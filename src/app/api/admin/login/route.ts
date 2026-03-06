@@ -9,9 +9,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { password } = await req.json();
+    const { username, password } = await req.json();
     
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 
     if (!ADMIN_PASSWORD) {
       console.error("ADMIN_PASSWORD env var is not set!");
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     // Constant time comparison would be better, but for now add delay
     await new Promise(resolve => setTimeout(resolve, 500)); // Anti-timing attack delay
 
-    if (password === ADMIN_PASSWORD) {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       // Create a signed JWT
       const token = await signToken({ role: "admin" });
 

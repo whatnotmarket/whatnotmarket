@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ProxyOrder, OrderStatus } from "@/lib/orders-db";
 import { Button } from "@/components/ui/Button";
 import { Squircle } from "@/components/ui/Squircle";
+import { toast } from "sonner";
 
 interface AdminOrdersClientProps {
   initialOrders: ProxyOrder[];
@@ -16,6 +17,41 @@ export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
   const [message, setMessage] = useState("");
   const [metadata, setMetadata] = useState<any>({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [followerHandle, setFollowerHandle] = useState("");
+  const [targetHandle, setTargetHandle] = useState("whatnotmarket");
+  const [isTestingFollow, setIsTestingFollow] = useState(false);
+
+  const handleFollowTest = async () => {
+    if (!followerHandle.trim() || !targetHandle.trim()) {
+      toast.error("Inserisci follower e target handle.");
+      return;
+    }
+
+    setIsTestingFollow(true);
+    try {
+      const res = await fetch("/api/admin/notifications/test-follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          followerHandle,
+          targetHandle,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        toast.error(data?.error || "Test follow non riuscito.");
+        return;
+      }
+
+      toast.success("Follow test inviato. Controlla le notifiche del target.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Errore durante il test follow.");
+    } finally {
+      setIsTestingFollow(false);
+    }
+  };
 
   const handleUpdate = async () => {
     if (!selectedOrder) return;
@@ -48,7 +84,40 @@ export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="space-y-8">
+      <Squircle
+        radius={20}
+        smoothing={1}
+        innerClassName="bg-[#1C1C1E] p-5 border border-emerald-500/20 space-y-4"
+      >
+        <h2 className="text-lg font-bold text-white">Test Follow Notification</h2>
+        <p className="text-sm text-zinc-400">
+          Simula un follow da un profilo verso un altro. Questo crea anche la notifica `profile_followed`.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input
+            value={followerHandle}
+            onChange={(e) => setFollowerHandle(e.target.value)}
+            placeholder="Follower handle (es. test)"
+            className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-white"
+          />
+          <input
+            value={targetHandle}
+            onChange={(e) => setTargetHandle(e.target.value)}
+            placeholder="Target handle (es. whatnotmarket)"
+            className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-white"
+          />
+          <Button
+            onClick={handleFollowTest}
+            disabled={isTestingFollow}
+            className="bg-white text-black hover:bg-zinc-200 font-bold"
+          >
+            {isTestingFollow ? "Testing..." : "Run Follow Test"}
+          </Button>
+        </div>
+      </Squircle>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {/* Order List */}
       <div className="col-span-1 space-y-4">
         <h2 className="text-xl font-bold mb-4">Orders ({orders.length})</h2>
@@ -200,6 +269,7 @@ export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
             Select an order to manage
           </div>
         )}
+      </div>
       </div>
     </div>
   );
