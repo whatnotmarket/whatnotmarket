@@ -188,7 +188,7 @@ export function ProfileMenu() {
 
       if (!active) return;
       if (!isUsableHandle(handle)) {
-        setProfileHref("/profile");
+        setProfileHref(`/profile?id=${user.id}`);
         return;
       }
 
