@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   },
 };
 
+// Trigger Vercel build
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { Footer } from "@/components/Footer";
