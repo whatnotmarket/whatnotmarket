@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/primitives/container";
-import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Seller {
@@ -41,6 +40,11 @@ const TOP_ESCROW: Seller[] = [
   { id: "18", name: "VerifiedAgent", avatar: "/placeholder.svg" },
 ];
 
+function toSellerProfileHref(name: string) {
+  const handle = name.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "");
+  return `/seller/@${encodeURIComponent(handle || "seller")}`;
+}
+
 function SellerRow({ title, sellers }: { title: string; sellers: Seller[] }) {
   return (
     <div className="space-y-6">
@@ -52,7 +56,7 @@ function SellerRow({ title, sellers }: { title: string; sellers: Seller[] }) {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
         {sellers.map((seller) => (
-          <Link href={`/profile/${seller.id}`} key={seller.id} className="group flex flex-col items-center gap-3">
+          <Link href={toSellerProfileHref(seller.name)} key={seller.id} className="group flex flex-col items-center gap-3">
             <div className="relative">
               <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden bg-zinc-800 border-2 border-transparent group-hover:border-white/20 transition-all relative">
                 <Image 

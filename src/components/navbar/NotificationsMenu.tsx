@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bell, MessageCircle, AlertCircle, Tag, Loader2 } from "lucide-react";
+import { Bell, MessageCircle, AlertCircle, Tag, Loader2, UserPlus } from "lucide-react";
 import { NavPopup } from "./NavPopup";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -193,6 +193,7 @@ export function NotificationsMenu() {
     if (type === "offer_accepted") return <Tag className="h-4 w-4 text-blue-400" />;
     if (type === "message_received") return <MessageCircle className="h-4 w-4 text-indigo-400" />;
     if (type === "deal_status_changed") return <AlertCircle className="h-4 w-4 text-amber-400" />;
+    if (type === "profile_followed") return <UserPlus className="h-4 w-4 text-cyan-400" />;
     return <MessageCircle className="h-4 w-4 text-zinc-400" />;
   };
 
@@ -278,4 +279,3 @@ export function NotificationsMenu() {
     </div>
   );
 }
-

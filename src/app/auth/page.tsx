@@ -65,9 +65,29 @@ function AuthContent() {
       },
     });
 
-    if (error) {
+    const isEmailRateLimitError = !!error && /email rate limit exceeded/i.test(error.message);
+
+    if (error && !isEmailRateLimitError) {
       setLoading(false);
       toast.error(error.message);
+      return;
+    }
+
+    if (isEmailRateLimitError) {
+      const { error: fallbackSignInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      setLoading(false);
+
+      if (fallbackSignInError) {
+        toast.error("Account already exists. Use Sign In.");
+        return;
+      }
+
+      toast.success("Welcome back!");
+      router.push("/market");
       return;
     }
 
