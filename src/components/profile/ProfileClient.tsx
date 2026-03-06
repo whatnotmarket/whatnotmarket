@@ -739,7 +739,7 @@ export function ProfileClient({
                   )}
 
                   {!isEditing && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-xs font-bold px-2 py-1 rounded-full border-2 border-[#1C1C1E] z-20 shadow-lg">
+                    <div className="absolute -top-2 -right-2 bg-white/10 text-white text-xs font-bold px-2 py-1 rounded-full border border-white/25 z-20 backdrop-blur-sm">
                       Lvl {profile.level}
                     </div>
                   )}
