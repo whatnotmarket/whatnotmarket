@@ -842,25 +842,25 @@ export function ProfileClient({
                 </div>
 
                 {isEditing ? (
-                  <div className="mb-6 w-full max-w-xs space-y-3">
-                    <div>
-                      <label className="text-xs uppercase text-zinc-500 tracking-wider">Display Name</label>
-                      <input
-                        value={editForm.name}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
-                        placeholder="Mario"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs uppercase text-zinc-500 tracking-wider">Handle</label>
-                      <input
-                        value={editForm.handle}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
-                        placeholder="@yourhandle"
-                      />
-                    </div>
+          <div className="mb-6 w-full max-w-xs space-y-3">
+            <div>
+              <label className="text-xs uppercase text-zinc-500 tracking-wider">Display Name</label>
+              <input
+                value={editForm.name}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                placeholder="Use your username"
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase text-zinc-500 tracking-wider">Handle</label>
+              <input
+                value={editForm.handle}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
+                className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                placeholder="@yourhandle"
+              />
+            </div>
                   </div>
                 ) : (
                   <>

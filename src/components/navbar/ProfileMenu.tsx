@@ -54,8 +54,9 @@ export function ProfileMenu() {
 
   useEffect(() => {
     let active = true;
+    let profileChannel: ReturnType<typeof supabase.channel> | null = null;
 
-    async function resolveProfileHref() {
+    const resolveProfileHref = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -152,9 +153,29 @@ export function ProfileMenu() {
 
       if (!active) return;
       setProfileHref(`/profile?id=${user.id}&role=${rolePreference}`);
-    }
+    };
 
-    resolveProfileHref();
+    const setup = async () => {
+      await resolveProfileHref();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      profileChannel = supabase
+        .channel(`profile-menu-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+          () => {
+            resolveProfileHref();
+          }
+        )
+        .subscribe();
+    };
+
+    setup();
 
     const {
       data: { subscription },
@@ -164,6 +185,7 @@ export function ProfileMenu() {
 
     return () => {
       active = false;
+      profileChannel?.unsubscribe();
       subscription.unsubscribe();
     };
   }, [supabase]);
