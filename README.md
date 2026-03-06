@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Whatnot Market
+
+A private, invitation-only marketplace web app built with Next.js, Tailwind CSS, and Supabase.
+
+## Features
+
+- **Invite-Only Access**: Strict entry gate with invite code validation.
+- **Request-Driven Marketplace**: Buyers post requests, sellers make offers.
+- **Deal Room**: Real-time chat and transaction timeline for accepted offers.
+- **Secure Payments (Escrow)**:
+  - Multi-chain support (Ethereum, Polygon, Base, Bitcoin).
+  - Mock payment adapter for demo purposes.
+  - Buyer pays -> Funds held -> Seller fulfills -> Funds released.
+- **Onboarding Wizard**:
+  - Role selection (Buyer/Seller).
+  - Payout wallet setup.
+  - Telegram verification (Mocked).
+- **Admin Dashboard**: Generate invite codes, moderate content, resolve payment disputes.
+- **Premium UI**: Dark mode first, fluid animations, glassmorphism effects.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4 + Framer Motion
+- **Icons**: Lucide React
+- **State**: TanStack Query
+- **Backend**: Supabase (Auth, Postgres, Realtime)
+- **Forms**: React Hook Form + Zod
 
 ## Getting Started
 
-First, run the development server:
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Set up Supabase**:
+   - Create a new project at [supabase.com](https://supabase.com).
+   - Go to the SQL Editor and run the contents of `schema.sql`.
+   - Copy your project URL and Anon Key.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Environment Variables**:
+   - Copy `.env.local.example` to `.env.local`.
+   - Fill in your Supabase credentials:
+     ```
+     NEXT_PUBLIC_SUPABASE_URL=your-project-url
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+     SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+     ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. **Access the app**:
+   - Go to `http://localhost:3000`.
+   - Enter the demo invite code: **VIP2026**.
 
-## Learn More
+## Demo Workflows
 
-To learn more about Next.js, take a look at the following resources:
+### Onboarding
+- After signing up, you will be redirected to `/onboarding`.
+- Choose **"I want to sell"** to see the full flow.
+- **Telegram Verification**: Click "Open Telegram Bot" to generate a mock code, then copy-paste it to verify.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Payments (Deal Room)
+- Go to any deal (or create a request -> make offer -> accept).
+- **Buyer View**: Select a network/token (e.g., Ethereum / USDC). Click "Pay".
+- **Deposit**: A QR code and address will appear.
+- **Simulate**: Click "Simulate Payment (Demo)" to instantly fund the deal.
+- **Seller View**: Toggle "View as Seller" to see the "Awaiting Payment" status change to "Funds Secured".
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Contributing
 
-## Deploy on Vercel
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
