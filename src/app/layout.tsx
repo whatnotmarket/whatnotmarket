@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   },
 };
 
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { Footer } from "@/components/Footer";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
           </div>
         </Providers>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
