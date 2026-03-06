@@ -39,3 +39,44 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local caches and binaries
+.npm-cache/
+codex-local.exe
+*.exe
+supabase/.temp/
+supabase/.cache/
+
+# OS-specific
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+Icon?
+
+# Editors / IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-*.log*
+pnpm-debug.log*
+
+# Build / Cache
+dist/
+.turbo/
+.parcel-cache
+.swc/
+.cache/
+.eslintcache
+
+# Temporary
+tmp/
+temp/
+*.tmp
