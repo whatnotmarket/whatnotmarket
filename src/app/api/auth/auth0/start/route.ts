@@ -89,6 +89,7 @@ export async function POST(request: Request) {
       mode,
       nextPath,
       provider,
+      loginHint,
       desiredRole,
       inviteCode,
     }),

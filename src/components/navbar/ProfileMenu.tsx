@@ -16,6 +16,28 @@ function normalizeHandle(raw: string | null | undefined) {
     .replace(/[^a-z0-9._-]/g, "");
 }
 
+function toDisplayNameFromEmail(email: string | null | undefined) {
+  const localPart = String(email || "")
+    .split("@")[0]
+    ?.trim();
+  if (!localPart) return null;
+  const cleaned = localPart.replace(/[._-]+/g, " ").trim();
+  if (!cleaned) return null;
+  return cleaned
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function walletNameFromBridgeSubject(rawSubject: string | null | undefined) {
+  const subject = String(rawSubject || "");
+  const parts = subject.split(":");
+  const address = parts.length >= 3 ? parts[2] : "";
+  if (!address.startsWith("0x") || address.length < 10) return null;
+  return address;
+}
+
 const CustomUserIcon = ({ className }: { className?: string }) => (
     <svg 
         width="24" 
@@ -52,9 +74,22 @@ export function ProfileMenu() {
         return;
       }
 
+      const userMetadata = (user.user_metadata || {}) as Record<string, unknown>;
+      const bridgeProvider = String(userMetadata.bridge_provider || "")
+        .trim()
+        .toLowerCase();
+      const isWalletProvider = bridgeProvider === "wallet" || bridgeProvider === "walletconnect";
+      const metadataFullName = String(userMetadata.full_name || "").trim();
+      const walletDisplayName = walletNameFromBridgeSubject(String(userMetadata.bridge_subject || ""));
+      const defaultFullName =
+        metadataFullName ||
+        (isWalletProvider ? walletDisplayName : null) ||
+        toDisplayNameFromEmail(user.email) ||
+        (isWalletProvider ? user.email || null : null);
+
       const { data, error } = await supabase
         .from("profiles")
-        .select("username,role_preference,email")
+        .select("username,role_preference,email,full_name")
         .eq("id", user.id)
         .maybeSingle();
       let profile = data;
@@ -71,6 +106,7 @@ export function ProfileMenu() {
           {
             id: user.id,
             email: user.email ?? null,
+            full_name: defaultFullName,
             role_preference: "buyer",
             onboarding_status: "completed",
           },
@@ -85,7 +121,7 @@ export function ProfileMenu() {
 
         const { data: bootstrapProfile, error: bootstrapFetchError } = await supabase
           .from("profiles")
-          .select("username,role_preference,email")
+          .select("username,role_preference,email,full_name")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -100,10 +136,20 @@ export function ProfileMenu() {
         profile = bootstrapProfile;
       }
 
+      if (!profile.full_name && defaultFullName) {
+        const { error: fullNameUpdateError } = await supabase
+          .from("profiles")
+          .update({ full_name: defaultFullName })
+          .eq("id", user.id);
+        if (fullNameUpdateError) {
+          console.error("Full name bootstrap error:", fullNameUpdateError);
+        }
+      }
+
       const rolePreference = profile.role_preference === "seller" ? "seller" : "buyer";
       let handle = normalizeHandle(profile.username);
 
-      if (!handle) {
+      if (!handle && !isWalletProvider) {
         const seed = normalizeHandle((profile.email || user.email || "buyer").split("@")[0]) || "buyer";
         const candidates = [seed, `${seed}${user.id.slice(0, 4)}`, `${seed}${Date.now().toString().slice(-4)}`];
 

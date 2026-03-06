@@ -109,7 +109,10 @@ export function ListingWalletPayment({
   const connectWallet = async () => {
     setLoading(true);
     try {
-      await wallet.connect("walletconnect");
+      const hasInjectedWallet =
+        typeof window !== "undefined" &&
+        Boolean((window as Window & { ethereum?: unknown }).ethereum);
+      await wallet.connect(hasInjectedWallet ? "injected" : "walletconnect");
       await refreshWalletLinkState();
       toast.success("Wallet connected.");
     } catch (error) {

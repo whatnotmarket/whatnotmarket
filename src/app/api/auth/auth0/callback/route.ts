@@ -10,6 +10,7 @@ type TxCookie = {
   mode: "signin" | "signup";
   nextPath: string;
   provider: string;
+  loginHint: string | null;
   desiredRole: "buyer" | "seller";
   inviteCode: string | null;
 };
@@ -32,6 +33,37 @@ function redirectToLogin(request: NextRequest, params: Record<string, string>) {
   });
 
   return url;
+}
+
+function toNameFromEmail(email: string | null) {
+  if (!email) return null;
+  const localPart = email.split("@")[0]?.trim();
+  if (!localPart) return null;
+  const cleaned = localPart.replace(/[._-]+/g, " ").trim();
+  if (!cleaned) return null;
+  return cleaned
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function resolveAuthDisplayName(input: {
+  name?: string;
+  nickname?: string;
+  givenName?: string;
+  familyName?: string;
+  loginHint: string | null;
+  email: string | null;
+}) {
+  const byClaims =
+    input.name?.trim() ||
+    [input.givenName, input.familyName].filter(Boolean).join(" ").trim() ||
+    input.nickname?.trim() ||
+    "";
+
+  if (byClaims) return byClaims;
+  return toNameFromEmail(input.loginHint) || toNameFromEmail(input.email);
 }
 
 export async function GET(request: NextRequest) {
@@ -84,7 +116,15 @@ export async function GET(request: NextRequest) {
       subject: userInfo.sub,
       provider: tx.provider,
       email: userInfo.email ?? null,
-      fullName: userInfo.name ?? userInfo.nickname ?? null,
+      fullName:
+        resolveAuthDisplayName({
+          name: userInfo.name,
+          nickname: userInfo.nickname,
+          givenName: userInfo.given_name,
+          familyName: userInfo.family_name,
+          loginHint: tx.loginHint,
+          email: userInfo.email ?? null,
+        }) ?? null,
       avatarUrl: userInfo.picture ?? null,
     });
 

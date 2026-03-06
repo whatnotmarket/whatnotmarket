@@ -47,16 +47,52 @@ async function createWalletConnectProvider() {
     throw new Error("WalletConnect is not configured.");
   }
 
+  const appUrl =
+    (typeof window !== "undefined" ? window.location.origin : null) ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
+
   const EthereumProvider = (await import("@walletconnect/ethereum-provider")).default;
   const provider = await EthereumProvider.init({
     projectId,
     showQrModal: true,
+    chains: [1],
     optionalChains: [1, 137, 10, 8453, 56],
     metadata: {
       name: "Whatnot Market",
       description: "Whatnot Market wallet auth and escrow payments",
-      url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-      icons: [],
+      url: appUrl,
+      icons: [`${appUrl}/logowhite.svg`],
+    },
+    qrModalOptions: {
+      themeMode: "dark",
+      enableExplorer: true,
+      mobileWallets: [
+        {
+          id: "metamask",
+          name: "MetaMask",
+          links: {
+            native: "metamask://",
+            universal: "https://metamask.app.link/wc?uri=",
+          },
+        },
+        {
+          id: "trust",
+          name: "Trust Wallet",
+          links: {
+            native: "trust://",
+            universal: "https://link.trustwallet.com/wc?uri=",
+          },
+        },
+        {
+          id: "rainbow",
+          name: "Rainbow",
+          links: {
+            native: "rainbow://",
+            universal: "https://rnbwapp.com/wc?uri=",
+          },
+        },
+      ],
     },
   });
 

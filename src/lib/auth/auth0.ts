@@ -30,6 +30,8 @@ export type Auth0UserInfo = {
   email?: string;
   name?: string;
   nickname?: string;
+  given_name?: string;
+  family_name?: string;
   picture?: string;
 };
 
@@ -156,4 +158,3 @@ export async function fetchAuth0UserInfo(accessToken: string): Promise<Auth0User
 
   return (await response.json()) as Auth0UserInfo;
 }
-

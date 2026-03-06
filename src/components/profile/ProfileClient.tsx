@@ -180,6 +180,7 @@ export function ProfileClient({
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
+    name: "",
     handle: "",
     avatar: "",
     banner: "",
@@ -234,7 +235,7 @@ export function ProfileClient({
           return data;
         };
 
-        let handleLookup =
+        const handleLookup =
           (await findByHandle(normalizedTargetHandle, "eq")) ||
           (await findByHandle(`@${normalizedTargetHandle}`, "eq")) ||
           (await findByHandle(normalizedTargetHandle, "ilike")) ||
@@ -457,6 +458,7 @@ export function ProfileClient({
   const handleEditClick = () => {
     if (!isOwnProfile) return;
     setEditForm({
+      name: profile.name,
       handle: profile.handle,
       avatar: profile.avatar,
       banner: profile.banner,
@@ -501,6 +503,12 @@ export function ProfileClient({
     }
 
     const normalizedHandle = normalizeHandle(editForm.handle);
+    const normalizedName = String(editForm.name || "").trim();
+    if (normalizedName.length < 2) {
+      toast.error("Display name must be at least 2 characters.");
+      return;
+    }
+
     if (normalizedHandle.length < 3) {
       toast.error("Handle must be at least 3 characters.");
       return;
@@ -523,6 +531,7 @@ export function ProfileClient({
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
+          full_name: normalizedName,
           username: normalizedHandle,
           bio: editForm.description,
           avatar_url: nextAvatar,
@@ -540,6 +549,7 @@ export function ProfileClient({
 
       setProfile((prev) => ({
         ...prev,
+        name: normalizedName,
         handle: `@${normalizedHandle}`,
         avatar: nextAvatar,
         banner: nextBanner,
@@ -831,23 +841,35 @@ export function ProfileClient({
                   )}
                 </div>
 
-                <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2 mt-2">
-                  {profile.name}
-                  {isSeller && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
-                </h1>
-
                 {isEditing ? (
-                  <div className="mb-6 w-full max-w-xs">
-                    <label className="text-xs uppercase text-zinc-500 tracking-wider">Handle</label>
-                    <input
-                      value={editForm.handle}
-                      onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
-                      placeholder="@yourhandle"
-                    />
+                  <div className="mb-6 w-full max-w-xs space-y-3">
+                    <div>
+                      <label className="text-xs uppercase text-zinc-500 tracking-wider">Display Name</label>
+                      <input
+                        value={editForm.name}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                        placeholder="Mario"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs uppercase text-zinc-500 tracking-wider">Handle</label>
+                      <input
+                        value={editForm.handle}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                        placeholder="@yourhandle"
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-zinc-500 text-sm mb-6">{profile.handle}</p>
+                  <>
+                    <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2 mt-2">
+                      {profile.name}
+                      {isSeller && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
+                    </h1>
+                    <p className="text-zinc-500 text-sm mb-6">{profile.handle}</p>
+                  </>
                 )}
 
                 <div className="grid grid-cols-2 gap-3 w-full mb-6">

@@ -220,10 +220,16 @@ function LoginContent() {
     setLoadingProvider("wallet");
 
     try {
+      const hasInjectedWallet =
+        typeof window !== "undefined" &&
+        Boolean((window as Window & { ethereum?: unknown }).ethereum);
+
       const connected =
         wallet.status === "connected" && wallet.address && wallet.chainId
           ? { address: wallet.address, chainId: wallet.chainId }
-          : await wallet.connect("walletconnect");
+          : hasInjectedWallet
+            ? await wallet.connect("injected")
+            : await wallet.connect("walletconnect");
 
       const challengeResponse = await fetch("/api/auth/external/wallet/challenge", {
         method: "POST",
