@@ -34,8 +34,8 @@ const applicationSchema = z.object({
   sellerName: z.string().min(3, "Seller name must be at least 3 characters"),
   listings: z.string().min(10, "Please list the items you want to promote"),
   duration: z.enum(["1_month", "3_months", "6_months"], {
-    required_error: "Please select a duration",
-  }),
+  required_error: "Please select a duration"
+}),
   notes: z.string().optional(),
 });
 
