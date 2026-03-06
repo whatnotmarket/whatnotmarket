@@ -159,8 +159,10 @@ function ProfileContent() {
   const [activeTab, setActiveTab] = useState<"listings" | "reviews">("listings");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [bannerObjectFit, setBannerObjectFit] = useState<"cover" | "fill">("cover");
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -183,9 +185,11 @@ function ProfileContent() {
 
   const [profile, setProfile] = useState<ProfileState>(() => getBaseProfile(isSeller));
   const isOwnProfile = !!currentUserId && (!validTargetProfileId || currentUserId === validTargetProfileId);
+  const displayBannerSrc = isEditing ? editForm.banner || profile.banner : profile.banner;
 
   useEffect(() => {
     let active = true;
+    setIsProfileLoading(true);
 
     async function loadProfile() {
       const defaults = getRoleDefaults(isSeller);
@@ -203,6 +207,7 @@ function ProfileContent() {
         setProfile(getBaseProfile(isSeller));
         setPurchaseItems([]);
         setIsFollowing(false);
+        setIsProfileLoading(false);
         return;
       }
 
@@ -324,6 +329,8 @@ function ProfileContent() {
       } else {
         setIsFollowing(false);
       }
+
+      setIsProfileLoading(false);
     }
 
     loadProfile();
@@ -525,6 +532,59 @@ function ProfileContent() {
     };
   }, [isDraggingBanner]);
 
+  useEffect(() => {
+    if (!displayBannerSrc) {
+      setBannerObjectFit("cover");
+      return;
+    }
+
+    let cancelled = false;
+    const probe = new window.Image();
+
+    probe.onload = () => {
+      if (cancelled) return;
+      const isSmall = probe.naturalWidth < 1200 || probe.naturalHeight < 320;
+      setBannerObjectFit(isSmall ? "fill" : "cover");
+    };
+
+    probe.onerror = () => {
+      if (cancelled) return;
+      setBannerObjectFit("cover");
+    };
+
+    probe.src = displayBannerSrc;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [displayBannerSrc]);
+
+  if (isProfileLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white pb-20">
+        <Navbar />
+        <div className="h-64 md:h-80 w-full bg-zinc-900 animate-pulse" />
+        <main className="container mx-auto px-4 sm:px-6 relative z-20 -mt-24">
+          <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
+            <div className="rounded-3xl border border-white/10 bg-[#1C1C1E] p-6">
+              <div className="mx-auto mb-4 h-32 w-32 rounded-full bg-zinc-800 animate-pulse" />
+              <div className="mx-auto mb-3 h-6 w-40 rounded bg-zinc-800 animate-pulse" />
+              <div className="mx-auto mb-6 h-4 w-28 rounded bg-zinc-800 animate-pulse" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-16 rounded-xl bg-zinc-800 animate-pulse" />
+                <div className="h-16 rounded-xl bg-zinc-800 animate-pulse" />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-44 rounded-3xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
+              <div className="h-60 rounded-3xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-zinc-800 selection:text-white pb-20">
       <Navbar />
@@ -539,10 +599,13 @@ function ProfileContent() {
       >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 z-10 pointer-events-none" />
         <Image
-          src={isEditing ? editForm.banner || profile.banner : profile.banner}
+          src={displayBannerSrc}
           alt="Banner"
           fill
-          className="object-cover opacity-60 transition-all duration-75 ease-out"
+          className={cn(
+            "opacity-60 transition-all duration-75 ease-out",
+            bannerObjectFit === "fill" ? "object-fill" : "object-cover"
+          )}
           style={{ objectPosition: `center ${isEditing ? editForm.bannerPosition : profile.bannerPosition}%` }}
           priority
           draggable={false}
@@ -610,7 +673,7 @@ function ProfileContent() {
                       src={isEditing ? editForm.avatar || profile.avatar : profile.avatar}
                       alt={profile.name}
                       fill
-                      className="object-cover"
+                      className="object-fill"
                     />
 
                     {isEditing && (
