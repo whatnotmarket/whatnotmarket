@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
   // Silence Turbopack error for webpack plugins (next-pwa)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   turbopack: {} as any,
+  webpack: (config) => {
+    config.externals = config.externals || [];
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+    return config;
+  },
   images: {
     remotePatterns: [
       {

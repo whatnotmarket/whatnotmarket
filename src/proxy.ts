@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
     pathname === "/login" ||
     pathname.startsWith("/login/") ||
     pathname === "/auth" ||
-    pathname.startsWith("/auth/");
+    pathname.startsWith("/auth/") ||
+    pathname === "/testlogin";
 
   const supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
