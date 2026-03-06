@@ -52,7 +52,7 @@ export function Modal({
           >
             <div
               className={cn(
-                "relative w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl",
+                "relative w-full overflow-hidden rounded-xl border border-zinc-800 bg-[#0A0A0A] p-6 shadow-2xl",
                 className
               )}
             >

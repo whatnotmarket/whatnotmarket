@@ -100,6 +100,7 @@ export function NotificationsMenu() {
         className="w-[380px]" 
         title="Notifications"
       >
+        <div className="bg-[#1C1C1E] rounded-[16px] p-2">
         <div className="bg-[#222222] rounded-[16px] overflow-hidden flex flex-col max-h-[480px]">
           {/* Header Actions */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
@@ -117,7 +118,7 @@ export function NotificationsMenu() {
           </div>
 
           {/* List */}
-          <div className="overflow-y-auto custom-scrollbar">
+          <div className="overflow-y-auto custom-scrollbar p-2 space-y-2">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-zinc-500 text-sm">
                 No notifications yet
@@ -129,7 +130,7 @@ export function NotificationsMenu() {
                   href={notification.link}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-start gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 relative group",
+                    "flex items-start gap-4 p-4 hover:bg-white/10 transition-colors relative group bg-zinc-800/50 rounded-lg",
                     !notification.read && "bg-white/[0.02]"
                   )}
                 >
@@ -178,6 +179,7 @@ export function NotificationsMenu() {
             </Link>
           </div>
         </div>
+      </div>
       </NavPopup>
     </div>
   );

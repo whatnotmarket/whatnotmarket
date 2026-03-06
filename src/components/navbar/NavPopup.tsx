@@ -56,7 +56,7 @@ export function NavPopup({
             className="relative z-10"
           >
             <div className={cn(
-              "w-full max-w-[440px] overflow-hidden rounded-[20px] bg-[#1E1E1E] p-5 shadow-2xl no-scrollbar relative",
+              "w-full max-w-[440px] overflow-hidden rounded-[20px] bg-[#0A0A0A] p-5 shadow-2xl no-scrollbar relative",
               className
             )}>
                 {/* Title and Internal Close Button Header */}
@@ -70,7 +70,7 @@ export function NavPopup({
                     {/* Internal Close button as per spec "top-right corner inside" */}
                     <button
                         onClick={onClose}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-white bg-[#2A2A2A] rounded-lg hover:bg-zinc-700 transition-colors"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-white bg-[#1C1C1E] rounded-lg hover:bg-zinc-700 transition-colors"
                     >
                         <X className="h-4 w-4" />
                     </button>

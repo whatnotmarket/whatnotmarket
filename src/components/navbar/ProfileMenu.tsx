@@ -40,7 +40,7 @@ export function ProfileMenu() {
       </button>
 
       <NavPopup isOpen={isOpen} onClose={() => setIsOpen(false)} align="center" className="w-[320px]" title="Profile">
-        <div className="bg-[#222222] rounded-[16px] p-2">
+        <div className="bg-[#1C1C1E] rounded-[16px] p-2">
             <div className="space-y-1">
                 <Link href="/profile" className="w-full flex items-center gap-3 px-3 h-[50px] rounded-lg hover:bg-white/5 transition-colors group">
                     <User className="h-5 w-5 text-zinc-400 group-hover:text-white" />

@@ -37,7 +37,7 @@ export function CryptoSelector() {
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <input 
-                    className="w-full bg-[#2A2A2A] border-none rounded-[12px] py-3 pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 focus:ring-0 focus:outline-none transition-all"
+                    className="w-full bg-[#1C1C1E] border-none rounded-[12px] py-3 pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 focus:ring-0 focus:outline-none transition-all"
                     placeholder="Search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -46,7 +46,7 @@ export function CryptoSelector() {
             </div>
         </div>
         
-        <div className="bg-[#222222] rounded-[16px] p-2">
+        <div className="bg-[#1C1C1E] rounded-[16px] p-2">
             <div className="max-h-[400px] overflow-y-auto no-scrollbar space-y-1">
                 {filtered.map((c) => (
                     <button
@@ -67,10 +67,9 @@ export function CryptoSelector() {
                         <div className={cn(
                             "h-5 w-5 rounded-full border flex items-center justify-center transition-all",
                             selectedCrypto === c.code 
-                                ? "bg-[#FF8A00] border-[#FF8A00]" 
-                                : "bg-[#2A2A2A] border-zinc-700 group-hover:border-zinc-500"
+                                ? "bg-white border-white" 
+                                : "bg-transparent border-zinc-700 group-hover:border-zinc-500"
                         )}>
-                            {selectedCrypto === c.code && <div className="h-2 w-2 bg-white rounded-full" />}
                         </div>
                     </button>
                 ))}
