@@ -23,7 +23,7 @@ export function StepPaymentMethod({ data, updateData, onNext, onBack }: StepProp
   };
 
   const selectedCryptoData = CRYPTO_CURRENCIES.find(c => c.code === selectedCurrency);
-  const showNetworkSelector = selectedCurrency && ["USDT", "USDC"].includes(selectedCurrency);
+  const showNetworkSelector = !!selectedCurrency && ["USDT", "USDC"].includes(selectedCurrency);
 
   const networks = ["ERC20", "TRC20", "BEP20", "SOL"];
 

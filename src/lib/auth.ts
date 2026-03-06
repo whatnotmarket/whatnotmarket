@@ -1,27 +1,29 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const SECRET_KEY = process.env.ADMIN_JWT_SECRET;
-
-if (!SECRET_KEY) {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("ADMIN_JWT_SECRET is missing in production environment");
+const getSecretKey = () => {
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("ADMIN_JWT_SECRET is missing in production environment");
+    }
+    return "dev-secret-do-not-use-in-prod";
   }
-  console.warn("WARNING: ADMIN_JWT_SECRET is missing, using unsafe dev secret");
-}
+  return secret;
+};
 
-const key = new TextEncoder().encode(SECRET_KEY || "dev-secret-do-not-use-in-prod");
+const getKey = () => new TextEncoder().encode(getSecretKey());
 
 export async function signToken(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("24h")
-    .sign(key);
+    .sign(getKey());
 }
 
 export async function verifyToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, key);
+    const { payload } = await jwtVerify(token, getKey());
     return payload;
   } catch (error) {
     return null;

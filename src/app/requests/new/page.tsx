@@ -41,12 +41,12 @@ const DELIVERY_OPTIONS: Option[] = [
   { value: "flexible", label: "Flexible", icon: "🤝", subtitle: "Negotiable timeframe" },
 ];
 
-const requestSchema = z.object({
+export const requestSchema = z.object({
   title: z.string().min(5, "Title is too short (min 5 chars)"),
   category: z.string().min(1, "Please select a category"),
   condition: z.string().min(1, "Please select a condition"),
-  budgetMin: z.coerce.number().min(0, "Invalid amount"),
-  budgetMax: z.coerce.number().min(1, "Invalid amount"),
+  budgetMin: z.number().min(0, "Invalid amount"),
+  budgetMax: z.number().min(0, "Invalid amount"),
   paymentMethod: z.string().min(1, "Please select a payment method"),
   deliveryTime: z.string().min(1, "Please select a delivery time"),
   description: z.string().min(10, "Please add more details (min 10 chars)"),
@@ -55,7 +55,7 @@ const requestSchema = z.object({
   path: ["budgetMax"],
 });
 
-type RequestFormValues = z.infer<typeof requestSchema>;
+export type RequestFormValues = z.infer<typeof requestSchema>;
 
 // Mock suggestions (in a real app, these would come from an API based on existing listings)
 const SUGGESTIONS = [
@@ -83,11 +83,14 @@ export default function CreateRequestPage() {
   } = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
+      title: "",
+      category: "",
       condition: "",
       budgetMin: 0,
       budgetMax: 0,
       paymentMethod: selectedCrypto, // Initialize with context value
-      deliveryTime: ""
+      deliveryTime: "",
+      description: "",
     },
     mode: "onChange",
   });
@@ -309,7 +312,7 @@ export default function CreateRequestPage() {
                         </div>
                         <input 
                           type="number"
-                          {...register("budgetMin")}
+                          {...register("budgetMin", { valueAsNumber: true })}
                           placeholder="Min"
                           className="w-full h-10 pl-8 pr-3 rounded-lg bg-[#1C1C1E] border border-white/10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-colors text-right"
                         />
@@ -321,7 +324,7 @@ export default function CreateRequestPage() {
                         </div>
                         <input 
                           type="number"
-                          {...register("budgetMax")}
+                          {...register("budgetMax", { valueAsNumber: true })}
                           placeholder="Max"
                           className="w-full h-10 pl-8 pr-3 rounded-lg bg-[#1C1C1E] border border-white/10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-colors text-right"
                         />

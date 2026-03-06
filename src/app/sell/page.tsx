@@ -43,7 +43,7 @@ const sellSchema = z.object({
   title: z.string().min(5, "Title is too short (min 5 chars)"),
   category: z.string().min(1, "Please select a category"),
   condition: z.string().min(1, "Please select a condition"),
-  price: z.coerce.number().min(0.01, "Price must be greater than 0"),
+  price: z.number().min(0.01, "Price must be greater than 0"),
   paymentMethods: z.array(z.string()).min(1, "Select at least one crypto"),
   deliveryTime: z.string().min(1, "Please select a delivery time"),
   description: z.string().min(10, "Please add more details (min 10 chars)"),
@@ -77,10 +77,13 @@ export default function SellPage() {
   } = useForm<SellFormValues>({
     resolver: zodResolver(sellSchema),
     defaultValues: {
+      title: "",
+      category: "",
       condition: "",
       price: 0,
       paymentMethods: [],
-      deliveryTime: ""
+      deliveryTime: "",
+      description: "",
     },
     mode: "onChange",
   });
@@ -264,13 +267,13 @@ export default function SellPage() {
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none font-sans font-medium">
                         $
                       </div>
-                      <input 
-                        type="number"
-                        step="0.01"
-                        {...register("price")}
-                        placeholder="0.00"
-                        className="w-full h-10 pl-8 pr-3 rounded-lg bg-[#1C1C1E] border border-white/10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-colors text-right"
-                      />
+                        <input 
+                          type="number"
+                          step="0.01"
+                          {...register("price", { valueAsNumber: true })}
+                          placeholder="0.00"
+                          className="w-full h-10 pl-8 pr-3 rounded-lg bg-[#1C1C1E] border border-white/10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-colors text-right"
+                        />
                     </div>
                   </div>
                    {errors.price && (
