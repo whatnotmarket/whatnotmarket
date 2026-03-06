@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
-// Import actions if needed, or implement mock login
+import { createClient } from "@/lib/supabase";
 
 function AuthContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const supabase = createClient();
   const inviteCode = searchParams.get("code");
   const [activeTab, setActiveTab] = useState<"login" | "signup">(
     inviteCode ? "signup" : "login"
@@ -23,41 +24,69 @@ function AuthContent() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [code, setCode] = useState(inviteCode || "");
-
-  useEffect(() => {
-    if (inviteCode) {
-      setCode(inviteCode);
-      setActiveTab("signup");
-    }
-  }, [inviteCode]);
+  const effectiveCode = inviteCode || code;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mock login
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("Welcome back!");
-      router.push("/market");
-    }, 1000);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success("Welcome back!");
+    router.push("/market");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    if (code !== (process.env.NEXT_PUBLIC_INVITE_CODE || "VIP2026")) {
+    if (effectiveCode.trim().toUpperCase() !== (process.env.NEXT_PUBLIC_INVITE_CODE || "VIP2026").toUpperCase()) {
         setLoading(false);
         toast.error("Invalid invite code");
         return;
     }
 
-    // Mock signup
-    setTimeout(() => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+
+    if (error) {
       setLoading(false);
-      toast.success("Account created!");
-      router.push("/market");
-    }, 1500);
+      toast.error(error.message);
+      return;
+    }
+
+    if (!data.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setLoading(false);
+        toast.error("Account created. Confirm email, then sign in.");
+        return;
+      }
+    }
+
+    setLoading(false);
+    toast.success("Account created!");
+    router.push("/market");
   };
 
   return (
@@ -157,7 +186,7 @@ function AuthContent() {
                   <Input
                     type="text"
                     required
-                    value={code}
+                    value={effectiveCode}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     className="bg-zinc-900/50 border-zinc-800 focus:border-white/20 h-11 text-center tracking-widest font-mono"
                     readOnly={!!inviteCode}
