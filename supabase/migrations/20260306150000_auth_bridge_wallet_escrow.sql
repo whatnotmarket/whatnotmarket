@@ -2,6 +2,23 @@ do $$
 begin
   if not exists (
     select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where p.proname = 'set_updated_at' and n.nspname = 'public'
+  ) then
+    create function public.set_updated_at()
+    returns trigger
+    language plpgsql
+    as $fn$
+    begin
+      new.updated_at = now();
+      return new;
+    end;
+    $fn$;
+  end if;
+
+  if not exists (
+    select 1
     from pg_type t
     join pg_namespace n on n.oid = t.typnamespace
     where t.typname = 'listing_payment_status' and n.nspname = 'public'
@@ -218,4 +235,3 @@ drop trigger if exists set_listing_payments_updated_at on public.listing_payment
 create trigger set_listing_payments_updated_at
 before update on public.listing_payments
 for each row execute function public.set_updated_at();
-

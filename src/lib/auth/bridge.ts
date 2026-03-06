@@ -69,7 +69,7 @@ async function resolveSupabaseUserIdByEmail(email: string) {
     .maybeSingle<{ id: string }>();
 
   if (error) {
-    return null;
+    throw new Error(`Unable to resolve profile by email: ${error.message}`);
   }
 
   return data?.id ?? null;
@@ -95,7 +95,7 @@ async function upsertBridgeIdentity(row: {
   );
 
   if (error) {
-    throw new Error("Unable to persist identity mapping");
+    throw new Error(`Unable to persist identity mapping: ${error.message}`);
   }
 }
 
@@ -121,11 +121,15 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
   const email = normalizeEmail(identity.email) ?? subjectToSyntheticEmail(identity.subject);
   const password = deriveBridgePassword(identity.subject);
 
-  const { data: mapping } = await admin
+  const { data: mapping, error: mappingError } = await admin
     .from("auth_bridge_identities")
     .select("auth_subject,provider,supabase_user_id,email")
     .eq("auth_subject", identity.subject)
     .maybeSingle<BridgeIdentityRow>();
+
+  if (mappingError && mappingError.code !== "PGRST116") {
+    throw new Error(`Unable to read identity mapping: ${mappingError.message}`);
+  }
 
   if (mapping?.supabase_user_id) {
     await admin.auth.admin.updateUserById(mapping.supabase_user_id, {
@@ -246,4 +250,3 @@ export async function signInBridgeUserOnRoute(params: {
     throw new Error(error.message);
   }
 }
-
