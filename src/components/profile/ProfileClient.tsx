@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   ShieldCheck,
   Calendar,
@@ -159,7 +160,9 @@ export function ProfileClient({
   const supabase = useMemo(() => createClient(), []);
   const { role } = useUser();
   const viewerRole = role === "seller" ? "seller" : "buyer";
+  const requestedTargetId = targetProfileId;
   const normalizedTargetHandle = normalizeHandle(targetHandle || "");
+  const hasExplicitTarget = Boolean(requestedTargetId || normalizedTargetHandle);
   const validTargetProfileId = targetProfileId && isUuid(targetProfileId) ? targetProfileId : null;
   const initialProfileRole = routeRole || viewerRole;
 
@@ -169,6 +172,7 @@ export function ProfileClient({
   const [profileRole, setProfileRole] = useState<"buyer" | "seller">(initialProfileRole);
   const [isSaving, setIsSaving] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isProfileMissing, setIsProfileMissing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [bannerObjectFit, setBannerObjectFit] = useState<"cover" | "fill">("cover");
@@ -200,6 +204,7 @@ export function ProfileClient({
   useEffect(() => {
     let active = true;
     setIsProfileLoading(true);
+    setIsProfileMissing(false);
 
     async function loadProfile() {
       const {
@@ -215,15 +220,25 @@ export function ProfileClient({
       let resolvedRole: "buyer" | "seller" = routeRole || viewerRole;
 
       if (!targetId && normalizedTargetHandle) {
-        const { data: handleLookup, error: lookupError } = await supabase
-          .from("profiles")
-          .select("id,role_preference")
-          .eq("username", normalizedTargetHandle)
-          .maybeSingle();
+        const findByHandle = async (candidate: string, mode: "eq" | "ilike") => {
+          const query = supabase.from("profiles").select("id,role_preference");
+          const { data, error } =
+            mode === "eq"
+              ? await query.eq("username", candidate).maybeSingle()
+              : await query.ilike("username", candidate).maybeSingle();
 
-        if (lookupError) {
-          console.error("Handle lookup error:", lookupError);
-        }
+          if (error) {
+            console.error(`Handle lookup error (${mode}:${candidate}):`, error);
+            return null;
+          }
+          return data;
+        };
+
+        let handleLookup =
+          (await findByHandle(normalizedTargetHandle, "eq")) ||
+          (await findByHandle(`@${normalizedTargetHandle}`, "eq")) ||
+          (await findByHandle(normalizedTargetHandle, "ilike")) ||
+          (await findByHandle(`@${normalizedTargetHandle}`, "ilike"));
 
         if (handleLookup?.id) {
           targetId = handleLookup.id;
@@ -235,8 +250,20 @@ export function ProfileClient({
         }
       }
 
-      if (!targetId && viewerId) {
-        targetId = viewerId;
+      if (!targetId) {
+        if (hasExplicitTarget) {
+          setProfileRole(resolvedRole);
+          setProfile(getBaseProfile(resolvedRole === "seller"));
+          setResolvedTargetId(null);
+          setPurchaseItems([]);
+          setIsFollowing(false);
+          setIsProfileMissing(true);
+          setIsProfileLoading(false);
+          return;
+        }
+        if (viewerId) {
+          targetId = viewerId;
+        }
       }
 
       if (!targetId) {
@@ -296,6 +323,17 @@ export function ProfileClient({
       }
 
       const dbProfile = (profileRes.data || null) as StoredProfile | null;
+      if (!dbProfile && hasExplicitTarget) {
+        setProfileRole(resolvedRole);
+        setProfile(getBaseProfile(resolvedRole === "seller"));
+        setResolvedTargetId(null);
+        setPurchaseItems([]);
+        setIsFollowing(false);
+        setIsProfileMissing(true);
+        setIsProfileLoading(false);
+        return;
+      }
+
       if (!routeRole) {
         resolvedRole = dbProfile?.role_preference === "seller" ? "seller" : resolvedRole;
       }
@@ -383,7 +421,7 @@ export function ProfileClient({
     return () => {
       active = false;
     };
-  }, [normalizedTargetHandle, routeRole, supabase, validTargetProfileId, viewerRole]);
+  }, [hasExplicitTarget, normalizedTargetHandle, routeRole, supabase, validTargetProfileId, viewerRole]);
 
   const handleEditClick = () => {
     if (!isOwnProfile) return;
@@ -624,6 +662,26 @@ export function ProfileClient({
               <div className="h-44 rounded-3xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
               <div className="h-60 rounded-3xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
             </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isProfileMissing) {
+    return (
+      <div className="min-h-screen bg-black text-white pb-20">
+        <Navbar />
+        <main className="container mx-auto px-4 sm:px-6 py-16">
+          <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-[#1C1C1E] p-8 text-center">
+            <h1 className="text-2xl font-bold text-white">Profile not found</h1>
+            <p className="mt-3 text-sm text-zinc-400">This profile does not exist or is not available.</p>
+            <Link
+              href="/market"
+              className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-white px-5 text-sm font-bold text-black transition-colors hover:bg-zinc-200"
+            >
+              Back to Market
+            </Link>
           </div>
         </main>
       </div>

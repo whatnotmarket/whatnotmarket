@@ -1,4 +1,6 @@
+import { notFound, redirect } from "next/navigation";
 import { ProfileClient } from "@/components/profile/ProfileClient";
+import { createClient } from "@/lib/supabase-server";
 
 type SellerProfilePageProps = {
   params: Promise<{ handle: string }>;
@@ -6,5 +8,43 @@ type SellerProfilePageProps = {
 
 export default async function SellerProfilePage({ params }: SellerProfilePageProps) {
   const { handle } = await params;
-  return <ProfileClient targetHandle={handle} routeRole="seller" />;
+  const normalizedHandle = handle.trim().toLowerCase().replace(/^@+/, "");
+  if (!normalizedHandle) {
+    notFound();
+  }
+
+  const supabase = await createClient();
+
+  const findBy = async (value: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,username,role_preference")
+      .eq("username", value)
+      .maybeSingle();
+    return data;
+  };
+
+  const profile =
+    (await findBy(normalizedHandle)) ||
+    (await findBy(`@${normalizedHandle}`)) ||
+    (await (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,username,role_preference")
+        .ilike("username", normalizedHandle)
+        .maybeSingle();
+      return data;
+    })());
+
+  if (!profile) {
+    notFound();
+  }
+
+  const canonicalHandle = String(profile.username || normalizedHandle).replace(/^@+/, "").toLowerCase();
+
+  if (profile.role_preference === "buyer") {
+    redirect(`/buyer/@${encodeURIComponent(canonicalHandle)}`);
+  }
+
+  return <ProfileClient targetProfileId={profile.id} targetHandle={canonicalHandle} routeRole="seller" />;
 }
