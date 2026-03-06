@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
 import { useUser } from "@/contexts/UserContext";
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase";
 
 // Mock Data
 const MOCK_PROFILE = {
@@ -60,10 +61,34 @@ const MOCK_REQUESTS = [
   { id: 2, title: "Need custom Telegram bot dev", budget: "$200-500", image: "🤖" },
 ];
 
+type EditableImageType = "avatar" | "banner";
+
+type StoredProfile = {
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+};
+
+function getRoleDefaults(isSeller: boolean) {
+  return {
+    name: isSeller ? "CryptoKing_99" : "SilentBuyer_01",
+    handle: isSeller ? "@cryptoking" : "@silentbuyer",
+    avatar: isSeller
+      ? "https://ui-avatars.com/api/?name=Crypto+King&background=10b981&color=fff"
+      : "https://ui-avatars.com/api/?name=Silent+Buyer&background=3b82f6&color=fff",
+    banner: "/framehero.svg",
+  };
+}
+
 export default function ProfilePage() {
+  const supabase = useMemo(() => createClient(), []);
   const { role } = useUser();
+  const isSeller = role === "seller";
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<"listings" | "reviews">("listings");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Editing State
   const [isEditing, setIsEditing] = useState(false);
@@ -74,24 +99,75 @@ export default function ProfilePage() {
     bannerPosition: 50, // 0-100% Y position
     avatarPosition: 50  // 0-100% X/Y (simplified to just one axis for now or could be complex)
   });
+  const [pendingImages, setPendingImages] = useState<Record<EditableImageType, File | null>>({
+    avatar: null,
+    banner: null,
+  });
 
   const [isDraggingBanner, setIsDraggingBanner] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const startPos = useRef(0);
-
-  const isSeller = role === "seller";
   
   // Use mock data but adapt based on role
   const [profile, setProfile] = useState({
     ...MOCK_PROFILE,
-    name: isSeller ? "CryptoKing_99" : "SilentBuyer_01", 
-    handle: isSeller ? "@cryptoking" : "@silentbuyer",
-    avatar: isSeller 
-      ? "https://ui-avatars.com/api/?name=Crypto+King&background=10b981&color=fff"
-      : "https://ui-avatars.com/api/?name=Silent+Buyer&background=3b82f6&color=fff",
+    ...getRoleDefaults(isSeller),
     bannerPosition: 50
   });
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      const defaults = getRoleDefaults(isSeller);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!active) return;
+
+      setCurrentUserId(user?.id || null);
+
+      if (!user) {
+        setProfile((prev) => ({
+          ...prev,
+          ...defaults,
+        }));
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name,username,avatar_url,banner_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Load profile error:", error);
+        return;
+      }
+
+      const dbProfile = (data || null) as StoredProfile | null;
+      const handle = dbProfile?.username
+        ? `@${dbProfile.username.replace(/^@/, "")}`
+        : defaults.handle;
+
+      setProfile((prev) => ({
+        ...prev,
+        name: dbProfile?.full_name || defaults.name,
+        handle,
+        avatar: dbProfile?.avatar_url || defaults.avatar,
+        banner: dbProfile?.banner_url || defaults.banner,
+      }));
+    }
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [isSeller, supabase]);
 
   const handleEditClick = () => {
     setEditForm({
@@ -104,21 +180,93 @@ export default function ProfilePage() {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setProfile(prev => ({
-      ...prev,
-      avatar: editForm.avatar || prev.avatar,
-      banner: editForm.banner || prev.banner,
-      description: editForm.description,
-      bannerPosition: editForm.bannerPosition
-    }));
+  const handleCancelEdit = () => {
     setIsEditing(false);
-    toast.success("Profile updated successfully!");
+    setPendingImages({ avatar: null, banner: null });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+  const uploadProfileImage = async (file: File, type: EditableImageType) => {
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const extension = file.name.includes(".")
+      ? file.name.split(".").pop()?.toLowerCase() || "jpg"
+      : "jpg";
+    const bucket = type === "avatar" ? "avatars" : "profile-banners";
+    const roleSegment = isSeller ? "seller" : "buyer";
+    const filePath = `${currentUserId}/${roleSegment}/${type}-${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, { cacheControl: "3600", upsert: false });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    return supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
+  };
+
+  const handleSave = async () => {
+    if (isSaving) return;
+
+    if ((pendingImages.avatar || pendingImages.banner) && !currentUserId) {
+      toast.error("Sign in to save avatar and banner permanently.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      let nextAvatar = editForm.avatar || profile.avatar;
+      let nextBanner = editForm.banner || profile.banner;
+
+      if (pendingImages.avatar) {
+        nextAvatar = await uploadProfileImage(pendingImages.avatar, "avatar");
+      }
+
+      if (pendingImages.banner) {
+        nextBanner = await uploadProfileImage(pendingImages.banner, "banner");
+      }
+
+      if (currentUserId) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            avatar_url: nextAvatar,
+            banner_url: nextBanner,
+          })
+          .eq("id", currentUserId);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+
+      setProfile((prev) => ({
+        ...prev,
+        avatar: nextAvatar,
+        banner: nextBanner,
+        description: editForm.description,
+        bannerPosition: editForm.bannerPosition
+      }));
+      setPendingImages({ avatar: null, banner: null });
+      setIsEditing(false);
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      console.error("Save profile error:", error);
+      toast.error("Failed to save profile changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: EditableImageType) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setPendingImages((prev) => ({ ...prev, [type]: file }));
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -244,7 +392,7 @@ export default function ProfilePage() {
                 ) : (
                   <div className="absolute top-0 right-0 flex gap-2">
                     <button 
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleCancelEdit}
                       className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
                       title="Cancel"
                     >
@@ -252,6 +400,7 @@ export default function ProfilePage() {
                     </button>
                     <button 
                       onClick={handleSave}
+                      disabled={isSaving}
                       className="p-2 text-emerald-500 hover:text-emerald-400 transition-colors"
                       title="Save"
                     >

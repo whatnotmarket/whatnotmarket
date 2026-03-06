@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 import withPWA from "@ducanh2912/next-pwa";
 
+const supabaseHostname = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
+  } catch {
+    return "";
+  }
+})();
+
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
@@ -21,6 +29,16 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      ...(supabaseHostname
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: supabaseHostname,
+              port: "",
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
   async headers() {
