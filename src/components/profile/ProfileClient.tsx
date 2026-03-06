@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   ShieldCheck,
-  MapPin,
   Calendar,
   TrendingUp,
   Clock,
@@ -51,7 +50,6 @@ type ProfileState = {
   followers: number;
   following: number;
   description: string;
-  location: string;
   isOnline: boolean;
   successfulDeliveries: number;
   sellerRanking: string;
@@ -141,7 +139,6 @@ function getBaseProfile(isSeller: boolean): ProfileState {
     followers: 0,
     following: 0,
     description: "",
-    location: "Online",
     isOnline: true,
     successfulDeliveries: 0,
     sellerRanking: "Rookie Seller",
@@ -799,13 +796,6 @@ export function ProfileClient({
                       <Calendar className="w-4 h-4" /> Member Since
                     </span>
                     <span className="text-zinc-300 font-medium">{profile.memberSince}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 flex items-center gap-2">
-                      <MapPin className="w-4 h-4" /> Location
-                    </span>
-                    <span className="text-zinc-300 font-medium">{profile.location}</span>
                   </div>
 
                   {isSeller && (
