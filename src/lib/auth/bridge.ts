@@ -20,6 +20,37 @@ type BridgeIdentityRow = {
   email: string | null;
 };
 
+function toNameFromEmail(email: string | null) {
+  if (!email) return null;
+  const localPart = email.split("@")[0]?.trim();
+  if (!localPart) return null;
+  const cleaned = localPart.replace(/[._-]+/g, " ").trim();
+  if (!cleaned) return null;
+  return cleaned
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function walletAddressFromSubject(subject: string) {
+  const parts = subject.split(":");
+  const address = parts.length >= 3 ? parts[2] : "";
+  if (!address.startsWith("0x") || address.length < 10) return null;
+  return address;
+}
+
+function resolveBridgeFullName(identity: BridgeIdentityInput, normalizedEmail: string | null) {
+  const explicitName = String(identity.fullName ?? "").trim();
+  if (explicitName) return explicitName;
+
+  if (identity.provider === "wallet") {
+    return walletAddressFromSubject(identity.subject) || normalizedEmail || "Wallet User";
+  }
+
+  return toNameFromEmail(normalizedEmail) || "User";
+}
+
 function getBridgeSecret() {
   const value = process.env.AUTH_BRIDGE_SECRET;
   if (!value) {
@@ -119,6 +150,7 @@ async function updateProfileDetails(params: {
 export async function ensureBridgeUser(identity: BridgeIdentityInput) {
   const admin = createAdminClient();
   const email = normalizeEmail(identity.email) ?? subjectToSyntheticEmail(identity.subject);
+  const resolvedFullName = resolveBridgeFullName(identity, email);
   const password = deriveBridgePassword(identity.subject);
 
   const { data: mapping, error: mappingError } = await admin
@@ -137,7 +169,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
       password,
       email_confirm: true,
       user_metadata: {
-        full_name: identity.fullName ?? undefined,
+        full_name: resolvedFullName,
         avatar_url: identity.avatarUrl ?? undefined,
         bridge_subject: identity.subject,
         bridge_provider: identity.provider,
@@ -154,7 +186,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
     await updateProfileDetails({
       userId: mapping.supabase_user_id,
       email,
-      fullName: identity.fullName,
+      fullName: resolvedFullName,
       avatarUrl: identity.avatarUrl,
     });
 
@@ -173,7 +205,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
       password,
       email_confirm: true,
       user_metadata: {
-        full_name: identity.fullName ?? undefined,
+        full_name: resolvedFullName,
         avatar_url: identity.avatarUrl ?? undefined,
         bridge_subject: identity.subject,
         bridge_provider: identity.provider,
@@ -191,7 +223,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
       email,
       email_confirm: true,
       user_metadata: {
-        full_name: identity.fullName ?? undefined,
+        full_name: resolvedFullName,
         avatar_url: identity.avatarUrl ?? undefined,
         bridge_subject: identity.subject,
         bridge_provider: identity.provider,
@@ -209,7 +241,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
   await updateProfileDetails({
     userId: supabaseUserId,
     email,
-    fullName: identity.fullName,
+    fullName: resolvedFullName,
     avatarUrl: identity.avatarUrl,
   });
 

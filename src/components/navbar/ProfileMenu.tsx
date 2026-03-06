@@ -16,6 +16,10 @@ function normalizeHandle(raw: string | null | undefined) {
     .replace(/[^a-z0-9._-]/g, "");
 }
 
+function isUsableHandle(handle: string) {
+  return handle.length >= 3;
+}
+
 function toDisplayNameFromEmail(email: string | null | undefined) {
   const localPart = String(email || "")
     .split("@")[0]
@@ -183,7 +187,7 @@ export function ProfileMenu() {
       }
 
       if (!active) return;
-      if (!handle) {
+      if (!isUsableHandle(handle)) {
         setProfileHref("/profile");
         return;
       }

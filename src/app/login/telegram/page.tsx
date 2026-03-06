@@ -8,7 +8,7 @@ function getBotUsername() {
   return (
     process.env.TELEGRAM_BOT_USERNAME ||
     process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
-    ""
+    "whatnotmarketauthbot"
   ).trim();
 }
 

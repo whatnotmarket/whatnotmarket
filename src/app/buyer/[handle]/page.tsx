@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ProfileClient } from "@/components/profile/ProfileClient";
 import { createClient } from "@/lib/supabase-server";
 
@@ -14,7 +14,7 @@ export default async function BuyerProfilePage({ params }: BuyerProfilePageProps
     .replace(/^@+/, "")
     .replace(/[^a-z0-9._-]/g, "");
   if (!normalizedHandle) {
-    notFound();
+    redirect("/profile");
   }
 
   const supabase = await createClient();
