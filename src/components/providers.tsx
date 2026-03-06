@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { CartProvider } from "@/contexts/CartContext";
 import { CryptoProvider } from "@/contexts/CryptoContext";
 import { UserProvider } from "@/contexts/UserContext";
+import { WalletProvider } from "@/contexts/WalletContext";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -14,14 +15,16 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
-        <CryptoProvider>
-          <CartProvider>
-            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
-              {children}
-              <Toaster position="top-center" richColors theme="dark" />
-            </ThemeProvider>
-          </CartProvider>
-        </CryptoProvider>
+        <WalletProvider>
+          <CryptoProvider>
+            <CartProvider>
+              <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+                {children}
+                <Toaster position="top-center" richColors theme="dark" />
+              </ThemeProvider>
+            </CartProvider>
+          </CryptoProvider>
+        </WalletProvider>
       </UserProvider>
     </QueryClientProvider>
   );

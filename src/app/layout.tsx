@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Whatnot Market",
-  description: "Private, invitation-only marketplace.",
+  description: "Secure buyer/seller marketplace.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

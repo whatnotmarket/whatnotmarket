@@ -33,8 +33,12 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Public route for authentication page.
-  const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
+  // Public routes for authentication pages.
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname === "/auth" ||
+    pathname.startsWith("/auth/");
 
   const supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -66,7 +70,7 @@ export async function proxy(request: NextRequest) {
   };
 
   if (!user && !isAuthRoute) {
-    const loginUrl = new URL("/auth", request.url);
+    const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return withSupabaseCookies(NextResponse.redirect(loginUrl));
   }

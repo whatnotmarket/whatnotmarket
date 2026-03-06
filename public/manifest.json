@@ -1,7 +1,7 @@
 {
   "name": "Whatnot Market",
   "short_name": "Whatnot",
-  "description": "Private, invitation-only marketplace.",
+  "description": "Secure buyer and seller marketplace.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

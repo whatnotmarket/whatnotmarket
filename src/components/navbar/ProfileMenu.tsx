@@ -113,17 +113,41 @@ export function ProfileMenu() {
     setIsSigningOut(true);
 
     try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { redirectTo?: string }
+        | null;
+      const auth0LogoutUrl = response.headers.get("x-auth0-logout-url");
+
+      if (auth0LogoutUrl) {
+        window.location.assign(auth0LogoutUrl);
+        return;
+      }
+
       await supabase.auth.signOut();
+
+      const redirectTo = payload?.redirectTo || "/login";
+      logout();
+      setIsOpen(false);
+      router.replace(redirectTo);
+      router.refresh();
+      setTimeout(() => {
+        window.location.href = redirectTo;
+      }, 0);
+      return;
     } catch (error) {
       console.error("Sign out failed:", error);
     }
 
     logout();
     setIsOpen(false);
-    router.replace("/auth");
+    router.replace("/login");
     router.refresh();
     setTimeout(() => {
-      window.location.href = "/auth";
+      window.location.href = "/login";
     }, 0);
   };
 

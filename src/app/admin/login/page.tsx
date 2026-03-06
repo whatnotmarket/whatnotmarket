@@ -22,11 +22,11 @@ export default function AdminLoginPage() {
       });
 
       if (res.ok) {
-        router.push("/admin/proxy-orders");
+        router.push("/admin/escrow");
       } else {
         setError("Invalid password");
       }
-    } catch (err) {
+    } catch {
       setError("Login failed");
     }
   };

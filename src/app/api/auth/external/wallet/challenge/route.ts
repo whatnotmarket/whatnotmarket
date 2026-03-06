@@ -1,0 +1,86 @@
+import { randomUUID } from "crypto";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { createWalletChallengeMessage } from "@/lib/auth/external-wallet";
+import { resolveInviteCode } from "@/lib/invite-codes";
+
+type Payload = {
+  address?: string;
+  chain?: string;
+  mode?: "signin" | "signup";
+  inviteCode?: string;
+  next?: string;
+};
+
+function normalizeNext(raw: string | undefined) {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) {
+    return "/market";
+  }
+  return raw;
+}
+
+export async function POST(request: NextRequest) {
+  const body = (await request.json().catch(() => ({}))) as Payload;
+  const address = String(body.address ?? "")
+    .trim()
+    .toLowerCase();
+  const chain = String(body.chain ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!address || !address.startsWith("0x") || address.length !== 42) {
+    return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
+  }
+
+  if (!chain) {
+    return NextResponse.json({ error: "Chain is required" }, { status: 400 });
+  }
+
+  const mode = body.mode === "signup" ? "signup" : "signin";
+  const inviteCode = body.inviteCode?.trim().toUpperCase() || null;
+  const nextPath = normalizeNext(body.next);
+  const desiredRole =
+    mode === "signup" ? resolveInviteCode(inviteCode).role : ("buyer" as const);
+
+  if (mode === "signup") {
+    const invite = resolveInviteCode(inviteCode);
+    if (!invite.isValid) {
+      return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
+    }
+  }
+
+  const nonce = randomUUID();
+  const message = createWalletChallengeMessage({
+    address,
+    chain,
+    nonce,
+  });
+
+  const response = NextResponse.json({
+    message,
+    nonce,
+  });
+
+  response.cookies.set(
+    "wm_wallet_auth_tx",
+    JSON.stringify({
+      nonce,
+      address,
+      chain,
+      mode,
+      desiredRole,
+      inviteCode,
+      nextPath,
+    }),
+    {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 10,
+    }
+  );
+
+  return response;
+}
+

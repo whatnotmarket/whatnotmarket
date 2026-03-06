@@ -9,7 +9,6 @@ export type UserRole = "guest" | "buyer" | "seller";
 // Define the context type
 type UserContextType = {
   role: UserRole;
-  login: (code: string) => boolean;
   logout: () => void;
 };
 
@@ -62,27 +61,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = (code: string): boolean => {
-    if (code === "BUY1") {
-      setRole("buyer");
-      localStorage.setItem("whatnot_user_role", "buyer");
-      return true;
-    }
-    if (code === "SELL1") {
-      setRole("seller");
-      localStorage.setItem("whatnot_user_role", "seller");
-      return true;
-    }
-    return false;
-  };
-
   const logout = () => {
     setRole("guest");
     localStorage.removeItem("whatnot_user_role");
   };
 
   return (
-    <UserContext.Provider value={{ role, login, logout }}>
+    <UserContext.Provider value={{ role, logout }}>
       {children}
     </UserContext.Provider>
   );

@@ -42,25 +42,135 @@ create policy "Users can update own profile."
   on profiles for update
   using ( auth.uid() = id );
 
--- INVITE CODES
-create type invite_status as enum ('active', 'used', 'revoked');
-
-create table public.invite_codes (
+-- SELLER INVITE CLAIMS (single-use seller codes)
+create table public.seller_invite_code_claims (
   code text primary key,
-  status invite_status default 'active',
-  created_by uuid references public.profiles(id),
-  used_by uuid references public.profiles(id),
-  expires_at timestamptz,
+  user_id uuid references public.profiles(id) not null,
+  email text not null,
+  claimed_at timestamptz default now()
+);
+
+alter table public.seller_invite_code_claims enable row level security;
+
+create policy "Admins can read seller invite claims"
+  on seller_invite_code_claims for select
+  using ( exists (select 1 from profiles where id = auth.uid() and is_admin = true) );
+
+-- AUTH BRIDGE IDENTITIES (Auth0/external -> Supabase auth user)
+create table public.auth_bridge_identities (
+  auth_subject text primary key,
+  provider text not null,
+  supabase_user_id uuid references auth.users(id) not null,
+  email text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.auth_bridge_identities enable row level security;
+create policy "Admins can read auth bridge identities"
+  on auth_bridge_identities for select
+  using ( exists (select 1 from profiles where id = auth.uid() and is_admin = true) );
+
+-- WALLETS (linked and verified ownership)
+create table public.wallets (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) not null,
+  address text not null,
+  chain text not null,
+  provider text not null,
+  verified_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id, address, chain)
+);
+
+alter table public.wallets enable row level security;
+create policy "Users can read own wallets"
+  on wallets for select
+  using (auth.uid() = user_id or exists (select 1 from profiles where id = auth.uid() and is_admin = true));
+create policy "Users can insert own wallets"
+  on wallets for insert
+  with check (auth.uid() = user_id);
+create policy "Users can update own wallets"
+  on wallets for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- LISTING PAYMENTS (escrow-first flow)
+create type listing_payment_status as enum ('pending', 'funded_to_escrow', 'awaiting_release', 'released', 'failed', 'cancelled');
+
+create table public.listing_payments (
+  id uuid default uuid_generate_v4() primary key,
+  listing_id text not null,
+  payer_user_id uuid references public.profiles(id) not null,
+  payee_user_id uuid references public.profiles(id),
+  payer_wallet_address text not null,
+  target_wallet_address text not null,
+  amount numeric not null,
+  currency text not null,
+  chain text not null,
+  status listing_payment_status default 'pending',
+  escrow_reference text not null unique,
+  tx_hash_in text,
+  tx_hash_out text,
+  idempotency_key text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(payer_user_id, idempotency_key)
+);
+
+alter table public.listing_payments enable row level security;
+create policy "Participants and admins can read listing payments"
+  on listing_payments for select
+  using (
+    auth.uid() = payer_user_id
+    or auth.uid() = payee_user_id
+    or exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+  );
+create policy "Payer can create listing payments"
+  on listing_payments for insert
+  with check (auth.uid() = payer_user_id);
+create policy "Payer can cancel own pending payments"
+  on listing_payments for update
+  using (auth.uid() = payer_user_id and status = 'pending')
+  with check (auth.uid() = payer_user_id);
+
+-- ESCROW ACTIONS (auditable trail)
+create table public.escrow_actions (
+  id uuid default uuid_generate_v4() primary key,
+  payment_id uuid references public.listing_payments(id) not null,
+  action_type text not null,
+  performed_by_user_id uuid references public.profiles(id),
+  notes text,
+  tx_hash text,
+  idempotency_key text,
   created_at timestamptz default now()
 );
 
-alter table public.invite_codes enable row level security;
+create unique index escrow_actions_payment_idempotency
+  on public.escrow_actions (payment_id, idempotency_key)
+  where idempotency_key is not null;
 
--- Only admins can see all invites or create them. 
--- For MVP, let's allow public read of *active* invites so we can validate them on the client without auth.
-create policy "Anyone can check if an invite is active"
-  on invite_codes for select
-  using ( status = 'active' );
+alter table public.escrow_actions enable row level security;
+create policy "Participants and admins can read escrow actions"
+  on escrow_actions for select
+  using (
+    exists (
+      select 1 from listing_payments lp
+      where lp.id = payment_id
+      and (
+        lp.payer_user_id = auth.uid()
+        or lp.payee_user_id = auth.uid()
+      )
+    )
+    or exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+  );
+create policy "Actors can insert escrow actions"
+  on escrow_actions for insert
+  with check (
+    auth.uid() = performed_by_user_id
+    or exists (select 1 from profiles where id = auth.uid() and is_admin = true)
+  );
 
 -- REQUESTS
 create type request_status as enum ('open', 'accepted', 'closed');

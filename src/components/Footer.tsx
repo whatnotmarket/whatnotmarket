@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/primitives/container";
 import { Squircle } from "@/components/ui/Squircle";
 import { 
@@ -16,6 +17,11 @@ import {
 import { CurrencyIcon } from "@/components/market/CurrencyIcon";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname === "/login" || pathname.startsWith("/login/") || pathname === "/auth" || pathname.startsWith("/auth/")) {
+    return null;
+  }
+
   return (
     <footer className="relative pt-16 pb-8 text-sm">
       <Squircle 

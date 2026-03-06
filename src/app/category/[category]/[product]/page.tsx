@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
-  ArrowLeft, 
   Search, 
   Share2, 
   Clock,
@@ -16,9 +15,9 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/primitives/container";
-import { Section } from "@/components/ui/primitives/section";
 import { Card } from "@/components/ui/primitives/card";
 import { Input } from "@/components/ui/primitives/input";
+import { ListingWalletPayment } from "@/components/listing/ListingWalletPayment";
 
 // Mock Offers Data
 const OFFERS = Array.from({ length: 8 }).map((_, i) => ({
@@ -33,7 +32,8 @@ const OFFERS = Array.from({ length: 8 }).map((_, i) => ({
   },
   deliveryTime: "Instant",
   stock: 1 + (i * 3) % 50, // Deterministic stock
-  badges: i % 3 === 0 ? ["Insurance"] : []
+  badges: i % 3 === 0 ? ["Insurance"] : [],
+  targetWalletAddress: `0x${(i + 1).toString(16).padStart(40, "0")}`,
 }));
 
 export default function ProductListingPage() {
@@ -174,31 +174,40 @@ export default function ProductListingPage() {
                                 )}
                             </div>
                         </div>
-
-                        <div className="mt-6 pt-4 border-t border-white/5 flex items-end justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="relative">
-                                    <div className="w-8 h-8 bg-zinc-800 rounded-full overflow-hidden border border-white/10">
-                                        {/* Avatar placeholder */}
-                                        <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600" />
+                        <div className="mt-6 space-y-4 border-t border-white/5 pt-4">
+                            <div className="flex items-end justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                        <div className="w-8 h-8 bg-zinc-800 rounded-full overflow-hidden border border-white/10">
+                                            {/* Avatar placeholder */}
+                                            <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600" />
+                                        </div>
+                                        {offer.seller.online && (
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#1C1C1E]" />
+                                        )}
                                     </div>
-                                    {offer.seller.online && (
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#1C1C1E]" />
-                                    )}
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold text-white flex items-center gap-1">
+                                            {offer.seller.name}
+                                            <span className="text-[10px] text-yellow-500">★ {offer.seller.rating}</span>
+                                        </span>
+                                        <span className="text-[10px] text-zinc-500">Level {offer.seller.level}</span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-white flex items-center gap-1">
-                                        {offer.seller.name}
-                                        <span className="text-[10px] text-yellow-500">★ {offer.seller.rating}</span>
-                                    </span>
-                                    <span className="text-[10px] text-zinc-500">Level {offer.seller.level}</span>
+
+                                <div className="text-right">
+                                    <div className="text-lg font-bold text-white">${offer.price}</div>
+                                    <div className="text-[10px] text-zinc-500">per unit</div>
                                 </div>
                             </div>
 
-                            <div className="text-right">
-                                <div className="text-lg font-bold text-white">${offer.price}</div>
-                                <div className="text-[10px] text-zinc-500">per unit</div>
-                            </div>
+                            <ListingWalletPayment
+                              listingId={`${categorySlug}/${productSlug}/${offer.id}`}
+                              amount={Number(offer.price)}
+                              currency="ETH"
+                              chain="eip155:1"
+                              targetWalletAddress={offer.targetWalletAddress}
+                            />
                         </div>
                     </Card>
                 </motion.div>
@@ -261,3 +270,4 @@ export default function ProductListingPage() {
     </div>
   );
 }
+

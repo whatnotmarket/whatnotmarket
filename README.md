@@ -1,21 +1,26 @@
 # Whatnot Market
 
-A private, invitation-only marketplace web app built with Next.js, Tailwind CSS, and Supabase.
+A buyer/seller marketplace web app built with Next.js, Tailwind CSS, and Supabase.
 
 ## Features
 
-- **Invite-Only Access**: Strict entry gate with invite code validation.
+- **Auth0-Centered Auth**: Email passwordless, Google, Apple, Wallet Connect, Telegram.
+- **Role by Invite Code**: Optional invite code assigns `buyer` or `seller` role.
 - **Request-Driven Marketplace**: Buyers post requests, sellers make offers.
 - **Deal Room**: Real-time chat and transaction timeline for accepted offers.
 - **Secure Payments (Escrow)**:
   - Multi-chain support (Ethereum, Polygon, Base, Bitcoin).
   - Mock payment adapter for demo purposes.
   - Buyer pays -> Funds held -> Seller fulfills -> Funds released.
+- **Listing Wallet Escrow**:
+  - Authenticated users can connect and verify wallet ownership.
+  - Listing payments go to platform escrow first.
+  - Admin manually releases escrow to target wallet with audit trail.
 - **Onboarding Wizard**:
   - Role selection (Buyer/Seller).
   - Payout wallet setup.
   - Telegram verification (Mocked).
-- **Admin Dashboard**: Generate invite codes, moderate content, resolve payment disputes.
+- **Admin Dashboard**: Moderate content and resolve payment disputes.
 - **Premium UI**: Dark mode first, fluid animations, glassmorphism effects.
 
 ## Tech Stack
@@ -25,7 +30,7 @@ A private, invitation-only marketplace web app built with Next.js, Tailwind CSS,
 - **Styling**: Tailwind CSS v4 + Framer Motion
 - **Icons**: Lucide React
 - **State**: TanStack Query
-- **Backend**: Supabase (Auth, Postgres, Realtime)
+- **Backend**: Auth0 + Supabase (Postgres, Realtime, bridge auth session)
 - **Forms**: React Hook Form + Zod
 
 ## Getting Started
@@ -51,7 +56,7 @@ A private, invitation-only marketplace web app built with Next.js, Tailwind CSS,
 
 5. **Access the app**:
    - Go to `http://localhost:3000`.
-   - Enter the demo invite code: **VIP2026**.
+   - Use `/login` for Auth0/email/social/external auth flows.
 
 ## Demo Workflows
 
