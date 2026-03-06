@@ -8,18 +8,6 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import { createClient } from "@/lib/supabase";
 
-function normalizeHandle(raw: string | null | undefined) {
-  return String(raw || "")
-    .trim()
-    .toLowerCase()
-    .replace(/^@+/, "")
-    .replace(/[^a-z0-9._-]/g, "");
-}
-
-function isUsableHandle(handle: string) {
-  return handle.length >= 3;
-}
-
 function toDisplayNameFromEmail(email: string | null | undefined) {
   const localPart = String(email || "")
     .split("@")[0]
@@ -151,32 +139,8 @@ export function ProfileMenu() {
       }
 
       const rolePreference = profile.role_preference === "seller" ? "seller" : "buyer";
-      let handle = normalizeHandle(profile.username);
 
-      if (!handle && !isWalletProvider) {
-        const seed = normalizeHandle((profile.email || user.email || "buyer").split("@")[0]) || "buyer";
-        const candidates = [seed, `${seed}${user.id.slice(0, 4)}`, `${seed}${Date.now().toString().slice(-4)}`];
-
-        for (const candidate of candidates) {
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({
-              username: candidate,
-              role_preference: profile.role_preference ?? "buyer",
-            })
-            .eq("id", user.id);
-
-          if (!updateError) {
-            handle = candidate;
-            break;
-          }
-
-          if (updateError.code !== "23505") {
-            console.error("Handle bootstrap error:", updateError);
-            break;
-          }
-        }
-      } else if (!profile.role_preference) {
+      if (!profile.role_preference) {
         const { error: roleUpdateError } = await supabase
           .from("profiles")
           .update({ role_preference: "buyer" })
@@ -187,12 +151,7 @@ export function ProfileMenu() {
       }
 
       if (!active) return;
-      if (!isUsableHandle(handle)) {
-        setProfileHref(`/profile?id=${user.id}`);
-        return;
-      }
-
-      setProfileHref(`/${rolePreference}/@${encodeURIComponent(handle)}`);
+      setProfileHref(`/profile?id=${user.id}&role=${rolePreference}`);
     }
 
     resolveProfileHref();
