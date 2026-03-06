@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { User, CreditCard, LogOut, Phone, Ticket, PlusCircle, MessageSquare } from "lucide-react";
 import { NavPopup } from "./NavPopup";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
+import { createClient } from "@/lib/supabase";
 
 const CustomUserIcon = ({ className }: { className?: string }) => (
     <svg 
@@ -21,12 +23,29 @@ const CustomUserIcon = ({ className }: { className?: string }) => (
 );
 
 export function ProfileMenu() {
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { role, logout } = useUser();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+
     logout();
     setIsOpen(false);
+    router.replace("/auth");
+    router.refresh();
+    setTimeout(() => {
+      window.location.href = "/auth";
+    }, 0);
   };
 
   return (
@@ -81,10 +100,11 @@ export function ProfileMenu() {
                 <div className="h-px bg-zinc-700/50 my-2 mx-3" />
                 <button 
                     onClick={handleLogout}
+                    disabled={isSigningOut}
                     className="w-full flex items-center gap-3 px-3 h-[50px] rounded-lg hover:bg-white/5 transition-colors group text-red-400 hover:text-red-300"
                 >
                     <LogOut className="h-5 w-5" />
-                    <span className="text-[15px] font-medium">Sign out</span>
+                    <span className="text-[15px] font-medium">{isSigningOut ? "Signing out..." : "Sign out"}</span>
                 </button>
             </div>
         </div>
