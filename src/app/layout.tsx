@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   },
 };
 
+import { Analytics } from "@vercel/analytics/react";
 import { Footer } from "@/components/Footer";
 
 export default function RootLayout({
@@ -55,6 +56,7 @@ export default function RootLayout({
             <Footer />
           </div>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
