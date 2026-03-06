@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Navbar } from "@/components/Navbar";
-import { Squircle } from "@/components/ui/Squircle";
-import { useUser } from "@/contexts/UserContext";
-import { 
-  ShieldCheck, 
-  MapPin, 
-  Calendar, 
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+  ShieldCheck,
+  MapPin,
+  Calendar,
   TrendingUp,
   Clock,
   Package,
@@ -15,50 +15,19 @@ import {
   Camera,
   X,
   Save,
-  Move
+  Move,
 } from "lucide-react";
-import Image from "next/image";
-import { Button } from "@/components/ui/Button";
-import { motion } from "framer-motion";
+import { Navbar } from "@/components/Navbar";
+import { Squircle } from "@/components/ui/Squircle";
+import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase";
 
-// Mock Data
-const MOCK_PROFILE = {
-  name: "CryptoKing_99",
-  handle: "@cryptoking",
-  avatar: "https://ui-avatars.com/api/?name=Crypto+King&background=10b981&color=fff",
-  banner: "/framehero.svg", 
-  level: 42,
-  memberSince: "Nov 2023",
-  followers: 1240,
-  following: 85,
-  description: "Professional seller of premium accounts and development services. Fast delivery, 24/7 support, and 100% warranty on all products. DM for custom orders.",
-  location: "Online",
-  languages: ["English", "Spanish"],
-  isOnline: true,
-  // Seller Stats
-  successfulDeliveries: 4582,
-  sellerRanking: "Top Rated Seller",
-  sellerProtection: "100% Covered",
-  avgResponseTime: "5 mins",
-  // Buyer Stats
-  buyerRanking: "Diamond Buyer",
-  buyerProtection: "Escrow Protected",
-  totalPurchases: 156
-};
-
-// Mock Listings
 const MOCK_LISTINGS = [
-  { id: 1, title: "Netflix 4K UHD Lifetime", price: 15.00, image: "🍿", sold: 120 },
-  { id: 2, title: "Spotify Premium Upgrade", price: 8.50, image: "🎵", sold: 450 },
-  { id: 3, title: "NordVPN 2 Year Account", price: 12.00, image: "🔒", sold: 85 },
-];
-
-const MOCK_REQUESTS = [
-  { id: 1, title: "Looking for aged Twitter accounts", budget: "$50-100", image: "🐦" },
-  { id: 2, title: "Need custom Telegram bot dev", budget: "$200-500", image: "🤖" },
+  { id: 1, title: "Netflix 4K UHD Lifetime", price: 15.0, image: "NFX", sold: 120 },
+  { id: 2, title: "Spotify Premium Upgrade", price: 8.5, image: "SPF", sold: 450 },
+  { id: 3, title: "NordVPN 2 Year Account", price: 12.0, image: "VPN", sold: 85 },
 ];
 
 type EditableImageType = "avatar" | "banner";
@@ -68,36 +37,139 @@ type StoredProfile = {
   username: string | null;
   avatar_url: string | null;
   banner_url: string | null;
+  bio: string | null;
+  created_at: string | null;
 };
+
+type ProfileState = {
+  name: string;
+  handle: string;
+  avatar: string;
+  banner: string;
+  level: number;
+  memberSince: string;
+  followers: number;
+  following: number;
+  description: string;
+  location: string;
+  isOnline: boolean;
+  successfulDeliveries: number;
+  sellerRanking: string;
+  sellerProtection: string;
+  avgResponseTime: string;
+  buyerRanking: string;
+  buyerProtection: string;
+  totalPurchases: number;
+  bannerPosition: number;
+};
+
+type PurchaseItem = {
+  id: string;
+  title: string;
+  price: number;
+  purchasedAt: string;
+};
+
+type DealSummaryRow = {
+  id: string;
+  request_id: string;
+  offer_id: string;
+  created_at: string;
+};
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function normalizeHandle(raw: string) {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
+function toDisplayHandle(raw: string | null | undefined) {
+  const clean = normalizeHandle(raw || "");
+  return clean ? `@${clean}` : "@set-handle";
+}
+
+function formatMemberSince(createdAt: string | null | undefined) {
+  if (!createdAt) return "Just joined";
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "Just joined";
+  return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(date);
+}
+
+function getBuyerRanking(totalPurchases: number) {
+  if (totalPurchases >= 20) return "Elite Buyer";
+  if (totalPurchases >= 5) return "Trusted Buyer";
+  if (totalPurchases >= 1) return "Active Buyer";
+  return "Rookie Buyer";
+}
+
+function getSellerRanking(totalSales: number) {
+  if (totalSales >= 20) return "Elite Seller";
+  if (totalSales >= 5) return "Trusted Seller";
+  if (totalSales >= 1) return "Active Seller";
+  return "Rookie Seller";
+}
 
 function getRoleDefaults(isSeller: boolean) {
   return {
-    name: isSeller ? "CryptoKing_99" : "SilentBuyer_01",
-    handle: isSeller ? "@cryptoking" : "@silentbuyer",
+    name: isSeller ? "Seller" : "Buyer",
+    handle: "@set-handle",
     avatar: isSeller
-      ? "https://ui-avatars.com/api/?name=Crypto+King&background=10b981&color=fff"
-      : "https://ui-avatars.com/api/?name=Silent+Buyer&background=3b82f6&color=fff",
+      ? "https://ui-avatars.com/api/?name=Seller&background=10b981&color=fff"
+      : "https://ui-avatars.com/api/?name=Buyer&background=3b82f6&color=fff",
     banner: "/framehero.svg",
+  };
+}
+
+function getBaseProfile(isSeller: boolean): ProfileState {
+  const defaults = getRoleDefaults(isSeller);
+  return {
+    ...defaults,
+    level: 1,
+    memberSince: "Just joined",
+    followers: 0,
+    following: 0,
+    description: "",
+    location: "Online",
+    isOnline: true,
+    successfulDeliveries: 0,
+    sellerRanking: "Rookie Seller",
+    sellerProtection: "Base Coverage",
+    avgResponseTime: "-",
+    buyerRanking: "Rookie Buyer",
+    buyerProtection: "Base Protection",
+    totalPurchases: 0,
+    bannerPosition: 50,
   };
 }
 
 export default function ProfilePage() {
   const supabase = useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
   const { role } = useUser();
   const isSeller = role === "seller";
-  const [isFollowing, setIsFollowing] = useState(false);
+  const targetProfileId = searchParams.get("id");
+  const validTargetProfileId = targetProfileId && isUuid(targetProfileId) ? targetProfileId : null;
+
   const [activeTab, setActiveTab] = useState<"listings" | "reviews">("listings");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
-  // Editing State
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
+    handle: "",
     avatar: "",
     banner: "",
     description: "",
-    bannerPosition: 50, // 0-100% Y position
-    avatarPosition: 50  // 0-100% X/Y (simplified to just one axis for now or could be complex)
+    bannerPosition: 50,
   });
   const [pendingImages, setPendingImages] = useState<Record<EditableImageType, File | null>>({
     avatar: null,
@@ -108,13 +180,9 @@ export default function ProfilePage() {
   const bannerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const startPos = useRef(0);
-  
-  // Use mock data but adapt based on role
-  const [profile, setProfile] = useState({
-    ...MOCK_PROFILE,
-    ...getRoleDefaults(isSeller),
-    bannerPosition: 50
-  });
+
+  const [profile, setProfile] = useState<ProfileState>(() => getBaseProfile(isSeller));
+  const isOwnProfile = !!currentUserId && (!validTargetProfileId || currentUserId === validTargetProfileId);
 
   useEffect(() => {
     let active = true;
@@ -127,39 +195,135 @@ export default function ProfilePage() {
 
       if (!active) return;
 
-      setCurrentUserId(user?.id || null);
+      const viewerId = user?.id || null;
+      setCurrentUserId(viewerId);
 
-      if (!user) {
-        setProfile((prev) => ({
-          ...prev,
-          ...defaults,
+      const targetId = validTargetProfileId || viewerId;
+      if (!targetId) {
+        setProfile(getBaseProfile(isSeller));
+        setPurchaseItems([]);
+        setIsFollowing(false);
+        return;
+      }
+
+      const [
+        profileRes,
+        followersRes,
+        followingRes,
+        purchasesCountRes,
+        salesCountRes,
+        purchaseDealsRes,
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name,username,avatar_url,banner_url,bio,created_at")
+          .eq("id", targetId)
+          .maybeSingle(),
+        supabase
+          .from("profile_follows")
+          .select("following_id", { count: "exact", head: true })
+          .eq("following_id", targetId),
+        supabase
+          .from("profile_follows")
+          .select("follower_id", { count: "exact", head: true })
+          .eq("follower_id", targetId),
+        supabase
+          .from("deals")
+          .select("id", { count: "exact", head: true })
+          .eq("buyer_id", targetId)
+          .eq("status", "completed"),
+        supabase
+          .from("deals")
+          .select("id", { count: "exact", head: true })
+          .eq("seller_id", targetId)
+          .eq("status", "completed"),
+        supabase
+          .from("deals")
+          .select("id,request_id,offer_id,created_at")
+          .eq("buyer_id", targetId)
+          .eq("status", "completed")
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
+
+      if (!active) return;
+
+      if (profileRes.error) {
+        console.error("Load profile error:", profileRes.error);
+      }
+
+      const dbProfile = (profileRes.data || null) as StoredProfile | null;
+      const followers = followersRes.count || 0;
+      const following = followingRes.count || 0;
+      const totalPurchases = purchasesCountRes.count || 0;
+      const successfulDeliveries = salesCountRes.count || 0;
+
+      const rawDeals = (purchaseDealsRes.data || []) as DealSummaryRow[];
+      let purchases: PurchaseItem[] = [];
+
+      if (rawDeals.length > 0) {
+        const requestIds = [...new Set(rawDeals.map((row) => row.request_id))];
+        const offerIds = [...new Set(rawDeals.map((row) => row.offer_id))];
+
+        const [requestsRes, offersRes] = await Promise.all([
+          supabase.from("requests").select("id,title").in("id", requestIds),
+          supabase.from("offers").select("id,price").in("id", offerIds),
+        ]);
+
+        const requestMap = new Map<string, string>();
+        const offerMap = new Map<string, number>();
+
+        (requestsRes.data || []).forEach((row) => {
+          requestMap.set(row.id, row.title);
+        });
+
+        (offersRes.data || []).forEach((row) => {
+          offerMap.set(row.id, Number(row.price || 0));
+        });
+
+        purchases = rawDeals.map((row) => ({
+          id: row.id,
+          title: requestMap.get(row.request_id) || "Purchase",
+          price: offerMap.get(row.offer_id) || 0,
+          purchasedAt: row.created_at,
         }));
-        return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name,username,avatar_url,banner_url")
-        .eq("id", user.id)
-        .maybeSingle();
+      const totalActivity = totalPurchases + successfulDeliveries;
 
-      if (error) {
-        console.error("Load profile error:", error);
-        return;
-      }
-
-      const dbProfile = (data || null) as StoredProfile | null;
-      const handle = dbProfile?.username
-        ? `@${dbProfile.username.replace(/^@/, "")}`
-        : defaults.handle;
-
-      setProfile((prev) => ({
-        ...prev,
+      setProfile({
+        ...getBaseProfile(isSeller),
         name: dbProfile?.full_name || defaults.name,
-        handle,
+        handle: toDisplayHandle(dbProfile?.username),
         avatar: dbProfile?.avatar_url || defaults.avatar,
         banner: dbProfile?.banner_url || defaults.banner,
-      }));
+        description: dbProfile?.bio || "",
+        memberSince: formatMemberSince(dbProfile?.created_at),
+        followers,
+        following,
+        totalPurchases,
+        successfulDeliveries,
+        buyerRanking: getBuyerRanking(totalPurchases),
+        sellerRanking: getSellerRanking(successfulDeliveries),
+        level: Math.max(1, Math.floor(totalActivity / 5) + 1),
+      });
+
+      setPurchaseItems(purchases);
+
+      if (viewerId && viewerId !== targetId) {
+        const { data: followRow, error: followError } = await supabase
+          .from("profile_follows")
+          .select("follower_id")
+          .eq("follower_id", viewerId)
+          .eq("following_id", targetId)
+          .maybeSingle();
+
+        if (!followError) {
+          setIsFollowing(!!followRow);
+        }
+      } else {
+        setIsFollowing(false);
+      }
     }
 
     loadProfile();
@@ -167,15 +331,16 @@ export default function ProfilePage() {
     return () => {
       active = false;
     };
-  }, [isSeller, supabase]);
+  }, [isSeller, supabase, validTargetProfileId]);
 
   const handleEditClick = () => {
+    if (!isOwnProfile) return;
     setEditForm({
+      handle: profile.handle,
       avatar: profile.avatar,
       banner: profile.banner,
       description: profile.description,
       bannerPosition: profile.bannerPosition,
-      avatarPosition: 50
     });
     setIsEditing(true);
   };
@@ -201,18 +366,22 @@ export default function ProfilePage() {
       .from(bucket)
       .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
-    if (uploadError) {
-      throw uploadError;
-    }
+    if (uploadError) throw uploadError;
 
     return supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
   };
 
   const handleSave = async () => {
     if (isSaving) return;
+    if (!isOwnProfile) return;
+    if (!currentUserId) {
+      toast.error("Sign in to save profile.");
+      return;
+    }
 
-    if ((pendingImages.avatar || pendingImages.banner) && !currentUserId) {
-      toast.error("Sign in to save avatar and banner permanently.");
+    const normalizedHandle = normalizeHandle(editForm.handle);
+    if (normalizedHandle.length < 3) {
+      toast.error("Handle must be at least 3 characters.");
       return;
     }
 
@@ -230,35 +399,83 @@ export default function ProfilePage() {
         nextBanner = await uploadProfileImage(pendingImages.banner, "banner");
       }
 
-      if (currentUserId) {
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({
-            avatar_url: nextAvatar,
-            banner_url: nextBanner,
-          })
-          .eq("id", currentUserId);
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          username: normalizedHandle,
+          bio: editForm.description,
+          avatar_url: nextAvatar,
+          banner_url: nextBanner,
+        })
+        .eq("id", currentUserId);
 
-        if (updateError) {
-          throw updateError;
+      if (updateError) {
+        if (updateError.code === "23505") {
+          toast.error("Handle already used. Choose another one.");
+          return;
         }
+        throw updateError;
       }
 
       setProfile((prev) => ({
         ...prev,
+        handle: `@${normalizedHandle}`,
         avatar: nextAvatar,
         banner: nextBanner,
         description: editForm.description,
-        bannerPosition: editForm.bannerPosition
+        bannerPosition: editForm.bannerPosition,
       }));
+
       setPendingImages({ avatar: null, banner: null });
       setIsEditing(false);
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully.");
     } catch (error) {
       console.error("Save profile error:", error);
-      toast.error("Failed to save profile changes.");
+      toast.error("Failed to save profile.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    if (!currentUserId) {
+      toast.error("Sign in to follow users.");
+      return;
+    }
+
+    const targetId = validTargetProfileId;
+    if (!targetId || currentUserId === targetId || isFollowLoading) return;
+
+    setIsFollowLoading(true);
+
+    try {
+      if (isFollowing) {
+        const { error } = await supabase
+          .from("profile_follows")
+          .delete()
+          .eq("follower_id", currentUserId)
+          .eq("following_id", targetId);
+
+        if (error) throw error;
+
+        setIsFollowing(false);
+        setProfile((prev) => ({ ...prev, followers: Math.max(0, prev.followers - 1) }));
+      } else {
+        const { error } = await supabase.from("profile_follows").insert({
+          follower_id: currentUserId,
+          following_id: targetId,
+        });
+
+        if (error) throw error;
+
+        setIsFollowing(true);
+        setProfile((prev) => ({ ...prev, followers: prev.followers + 1 }));
+      }
+    } catch (error) {
+      console.error("Follow toggle error:", error);
+      toast.error("Failed to update follow status.");
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -270,16 +487,15 @@ export default function ProfilePage() {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setEditForm(prev => ({
+      setEditForm((prev) => ({
         ...prev,
-        [type]: reader.result as string
+        [type]: reader.result as string,
       }));
-      toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} updated!`);
+      toast.success(`${type === "avatar" ? "Avatar" : "Banner"} updated.`);
     };
     reader.readAsDataURL(file);
   };
 
-  // Banner Dragging Logic
   const handleBannerMouseDown = (e: React.MouseEvent) => {
     if (!isEditing) return;
     setIsDraggingBanner(true);
@@ -290,30 +506,22 @@ export default function ProfilePage() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingBanner) return;
-      
       const deltaY = e.clientY - startY.current;
-      // Convert pixels to percentage based on container height (approx 320px)
-      // Sensitivity factor 0.2 to make it smoother
-      const deltaPercent = (deltaY / 320) * 100 * -1; 
-      
-      let newPos = startPos.current + deltaPercent;
-      newPos = Math.max(0, Math.min(100, newPos)); // Clamp between 0-100%
-
-      setEditForm(prev => ({ ...prev, bannerPosition: newPos }));
+      const deltaPercent = (deltaY / 320) * 100 * -1;
+      const newPos = Math.max(0, Math.min(100, startPos.current + deltaPercent));
+      setEditForm((prev) => ({ ...prev, bannerPosition: newPos }));
     };
 
-    const handleMouseUp = () => {
-      setIsDraggingBanner(false);
-    };
+    const handleMouseUp = () => setIsDraggingBanner(false);
 
     if (isDraggingBanner) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDraggingBanner]);
 
@@ -321,8 +529,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-black text-white font-sans selection:bg-zinc-800 selection:text-white pb-20">
       <Navbar />
 
-      {/* Banner */}
-      <div 
+      <div
         ref={bannerRef}
         className={cn(
           "relative h-64 md:h-80 w-full overflow-hidden group select-none",
@@ -332,31 +539,23 @@ export default function ProfilePage() {
       >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 z-10 pointer-events-none" />
         <Image
-          src={isEditing ? (editForm.banner || profile.banner) : profile.banner}
+          src={isEditing ? editForm.banner || profile.banner : profile.banner}
           alt="Banner"
           fill
           className="object-cover opacity-60 transition-all duration-75 ease-out"
-          style={{ 
-            objectPosition: `center ${isEditing ? editForm.bannerPosition : profile.bannerPosition}%` 
-          }}
+          style={{ objectPosition: `center ${isEditing ? editForm.bannerPosition : profile.bannerPosition}%` }}
           priority
           draggable={false}
         />
-        
-        {/* Edit Banner Controls */}
+
         {isEditing && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
             <div className="flex flex-col items-center gap-3 w-full max-w-md px-4 pointer-events-auto">
               <div className="flex items-center gap-2">
-                 <label className="cursor-pointer text-sm font-bold text-white flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-md border border-white/10 shadow-lg">
-                  <Camera className="w-4 h-4" /> 
+                <label className="cursor-pointer text-sm font-bold text-white flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-md border border-white/10 shadow-lg">
+                  <Camera className="w-4 h-4" />
                   Change
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, 'banner')}
-                  />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "banner")} />
                 </label>
                 <div className="px-4 py-2 bg-black/50 text-white text-xs font-bold rounded-full border border-white/10 backdrop-blur-md flex items-center gap-2">
                   <Move className="w-3 h-3" /> Drag to reposition
@@ -369,36 +568,32 @@ export default function ProfilePage() {
 
       <main className="container mx-auto px-4 sm:px-6 relative z-20 -mt-24">
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
-          
-          {/* Left Column: Profile Card */}
           <div className="space-y-6">
-            <Squircle 
-              radius={32} 
-              smoothing={1} 
+            <Squircle
+              radius={32}
+              smoothing={1}
               className="w-full drop-shadow-2xl"
               innerClassName="bg-[#1C1C1E] border border-white/10 overflow-hidden p-6"
             >
               <div className="flex flex-col items-center text-center relative">
-                
-                {/* Edit Button (Top Right of Card) */}
-                {!isEditing ? (
-                  <button 
+                {!isEditing && isOwnProfile ? (
+                  <button
                     onClick={handleEditClick}
                     className="absolute top-0 right-0 p-2 text-zinc-500 hover:text-white transition-colors"
                     title="Edit Profile"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
-                ) : (
+                ) : isEditing && isOwnProfile ? (
                   <div className="absolute top-0 right-0 flex gap-2">
-                    <button 
+                    <button
                       onClick={handleCancelEdit}
                       className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
                       title="Cancel"
                     >
                       <X className="w-4 h-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={handleSave}
                       disabled={isSaving}
                       className="p-2 text-emerald-500 hover:text-emerald-400 transition-colors"
@@ -407,29 +602,22 @@ export default function ProfilePage() {
                       <Save className="w-4 h-4" />
                     </button>
                   </div>
-                )}
+                ) : null}
 
-                {/* Avatar */}
                 <div className="relative mb-4 group">
                   <div className="w-32 h-32 rounded-full border-4 border-[#1C1C1E] overflow-hidden relative z-10 bg-zinc-800">
                     <Image
-                      src={isEditing ? (editForm.avatar || profile.avatar) : profile.avatar}
+                      src={isEditing ? editForm.avatar || profile.avatar : profile.avatar}
                       alt={profile.name}
                       fill
                       className="object-cover"
                     />
-                    
-                    {/* Edit Avatar Overlay */}
+
                     {isEditing && (
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors z-20">
                         <label className="cursor-pointer w-full h-full flex items-center justify-center">
                           <Camera className="w-8 h-8 text-white/80" />
-                          <input 
-                            type="file" 
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, 'avatar')}
-                          />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "avatar")} />
                         </label>
                       </div>
                     )}
@@ -438,8 +626,7 @@ export default function ProfilePage() {
                   {!isEditing && profile.isOnline && (
                     <div className="absolute bottom-2 right-2 w-6 h-6 bg-emerald-500 border-4 border-[#1C1C1E] rounded-full z-20" title="Online" />
                   )}
-                  
-                  {/* Level Badge */}
+
                   {!isEditing && (
                     <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-xs font-bold px-2 py-1 rounded-full border-2 border-[#1C1C1E] z-20 shadow-lg">
                       Lvl {profile.level}
@@ -451,38 +638,50 @@ export default function ProfilePage() {
                   {profile.name}
                   {isSeller && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
                 </h1>
-                <p className="text-zinc-500 text-sm mb-6">{profile.handle}</p>
 
-                {/* Main Stats Grid */}
+                {isEditing ? (
+                  <div className="mb-6 w-full max-w-xs">
+                    <label className="text-xs uppercase text-zinc-500 tracking-wider">Handle</label>
+                    <input
+                      value={editForm.handle}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                      placeholder="@yourhandle"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-zinc-500 text-sm mb-6">{profile.handle}</p>
+                )}
+
                 <div className="grid grid-cols-2 gap-3 w-full mb-6">
-                   <div className="bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
-                      <span className="text-lg font-bold text-white">{profile.followers}</span>
-                      <span className="text-xs text-zinc-500">Followers</span>
-                   </div>
-                   <div className="bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
-                      <span className="text-lg font-bold text-white">{profile.following}</span>
-                      <span className="text-xs text-zinc-500">Following</span>
-                   </div>
+                  <div className="bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
+                    <span className="text-lg font-bold text-white">{profile.followers}</span>
+                    <span className="text-xs text-zinc-500">Followers</span>
+                  </div>
+                  <div className="bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
+                    <span className="text-lg font-bold text-white">{profile.following}</span>
+                    <span className="text-xs text-zinc-500">Following</span>
+                  </div>
                 </div>
 
-                {/* Follow Button (Only show if not editing) */}
-                {!isEditing && (
-                  <Button 
+                {!isEditing && validTargetProfileId && !isOwnProfile && (
+                  <button
+                    onClick={handleFollowToggle}
+                    disabled={isFollowLoading}
                     className={cn(
                       "w-full h-10 rounded-xl font-bold mb-6 transition-all",
-                      isFollowing 
-                        ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white" 
-                        : "bg-white text-black hover:bg-zinc-200"
+                      isFollowing
+                        ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        : "bg-white text-black hover:bg-zinc-200",
+                      isFollowLoading && "opacity-70 cursor-not-allowed"
                     )}
-                    onClick={() => setIsFollowing(!isFollowing)}
                   >
-                    {isFollowing ? "Following" : "Follow"}
-                  </Button>
+                    {isFollowLoading ? "Updating..." : isFollowing ? "Following" : "Follow"}
+                  </button>
                 )}
 
                 <div className="w-full h-px bg-white/5 mb-6" />
 
-                {/* Details List */}
                 <div className="w-full space-y-4 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-500 flex items-center gap-2">
@@ -490,7 +689,7 @@ export default function ProfilePage() {
                     </span>
                     <span className="text-zinc-300 font-medium">{profile.memberSince}</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-500 flex items-center gap-2">
                       <MapPin className="w-4 h-4" /> Location
@@ -517,48 +716,53 @@ export default function ProfilePage() {
 
                   {!isSeller && (
                     <div className="flex items-center justify-between">
-                        <span className="text-zinc-500 flex items-center gap-2">
-                          <Package className="w-4 h-4" /> Purchases
-                        </span>
-                        <span className="text-zinc-300 font-bold">{profile.totalPurchases}</span>
+                      <span className="text-zinc-500 flex items-center gap-2">
+                        <Package className="w-4 h-4" /> Purchases
+                      </span>
+                      <span className="text-zinc-300 font-bold">{profile.totalPurchases}</span>
                     </div>
                   )}
                 </div>
               </div>
             </Squircle>
 
-            {/* Badges Card */}
-            <Squircle 
-              radius={24} 
-              smoothing={1} 
+            <Squircle
+              radius={24}
+              smoothing={1}
               className="w-full"
               innerClassName="bg-[#1C1C1E] border border-white/10 p-5"
             >
               <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4">
                 {isSeller ? "Seller Status" : "Buyer Status"}
               </h3>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br", isSeller ? "from-emerald-500/20 to-teal-500/20 text-emerald-400" : "from-blue-500/20 to-indigo-500/20 text-blue-400")}>
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br",
+                      isSeller ? "from-emerald-500/20 to-teal-500/20 text-emerald-400" : "from-blue-500/20 to-indigo-500/20 text-blue-400"
+                    )}
+                  >
                     <TrendingUp className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">
-                      {isSeller ? profile.sellerRanking : profile.buyerRanking}
-                    </div>
+                    <div className="text-sm font-bold text-white">{isSeller ? profile.sellerRanking : profile.buyerRanking}</div>
                     <div className="text-xs text-zinc-500">Ranking</div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br", isSeller ? "from-amber-500/20 to-yellow-500/20 text-amber-400" : "from-purple-500/20 to-pink-500/20 text-purple-400")}>
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br",
+                      isSeller ? "from-amber-500/20 to-yellow-500/20 text-amber-400" : "from-purple-500/20 to-pink-500/20 text-purple-400"
+                    )}
+                  >
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">
-                      {isSeller ? profile.sellerProtection : profile.buyerProtection}
-                    </div>
+                    <div className="text-sm font-bold text-white">{isSeller ? profile.sellerProtection : profile.buyerProtection}</div>
                     <div className="text-xs text-zinc-500">Protection Level</div>
                   </div>
                 </div>
@@ -566,101 +770,107 @@ export default function ProfilePage() {
             </Squircle>
           </div>
 
-          {/* Right Column: Content */}
           <div className="space-y-8">
-            
-            {/* About Section */}
             <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                 <h2 className="text-xl font-bold text-white">About</h2>
-                 {isEditing && <span className="text-xs text-emerald-400 font-medium animate-pulse">Editing mode active</span>}
-               </div>
-               
-               {isEditing ? (
-                 <div className="bg-[#1C1C1E] p-6 rounded-3xl border border-emerald-500/30 ring-1 ring-emerald-500/20">
-                   <textarea 
-                      value={editForm.description}
-                      onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                      className="w-full min-h-[120px] bg-transparent border-none text-white placeholder:text-zinc-500 focus:ring-0 resize-none text-sm md:text-base leading-relaxed"
-                      placeholder="Write something about yourself..."
-                   />
-                 </div>
-               ) : (
-                 <p className="text-zinc-400 leading-relaxed text-sm md:text-base bg-[#1C1C1E] p-6 rounded-3xl border border-white/5 whitespace-pre-wrap">
-                   {profile.description}
-                 </p>
-               )}
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">About</h2>
+                {isEditing && <span className="text-xs text-emerald-400 font-medium animate-pulse">Editing mode active</span>}
+              </div>
+
+              {isEditing ? (
+                <div className="bg-[#1C1C1E] p-6 rounded-3xl border border-emerald-500/30 ring-1 ring-emerald-500/20">
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                    className="w-full min-h-[120px] bg-transparent border-none text-white placeholder:text-zinc-500 focus:ring-0 resize-none text-sm md:text-base leading-relaxed"
+                    placeholder="Write your bio..."
+                  />
+                </div>
+              ) : (
+                <p className="text-zinc-400 leading-relaxed text-sm md:text-base bg-[#1C1C1E] p-6 rounded-3xl border border-white/5 whitespace-pre-wrap">
+                  {profile.description || "No bio yet."}
+                </p>
+              )}
             </div>
 
-            {/* Content Tabs */}
             <div className="space-y-6">
               <div className="flex items-center gap-6 border-b border-white/10 pb-1">
-                <button 
+                <button
                   onClick={() => setActiveTab("listings")}
-                  className={cn("text-sm font-bold pb-3 border-b-2 transition-colors", activeTab === "listings" ? "text-white border-white" : "text-zinc-500 border-transparent hover:text-zinc-300")}
+                  className={cn(
+                    "text-sm font-bold pb-3 border-b-2 transition-colors",
+                    activeTab === "listings" ? "text-white border-white" : "text-zinc-500 border-transparent hover:text-zinc-300"
+                  )}
                 >
                   {isSeller ? "My Offers" : "What I Buy"}
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab("reviews")}
-                  className={cn("text-sm font-bold pb-3 border-b-2 transition-colors", activeTab === "reviews" ? "text-white border-white" : "text-zinc-500 border-transparent hover:text-zinc-300")}
+                  className={cn(
+                    "text-sm font-bold pb-3 border-b-2 transition-colors",
+                    activeTab === "reviews" ? "text-white border-white" : "text-zinc-500 border-transparent hover:text-zinc-300"
+                  )}
                 >
-                  Reviews <span className="text-xs bg-zinc-800 px-1.5 py-0.5 rounded ml-1 text-zinc-400">128</span>
+                  Reviews <span className="text-xs bg-zinc-800 px-1.5 py-0.5 rounded ml-1 text-zinc-400">0</span>
                 </button>
               </div>
 
-              {/* Tab Content */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activeTab === "listings" && isSeller && MOCK_LISTINGS.map(item => (
-                   <motion.div 
-                    key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="group relative bg-[#1C1C1E] hover:bg-[#252527] border border-white/5 rounded-2xl p-4 transition-all cursor-pointer"
-                   >
-                     <div className="flex items-start gap-4">
-                       <div className="w-16 h-16 bg-[#2C2C2E] rounded-xl flex items-center justify-center text-3xl">
-                         {item.image}
-                       </div>
-                       <div>
-                         <h3 className="text-white font-bold text-sm mb-1 group-hover:text-emerald-400 transition-colors">{item.title}</h3>
-                         <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
-                           <span>{item.sold} sold</span>
-                           <span>•</span>
-                           <span className="text-emerald-400 font-medium">Instant Delivery</span>
-                         </div>
-                         <div className="text-white font-bold">${item.price.toFixed(2)}</div>
-                       </div>
-                     </div>
-                   </motion.div>
-                ))}
+                {activeTab === "listings" &&
+                  isSeller &&
+                  MOCK_LISTINGS.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="group relative bg-[#1C1C1E] hover:bg-[#252527] border border-white/5 rounded-2xl p-4 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-16 h-16 bg-[#2C2C2E] rounded-xl flex items-center justify-center text-base font-bold">{item.image}</div>
+                        <div>
+                          <h3 className="text-white font-bold text-sm mb-1 group-hover:text-emerald-400 transition-colors">{item.title}</h3>
+                          <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
+                            <span>{item.sold} sold</span>
+                            <span>-</span>
+                            <span className="text-emerald-400 font-medium">Instant Delivery</span>
+                          </div>
+                          <div className="text-white font-bold">${item.price.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
 
-                {activeTab === "listings" && !isSeller && MOCK_REQUESTS.map(item => (
-                   <motion.div 
-                    key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="group relative bg-[#1C1C1E] hover:bg-[#252527] border border-white/5 rounded-2xl p-4 transition-all cursor-pointer"
-                   >
-                     <div className="flex items-start gap-4">
-                       <div className="w-16 h-16 bg-[#2C2C2E] rounded-xl flex items-center justify-center text-3xl">
-                         {item.image}
-                       </div>
-                       <div>
-                         <h3 className="text-white font-bold text-sm mb-1 group-hover:text-blue-400 transition-colors">{item.title}</h3>
-                         <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
-                           <span className="bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">Request</span>
-                         </div>
-                         <div className="text-white font-bold">Budget: {item.budget}</div>
-                       </div>
-                     </div>
-                   </motion.div>
-                ))}
+                {activeTab === "listings" &&
+                  !isSeller &&
+                  purchaseItems.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="group relative bg-[#1C1C1E] hover:bg-[#252527] border border-white/5 rounded-2xl p-4 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-white font-bold text-sm mb-1">{item.title}</h3>
+                          <div className="text-xs text-zinc-500">Purchased {new Date(item.purchasedAt).toLocaleDateString()}</div>
+                        </div>
+                        <div className="text-white font-bold">${item.price.toFixed(2)}</div>
+                      </div>
+                    </motion.div>
+                  ))}
               </div>
+
+              {activeTab === "listings" && !isSeller && purchaseItems.length === 0 && (
+                <div className="rounded-2xl border border-white/10 bg-[#1C1C1E] p-5 text-sm text-zinc-400">No purchases yet. What you buy will appear here.</div>
+              )}
+
+              {activeTab === "reviews" && (
+                <div className="rounded-2xl border border-white/10 bg-[#1C1C1E] p-5 text-sm text-zinc-400">
+                  No reviews yet. Reviews will appear after completed purchases/sales when review data is available.
+                </div>
+              )}
             </div>
-
           </div>
-
         </div>
       </main>
     </div>
