@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { Suspense, useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -148,7 +148,7 @@ function getBaseProfile(isSeller: boolean): ProfileState {
   };
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
   const { role } = useUser();
@@ -874,5 +874,13 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black text-white" />}>
+      <ProfileContent />
+    </Suspense>
   );
 }
