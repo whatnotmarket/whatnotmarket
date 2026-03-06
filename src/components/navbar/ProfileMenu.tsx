@@ -46,15 +46,59 @@ export function ProfileMenu() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!active || !user) return;
+      if (!active) return;
+      if (!user) {
+        setProfileHref("/profile");
+        return;
+      }
 
-      const { data: profile, error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("username,role_preference,email")
         .eq("id", user.id)
         .maybeSingle();
+      let profile = data;
 
-      if (!active || error || !profile) return;
+      if (!active) return;
+      if (error) {
+        console.error("Profile fetch error:", error);
+        setProfileHref("/profile");
+        return;
+      }
+
+      if (!profile) {
+        const { error: bootstrapProfileError } = await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            email: user.email ?? null,
+            role_preference: "buyer",
+            onboarding_status: "completed",
+          },
+          { onConflict: "id" }
+        );
+
+        if (bootstrapProfileError) {
+          console.error("Profile bootstrap error:", bootstrapProfileError);
+          setProfileHref("/profile");
+          return;
+        }
+
+        const { data: bootstrapProfile, error: bootstrapFetchError } = await supabase
+          .from("profiles")
+          .select("username,role_preference,email")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (bootstrapFetchError || !bootstrapProfile) {
+          if (bootstrapFetchError) {
+            console.error("Profile bootstrap fetch error:", bootstrapFetchError);
+          }
+          setProfileHref("/profile");
+          return;
+        }
+
+        profile = bootstrapProfile;
+      }
 
       const rolePreference = profile.role_preference === "seller" ? "seller" : "buyer";
       let handle = normalizeHandle(profile.username);
@@ -103,8 +147,15 @@ export function ProfileMenu() {
 
     resolveProfileHref();
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      resolveProfileHref();
+    });
+
     return () => {
       active = false;
+      subscription.unsubscribe();
     };
   }, [supabase]);
 

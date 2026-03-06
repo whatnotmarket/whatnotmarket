@@ -40,6 +40,23 @@ function modeForTab(tab: AuthTab): AuthMode {
   return tab === "signup" ? "signup" : "signin";
 }
 
+function buildTelegramFallbackUrl(params: {
+  mode: AuthMode;
+  nextPath: string;
+  inviteCode: string | null;
+}) {
+  const query = new URLSearchParams({
+    mode: params.mode,
+    next: params.nextPath,
+  });
+
+  if (params.mode === "signup" && params.inviteCode) {
+    query.set("inviteCode", params.inviteCode);
+  }
+
+  return `/api/auth/external/telegram/start?${query.toString()}`;
+}
+
 let telegramSdkLoadingPromise: Promise<void> | null = null;
 
 function ensureTelegramSdkLoaded() {
@@ -325,8 +342,30 @@ function LoginContent() {
       window.location.assign(payload.redirectTo);
     } catch (error) {
       setLoadingProvider(null);
-      toast.error(error instanceof Error ? error.message : "Telegram authentication failed.");
+      toast.error(
+        error instanceof Error
+          ? `${error.message} You can use Telegram fallback login.`
+          : "Telegram authentication failed. You can use Telegram fallback login."
+      );
     }
+  };
+
+  const startTelegramFallback = () => {
+    const mode = modeForTab(activeTab);
+    const normalizedInvite = inviteCode.trim().toUpperCase();
+
+    if (mode === "signup" && hasInviteCode && !normalizedInvite) {
+      toast.error("Invite code is required when enabled.");
+      return;
+    }
+
+    const fallbackUrl = buildTelegramFallbackUrl({
+      mode,
+      nextPath,
+      inviteCode: mode === "signup" && hasInviteCode ? normalizedInvite : null,
+    });
+
+    window.location.assign(fallbackUrl);
   };
 
   const handleProviderSelect = async (provider: AuthButtonProvider) => {
@@ -480,6 +519,14 @@ function LoginContent() {
                 activeTab === "login" ? "Continue with Email Passwordless" : "Signup with Email Passwordless"
               }
             />
+
+            <button
+              type="button"
+              onClick={startTelegramFallback}
+              className="w-full text-center text-xs text-zinc-400 underline decoration-zinc-600 underline-offset-4 transition-colors hover:text-zinc-200"
+            >
+              Telegram popup stuck? Use Telegram fallback login
+            </button>
           </div>
 
           {wallet.status === "connected" && wallet.address && (
