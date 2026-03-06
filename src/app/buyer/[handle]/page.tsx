@@ -8,7 +8,11 @@ type BuyerProfilePageProps = {
 
 export default async function BuyerProfilePage({ params }: BuyerProfilePageProps) {
   const { handle } = await params;
-  const normalizedHandle = handle.trim().toLowerCase().replace(/^@+/, "");
+  const normalizedHandle = handle
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9._-]/g, "");
   if (!normalizedHandle) {
     notFound();
   }
@@ -24,17 +28,20 @@ export default async function BuyerProfilePage({ params }: BuyerProfilePageProps
     return data;
   };
 
+  const findByILike = async (value: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,username,role_preference")
+      .ilike("username", value)
+      .maybeSingle();
+    return data;
+  };
+
   const profile =
     (await findBy(normalizedHandle)) ||
     (await findBy(`@${normalizedHandle}`)) ||
-    (await (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id,username,role_preference")
-        .ilike("username", normalizedHandle)
-        .maybeSingle();
-      return data;
-    })());
+    (await findByILike(normalizedHandle)) ||
+    (await findByILike(`@${normalizedHandle}`));
 
   if (!profile) {
     notFound();

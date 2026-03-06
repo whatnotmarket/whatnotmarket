@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { User, CreditCard, LogOut, Phone, Ticket, PlusCircle, MessageSquare } from "lucide-react";
 import { NavPopup } from "./NavPopup";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
-import { createClient } from "@/lib/supabase";
-
-function normalizeHandle(raw: string | null | undefined) {
-  return String(raw || "")
-    .trim()
-    .toLowerCase()
-    .replace(/^@+/, "")
-    .replace(/[^a-z0-9._-]/g, "");
-}
 
 const CustomUserIcon = ({ className }: { className?: string }) => (
     <svg 
@@ -30,54 +21,8 @@ const CustomUserIcon = ({ className }: { className?: string }) => (
 );
 
 export function ProfileMenu() {
-  const supabase = useMemo(() => createClient(), []);
   const [isOpen, setIsOpen] = useState(false);
   const { role, logout } = useUser();
-  const [profileHref, setProfileHref] = useState("/profile");
-
-  useEffect(() => {
-    let active = true;
-
-    async function resolveProfileHref() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!active || !user) return;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("username,role_preference")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!active || error) return;
-
-      const username = normalizeHandle(data?.username);
-      if (!username) {
-        setProfileHref("/profile");
-        return;
-      }
-
-      const rolePreference = data?.role_preference;
-      const profileRole =
-        rolePreference === "seller"
-          ? "seller"
-          : rolePreference === "buyer"
-            ? "buyer"
-            : role === "seller"
-              ? "seller"
-              : "buyer";
-
-      setProfileHref(`/${profileRole}/@${encodeURIComponent(username)}`);
-    }
-
-    resolveProfileHref();
-
-    return () => {
-      active = false;
-    };
-  }, [role, supabase]);
 
   const handleLogout = () => {
     logout();
@@ -96,7 +41,7 @@ export function ProfileMenu() {
       <NavPopup isOpen={isOpen} onClose={() => setIsOpen(false)} align="center" className="w-[320px]" title="Profile">
         <div className="bg-[#1C1C1E] rounded-[16px] p-2">
             <div className="space-y-1">
-                <Link href={profileHref} className="w-full flex items-center gap-3 px-3 h-[50px] rounded-lg hover:bg-white/5 transition-colors group">
+                <Link href="/profile" className="w-full flex items-center gap-3 px-3 h-[50px] rounded-lg hover:bg-white/5 transition-colors group">
                     <User className="h-5 w-5 text-zinc-400 group-hover:text-white" />
                     <span className="text-[15px] font-medium text-zinc-300 group-hover:text-white">Profile</span>
                 </Link>
