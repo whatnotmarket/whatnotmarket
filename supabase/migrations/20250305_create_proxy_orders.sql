@@ -19,23 +19,40 @@ create table if not exists public.proxy_orders (
   locker_details jsonb
 );
 
--- Enable RLS
+-- Constrain allowed statuses used by the app timeline.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'proxy_orders_status_check'
+      and conrelid = 'public.proxy_orders'::regclass
+  ) then
+    alter table public.proxy_orders
+      add constraint proxy_orders_status_check
+      check (
+        status in (
+          'CREATED',
+          'PLACED',
+          'PROCESSING',
+          'LOCKER_ASSIGNED',
+          'READY_FOR_PICKUP',
+          'PICKED_UP',
+          'COMPLETED',
+          'CANCELLED'
+        )
+      );
+  end if;
+end $$;
+
+-- Enable RLS.
 alter table public.proxy_orders enable row level security;
 
--- Policies
--- Allow public insert (anyone can create an order) or restrict to authenticated users?
--- Since the original code allowed anyone to POST to /api/orders/create, we should allow public inserts or handle it via admin client.
--- The current implementation uses admin client which bypasses RLS, so policies are less critical for the write operation but good for read.
+-- Access is intentionally handled through the service-role client in server routes.
+-- With RLS enabled and no anon/authenticated policies, direct client access is denied.
 
--- Allow users to read their own orders?
--- Currently there is no user_id associated with proxy orders (they are guest orders with tracking ID).
--- So reading is done by tracking ID or admin access.
+create index if not exists proxy_orders_created_at_idx
+  on public.proxy_orders (created_at desc);
 
--- Admin access policy
-create policy "Admins can view all proxy orders"
-  on proxy_orders for select
-  using ( exists (select 1 from profiles where id = auth.uid() and is_admin = true) );
-
-create policy "Admins can update proxy orders"
-  on proxy_orders for update
-  using ( exists (select 1 from profiles where id = auth.uid() and is_admin = true) );
+create index if not exists proxy_orders_status_idx
+  on public.proxy_orders (status);

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, ArrowLeft, DollarSign, Clock, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/primitives/input";
 import { Button } from "@/components/ui/Button";
@@ -140,13 +140,29 @@ export default function CreateRequestPage() {
 
   const onSubmit = async (data: RequestFormValues) => {
     setLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log("Form Data:", data);
-    toast.success("Request posted successfully!");
-    router.push("/market");
+
+    try {
+      const res = await fetch("/api/requests/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const payload = await res.json();
+
+      if (!res.ok || !payload.ok || !payload.requestId) {
+        toast.error(payload.error || "Failed to create request");
+        return;
+      }
+
+      toast.success("Request posted successfully!");
+      router.push(`/requests/${payload.requestId}`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unexpected error while creating request");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -182,7 +198,7 @@ export default function CreateRequestPage() {
                 Create a Request
               </h1>
               <p className="text-zinc-400 text-base leading-relaxed">
-                Tell sellers what you're looking for. We'll help you find the best match.
+                Tell sellers what you&apos;re looking for. We&apos;ll help you find the best match.
               </p>
             </motion.div>
           </div>
@@ -264,7 +280,7 @@ export default function CreateRequestPage() {
                           label="Category"
                           options={CATEGORY_OPTIONS}
                           value={watch("category")}
-                          onChange={(val) => setValue("category", val as any, { shouldValidate: true })}
+                          onChange={(val) => setValue("category", val, { shouldValidate: true })}
                           placeholder="Select category..."
                           searchPlaceholder="Search categories..."
                         />
@@ -278,7 +294,7 @@ export default function CreateRequestPage() {
                           label="Condition"
                           options={CONDITION_OPTIONS}
                           value={watch("condition")}
-                          onChange={(val) => setValue("condition", val as any, { shouldValidate: true })}
+                          onChange={(val) => setValue("condition", val, { shouldValidate: true })}
                           placeholder="Select conditions..."
                           searchPlaceholder="Search condition..."
                         />
@@ -344,7 +360,7 @@ export default function CreateRequestPage() {
                             icon: <div className="w-5 h-5 flex items-center justify-center"><Image src={c.Icon} alt={c.code} width={20} height={20} /></div>
                           }))}
                           value={watch("paymentMethod")}
-                          onChange={(val) => setValue("paymentMethod", val, { shouldValidate: true })}
+                          onChange={(val) => handlePaymentMethodChange(val)}
                           placeholder="Select currency..."
                           searchPlaceholder="Search crypto..."
                         />
@@ -423,3 +439,4 @@ export default function CreateRequestPage() {
     </div>
   );
 }
+

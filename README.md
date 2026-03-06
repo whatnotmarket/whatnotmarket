@@ -37,17 +37,12 @@ A private, invitation-only marketplace web app built with Next.js, Tailwind CSS,
 
 2. **Set up Supabase**:
    - Create a new project at [supabase.com](https://supabase.com).
-   - Go to the SQL Editor and run the contents of `schema.sql`.
-   - Copy your project URL and Anon Key.
+   - Follow [SUPABASE_SETUP.md](SUPABASE_SETUP.md) and apply the SQL migrations in `supabase/migrations`.
+   - Copy your project URL, anon key, and service-role key.
 
 3. **Environment Variables**:
    - Copy `.env.local.example` to `.env.local`.
-   - Fill in your Supabase credentials:
-     ```
-     NEXT_PUBLIC_SUPABASE_URL=your-project-url
-     NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-     SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-     ```
+   - Fill in the required values (Supabase + admin + wallet vars).
 
 4. **Run the development server**:
    ```bash

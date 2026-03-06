@@ -1,186 +1,281 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Package, Tag, MessageCircle, AlertCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, MessageCircle, AlertCircle, Tag, Loader2 } from "lucide-react";
 import { NavPopup } from "./NavPopup";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
 
-interface Notification {
+type NotificationRow = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+type NotificationItem = {
   id: string;
   title: string;
   message: string;
   time: string;
-  type: "offer" | "shipping" | "price" | "system";
+  type: string;
   read: boolean;
   link: string;
+};
+
+function formatTimeAgo(isoDate: string) {
+  const now = Date.now();
+  const created = new Date(isoDate).getTime();
+  const seconds = Math.max(1, Math.floor((now - created) / 1000));
+
+  if (seconds < 60) return "now";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    title: "New Offer Received",
-    message: "Buyer sent an offer of $3,200 for MacBook Pro M3",
-    time: "2m ago",
-    type: "offer",
-    read: false,
-    link: "/deal/demo-seller"
-  },
-  {
-    id: "2",
-    title: "Item Shipped",
-    message: "Your order #8392 has been shipped via DHL",
-    time: "1h ago",
-    type: "shipping",
-    read: false,
-    link: "/orders/8392"
-  },
-  {
-    id: "3",
-    title: "Price Drop Alert",
-    message: "Leica Q2 is now available for $3,800 (was $4,200)",
-    time: "5h ago",
-    type: "price",
-    read: true,
-    link: "/market/leica-q2"
-  },
-  {
-    id: "4",
-    title: "System Update",
-    message: "Maintenance scheduled for tonight at 2:00 AM UTC",
-    time: "1d ago",
-    type: "system",
-    read: true,
-    link: "/support"
-  }
-];
+function toUiNotification(row: NotificationRow): NotificationItem {
+  return {
+    id: row.id,
+    title: row.title,
+    message: row.body,
+    time: formatTimeAgo(row.created_at),
+    type: row.type,
+    read: !!row.read_at,
+    link: row.link || "/inbox",
+  };
+}
 
 export function NotificationsMenu() {
+  const supabase = useMemo(() => createClient(), []);
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
-  
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    let active = true;
+
+    async function bootstrap() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!active) return;
+
+      const uid = user?.id || null;
+      setUserId(uid);
+
+      if (!uid) {
+        setNotifications([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id,type,title,body,link,read_at,created_at")
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      if (error) {
+        console.error("Failed to load notifications:", error);
+        if (active) {
+          setNotifications([]);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (active) {
+        setNotifications((data || []).map((row) => toUiNotification(row as NotificationRow)));
+        setIsLoading(false);
+      }
+    }
+
+    bootstrap();
+
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`notifications-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${userId}`,
+        },
+        (payload) => {
+          const incoming = toUiNotification(payload.new as NotificationRow);
+          setNotifications((prev) => {
+            if (prev.some((item) => item.id === incoming.id)) return prev;
+            return [incoming, ...prev];
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${userId}`,
+        },
+        (payload) => {
+          const updated = toUiNotification(payload.new as NotificationRow);
+          setNotifications((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, userId]);
+
+  const markAllAsRead = async () => {
+    if (!userId || unreadCount === 0) return;
+
+    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
+
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds);
+
+    if (error) {
+      console.error("Failed to mark notifications as read:", error);
+      return;
+    }
+
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  const getIcon = (type: Notification["type"]) => {
-    switch (type) {
-      case "offer": return <Tag className="h-4 w-4 text-emerald-400" />;
-      case "shipping": return <Package className="h-4 w-4 text-blue-400" />;
-      case "price": return <Tag className="h-4 w-4 text-amber-400" />;
-      case "system": return <AlertCircle className="h-4 w-4 text-zinc-400" />;
-      default: return <MessageCircle className="h-4 w-4 text-zinc-400" />;
+  const markOneAsRead = async (notificationId: string) => {
+    const target = notifications.find((item) => item.id === notificationId);
+    if (!target || target.read) return;
+
+    setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, read: true } : item)));
+
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notificationId);
+
+    if (error) {
+      console.error("Failed to mark notification as read:", error);
+      setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, read: false } : item)));
     }
+  };
+
+  const getIcon = (type: string) => {
+    if (type === "offer_created") return <Tag className="h-4 w-4 text-emerald-400" />;
+    if (type === "offer_accepted") return <Tag className="h-4 w-4 text-blue-400" />;
+    if (type === "message_received") return <MessageCircle className="h-4 w-4 text-indigo-400" />;
+    if (type === "deal_status_changed") return <AlertCircle className="h-4 w-4 text-amber-400" />;
+    return <MessageCircle className="h-4 w-4 text-zinc-400" />;
   };
 
   return (
     <div className="relative">
       <button
-        onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen && unreadCount > 0) {
-            // Optional: mark as read when opening? 
-            // For now, let's keep the dot until manually cleared or clicked
-          }
-        }}
-        className="relative flex items-center justify-center px-4 py-2 rounded-lg text-zinc-300 hover:text-white hover:bg-white/5 transition-all"
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative flex items-center justify-center rounded-lg px-4 py-2 text-zinc-300 transition-all hover:bg-white/5 hover:text-white"
       >
         <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <span className="absolute top-2 right-3 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1C1C1E]" />
-        )}
+        {unreadCount > 0 && <span className="absolute top-2 right-3 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1C1C1E]" />}
       </button>
 
-      <NavPopup 
-        isOpen={isOpen} 
-        onClose={() => setIsOpen(false)} 
-        align="center" 
-        className="w-[380px]" 
-        title="Notifications"
-      >
-        <div className="bg-[#1C1C1E] rounded-[16px] p-2">
-        <div className="bg-[#222222] rounded-[16px] overflow-hidden flex flex-col max-h-[480px]">
-          {/* Header Actions */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-            <span className="text-xs font-medium text-zinc-400">
-              {unreadCount} unread
-            </span>
-            {unreadCount > 0 && (
-              <button 
-                onClick={markAllAsRead}
-                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                Mark all as read
-              </button>
-            )}
-          </div>
+      <NavPopup isOpen={isOpen} onClose={() => setIsOpen(false)} align="center" className="w-[380px]" title="Notifications">
+        <div className="rounded-[16px] bg-[#1C1C1E] p-2">
+          <div className="flex max-h-[480px] flex-col overflow-hidden rounded-[16px] bg-[#222222]">
+            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+              <span className="text-xs font-medium text-zinc-400">{unreadCount} unread</span>
+              {unreadCount > 0 && (
+                <button onClick={markAllAsRead} className="text-xs font-bold text-indigo-400 transition-colors hover:text-indigo-300">
+                  Mark all as read
+                </button>
+              )}
+            </div>
 
-          {/* List */}
-          <div className="overflow-y-auto custom-scrollbar p-2 space-y-2">
-            {notifications.length === 0 ? (
-              <div className="p-8 text-center text-zinc-500 text-sm">
-                No notifications yet
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <Link 
-                  key={notification.id}
-                  href={notification.link}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "flex items-start gap-4 p-4 hover:bg-white/10 transition-colors relative group bg-zinc-800/50 rounded-lg",
-                    !notification.read && "bg-white/[0.02]"
-                  )}
-                >
-                  {/* Icon */}
-                  <div className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border border-white/5",
-                    "bg-zinc-800/50"
-                  )}>
-                    {getIcon(notification.type)}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <h4 className={cn(
-                        "text-sm font-semibold truncate pr-2",
-                        notification.read ? "text-zinc-300" : "text-white"
-                      )}>
-                        {notification.title}
-                      </h4>
-                      <span className="text-[11px] text-zinc-500 whitespace-nowrap shrink-0">
-                        {notification.time}
-                      </span>
+            <div className="custom-scrollbar space-y-2 overflow-y-auto p-2">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8 text-zinc-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : !userId ? (
+                <div className="p-8 text-center text-sm text-zinc-500">
+                  Sign in to receive notifications.
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="p-8 text-center text-sm text-zinc-500">No notifications yet</div>
+              ) : (
+                notifications.map((notification) => (
+                  <Link
+                    key={notification.id}
+                    href={notification.link}
+                    onClick={() => {
+                      markOneAsRead(notification.id);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "group relative flex items-start gap-4 rounded-lg bg-zinc-800/50 p-4 transition-colors hover:bg-white/10",
+                      !notification.read && "bg-white/[0.02]"
+                    )}
+                  >
+                    <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-zinc-800/50")}>
+                      {getIcon(notification.type)}
                     </div>
-                    <p className="text-[13px] text-zinc-400 leading-snug line-clamp-2">
-                      {notification.message}
-                    </p>
-                  </div>
 
-                  {/* Unread Indicator */}
-                  {!notification.read && (
-                    <div className="absolute top-5 right-4 h-2 w-2 rounded-full bg-indigo-500" />
-                  )}
-                </Link>
-              ))
-            )}
-          </div>
-          
-          {/* Footer */}
-          <div className="p-2 border-t border-white/5 bg-zinc-900/50">
-            <Link 
-              href="/notifications" 
-              className="flex items-center justify-center w-full py-2.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-            >
-              View All Notifications
-            </Link>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 flex items-center justify-between">
+                        <h4 className={cn("truncate pr-2 text-sm font-semibold", notification.read ? "text-zinc-300" : "text-white")}>
+                          {notification.title}
+                        </h4>
+                        <span className="shrink-0 whitespace-nowrap text-[11px] text-zinc-500">{notification.time}</span>
+                      </div>
+                      <p className="line-clamp-2 text-[13px] leading-snug text-zinc-400">{notification.message}</p>
+                    </div>
+
+                    {!notification.read && <div className="absolute top-5 right-4 h-2 w-2 rounded-full bg-indigo-500" />}
+                  </Link>
+                ))
+              )}
+            </div>
+
+            <div className="border-t border-white/5 bg-zinc-900/50 p-2">
+              <Link
+                href="/notifications"
+                onClick={() => setIsOpen(false)}
+                className="flex w-full items-center justify-center rounded-lg py-2.5 text-xs font-bold text-zinc-400 transition-all hover:bg-white/5 hover:text-white"
+              >
+                View All Notifications
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
       </NavPopup>
     </div>
   );
 }
+
