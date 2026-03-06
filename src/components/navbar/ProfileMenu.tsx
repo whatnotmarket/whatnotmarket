@@ -7,6 +7,14 @@ import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
 import { createClient } from "@/lib/supabase";
 
+function normalizeHandle(raw: string | null | undefined) {
+  return String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
 const CustomUserIcon = ({ className }: { className?: string }) => (
     <svg 
         width="24" 
@@ -45,7 +53,7 @@ export function ProfileMenu() {
 
       if (!active || error) return;
 
-      const username = String(data?.username || "").trim().toLowerCase();
+      const username = normalizeHandle(data?.username);
       if (!username) {
         setProfileHref("/profile");
         return;

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ProfileClient } from "@/components/profile/ProfileClient";
 import { createClient } from "@/lib/supabase-server";
 
@@ -42,9 +42,12 @@ export default async function BuyerProfilePage({ params }: BuyerProfilePageProps
 
   const canonicalHandle = String(profile.username || normalizedHandle).replace(/^@+/, "").toLowerCase();
 
-  if (profile.role_preference === "seller") {
-    redirect(`/seller/@${encodeURIComponent(canonicalHandle)}`);
-  }
+  const resolvedRole =
+    profile.role_preference === "seller"
+      ? "seller"
+      : profile.role_preference === "buyer"
+        ? "buyer"
+        : "buyer";
 
-  return <ProfileClient targetProfileId={profile.id} targetHandle={canonicalHandle} routeRole="buyer" />;
+  return <ProfileClient targetProfileId={profile.id} targetHandle={canonicalHandle} routeRole={resolvedRole} />;
 }

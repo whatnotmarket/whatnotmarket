@@ -248,6 +248,27 @@ export function ProfileClient({
           const pref = handleLookup?.role_preference;
           resolvedRole = pref === "seller" ? "seller" : "buyer";
         }
+
+        // If the requested handle is the current user's handle, treat it as own profile
+        // even when generic handle lookup misses due inconsistent stored formatting.
+        if (!targetId && viewerId) {
+          const { data: meProfile, error: meProfileError } = await supabase
+            .from("profiles")
+            .select("id,username,role_preference")
+            .eq("id", viewerId)
+            .maybeSingle();
+
+          if (meProfileError) {
+            console.error("Viewer profile lookup error:", meProfileError);
+          }
+
+          if (meProfile && normalizeHandle(meProfile.username) === normalizedTargetHandle) {
+            targetId = viewerId;
+            if (!routeRole) {
+              resolvedRole = meProfile.role_preference === "seller" ? "seller" : "buyer";
+            }
+          }
+        }
       }
 
       if (!targetId) {
@@ -324,6 +345,16 @@ export function ProfileClient({
 
       const dbProfile = (profileRes.data || null) as StoredProfile | null;
       if (!dbProfile && hasExplicitTarget) {
+        if (viewerId && targetId === viewerId) {
+          setProfileRole(resolvedRole);
+          setProfile(getBaseProfile(resolvedRole === "seller"));
+          setResolvedTargetId(targetId);
+          setPurchaseItems([]);
+          setIsFollowing(false);
+          setIsProfileLoading(false);
+          return;
+        }
+
         setProfileRole(resolvedRole);
         setProfile(getBaseProfile(resolvedRole === "seller"));
         setResolvedTargetId(null);
