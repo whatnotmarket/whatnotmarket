@@ -137,14 +137,19 @@ async function updateProfileDetails(params: {
   avatarUrl: string | null;
 }) {
   const admin = createAdminClient();
-  await admin
-    .from("profiles")
-    .update({
+  const { error } = await admin.from("profiles").upsert(
+    {
+      id: params.userId,
       email: params.email,
       full_name: params.fullName ?? undefined,
       avatar_url: params.avatarUrl ?? undefined,
-    })
-    .eq("id", params.userId);
+    },
+    { onConflict: "id" }
+  );
+
+  if (error) {
+    throw new Error(`Unable to upsert profile: ${error.message}`);
+  }
 }
 
 export async function ensureBridgeUser(identity: BridgeIdentityInput) {
