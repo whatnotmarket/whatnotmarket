@@ -25,13 +25,18 @@ export async function GET(request: NextRequest) {
       results: {
         users: [],
         wallets: [],
+        identities: [],
         requests: [],
         offers: [],
         deals: [],
         listing_payments: [],
+        escrow_actions: [],
         payment_intents: [],
         proxy_orders: [],
         ledger_entries: [],
+        payout_instructions: [],
+        admin_settings: [],
+        crypto_wallets: [],
         audit_logs: [],
         messages: [],
         notifications: [],
@@ -72,13 +77,18 @@ export async function GET(request: NextRequest) {
   const [
     usersRes,
     walletsRes,
+    identitiesRes,
     requestsRes,
     offersRes,
     dealsRes,
     listingPaymentsRes,
+    escrowActionsRes,
     paymentIntentsRes,
     proxyOrdersRes,
     ledgerEntriesRes,
+    payoutInstructionsRes,
+    adminSettingsRes,
+    cryptoWalletsRes,
     auditLogsRes,
     messagesRes,
     notificationsRes,
@@ -105,6 +115,20 @@ export async function GET(request: NextRequest) {
       .from("wallets")
       .select("id,user_id,address,chain,provider")
       .or([`address.ilike.${ilikeValue}`, isUuid ? `id.eq.${query}` : ""].filter(Boolean).join(","))
+      .limit(20),
+    admin
+      .from("auth_bridge_identities")
+      .select("auth_subject,provider,supabase_user_id,email,created_at")
+      .or(
+        [
+          `auth_subject.ilike.${ilikeValue}`,
+          `provider.ilike.${ilikeValue}`,
+          `email.ilike.${ilikeValue}`,
+          isUuid ? `supabase_user_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
       .limit(20),
     admin
       .from("requests")
@@ -135,6 +159,22 @@ export async function GET(request: NextRequest) {
           `tx_hash_in.ilike.${ilikeValue}`,
           `tx_hash_out.ilike.${ilikeValue}`,
           isUuid ? `id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("escrow_actions")
+      .select("id,payment_id,action_type,performed_by_user_id,notes,tx_hash,created_at")
+      .or(
+        [
+          `action_type.ilike.${ilikeValue}`,
+          `notes.ilike.${ilikeValue}`,
+          `tx_hash.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `payment_id.eq.${query}` : "",
+          isUuid ? `performed_by_user_id.eq.${query}` : "",
         ]
           .filter(Boolean)
           .join(",")
@@ -176,6 +216,49 @@ export async function GET(request: NextRequest) {
           `tx_hash.ilike.${ilikeValue}`,
           isUuid ? `id.eq.${query}` : "",
           isUuid ? `deal_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("payout_instructions")
+      .select("id,user_id,payout_network,payout_currency,payout_address,payout_memo_tag,kyc_status,updated_at")
+      .or(
+        [
+          `payout_network.ilike.${ilikeValue}`,
+          `payout_currency.ilike.${ilikeValue}`,
+          `payout_address.ilike.${ilikeValue}`,
+          `payout_memo_tag.ilike.${ilikeValue}`,
+          `kyc_status.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `user_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("admin_settings")
+      .select("key,value,description,updated_at")
+      .or(
+        [
+          `key.ilike.${ilikeValue}`,
+          `description.ilike.${ilikeValue}`,
+        ].join(",")
+      )
+      .limit(20),
+    admin
+      .from("admin_crypto_wallets")
+      .select("id,label,network,currency,address,memo_tag,is_active,updated_at")
+      .or(
+        [
+          `label.ilike.${ilikeValue}`,
+          `network.ilike.${ilikeValue}`,
+          `currency.ilike.${ilikeValue}`,
+          `address.ilike.${ilikeValue}`,
+          `memo_tag.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
         ]
           .filter(Boolean)
           .join(",")
@@ -269,13 +352,18 @@ export async function GET(request: NextRequest) {
     results: {
       users: usersRes.data || [],
       wallets: walletsRes.data || [],
+      identities: identitiesRes.data || [],
       requests: requestsRes.data || [],
       offers: offersRes.data || [],
       deals: dealsRes.data || [],
       listing_payments: listingPaymentsRes.data || [],
+      escrow_actions: escrowActionsRes.data || [],
       payment_intents: paymentIntentsRes.data || [],
       proxy_orders: proxyOrdersRes.data || [],
       ledger_entries: ledgerEntriesRes.data || [],
+      payout_instructions: payoutInstructionsRes.data || [],
+      admin_settings: adminSettingsRes.data || [],
+      crypto_wallets: cryptoWalletsRes.data || [],
       audit_logs: auditLogsRes.data || [],
       messages: messagesRes.data || [],
       notifications: notificationsRes.data || [],
