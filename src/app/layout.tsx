@@ -88,12 +88,10 @@ export default function RootLayout({
       >
         <PostHogProvider>
           <Providers>
-            <div className="relative z-10 flex-1 bg-black">
+            <div className="flex-1 bg-black">
               {children}
             </div>
-            <div className="sticky bottom-0 z-0">
-              <Footer />
-            </div>
+            <Footer />
           </Providers>
         </PostHogProvider>
         <Analytics />

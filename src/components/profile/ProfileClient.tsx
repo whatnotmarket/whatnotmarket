@@ -11,14 +11,16 @@ import {
   TrendingUp,
   Clock,
   Package,
-  Edit2,
   Camera,
-  X,
-  Save,
   Move,
+  MessageSquare,
+  Ban,
+  Flag,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { profileToast as toast } from "@/lib/notifications";
@@ -60,7 +62,11 @@ type ProfileState = {
   buyerRanking: string;
   buyerProtection: string;
   totalPurchases: number;
+  totalOffers: number;
   bannerPosition: number;
+  deliveryRate: number;
+  totalLifetimeOrders: number;
+  last30DaysScore: number;
 };
 
 type PurchaseItem = {
@@ -68,6 +74,14 @@ type PurchaseItem = {
   title: string;
   price: number;
   purchasedAt: string;
+};
+
+type OfferItem = {
+  id: string;
+  title: string;
+  price: number;
+  status: string;
+  createdAt: string;
 };
 
 type DealSummaryRow = {
@@ -149,13 +163,17 @@ function getBaseProfile(isSeller: boolean): ProfileState {
     buyerRanking: "Rookie Buyer",
     buyerProtection: "Base Protection",
     totalPurchases: 0,
+    totalOffers: 0,
     bannerPosition: 50,
+    deliveryRate: 100,
+    totalLifetimeOrders: 0,
+    last30DaysScore: 100,
   };
 }
 
 function FounderMark() {
   return (
-    <span className="group relative inline-flex items-center">
+    <span className="group/founder relative inline-flex items-center pointer-events-auto">
       <svg
         className="h-5 w-5"
         viewBox="0 0 24 24"
@@ -170,12 +188,81 @@ function FounderMark() {
           fill="#ffffff"
         />
       </svg>
-      <span className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-[9999] -translate-x-1/2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[11px] text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+      <span className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-[9999] -translate-x-1/2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[11px] text-white opacity-0 shadow-lg transition-opacity group-hover/founder:opacity-100">
         Founder of WhatnotMarket
       </span>
     </span>
   );
 }
+
+function ProfileEditPencilIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <g id="SVGRepo_bgCarrier" strokeWidth="0" />
+      <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round" />
+      <g id="SVGRepo_iconCarrier">
+        <path
+          d="M11 4H7.2C6.0799 4 5.51984 4 5.09202 4.21799C4.71569 4.40974 4.40973 4.7157 4.21799 5.09202C4 5.51985 4 6.0799 4 7.2V16.8C4 17.9201 4 18.4802 4.21799 18.908C4.40973 19.2843 4.71569 19.5903 5.09202 19.782C5.51984 20 6.0799 20 7.2 20H16.8C17.9201 20 18.4802 20 18.908 19.782C19.2843 19.5903 19.5903 19.2843 19.782 18.908C20 18.4802 20 17.9201 20 16.8V12.5M15.5 5.5L18.3284 8.32843M10.7627 10.2373L17.411 3.58902C18.192 2.80797 19.4584 2.80797 20.2394 3.58902C21.0205 4.37007 21.0205 5.6364 20.2394 6.41745L13.3774 13.2794C12.6158 14.0411 12.235 14.4219 11.8012 14.7247C11.4162 14.9936 11.0009 15.2162 10.564 15.3882C10.0717 15.582 9.54378 15.6885 8.48793 15.9016L8 16L8.04745 15.6678C8.21536 14.4925 8.29932 13.9048 8.49029 13.3561C8.65975 12.8692 8.89125 12.4063 9.17906 11.9786C9.50341 11.4966 9.92319 11.0768 10.7627 10.2373Z"
+          stroke="#ffffff"
+          strokeWidth="2.16"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+    </svg>
+  );
+}
+
+function BioText({ text, isWhatnotMarket }: { text: string; isWhatnotMarket: boolean }) {
+  if (!text) return "No bio yet.";
+  
+  if (!isWhatnotMarket) {
+    return <>{text}</>;
+  }
+
+  // Regex migliorata per supportare domini come whatnotmarket.app anche senza http/www
+  const linkRegex = /((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+  const parts = text.split(linkRegex);
+  
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.match(linkRegex)) {
+           let href = part;
+           if (!href.startsWith('http')) {
+             href = `https://${href}`;
+           }
+           
+           const isWhatnotApp = part.toLowerCase().includes('whatnotmarket.app');
+           
+           return (
+             <a 
+               key={i} 
+               href={href} 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               className={cn(
+                 "hover:underline",
+                 isWhatnotApp ? "font-bold text-white" : "text-white"
+               )}
+               onClick={(e) => e.stopPropagation()}
+             >
+               {part}
+             </a>
+           );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
 
 export function ProfileClient({
   targetProfileId = null,
@@ -203,6 +290,7 @@ export function ProfileClient({
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [bannerObjectFit, setBannerObjectFit] = useState<"cover" | "fill">("cover");
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
+  const [offerItems, setOfferItems] = useState<OfferItem[]>([]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -223,17 +311,19 @@ export function ProfileClient({
   const startY = useRef(0);
   const startPos = useRef(0);
 
-  const isSeller = profileRole === "seller";
-  const [profile, setProfile] = useState<ProfileState>(() => getBaseProfile(isSeller));
-  const isFounderProfile =
+  const [profile, setProfile] = useState<ProfileState | null>(null);
+  const isSeller = profile ? (profileRole === "seller") : (initialProfileRole === "seller");
+  const isFounderProfile = profile ? (
     normalizeHandle(profile.handle) === "whatnotmarket" ||
-    normalizeHandle(profile.name) === "whatnotmarket";
+    normalizeHandle(profile.name) === "whatnotmarket"
+  ) : false;
   const isOwnProfile = !!currentUserId && !!resolvedTargetId && currentUserId === resolvedTargetId;
-  const displayBannerSrc = isEditing ? editForm.banner || profile.banner : profile.banner;
+  const displayBannerSrc = profile ? (isEditing ? editForm.banner || profile.banner : profile.banner) : "/banner-placeholder.jpg";
 
   useEffect(() => {
     let active = true;
     setIsProfileLoading(true);
+    setProfile(null); // Reset profile to ensure loading state shows
     setIsProfileMissing(false);
 
     async function loadProfile() {
@@ -380,6 +470,7 @@ export function ProfileClient({
           setProfile(getBaseProfile(resolvedRole === "seller"));
           setResolvedTargetId(targetId);
           setPurchaseItems([]);
+          setOfferItems([]);
           setIsFollowing(false);
           setIsProfileLoading(false);
           return;
@@ -389,6 +480,7 @@ export function ProfileClient({
         setProfile(getBaseProfile(resolvedRole === "seller"));
         setResolvedTargetId(null);
         setPurchaseItems([]);
+        setOfferItems([]);
         setIsFollowing(false);
         setIsProfileMissing(true);
         setIsProfileLoading(false);
@@ -438,8 +530,99 @@ export function ProfileClient({
         }));
       }
 
-      const totalActivity = totalPurchases + successfulDeliveries;
+      // Fetch offers if the profile is a seller
+      let offers: OfferItem[] = [];
+      let totalOffersCount = 0;
+      let globalDeliveries = 0;
+      
+      // If profile is whatnotmarket, fetch ALL completed deals on platform
+      let totalLifetimeOrders = 0;
+      let deliveryRate = 100;
+      let last30DaysScore = 100;
+      
+      const isWhatnotProfile = toDisplayHandle(dbProfile?.username) === "@whatnotmarket";
 
+      if (isWhatnotProfile) {
+         const { count } = await supabase
+           .from("deals")
+           .select("id", { count: "exact", head: true })
+           .eq("status", "completed");
+         globalDeliveries = count || 0;
+         totalLifetimeOrders = globalDeliveries;
+         
+         // For Whatnot, assume 100% success rate and score for now
+         deliveryRate = 100;
+         last30DaysScore = 100;
+      } else if (resolvedRole === "seller") {
+         // Calculate for normal seller
+         // Total Lifetime Orders = Total Completed Deals as seller
+         const { count: lifetimeCount } = await supabase
+            .from("deals")
+            .select("id", { count: "exact", head: true })
+            .eq("seller_id", targetId)
+            .eq("status", "completed");
+         
+         totalLifetimeOrders = lifetimeCount || 0;
+         
+         // Delivery Rate = Completed / (Completed + Cancelled) * 100
+         // Or simplified: just base it on completed vs total attempted deals
+         const { count: totalDealsCount } = await supabase
+            .from("deals")
+            .select("id", { count: "exact", head: true })
+            .eq("seller_id", targetId)
+            .in("status", ["completed", "cancelled"]);
+            
+         const totalDeals = totalDealsCount || 0;
+         if (totalDeals > 0) {
+            deliveryRate = Math.round((totalLifetimeOrders / totalDeals) * 100);
+         } else {
+            deliveryRate = 100; // Default to 100 if no deals yet
+         }
+
+         // Last 30 Days Score
+         // Based on deals created in last 30 days that are completed
+         const thirtyDaysAgo = new Date();
+         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+         
+         const { data: last30Deals } = await supabase
+            .from("deals")
+            .select("status")
+            .eq("seller_id", targetId)
+            .gte("created_at", thirtyDaysAgo.toISOString())
+            .in("status", ["completed", "cancelled"]);
+            
+         if (last30Deals && last30Deals.length > 0) {
+            const completedLast30 = last30Deals.filter(d => d.status === "completed").length;
+            last30DaysScore = Math.round((completedLast30 / last30Deals.length) * 100);
+         } else {
+            last30DaysScore = 100; // Default if no recent activity
+         }
+      }
+
+      if (resolvedRole === "seller") {
+        const { data: offersData, count: offersCount } = await supabase
+          .from("offers")
+          .select("id, price, status, created_at, requests(title)", { count: "exact" })
+          .eq("created_by", targetId)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        
+        totalOffersCount = offersCount || 0;
+
+        if (offersData) {
+          offers = offersData.map((offer) => ({
+            id: offer.id,
+            // @ts-ignore: join result
+            title: offer.requests?.title || "Unknown Request",
+            price: Number(offer.price),
+            status: offer.status,
+            createdAt: offer.created_at,
+          }));
+        }
+      }
+
+      const totalActivity = totalPurchases + successfulDeliveries;
+      
       setProfile({
         ...getBaseProfile(resolvedRole === "seller"),
         name: dbProfile?.full_name || defaults.name,
@@ -451,13 +634,20 @@ export function ProfileClient({
         followers,
         following,
         totalPurchases,
-        successfulDeliveries,
+        totalOffers: totalOffersCount,
+        successfulDeliveries: isWhatnotProfile ? globalDeliveries : successfulDeliveries,
+        avgResponseTime: isWhatnotProfile ? "5min" : "-",
         buyerRanking: getBuyerRanking(totalPurchases),
-        sellerRanking: getSellerRanking(successfulDeliveries),
+        sellerRanking: isWhatnotProfile ? "Platinum Escrow" : getSellerRanking(successfulDeliveries),
+        sellerProtection: isWhatnotProfile ? "Maximum Coverage" : "Base Coverage",
         level: Math.max(1, Math.floor(totalActivity / 5) + 1),
+        deliveryRate,
+        totalLifetimeOrders,
+        last30DaysScore,
       });
 
       setPurchaseItems(purchases);
+      setOfferItems(offers);
 
       if (viewerId && viewerId !== targetId) {
         const { data: followRow, error: followError } = await supabase
@@ -487,12 +677,12 @@ export function ProfileClient({
   const handleEditClick = () => {
     if (!isOwnProfile) return;
     setEditForm({
-      name: profile.name,
-      handle: profile.handle,
-      avatar: profile.avatar,
-      banner: profile.banner,
-      description: profile.description,
-      bannerPosition: profile.bannerPosition,
+      name: profile?.name ?? "",
+      handle: profile?.handle ?? "",
+      avatar: profile?.avatar ?? "",
+      banner: profile?.banner ?? "",
+      description: profile?.description ?? "",
+      bannerPosition: profile?.bannerPosition ?? 50,
     });
     setIsEditing(true);
   };
@@ -543,11 +733,18 @@ export function ProfileClient({
       return;
     }
 
+    const linkRegex = /((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/i;
+    const hasLink = linkRegex.test(editForm.description);
+    if (hasLink && normalizedHandle !== "whatnotmarket") {
+       toast.error("Only @whatnotmarket can add links to bio.");
+       return;
+    }
+
     setIsSaving(true);
 
     try {
-      let nextAvatar = editForm.avatar || profile.avatar;
-      let nextBanner = editForm.banner || profile.banner;
+      let nextAvatar = editForm.avatar || profile?.avatar || "";
+      let nextBanner = editForm.banner || profile?.banner || "";
 
       if (pendingImages.avatar) {
         nextAvatar = await uploadProfileImage(pendingImages.avatar, "avatar");
@@ -575,17 +772,18 @@ export function ProfileClient({
         }
         throw updateError;
       }
-
-      setProfile((prev) => ({
-        ...prev,
-        name: normalizedName,
-        handle: `@${normalizedHandle}`,
-        avatar: nextAvatar,
-        banner: nextBanner,
-        description: editForm.description,
-        bannerPosition: editForm.bannerPosition,
-      }));
-
+      setProfile((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          name: normalizedName,
+          handle: `@${normalizedHandle}`,
+          avatar: nextAvatar,
+          banner: nextBanner,
+          description: editForm.description,
+          bannerPosition: editForm.bannerPosition,
+        };
+      });
       setPendingImages({ avatar: null, banner: null });
       setIsEditing(false);
       router.replace(`/profile/${normalizedHandle}`);
@@ -620,7 +818,7 @@ export function ProfileClient({
         if (error) throw error;
 
         setIsFollowing(false);
-        setProfile((prev) => ({ ...prev, followers: Math.max(0, prev.followers - 1) }));
+        setProfile((prev) => prev ? ({ ...prev, followers: Math.max(0, prev.followers - 1) }) : prev);
       } else {
         const { error } = await supabase.from("profile_follows").insert({
           follower_id: currentUserId,
@@ -630,7 +828,7 @@ export function ProfileClient({
         if (error) throw error;
 
         setIsFollowing(true);
-        setProfile((prev) => ({ ...prev, followers: prev.followers + 1 }));
+        setProfile((prev) => prev ? ({ ...prev, followers: prev.followers + 1 }) : prev);
       }
     } catch (error) {
       console.error("Follow toggle error:", error);
@@ -718,25 +916,28 @@ export function ProfileClient({
     router.replace("/market");
   }, [isProfileMissing, router]);
 
-  if (isProfileLoading) {
+  if (isProfileLoading || !profile) {
     return (
       <div className="min-h-screen bg-black text-white pb-20">
         <Navbar />
         <div className="h-64 md:h-80 w-full bg-zinc-900 animate-pulse" />
         <main className="container mx-auto px-4 sm:px-6 relative z-20 -mt-24">
           <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
-            <div className="rounded-3xl border border-white/10 bg-[#1C1C1E] p-6">
+            <div className="rounded-3xl border border-white/10 bg-[#1C1C1E] p-6 h-[500px]">
               <div className="mx-auto mb-4 h-32 w-32 rounded-full bg-zinc-800 animate-pulse" />
               <div className="mx-auto mb-3 h-6 w-40 rounded bg-zinc-800 animate-pulse" />
               <div className="mx-auto mb-6 h-4 w-28 rounded bg-zinc-800 animate-pulse" />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mt-8">
                 <div className="h-16 rounded-xl bg-zinc-800 animate-pulse" />
                 <div className="h-16 rounded-xl bg-zinc-800 animate-pulse" />
               </div>
             </div>
             <div className="space-y-6">
-              <div className="h-44 rounded-3xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
-              <div className="h-60 rounded-3xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
+              <div className="h-12 w-48 rounded-xl bg-zinc-800 animate-pulse mb-6" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="h-40 rounded-2xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
+                 <div className="h-40 rounded-2xl bg-[#1C1C1E] border border-white/10 animate-pulse" />
+              </div>
             </div>
           </div>
         </main>
@@ -771,7 +972,7 @@ export function ProfileClient({
       <div
         ref={bannerRef}
         className={cn(
-          "relative h-64 md:h-80 w-full overflow-hidden group select-none",
+          "relative -mt-4 md:-mt-6 h-80 md:h-[30rem] w-full overflow-hidden rounded-b-[24px] border-x border-b border-zinc-800 group select-none",
           isEditing && "cursor-move"
         )}
         onMouseDown={handleBannerMouseDown}
@@ -790,160 +991,224 @@ export function ProfileClient({
           draggable={false}
         />
 
-        {isEditing && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-3 w-full max-w-md px-4 pointer-events-auto">
-              <div className="flex items-center gap-2">
-                <label className="cursor-pointer text-sm font-bold text-white flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-md border border-white/10 shadow-lg">
-                  <Camera className="w-4 h-4" />
-                  Change
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "banner")} />
-                </label>
-                <div className="px-4 py-2 bg-black/50 text-white text-xs font-bold rounded-full border border-white/10 backdrop-blur-md flex items-center gap-2">
-                  <Move className="w-3 h-3" /> Drag to reposition
-                </div>
+        <div className="container mx-auto px-4 sm:px-6 relative h-full">
+          {!isEditing && isOwnProfile && (
+            <div className="absolute top-8 md:top-10 right-4 sm:right-6 z-30">
+              <Button
+                onClick={handleEditClick}
+                variant="outline"
+                className="gap-2 !border-[#101010]/70 !bg-[#101010]/80 hover:!bg-[#101010]/90 text-xs md:text-sm h-7 md:h-10 px-3 md:px-4"
+                aria-label="Modifica profilo"
+              >
+                Modifica profilo
+                <ProfileEditPencilIcon />
+              </Button>
+            </div>
+          )}
+          {isEditing && isOwnProfile && (
+            <div className="absolute top-8 md:top-10 right-4 sm:right-6 z-30">
+              <ButtonGroup>
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outline"
+                  className="!border-[#101010]/70 !bg-[#101010]/80 hover:!bg-[#101010]/90 text-xs md:text-sm h-7 md:h-10 px-3 md:px-4"
+                >
+                  Annulla
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  variant="outline"
+                  className="!border-[#101010]/70 !bg-[#101010]/80 hover:!bg-[#101010]/90 text-xs md:text-sm h-7 md:h-10 px-3 md:px-4"
+                >
+                  Salva
+                </Button>
+              </ButtonGroup>
+            </div>
+          )}
+
+          {isEditing && isOwnProfile && (
+            <div className="absolute top-8 md:top-10 left-4 sm:left-6 z-30 flex flex-col md:flex-row items-start md:items-center gap-2">
+              <label className="cursor-pointer">
+                <Button variant="outline" size="sm" asChild className="gap-2 !border-[#101010]/70 !bg-[#101010]/80 hover:!bg-[#101010]/90 text-xs md:text-sm h-7 md:h-10 px-3 md:px-4 w-full md:w-auto justify-start md:justify-center">
+                  <span>
+                    <Camera className="w-3 h-3 md:w-4 md:h-4" />
+                    Change Banner
+                  </span>
+                </Button>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "banner")} />
+              </label>
+              
+              <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 !border-[#101010]/70 !bg-[#101010]/80 hover:!bg-[#101010]/90 cursor-move text-xs md:text-sm h-7 md:h-10 px-3 md:px-4 w-full md:w-auto justify-start md:justify-center"
+                >
+                  <Move className="w-3 h-3 md:w-4 md:h-4" />
+                  Drag to reposition
+                </Button>
+            </div>
+          )}
+        </div>
+
+        <div className={cn("absolute inset-0 z-20 flex items-center justify-center", isEditing ? "pointer-events-auto" : "pointer-events-none")}>
+          <div className={cn("flex w-full max-w-3xl flex-col items-center px-4 text-center mt-8 md:mt-0", isEditing && "mt-32 md:mt-0")}>
+            <div className="relative mb-3 pointer-events-auto">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-[#1C1C1E] overflow-hidden relative z-10 bg-zinc-800">
+                <Image
+                  src={isEditing ? editForm.avatar || profile.avatar : profile.avatar}
+                  alt={isEditing ? editForm.name || profile.name : profile.name}
+                  fill
+                  className="object-fill"
+                />
+                {isEditing && (
+                  <div className="absolute inset-0 z-20 bg-black/55 transition-colors hover:bg-black/65">
+                    <label className="flex h-full w-full cursor-pointer items-center justify-center">
+                      <Camera className="w-5 h-5 md:w-7 md:h-7 text-white/85" />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "avatar")} />
+                    </label>
+                  </div>
+                )}
+              </div>
+              {profile.isOnline && (
+                <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2 w-3 h-3 md:w-5 md:h-5 bg-emerald-500 border-2 md:border-4 border-[#1C1C1E] rounded-full z-20" title="Online" />
+              )}
+              <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-white/10 text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded-full border border-white/25 z-20 backdrop-blur-sm">
+                Lvl {profile.level}
               </div>
             </div>
+
+            {isEditing ? (
+              <div className="mb-3 w-full max-w-[300px] space-y-1.5">
+                <input
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full rounded-2xl border border-white/10 bg-[#1C1C1E]/70 px-2.5 py-1 text-center text-2xl md:text-3xl font-bold text-white outline-none focus:border-white/25"
+                  placeholder="Display name"
+                />
+                <input
+                  value={editForm.handle}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
+                  className="w-full rounded-2xl border border-white/10 bg-[#1C1C1E]/70 px-2.5 py-1 text-center text-xs md:text-sm text-zinc-200 outline-none focus:border-white/25"
+                  placeholder="@handle"
+                />
+              </div>
+            ) : (
+              <>
+                <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 flex items-center justify-center gap-2 max-w-full">
+                  <span className="truncate max-w-[200px] sm:max-w-[300px] md:max-w-none">{profile.name}</span>
+                  {isFounderProfile ? (
+                    <FounderMark />
+                  ) : (
+                    isSeller && <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 flex-shrink-0" />
+                  )}
+                </h1>
+                <p className="text-zinc-300 text-xs md:text-sm mb-3 truncate max-w-[250px] sm:max-w-[350px] mx-auto">{profile.handle}</p>
+              </>
+            )}
+
+            <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#1C1C1E] p-4 md:p-5 text-left focus-within:border-white/25 focus-within:ring-1 focus-within:ring-white/15">
+              <h2 className="mb-2 text-lg md:text-xl font-bold text-white flex justify-between items-center">
+                About
+                {isEditing && (
+                   <span className={cn("text-xs", editForm.description.length > 250 ? "text-red-400" : "text-zinc-500")}>
+                     {editForm.description.length}/250
+                   </span>
+                )}
+              </h2>
+              {isEditing ? (
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= 250) {
+                      setEditForm((prev) => ({ ...prev, description: val }));
+                    }
+                  }}
+                  className="h-[120px] w-full resize-none border-none bg-transparent text-sm leading-relaxed text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0 md:text-base overflow-y-auto"
+                  placeholder="Write your bio (max 250 characters)..."
+                />
+              ) : (
+                <p className="text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap md:text-base">
+                  <BioText text={profile.description || ""} isWhatnotMarket={normalizeHandle(profile.handle) === "whatnotmarket"} />
+                </p>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+
       </div>
 
-      <main className="container mx-auto px-4 sm:px-6 relative z-20 -mt-24">
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
-          <div className="space-y-6">
+      <main className="container mx-auto px-4 sm:px-6 relative z-20 mt-2 md:mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8 items-start">
+          <div className="space-y-6 lg:sticky lg:top-20">
             <Squircle
               radius={32}
               smoothing={1}
               className="w-full drop-shadow-2xl"
-              innerClassName="bg-[#1C1C1E] border border-white/10 overflow-hidden p-6"
+              innerClassName="bg-[#1C1C1E] border border-white/10 overflow-hidden p-4 md:p-6"
             >
               <div className="flex flex-col items-center text-center relative">
-                {!isEditing && isOwnProfile ? (
-                  <button
-                    onClick={handleEditClick}
-                    className="absolute top-0 right-0 p-2 text-zinc-500 hover:text-white transition-colors"
-                    title="Edit Profile"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                ) : isEditing && isOwnProfile ? (
-                  <div className="absolute top-0 right-0 flex gap-2">
-                    <button
-                      onClick={handleCancelEdit}
-                      className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
-                      title="Cancel"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className="p-2 text-emerald-500 hover:text-emerald-400 transition-colors"
-                      title="Save"
-                    >
-                      <Save className="w-4 h-4" />
-                    </button>
+
+                <div className="grid grid-cols-2 gap-2 md:gap-3 w-full mb-4 md:mb-6">
+                  <div className="bg-[#2C2C2E] rounded-xl p-2 md:p-3 flex flex-col items-center justify-center border border-white/5">
+                    <span className="text-base md:text-lg font-bold text-white">{profile.followers}</span>
+                    <span className="text-[10px] md:text-xs text-zinc-500">Followers</span>
                   </div>
-                ) : null}
-
-                <div className="relative mb-4 group">
-                  <div className="w-32 h-32 rounded-full border-4 border-[#1C1C1E] overflow-hidden relative z-10 bg-zinc-800">
-                    <Image
-                      src={isEditing ? editForm.avatar || profile.avatar : profile.avatar}
-                      alt={profile.name}
-                      fill
-                      className="object-fill"
-                    />
-
-                    {isEditing && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors z-20">
-                        <label className="cursor-pointer w-full h-full flex items-center justify-center">
-                          <Camera className="w-8 h-8 text-white/80" />
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "avatar")} />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-
-                  {!isEditing && profile.isOnline && (
-                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-emerald-500 border-4 border-[#1C1C1E] rounded-full z-20" title="Online" />
-                  )}
-
-                  {!isEditing && (
-                    <div className="absolute -top-2 -right-2 bg-white/10 text-white text-xs font-bold px-2 py-1 rounded-full border border-white/25 z-20 backdrop-blur-sm">
-                      Lvl {profile.level}
-                    </div>
-                  )}
-                </div>
-
-                {isEditing ? (
-          <div className="mb-6 w-full max-w-xs space-y-3">
-            <div>
-              <label className="text-xs uppercase text-zinc-500 tracking-wider">Display Name</label>
-              <input
-                value={editForm.name}
-                onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-                className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
-                placeholder="Use your username"
-              />
-            </div>
-            <div>
-              <label className="text-xs uppercase text-zinc-500 tracking-wider">Handle</label>
-              <input
-                value={editForm.handle}
-                onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
-                className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
-                placeholder="@"
-              />
-            </div>
-                  </div>
-                ) : (
-                  <>
-                    <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2 mt-2">
-                      {profile.name}
-                      {isFounderProfile ? (
-                        <FounderMark />
-                      ) : (
-                        isSeller && <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                      )}
-                    </h1>
-                    <p className="text-zinc-500 text-sm mb-6">{profile.handle}</p>
-                  </>
-                )}
-
-                <div className="grid grid-cols-2 gap-3 w-full mb-6">
-                  <div className="bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
-                    <span className="text-lg font-bold text-white">{profile.followers}</span>
-                    <span className="text-xs text-zinc-500">Followers</span>
-                  </div>
-                  <div className="bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-white/5">
-                    <span className="text-lg font-bold text-white">{profile.following}</span>
-                    <span className="text-xs text-zinc-500">Following</span>
+                  <div className="bg-[#2C2C2E] rounded-xl p-2 md:p-3 flex flex-col items-center justify-center border border-white/5">
+                    <span className="text-base md:text-lg font-bold text-white">{profile.following}</span>
+                    <span className="text-[10px] md:text-xs text-zinc-500">Following</span>
                   </div>
                 </div>
 
                 {!isEditing && resolvedTargetId && !isOwnProfile && (
-                  <button
-                    onClick={handleFollowToggle}
-                    disabled={isFollowLoading}
-                    className={cn(
-                      "w-full h-10 rounded-xl font-bold mb-6 transition-all",
-                      isFollowing
-                        ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        : "bg-white text-black hover:bg-zinc-200",
-                      isFollowLoading && "opacity-70 cursor-not-allowed"
-                    )}
-                  >
-                    {isFollowLoading ? "Updating..." : isFollowing ? "Following" : "Follow"}
-                  </button>
-                )}
+                  <div className="w-full mb-4 md:mb-6 space-y-2 md:space-y-3">
+                    <button
+                      onClick={handleFollowToggle}
+                      disabled={isFollowLoading}
+                      className={cn(
+                        "w-full h-9 md:h-10 rounded-xl font-bold transition-all text-sm md:text-base",
+                        isFollowing
+                          ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                          : "bg-white text-black hover:bg-zinc-200",
+                        isFollowLoading && "opacity-70 cursor-not-allowed"
+                      )}
+                    >
+                      {isFollowLoading ? "Updating..." : isFollowing ? "Following" : "Follow"}
+                    </button>
+                    
+                    <button
+                       className="w-full h-9 md:h-10 rounded-xl font-bold bg-black text-white hover:bg-zinc-900 border border-white/10 flex items-center justify-center gap-2 transition-all text-sm md:text-base"
+                     >
+                       <Image 
+                         src="/chat.png" 
+                         alt="Chat" 
+                         width={20} 
+                         height={20} 
+                         className="w-4 h-4 md:w-5 md:h-5 object-contain" 
+                       />
+                       Chat
+                     </button>
 
-                <div className="w-full h-px bg-white/5 mb-6" />
+                     <div className="flex gap-2 pt-1 md:pt-2">
+                        <button className="flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all group">
+                           <Ban className="w-3 h-3 md:w-3.5 md:h-3.5 group-hover:text-red-500" />
+                           Block
+                        </button>
+                        <button className="flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-white border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all">
+                           <Flag className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                           Report
+                        </button>
+                     </div>
+                   </div>
+                 )}
 
-                <div className="w-full space-y-4 text-sm">
+                <div className="w-full h-px bg-white/5 mb-4 md:mb-6" />
+
+                <div className="w-full space-y-3 md:space-y-4 text-xs md:text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 flex items-center gap-2">
-                      <Calendar className="w-4 h-4" /> Member Since
+                    <span className="text-zinc-500 flex items-center gap-1.5 md:gap-2">
+                      <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" /> Member Since
                     </span>
                     <span className="text-zinc-300 font-medium">{profile.memberSince}</span>
                   </div>
@@ -951,70 +1216,65 @@ export function ProfileClient({
                   {isSeller && (
                     <>
                       <div className="flex items-center justify-between">
-                        <span className="text-zinc-500 flex items-center gap-2">
-                          <Package className="w-4 h-4" /> Deliveries
+                        <span className="text-zinc-500 flex items-center gap-1.5 md:gap-2">
+                          <Package className="w-3.5 h-3.5 md:w-4 md:h-4" /> {isFounderProfile ? "Transactions" : "Delivery"}
                         </span>
-                        <span className="text-emerald-400 font-bold">{profile.successfulDeliveries.toLocaleString()}</span>
+                        <span className="text-white font-bold text-[10px] md:text-sm">
+                           {profile.deliveryRate}% <span className="text-zinc-500 font-normal ml-0.5 md:ml-1">({profile.totalLifetimeOrders.toLocaleString()})</span>
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-zinc-500 flex items-center gap-2">
-                          <Clock className="w-4 h-4" /> Response Time
+                        <span className="text-zinc-500 flex items-center gap-1.5 md:gap-2">
+                          <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" /> Response Time
                         </span>
                         <span className="text-zinc-300 font-medium">{profile.avgResponseTime}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-500 flex items-center gap-1.5 md:gap-2">
+                          <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" /> Last 30 Days
+                        </span>
+                        <span className="text-emerald-400 font-bold">{profile.last30DaysScore}%</span>
                       </div>
                     </>
                   )}
 
                   {!isSeller && (
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 flex items-center gap-2">
-                        <Package className="w-4 h-4" /> Purchases
+                      <span className="text-zinc-500 flex items-center gap-1.5 md:gap-2">
+                        <Package className="w-3.5 h-3.5 md:w-4 md:h-4" /> Purchases
                       </span>
                       <span className="text-zinc-300 font-bold">{profile.totalPurchases}</span>
                     </div>
                   )}
                 </div>
-              </div>
-            </Squircle>
 
-            <Squircle
-              radius={24}
-              smoothing={1}
-              className="w-full"
-              innerClassName="bg-[#1C1C1E] border border-white/10 p-5"
-            >
-              <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4">
-                {isSeller ? "Seller Status" : "Buyer Status"}
-              </h3>
+                <div className="w-full h-px bg-white/5 my-4 md:my-6" />
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br",
-                      isSeller ? "from-emerald-500/20 to-teal-500/20 text-emerald-400" : "from-blue-500/20 to-indigo-500/20 text-blue-400"
-                    )}
-                  >
-                    <TrendingUp className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-white">{isSeller ? profile.sellerRanking : profile.buyerRanking}</div>
-                    <div className="text-xs text-zinc-500">Ranking</div>
-                  </div>
-                </div>
+                <div className="w-full text-left">
+                  <h3 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-wider mb-3 md:mb-4">
+                    {isFounderProfile && isSeller ? "Escrow Status" : (isSeller ? "Seller Status" : "Buyer Status")}
+                  </h3>
 
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br",
-                      isSeller ? "from-amber-500/20 to-yellow-500/20 text-amber-400" : "from-purple-500/20 to-pink-500/20 text-purple-400"
-                    )}
-                  >
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-white">{isSeller ? profile.sellerProtection : profile.buyerProtection}</div>
-                    <div className="text-xs text-zinc-500">Protection Level</div>
+                  <div className="space-y-2 md:space-y-3">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-zinc-800 text-white">
+                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs md:text-sm font-bold text-white">{isSeller ? profile.sellerRanking : profile.buyerRanking}</div>
+                        <div className="text-[10px] md:text-xs text-zinc-500">Ranking</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-zinc-800 text-white">
+                        <ShieldCheck className="w-4 h-4 md:w-5 md:h-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs md:text-sm font-bold text-white">{isSeller ? profile.sellerProtection : profile.buyerProtection}</div>
+                        <div className="text-[10px] md:text-xs text-zinc-500">Protection Level</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1022,28 +1282,6 @@ export function ProfileClient({
           </div>
 
           <div className="space-y-8">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">About</h2>
-                {isEditing && <span className="text-xs text-emerald-400 font-medium animate-pulse">Editing mode active</span>}
-              </div>
-
-              {isEditing ? (
-                <div className="bg-[#1C1C1E] p-6 rounded-3xl border border-emerald-500/30 ring-1 ring-emerald-500/20">
-                  <textarea
-                    value={editForm.description}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                    className="w-full min-h-[120px] bg-transparent border-none text-white placeholder:text-zinc-500 focus:ring-0 resize-none text-sm md:text-base leading-relaxed"
-                    placeholder="Write your bio..."
-                  />
-                </div>
-              ) : (
-                <p className="text-zinc-400 leading-relaxed text-sm md:text-base bg-[#1C1C1E] p-6 rounded-3xl border border-white/5 whitespace-pre-wrap">
-                  {profile.description || "No bio yet."}
-                </p>
-              )}
-            </div>
-
             <div className="space-y-6">
               <div className="flex items-center gap-6 border-b border-white/10 pb-1">
                 <button
@@ -1054,6 +1292,9 @@ export function ProfileClient({
                   )}
                 >
                   {isSeller ? "My Offers" : "What I Buy"}
+                  <span className="text-xs bg-zinc-800 px-1.5 py-0.5 rounded ml-1 text-zinc-400">
+                    {isSeller ? profile.totalOffers : profile.totalPurchases}
+                  </span>
                 </button>
                 <button
                   onClick={() => setActiveTab("reviews")}
@@ -1069,7 +1310,7 @@ export function ProfileClient({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeTab === "listings" &&
                   isSeller &&
-                  MOCK_LISTINGS.map((item) => (
+                  offerItems.map((item) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -1077,13 +1318,23 @@ export function ProfileClient({
                       className="group relative bg-[#1C1C1E] hover:bg-[#252527] border border-white/5 rounded-2xl p-4 transition-all cursor-pointer"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 bg-[#2C2C2E] rounded-xl flex items-center justify-center text-base font-bold">{item.image}</div>
+                        <div className="w-16 h-16 bg-[#2C2C2E] rounded-xl flex items-center justify-center text-base font-bold">
+                           {/* Placeholder icon since offers don't have images yet */}
+                           <Package className="w-6 h-6 text-zinc-500" />
+                        </div>
                         <div>
                           <h3 className="text-white font-bold text-sm mb-1 group-hover:text-emerald-400 transition-colors">{item.title}</h3>
                           <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
-                            <span>{item.sold} sold</span>
+                            <span className={cn(
+                              "font-medium",
+                              item.status === "pending" ? "text-yellow-400" :
+                              item.status === "accepted" ? "text-emerald-400" :
+                              item.status === "rejected" ? "text-red-400" : "text-zinc-400"
+                            )}>
+                              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                            </span>
                             <span>-</span>
-                            <span className="text-emerald-400 font-medium">Instant Delivery</span>
+                            <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                           </div>
                           <div className="text-white font-bold">${item.price.toFixed(2)}</div>
                         </div>
@@ -1110,6 +1361,12 @@ export function ProfileClient({
                     </motion.div>
                   ))}
               </div>
+
+              {activeTab === "listings" && isSeller && offerItems.length === 0 && (
+                <div className="rounded-2xl border border-white/10 bg-[#1C1C1E] p-5 text-sm text-zinc-400">
+                  No active offers. Listings will appear here once they are created.
+                </div>
+              )}
 
               {activeTab === "listings" && !isSeller && purchaseItems.length === 0 && (
                 <div className="rounded-2xl border border-white/10 bg-[#1C1C1E] p-5 text-sm text-zinc-400">No purchases yet. What you buy will appear here.</div>

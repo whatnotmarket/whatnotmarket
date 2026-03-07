@@ -41,7 +41,7 @@ export default async function ProfileBySlugPage({ params }: ProfileBySlugPagePro
   }
 
   if (isUuid(decodedSlug)) {
-    return <ProfileClient targetProfileId={decodedSlug} />;
+    return <ProfileClient key={decodedSlug} targetProfileId={decodedSlug} />;
   }
 
   if (/^0x[a-fA-F0-9]{40}$/.test(decodedSlug)) {
@@ -55,10 +55,10 @@ export default async function ProfileBySlugPage({ params }: ProfileBySlugPagePro
       .maybeSingle<{ supabase_user_id: string }>();
 
     if (data?.supabase_user_id) {
-      return <ProfileClient targetProfileId={data.supabase_user_id} />;
+      return <ProfileClient key={data.supabase_user_id} targetProfileId={data.supabase_user_id} />;
     }
 
-    return <ProfileClient targetHandle={walletAddress} />;
+    return <ProfileClient key={walletAddress} targetHandle={walletAddress} />;
   }
 
   const handle = normalizeHandle(decodedSlug);
@@ -66,5 +66,5 @@ export default async function ProfileBySlugPage({ params }: ProfileBySlugPagePro
     redirect("/profile");
   }
 
-  return <ProfileClient targetHandle={handle} />;
+  return <ProfileClient key={handle} targetHandle={handle} />;
 }

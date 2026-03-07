@@ -31,6 +31,7 @@ function ProfileSearchPageContent() {
 
   return (
     <ProfileClient
+      key={searchParams.get("id") || normalizedHandle || "default"}
       targetProfileId={searchParams.get("id")}
       targetHandle={normalizedHandle}
       routeRole={routeRole}

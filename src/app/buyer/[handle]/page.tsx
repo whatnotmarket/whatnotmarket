@@ -56,5 +56,5 @@ export default async function BuyerProfilePage({ params }: BuyerProfilePageProps
         ? "buyer"
         : "buyer";
 
-  return <ProfileClient targetProfileId={profile.id} targetHandle={canonicalHandle} routeRole={resolvedRole} />;
+  return <ProfileClient key={profile.id} targetProfileId={profile.id} targetHandle={canonicalHandle} routeRole={resolvedRole} />;
 }
