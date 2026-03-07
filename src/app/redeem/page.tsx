@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { marketToast as toast } from "@/lib/notifications";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 import { cn } from "@/lib/utils";
@@ -176,3 +176,4 @@ export default function RedeemPage() {
     </div>
   );
 }
+

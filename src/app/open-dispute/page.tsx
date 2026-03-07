@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/primitives/input";
 import { Textarea } from "@/components/ui/primitives/textarea";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { toast } from "sonner";
+import { dealsToast as toast } from "@/lib/notifications";
 
 export default function OpenDisputePage() {
   const router = useRouter();
@@ -161,3 +161,4 @@ export default function OpenDisputePage() {
     </div>
   );
 }
+

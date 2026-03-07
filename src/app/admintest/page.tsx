@@ -25,7 +25,7 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
-import { toast } from "sonner";
+import { adminToast as toast } from "@/lib/notifications";
 import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -2124,4 +2124,5 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+
 

@@ -15,9 +15,12 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import { toast } from "sonner";
+import { authToast as toast } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase";
 import { AppKitProvider } from "@/reown/AppKitProvider";
+import BlurText from "@/components/ui/blur-text";
+import ShinyText from "@/components/ui/shiny-text";
+import TiltedCard from "@/components/ui/tilted-card";
 
 export const dynamic = "force-dynamic";
 const carouselImages = ["/affiliate-bg.svg", "/framehero.svg", "/notifiche.svg"] as const;
@@ -353,46 +356,60 @@ const LoginCarousel = memo(function LoginCarousel({
       </section>
 
       <section className="hidden h-full w-full rounded-[36px] p-1 lg:block lg:max-w-[560px] lg:justify-self-end xl:-ml-12 xl:max-w-none xl:w-[calc(100%+3rem)]">
-        <div
-          className="relative h-full min-h-0 select-none rounded-[32px] bg-[#0a0b0d]"
-          style={{ touchAction: "pan-y" }}
-          onPointerDown={handleSliderPointerDown}
-          onPointerUp={handleSliderPointerUp}
-          onPointerCancel={handleSliderPointerCancel}
+        <TiltedCard
+          containerHeight="100%"
+          containerWidth="100%"
+          imageHeight="100%"
+          imageWidth="100%"
+          rotateAmplitude={8}
+          scaleOnHover={1.02}
+          showMobileWarning={false}
+          showTooltip={false}
+          displayOverlayContent={false}
+          className="h-full w-full select-none rounded-[32px]"
+          innerClassName="h-full w-full rounded-[32px]"
         >
-          {carouselImages.map((src, index) => (
-            <div
-              key={src}
-              className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${
-                index === activeSlide ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <Image
-                src={src}
-                alt={`Slide ${index + 1}`}
-                fill
-                className="rounded-[32px] object-cover object-center"
-                sizes="(max-width: 1023px) 0px, 50vw"
-                priority={index === 0 && isDesktopViewport}
-                draggable={false}
-              />
-            </div>
-          ))}
-
-          <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2">
-            {carouselImages.map((_, index) => (
-              <button
-                key={`indicator-${index}`}
-                type="button"
-                aria-label={`Vai alla slide ${index + 1}`}
-                onClick={() => setActiveSlide(index)}
-                className={`h-1.5 w-10 rounded-full transition-colors motion-reduce:transition-none ${
-                  index === activeSlide ? "bg-white" : "bg-white/35 hover:bg-white/55"
+          <div
+            className="relative h-full min-h-0 overflow-hidden rounded-[32px] bg-[#0a0b0d]"
+            style={{ touchAction: "pan-y" }}
+            onPointerDown={handleSliderPointerDown}
+            onPointerUp={handleSliderPointerUp}
+            onPointerCancel={handleSliderPointerCancel}
+          >
+            {carouselImages.map((src, index) => (
+              <div
+                key={src}
+                className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${
+                  index === activeSlide ? "opacity-100" : "opacity-0"
                 }`}
-              />
+              >
+                <Image
+                  src={src}
+                  alt={`Slide ${index + 1}`}
+                  fill
+                  className="rounded-[32px] object-cover object-center"
+                  sizes="(max-width: 1023px) 0px, 50vw"
+                  priority={index === 0 && isDesktopViewport}
+                  draggable={false}
+                />
+              </div>
             ))}
+
+            <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2">
+              {carouselImages.map((_, index) => (
+                <button
+                  key={`indicator-${index}`}
+                  type="button"
+                  aria-label={`Vai alla slide ${index + 1}`}
+                  onClick={() => setActiveSlide(index)}
+                  className={`h-1.5 w-10 rounded-full transition-colors motion-reduce:transition-none ${
+                    index === activeSlide ? "bg-white" : "bg-white/35 hover:bg-white/55"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </TiltedCard>
       </section>
     </>
   );
@@ -818,10 +835,27 @@ function TestLoginContent() {
 
           <div className="w-full space-y-1.5">
             <h1 className="w-full max-w-full text-center font-[Inter] text-[34px] leading-[1.05] font-[800] text-white whitespace-normal sm:text-[42px] xl:whitespace-nowrap">
-              Join WhatnotMarket
+              <BlurText
+                text="Join WhatnotMarket"
+                delay={100}
+                animateBy="words"
+                direction="bottom"
+                className="w-full justify-center"
+              />
             </h1>
             <p className="w-full text-center font-[Inter] text-[16px] text-zinc-300 whitespace-normal sm:text-[18px] xl:whitespace-nowrap">
-              The #1 Marketplace Where You Can Find Anything You Want
+              <ShinyText
+                text="The #1 Marketplace Where You Can Find Anything You Want"
+                speed={2.1}
+                delay={0}
+                color="#b5b5b5"
+                shineColor="#ffffff"
+                spread={120}
+                direction="left"
+                yoyo
+                pauseOnHover
+                disabled={false}
+              />
             </p>
           </div>
 
@@ -999,3 +1033,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NETWORKS, CURRENCIES, getCurrenciesForNetwork, Network, Currency } from "@/lib/payments/catalog";
 import { createPaymentIntentAction, simulatePaymentDetection } from "@/app/deals/payment-actions"; // Adjust path if needed
 import QRCode from "react-qr-code";
-import { toast } from "sonner";
+import { paymentsToast as toast } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 
 interface PaymentPanelProps {
@@ -242,3 +242,4 @@ export function PaymentPanel({ dealId, amount, isBuyer }: PaymentPanelProps) {
     </Card>
   );
 }
+

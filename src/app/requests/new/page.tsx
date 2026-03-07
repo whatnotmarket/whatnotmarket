@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/primitives/card";
 import { Container } from "@/components/ui/primitives/container";
-import { toast } from "sonner";
+import { marketToast as toast } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 import { CRYPTO_CURRENCIES, useCrypto } from "@/contexts/CryptoContext";
 import Image from "next/image";
@@ -439,4 +439,5 @@ export default function CreateRequestPage() {
     </div>
   );
 }
+
 

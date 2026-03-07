@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Loader2, Wallet, XCircle } from "lucide-react";
 import { parseEther } from "viem";
-import { toast } from "sonner";
+import { paymentsToast as toast } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { useWallet } from "@/contexts/WalletContext";
@@ -395,3 +395,4 @@ export function ListingWalletPayment({
     </>
   );
 }
+

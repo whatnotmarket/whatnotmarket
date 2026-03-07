@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { dealsToast as toast } from "@/lib/notifications";
 import { PaymentPanel } from "@/components/PaymentPanel";
 import { createClient } from "@/lib/supabase";
 
@@ -360,3 +360,4 @@ export default function DealRoomPage() {
     </div>
   );
 }
+

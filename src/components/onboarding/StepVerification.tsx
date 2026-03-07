@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { authToast as toast } from "@/lib/notifications";
 
 interface StepVerificationProps {
   mockBotOpen: boolean;
@@ -88,3 +88,4 @@ export function StepVerification({
     </motion.div>
   );
 }
+

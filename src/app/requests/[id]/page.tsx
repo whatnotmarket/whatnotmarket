@@ -7,7 +7,7 @@ import { MapPin, Clock, DollarSign, ArrowLeft, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Modal } from "@/components/ui/Modal";
-import { toast } from "sonner";
+import { dealsToast as toast } from "@/lib/notifications";
 import { Container } from "@/components/ui/primitives/container";
 import { Card } from "@/components/ui/primitives/card";
 import { Input } from "@/components/ui/primitives/input";
@@ -491,4 +491,5 @@ export default function RequestDetailPage() {
     </div>
   );
 }
+
 

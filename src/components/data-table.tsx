@@ -36,7 +36,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { toast } from "sonner"
+import { adminToast as toast } from "@/lib/notifications"
 import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -811,3 +811,4 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     </Drawer>
   )
 }
+

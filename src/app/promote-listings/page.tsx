@@ -27,7 +27,7 @@ import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { marketToast as toast } from "@/lib/notifications";
 
 // Schema for Step 2
 const applicationSchema = z.object({
@@ -485,3 +485,4 @@ I request to activate Sponsored Listings for my account.`;
     </div>
   );
 }
+

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { authToast as toast } from "@/lib/notifications";
 import { updateRolePreference, submitPayoutInfo, verifySellerCode, generateMockTelegramCode } from "./actions";
 
 import { StepRole } from "@/components/onboarding/StepRole";
@@ -151,3 +151,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

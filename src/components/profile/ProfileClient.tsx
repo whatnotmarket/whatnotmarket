@@ -21,7 +21,7 @@ import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
 import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { profileToast as toast } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase";
 
 const MOCK_LISTINGS = [
@@ -1127,3 +1127,4 @@ export function ProfileClient({
     </div>
   );
 }
+
