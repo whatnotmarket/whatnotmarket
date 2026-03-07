@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   AlertTriangle,
   Bell,
@@ -57,12 +57,16 @@ type SectionKey =
   | "invites"
   | "audit"
   | "risk"
-  | "system";
+  | "system"
+  | "config";
 
 type DashboardData = {
   metrics: Record<string, number>;
   charts: {
     activity: Array<{ date: string; users?: number; requests?: number; deals?: number; payments?: number }>;
+    payment_status?: Array<{ status: string; value: number }>;
+    deal_status?: Array<{ status: string; value: number }>;
+    ledger_flow?: Array<{ type: string; value: number }>;
   };
   sections: Record<string, any>;
 };
@@ -86,6 +90,7 @@ const sectionList: Array<{ key: SectionKey; slug: string; label: string; icon: R
   { key: "audit", slug: "audit", label: "Audit Logs", icon: <ClipboardList /> },
   { key: "risk", slug: "risk", label: "Risk", icon: <AlertTriangle /> },
   { key: "system", slug: "system", label: "System", icon: <Wrench /> },
+  { key: "config", slug: "config", label: "Config", icon: <Wrench /> },
 ];
 
 const slugToSection = new Map<string, SectionKey>(sectionList.map((item) => [item.slug || "overview", item.key]));
@@ -108,9 +113,8 @@ function fdate(value: string | null | undefined) {
   return d.toLocaleString();
 }
 
-function adminTestFetch(path: string, init?: RequestInit) {
+function adminFetch(path: string, init?: RequestInit) {
   const headers = new Headers(init?.headers);
-  headers.set("x-admin-test-bypass", "1");
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -177,11 +181,13 @@ export default function AdminPage() {
     link: "",
   });
   const [followDraft, setFollowDraft] = useState({ followerHandle: "", targetHandle: "whatnotmarket" });
+  const [configDraft, setConfigDraft] = useState({ key: "", value: "{}", description: "" });
 
   useEffect(() => {
     const path = pathname || "/admintest";
-    const slug = path.startsWith("/admintest/")
-      ? path.slice("/admintest/".length).split("/")[0] || "overview"
+    const basePath = path.startsWith("/admin") ? "/admin" : "/admintest";
+    const slug = path.startsWith(`${basePath}/`)
+      ? path.slice(`${basePath}/`.length).split("/")[0] || "overview"
       : "overview";
     setActive(slugToSection.get(slug) || "overview");
   }, [pathname]);
@@ -189,7 +195,7 @@ export default function AdminPage() {
   const loadDashboard = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await adminTestFetch("/api/admin/dashboard/overview");
+      const res = await adminFetch("/api/admin/dashboard/overview");
       const payload = (await res.json().catch(() => null)) as unknown;
       const isObjectPayload = payload !== null && typeof payload === "object";
       const maybeError =
@@ -219,7 +225,7 @@ export default function AdminPage() {
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await adminTestFetch(`/api/admin/dashboard/search?q=${encodeURIComponent(q)}`);
+        const res = await adminFetch(`/api/admin/dashboard/search?q=${encodeURIComponent(q)}`);
         const payload = (await res.json().catch(() => null)) as
           | { results?: Record<string, Array<Record<string, any>>>; error?: string }
           | null;
@@ -245,7 +251,7 @@ export default function AdminPage() {
       return;
     }
     try {
-      const res = await adminTestFetch("/api/admin/dashboard/action", {
+      const res = await adminFetch("/api/admin/dashboard/action", {
         method: "POST",
         body: JSON.stringify({ action, targetId, value: value ?? null, note }),
       });
@@ -282,6 +288,10 @@ export default function AdminPage() {
           ["DAU / WAU", `${data?.metrics.dau || 0} / ${data?.metrics.wau || 0}`],
           ["GMV", `$${Number(data?.metrics.gmv || 0).toFixed(2)}`],
           ["Fees", `$${Number(data?.metrics.feesGenerated || 0).toFixed(2)}`],
+          ["Open requests", data?.metrics.requestsOpen || 0],
+          ["Escrow queue", data?.metrics.listingPaymentsAwaitingRelease || 0],
+          ["Dispute rate", `${Number(data?.metrics.disputeRate || 0).toFixed(2)}%`],
+          ["Refund rate", `${Number(data?.metrics.refundRate || 0).toFixed(2)}%`],
         ].map(([label, value]) => (
           <Card key={label} className="border-zinc-800 bg-zinc-950">
             <CardHeader className="pb-2">
@@ -310,6 +320,48 @@ export default function AdminPage() {
           </ChartContainer>
         </CardContent>
       </Card>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <Card className="border-zinc-800 bg-zinc-950">
+          <CardHeader>
+            <CardTitle>Payments By Status</CardTitle>
+            <CardDescription>Escrow pipeline health.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{ value: { label: "Payments", color: "#22c55e" } }}
+              className="h-[280px] w-full"
+            >
+              <BarChart data={data?.charts.payment_status || []}>
+                <CartesianGrid vertical={false} strokeDasharray="4 4" />
+                <XAxis dataKey="status" tickLine={false} axisLine={false} interval={0} angle={-25} textAnchor="end" height={70} />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                <Bar dataKey="value" fill="#22c55e" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+        <Card className="border-zinc-800 bg-zinc-950">
+          <CardHeader>
+            <CardTitle>Ledger Flow</CardTitle>
+            <CardDescription>Amounts by ledger type.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{ value: { label: "Amount", color: "#f59e0b" } }}
+              className="h-[280px] w-full"
+            >
+              <BarChart data={data?.charts.ledger_flow || []}>
+                <CartesianGrid vertical={false} strokeDasharray="4 4" />
+                <XAxis dataKey="type" tickLine={false} axisLine={false} />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                <Bar dataKey="value" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 
@@ -368,7 +420,11 @@ export default function AdminPage() {
                   <td className="p-2">
                     <div className="grid grid-cols-2 gap-2">
                       <Button size="sm" variant="outline" className="border-zinc-700" onClick={() => runAction("user.resetOnboarding", user.id)}>Reset Onboarding</Button>
-                      {user.is_admin ? <Button size="sm" variant="outline" className="border-red-800 text-red-300" onClick={() => runAction("user.revokeAdmin", user.id, null, { requireNote: true })}>Revoke Admin</Button> : null}
+                      {user.is_admin ? (
+                        <Button size="sm" variant="outline" className="border-red-800 text-red-300" onClick={() => runAction("user.revokeAdmin", user.id, null, { requireNote: true })}>Revoke Admin</Button>
+                      ) : (
+                        <Button size="sm" variant="outline" className="border-zinc-700" onClick={() => runAction("user.setAdmin", user.id, true, { requireNote: true })}>Grant Admin</Button>
+                      )}
                       <Button size="sm" variant="outline" className="border-zinc-700" onClick={() => runAction("user.setAccountStatus", user.id, { status: "suspended", duration: "24h" }, { requireNote: true })}>Suspend 24h</Button>
                       <Button size="sm" variant="outline" className="border-zinc-700" onClick={() => runAction("user.setAccountStatus", user.id, { status: "active" }, { requireNote: true })}>Activate</Button>
                       <Button size="sm" variant="outline" className="border-red-800 text-red-300" onClick={() => runAction("user.ban", user.id, { duration: "720h" }, { requireNote: true })}>Ban</Button>
@@ -484,7 +540,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             <Input placeholder="follower handle" value={followDraft.followerHandle} onChange={(e) => setFollowDraft((p) => ({ ...p, followerHandle: e.target.value }))} className="border-zinc-700 bg-black" />
             <Input placeholder="target handle" value={followDraft.targetHandle} onChange={(e) => setFollowDraft((p) => ({ ...p, targetHandle: e.target.value }))} className="border-zinc-700 bg-black" />
-            <Button variant="outline" className="border-zinc-700" onClick={async () => { try { const res = await adminTestFetch("/api/admin/notifications/test-follow", { method: "POST", body: JSON.stringify(followDraft) }); const payload = await res.json(); if (!res.ok || !payload?.ok) throw new Error(payload?.error || "Follow test failed"); toast.success("Follow test sent"); } catch (error) { toast.error(error instanceof Error ? error.message : "Follow test failed"); } }}>Test Follow Trigger</Button>
+            <Button variant="outline" className="border-zinc-700" onClick={async () => { try { const res = await adminFetch("/api/admin/notifications/test-follow", { method: "POST", body: JSON.stringify(followDraft) }); const payload = await res.json(); if (!res.ok || !payload?.ok) throw new Error(payload?.error || "Follow test failed"); toast.success("Follow test sent"); } catch (error) { toast.error(error instanceof Error ? error.message : "Follow test failed"); } }}>Test Follow Trigger</Button>
           </div>
         </CardContent>
       </Card>
@@ -512,25 +568,85 @@ export default function AdminPage() {
     </Card>
   );
 
+  const renderConfig = () => (
+    <div className="space-y-4">
+      <Card className="border-zinc-800 bg-zinc-950">
+        <CardHeader>
+          <CardTitle>Config Panel</CardTitle>
+          <CardDescription>Runtime admin settings stored in database.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <Input
+              placeholder="config key (e.g. invite_rules)"
+              value={configDraft.key}
+              onChange={(e) => setConfigDraft((p) => ({ ...p, key: e.target.value }))}
+              className="border-zinc-700 bg-black"
+            />
+            <Input
+              placeholder='JSON value (e.g. {"seller_review_required":true})'
+              value={configDraft.value}
+              onChange={(e) => setConfigDraft((p) => ({ ...p, value: e.target.value }))}
+              className="border-zinc-700 bg-black"
+            />
+            <Input
+              placeholder="description"
+              value={configDraft.description}
+              onChange={(e) => setConfigDraft((p) => ({ ...p, description: e.target.value }))}
+              className="border-zinc-700 bg-black"
+            />
+          </div>
+          <Button
+            onClick={() => {
+              try {
+                const parsed = JSON.parse(configDraft.value || "{}");
+                runAction(
+                  "config.set",
+                  configDraft.key,
+                  { key: configDraft.key, value: parsed, description: configDraft.description },
+                  { requireNote: true, success: "Config updated" }
+                );
+              } catch {
+                toast.error("Config value must be valid JSON");
+              }
+            }}
+            className="bg-white text-black hover:bg-zinc-200"
+          >
+            Save Config
+          </Button>
+        </CardContent>
+      </Card>
+      <JsonTable title="Admin Settings" rows={data?.sections.config?.admin_settings || []} />
+      <JsonTable title="Support Matrix" rows={data?.sections.config?.support_matrix || []} />
+      <JsonTable title="Networks" rows={data?.sections.config?.networks || []} />
+      <JsonTable title="Currencies" rows={data?.sections.config?.currencies || []} />
+    </div>
+  );
+
   const title = sectionList.find((section) => section.key === active)?.label || "Overview";
+  const routeBase = pathname?.startsWith("/admin") ? "/admin" : "/admintest";
   const navMainItems = sectionList.slice(0, 8).map((section) => ({
     title: section.label,
-    url: section.slug ? `/admintest/${section.slug}` : "/admintest",
+    url: section.slug ? `${routeBase}/${section.slug}` : routeBase,
     icon: section.icon,
     isActive: active === section.key,
   }));
   const documentItems = sectionList.slice(8, 14).map((section) => ({
     name: section.label,
-    url: section.slug ? `/admintest/${section.slug}` : "/admintest",
+    url: section.slug ? `${routeBase}/${section.slug}` : routeBase,
     icon: section.icon,
   }));
   const navSecondaryItems = [
     ...sectionList.slice(14).map((section) => ({
       title: section.label,
-      url: section.slug ? `/admintest/${section.slug}` : "/admintest",
+      url: section.slug ? `${routeBase}/${section.slug}` : routeBase,
       icon: section.icon,
     })),
-    { title: "Legacy Admin", url: "/admin", icon: <ShieldAlert /> },
+    {
+      title: routeBase === "/admin" ? "Open Admin Test" : "Open Admin",
+      url: routeBase === "/admin" ? "/admintest" : "/admin",
+      icon: <ShieldAlert />,
+    },
   ];
 
   return (
@@ -546,14 +662,14 @@ export default function AdminPage() {
         <AppSidebar
           variant="inset"
           brandName="Whatnot Admin"
-          brandHref="/admintest"
+          brandHref={routeBase}
           navMainItems={navMainItems}
           documentItems={documentItems}
           navSecondaryItems={navSecondaryItems}
           showQuickCreate={false}
           user={{
-            name: "Admin Test",
-            email: "admintest@whatnotmarket.local",
+            name: "Admin Console",
+            email: "admin@whatnotmarket.local",
             avatar: "/avatars/shadcn.jpg",
           }}
         />
@@ -685,22 +801,24 @@ export default function AdminPage() {
                 {active === "invites" && (
                   <div className="space-y-4">
                     <Card className="border-zinc-800 bg-zinc-950"><CardHeader><CardTitle>Invite Management</CardTitle><CardDescription>Create / revoke / delete invites</CardDescription></CardHeader>
-                      <CardContent><Button className="bg-white text-black hover:bg-zinc-200" onClick={() => { const code = window.prompt("Invite code")?.trim().toUpperCase() || ""; if (!code) return; runAction("invite.create", code, { code }, { success: "Invite created" }); }}>Create Invite</Button></CardContent>
+                      <CardContent><Button className="bg-white text-black hover:bg-zinc-200" onClick={() => { const code = window.prompt("Invite code")?.trim().toUpperCase() || ""; if (!code) return; const type = (window.prompt("Invite type: buyer | seller | founder")?.trim().toLowerCase() || "buyer"); const singleUse = (window.prompt("Single use? yes/no")?.trim().toLowerCase() || "no") === "yes"; const usageLimitRaw = window.prompt("Usage limit (empty = unlimited)")?.trim() || ""; const usageLimit = usageLimitRaw ? Number(usageLimitRaw) : null; const expiresAt = window.prompt("Expires at ISO (optional)")?.trim() || null; runAction("invite.create", code, { code, type, singleUse, usageLimit, expiresAt }, { success: "Invite created", requireNote: true }); }}>Create Invite</Button></CardContent>
                     </Card>
                     <Card className="border-zinc-800 bg-zinc-950">
                       <CardContent className="overflow-auto pt-6">
                         <table className="w-full min-w-[1000px] text-sm">
                           <thead>
                             <tr className="border-b border-zinc-800 text-left text-zinc-400">
-                              <th className="p-2">Code</th><th className="p-2">Status</th><th className="p-2">Used By</th><th className="p-2">Expires</th><th className="p-2">Actions</th>
+                              <th className="p-2">Code</th><th className="p-2">Type</th><th className="p-2">Status</th><th className="p-2">Usage</th><th className="p-2">Last used</th><th className="p-2">Expires</th><th className="p-2">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {(data.sections.invites || []).map((invite: any) => (
                               <tr key={invite.code} className="border-b border-zinc-900">
                                 <td className="p-2 font-mono">{invite.code}</td>
+                                <td className="p-2">{invite.type || "buyer"}</td>
                                 <td className="p-2"><Badge variant="outline">{invite.status}</Badge></td>
-                                <td className="p-2">{short(invite.used_by)}</td>
+                                <td className="p-2">{invite.usage_count || 0}{invite.usage_limit ? ` / ${invite.usage_limit}` : ""}{invite.single_use ? " (single)" : ""}</td>
+                                <td className="p-2">{fdate(invite.last_used_at)} {invite.last_used_by_handle ? `- ${invite.last_used_by_handle}` : ""}</td>
                                 <td className="p-2">{fdate(invite.expires_at)}</td>
                                 <td className="p-2">
                                   <div className="flex flex-wrap gap-2">
@@ -715,11 +833,13 @@ export default function AdminPage() {
                         </table>
                       </CardContent>
                     </Card>
+                    <JsonTable title="Invite Usages" rows={data.sections.invite_usages || []} />
                   </div>
                 )}
                 {active === "audit" && <JsonTable title="Audit Logs" rows={data.sections.audit_logs || []} />}
-                {active === "risk" && <JsonTable title="Risk Signals" rows={[...(data.sections.risk?.reused_wallets || []), ...(data.sections.risk?.duplicate_telegrams || []), ...(data.sections.risk?.high_risk_messages || [])]} />}
+                {active === "risk" && <JsonTable title="Risk Signals" rows={[...(data.sections.risk?.reused_wallets || []), ...(data.sections.risk?.duplicate_telegrams || []), ...(data.sections.risk?.duplicate_emails || []), ...(data.sections.risk?.suspicious_providers || []), ...(data.sections.risk?.high_risk_messages || [])]} />}
                 {active === "system" && <JsonTable title="System Health" rows={Object.entries(data.sections.system || {}).map(([key, value]) => ({ key, value }))} />}
+                {active === "config" && renderConfig()}
               </>
             ) : null}
                 </main>
@@ -731,3 +851,4 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+

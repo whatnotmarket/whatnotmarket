@@ -18,7 +18,8 @@ const offerStatuses = new Set(["pending", "accepted", "rejected"]);
 const dealStatuses = new Set(["verification", "completed", "cancelled"]);
 const roleValues = new Set(["buyer", "seller", "both"]);
 const sellerStatuses = new Set(["unverified", "pending_telegram", "verified", "rejected"]);
-const inviteStatuses = new Set(["active", "used", "revoked"]);
+const inviteStatuses = new Set(["active", "used", "revoked", "expired", "exhausted"]);
+const inviteTypes = new Set(["buyer", "seller", "founder"]);
 const verificationStatuses = new Set(["issued", "used", "expired"]);
 const listingPaymentStatuses = new Set([
   "pending",
@@ -43,6 +44,7 @@ const actionsRequiringNote = new Set([
   "user.ban",
   "user.setAccountStatus",
   "user.delete",
+  "user.setAdmin",
   "user.revokeAdmin",
   "user.forceLogout",
   "request.setStatus",
@@ -51,8 +53,10 @@ const actionsRequiringNote = new Set([
   "payment.transition",
   "wallet.unlink",
   "identity.unlink",
+  "invite.create",
   "invite.setStatus",
   "invite.delete",
+  "config.set",
   "proxyOrder.updateStatus",
 ]);
 
@@ -103,7 +107,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal note is required for this action" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Supabase admin connection is not configured" },
+      { status: 500 }
+    );
+  }
   const actorId = await resolveActorId();
   const auditMetadata: Record<string, unknown> = {
     note: note || null,
@@ -119,6 +131,13 @@ export async function POST(request: NextRequest) {
     const { error } = await admin.from("profiles").update({ is_admin: false }).eq("id", targetId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     targetType = "profile";
+  } else if (action === "user.setAdmin") {
+    if (!targetId) return NextResponse.json({ error: "targetId is required" }, { status: 400 });
+    const setAdmin = Boolean(body.value);
+    const { error } = await admin.from("profiles").update({ is_admin: setAdmin }).eq("id", targetId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    targetType = "profile";
+    auditMetadata.is_admin = setAdmin;
   } else if (action === "user.setRole") {
     if (!targetId) return NextResponse.json({ error: "targetId is required" }, { status: 400 });
     const role = asString(body.value);
@@ -240,24 +259,44 @@ export async function POST(request: NextRequest) {
   } else if (action === "invite.create") {
     const payload = asRecord(body.value);
     const code = asString(payload.code || targetId).toUpperCase();
-    const expiresAt = asString(payload.expires_at) || null;
+    const expiresAt = asString(payload.expires_at || payload.expiresAt) || null;
+    const type = asString(payload.type || "buyer").toLowerCase();
+    const singleUse = Boolean(payload.single_use ?? payload.singleUse ?? false);
+    const usageLimitRaw = asString(payload.usage_limit ?? payload.usageLimit ?? "");
+    const usageLimit = usageLimitRaw ? Number(usageLimitRaw) : null;
+    const notes = asString(payload.notes || note) || null;
+    const metadata = asRecord(payload.metadata);
+
     if (!code) return NextResponse.json({ error: "Invite code is required" }, { status: 400 });
+    if (!inviteTypes.has(type)) return NextResponse.json({ error: "Invalid invite type" }, { status: 400 });
+    if (usageLimit !== null && (!Number.isFinite(usageLimit) || usageLimit <= 0)) {
+      return NextResponse.json({ error: "usageLimit must be > 0" }, { status: 400 });
+    }
+
     const { error } = await admin.from("invite_codes").insert({
       code,
+      type,
       status: "active",
+      single_use: singleUse,
+      usage_limit: usageLimit,
+      usage_count: 0,
       created_by: actorId,
       expires_at: expiresAt,
+      notes,
+      metadata,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     targetType = "invite_code";
     auditTargetId = null;
     auditMetadata.code = code;
+    auditMetadata.type = type;
+    auditMetadata.single_use = singleUse;
+    auditMetadata.usage_limit = usageLimit;
     auditMetadata.expires_at = expiresAt;
   } else if (action === "invite.setStatus") {
-    const code = asString(body.value) || targetId;
     const payload = asRecord(body.value);
-    const status = asString(payload.status || body.value).toLowerCase();
-    const inviteCode = asString(payload.code || code).toUpperCase();
+    const status = asString(payload.status || "").toLowerCase();
+    const inviteCode = asString(payload.code || targetId).toUpperCase();
     if (!inviteStatuses.has(status)) {
       return NextResponse.json({ error: "Invalid invite status" }, { status: 400 });
     }
@@ -276,6 +315,27 @@ export async function POST(request: NextRequest) {
     targetType = "invite_code";
     auditTargetId = null;
     auditMetadata.code = inviteCode;
+  } else if (action === "config.set") {
+    const payload = asRecord(body.value);
+    const key = asString(payload.key || targetId).toLowerCase();
+    const value = payload.value;
+    const description = asString(payload.description || "");
+
+    if (!key) return NextResponse.json({ error: "Config key is required" }, { status: 400 });
+
+    const { error } = await admin.from("admin_settings").upsert(
+      {
+        key,
+        value: value ?? {},
+        description: description || null,
+        updated_by: actorId,
+      },
+      { onConflict: "key" }
+    );
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    targetType = "admin_setting";
+    auditTargetId = null;
+    auditMetadata.key = key;
   } else if (action === "request.setStatus") {
     if (!targetId) return NextResponse.json({ error: "targetId is required" }, { status: 400 });
     const status = asString(body.value);

@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { timingSafeEqual } from "crypto";
 import { signToken } from "@/lib/auth";
 import { checkRateLimit, RateLimitResponse } from "@/lib/rate-limit";
+
+function safePasswordEquals(input: string, expected: string) {
+  const left = Buffer.from(input);
+  const right = Buffer.from(expected);
+
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return timingSafeEqual(left, right);
+}
 
 export async function POST(req: Request) {
   if (!checkRateLimit(req, 5)) { // Strict limit for login
@@ -9,9 +21,10 @@ export async function POST(req: Request) {
   }
 
   try {
+    const isProduction = process.env.NODE_ENV === "production";
     const cookieStore = await cookies();
     const founderGate = cookieStore.get("founder_admin_gate")?.value;
-    if (founderGate !== "1") {
+    if (isProduction && founderGate !== "1") {
       return NextResponse.json(
         { ok: false, error: "Forbidden" },
         { status: 403 }
@@ -19,12 +32,25 @@ export async function POST(req: Request) {
     }
 
     const { password } = await req.json();
-    const ADMIN_PASSWORD = "admin123";
+    const passwordCandidates = [
+      process.env.ADMIN_PASSWORD || "",
+      ...(isProduction ? [] : ["admin123"]),
+    ].filter(Boolean);
 
-    // Constant time comparison would be better, but for now add delay
-    await new Promise(resolve => setTimeout(resolve, 500)); // Anti-timing attack delay
+    if (passwordCandidates.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "Admin login is not configured" },
+        { status: 500 }
+      );
+    }
 
-    if (password === ADMIN_PASSWORD) {
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Small fixed delay to reduce brute-force speed.
+
+    const isValidPassword =
+      typeof password === "string" &&
+      passwordCandidates.some((candidate) => safePasswordEquals(password, candidate));
+
+    if (isValidPassword) {
       // Create a signed JWT
       const token = await signToken({ role: "admin" });
 

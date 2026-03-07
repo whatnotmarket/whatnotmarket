@@ -31,11 +31,26 @@ export async function GET(request: NextRequest) {
         listing_payments: [],
         payment_intents: [],
         proxy_orders: [],
+        ledger_entries: [],
+        audit_logs: [],
+        messages: [],
+        notifications: [],
+        invites: [],
+        invite_code_usages: [],
+        seller_verifications: [],
       },
     });
   }
 
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Supabase admin connection is not configured" },
+      { status: 500 }
+    );
+  }
   const ilikeValue = `%${query}%`;
   const isUuid = maybeUuid(query);
 
@@ -63,6 +78,13 @@ export async function GET(request: NextRequest) {
     listingPaymentsRes,
     paymentIntentsRes,
     proxyOrdersRes,
+    ledgerEntriesRes,
+    auditLogsRes,
+    messagesRes,
+    notificationsRes,
+    invitesRes,
+    inviteCodeUsagesRes,
+    sellerVerificationsRes,
   ] = await Promise.all([
     admin
       .from("profiles")
@@ -146,6 +168,100 @@ export async function GET(request: NextRequest) {
           .join(",")
       )
       .limit(20),
+    admin
+      .from("ledger_entries")
+      .select("id,deal_id,type,currency,network,amount,tx_hash,created_at")
+      .or(
+        [
+          `tx_hash.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `deal_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("audit_logs")
+      .select("id,actor_id,action,target_type,target_id,metadata,created_at")
+      .or(
+        [
+          `action.ilike.${ilikeValue}`,
+          `target_type.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `actor_id.eq.${query}` : "",
+          isUuid ? `target_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("messages")
+      .select("id,deal_id,sender_id,content,created_at")
+      .or(
+        [
+          `content.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `deal_id.eq.${query}` : "",
+          isUuid ? `sender_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("notifications")
+      .select("id,recipient_id,actor_id,type,title,body,link,created_at")
+      .or(
+        [
+          `title.ilike.${ilikeValue}`,
+          `body.ilike.${ilikeValue}`,
+          `type.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `recipient_id.eq.${query}` : "",
+          isUuid ? `actor_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("invite_codes")
+      .select("code,type,status,expires_at,created_at")
+      .or([`code.ilike.${ilikeValue}`, `type.ilike.${ilikeValue}`, `status.ilike.${ilikeValue}`].join(","))
+      .limit(20),
+    admin
+      .from("invite_code_usages")
+      .select("id,code,user_id,email,ip_address,source,used_at")
+      .or(
+        [
+          `code.ilike.${ilikeValue}`,
+          `email.ilike.${ilikeValue}`,
+          `ip_address.ilike.${ilikeValue}`,
+          `source.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `user_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
+    admin
+      .from("seller_verifications")
+      .select("id,telegram_user_id,telegram_username,status,used_by_user_id,issued_at,expires_at")
+      .or(
+        [
+          `telegram_username.ilike.${ilikeValue}`,
+          `telegram_user_id.ilike.${ilikeValue}`,
+          `status.ilike.${ilikeValue}`,
+          isUuid ? `id.eq.${query}` : "",
+          isUuid ? `used_by_user_id.eq.${query}` : "",
+        ]
+          .filter(Boolean)
+          .join(",")
+      )
+      .limit(20),
   ]);
 
   return NextResponse.json({
@@ -159,6 +275,14 @@ export async function GET(request: NextRequest) {
       listing_payments: listingPaymentsRes.data || [],
       payment_intents: paymentIntentsRes.data || [],
       proxy_orders: proxyOrdersRes.data || [],
+      ledger_entries: ledgerEntriesRes.data || [],
+      audit_logs: auditLogsRes.data || [],
+      messages: messagesRes.data || [],
+      notifications: notificationsRes.data || [],
+      invites: invitesRes.data || [],
+      invite_code_usages: inviteCodeUsagesRes.data || [],
+      seller_verifications: sellerVerificationsRes.data || [],
     },
   });
 }
+

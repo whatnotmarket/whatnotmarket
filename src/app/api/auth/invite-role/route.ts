@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     // Keep default empty payload.
   }
 
-  const resolution = resolveInviteCode(payload.code ?? "");
+  const resolution = await resolveInviteCode(payload.code ?? "");
   if (!resolution.isValid) {
     return NextResponse.json(
       {
@@ -29,4 +29,3 @@ export async function POST(request: Request) {
     normalizedCode: resolution.normalizedCode,
   });
 }
-

@@ -67,15 +67,17 @@ export async function POST(request: NextRequest) {
   const nextPath = normalizeNext(body.next);
   const provider = normalizeProvider(body.provider);
   const displayName = normalizeDisplayName(body.displayName);
-  const desiredRole =
-    mode === "signup" ? resolveInviteCode(inviteCode).role : ("buyer" as const);
+
+  let inviteResolution: Awaited<ReturnType<typeof resolveInviteCode>> | null = null;
 
   if (mode === "signup") {
-    const invite = resolveInviteCode(inviteCode);
-    if (!invite.isValid) {
+    inviteResolution = await resolveInviteCode(inviteCode);
+    if (!inviteResolution.isValid) {
       return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
     }
   }
+
+  const desiredRole = mode === "signup" ? inviteResolution?.role ?? "buyer" : ("buyer" as const);
 
   const nonce = randomUUID();
   const message = createWalletChallengeMessage({

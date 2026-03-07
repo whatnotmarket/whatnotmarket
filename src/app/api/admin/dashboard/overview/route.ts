@@ -121,11 +121,30 @@ type SellerVerificationRow = {
 
 type InviteCodeRow = {
   code: string;
-  status: "active" | "used" | "revoked";
+  type: "buyer" | "seller" | "founder" | null;
+  status: "active" | "used" | "revoked" | "expired" | "exhausted" | null;
+  single_use: boolean | null;
+  usage_limit: number | null;
+  usage_count: number | null;
   created_by: string | null;
-  used_by: string | null;
+  last_used_by: string | null;
+  last_used_at: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
   expires_at: string | null;
   created_at: string;
+};
+
+type InviteUsageRow = {
+  id: string;
+  code: string;
+  user_id: string | null;
+  email: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  source: string | null;
+  used_at: string;
+  metadata: Record<string, unknown> | null;
 };
 
 type SellerInviteClaimRow = {
@@ -133,6 +152,39 @@ type SellerInviteClaimRow = {
   user_id: string;
   email: string;
   claimed_at: string;
+};
+
+type NetworkRow = {
+  id: string;
+  name: string;
+  type: string;
+  chain_id: string | null;
+  explorer_url: string | null;
+  requires_memo_tag: boolean | null;
+};
+
+type CurrencyRow = {
+  id: string;
+  symbol: string;
+  decimals: number;
+  contract_address: string | null;
+  network_id: string | null;
+  is_stablecoin: boolean | null;
+};
+
+type SupportMatrixRow = {
+  id: string;
+  network_id: string | null;
+  currency_id: string | null;
+  adapter_type: string;
+};
+
+type AdminSettingRow = {
+  key: string;
+  value: Record<string, unknown> | null;
+  description: string | null;
+  updated_by: string | null;
+  updated_at: string;
 };
 
 type EscrowActionRow = {
@@ -245,22 +297,34 @@ function toNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function isRiskMessage(content: string) {
+const riskKeywordGroups: Array<{ label: string; tokens: string[] }> = [
+  {
+    label: "external_payment",
+    tokens: ["outside platform", "outside whatnot", "wire transfer", "send usdt", "send btc"],
+  },
+  {
+    label: "off_platform_contact",
+    tokens: ["telegram me", "whatsapp", "discord", "email me"],
+  },
+  {
+    label: "phishing",
+    tokens: ["phishing", "wallet seed", "recovery phrase", "private key"],
+  },
+  {
+    label: "pressure",
+    tokens: ["trust me", "urgent", "only today", "act fast"],
+  },
+];
+
+function riskFlagsForMessage(content: string) {
   const normalized = content.toLowerCase();
-  const riskyKeywords = [
-    "outside platform",
-    "outside whatnot",
-    "wire transfer",
-    "send usdt",
-    "send btc",
-    "telegram me",
-    "whatsapp",
-    "trust me",
-    "phishing",
-    "wallet seed",
-    "recovery phrase",
-  ];
-  return riskyKeywords.some((token) => normalized.includes(token));
+  return riskKeywordGroups
+    .filter((group) => group.tokens.some((token) => normalized.includes(token)))
+    .map((group) => group.label);
+}
+
+function isRiskMessage(content: string) {
+  return riskFlagsForMessage(content).length > 0;
 }
 
 export async function GET(request: NextRequest) {
@@ -270,7 +334,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Supabase admin connection is not configured" },
+      { status: 500 }
+    );
+  }
   const last30Iso = isoDaysBack(30);
 
   const [
@@ -286,12 +358,17 @@ export async function GET(request: NextRequest) {
     ledgerRes,
     verificationsRes,
     inviteCodesRes,
+    inviteUsageRes,
     sellerInviteClaimsRes,
     messagesRes,
     notificationsRes,
     proxyOrdersRes,
     auditLogsRes,
     followsRes,
+    networksRes,
+    currenciesRes,
+    supportMatrixRes,
+    adminSettingsRes,
     chartProfilesRes,
     chartRequestsRes,
     chartDealsRes,
@@ -355,9 +432,16 @@ export async function GET(request: NextRequest) {
       .limit(300),
     admin
       .from("invite_codes")
-      .select("code,status,created_by,used_by,expires_at,created_at")
+      .select(
+        "code,type,status,single_use,usage_limit,usage_count,created_by,last_used_by,last_used_at,notes,metadata,expires_at,created_at"
+      )
       .order("created_at", { ascending: false })
       .limit(300),
+    admin
+      .from("invite_code_usages")
+      .select("id,code,user_id,email,ip_address,user_agent,source,used_at,metadata")
+      .order("used_at", { ascending: false })
+      .limit(800),
     admin
       .from("seller_invite_code_claims")
       .select("code,user_id,email,claimed_at")
@@ -384,6 +468,10 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(600),
     admin.from("profile_follows").select("follower_id,following_id").limit(5000),
+    admin.from("networks").select("id,name,type,chain_id,explorer_url,requires_memo_tag").limit(300),
+    admin.from("currencies").select("id,symbol,decimals,contract_address,network_id,is_stablecoin").limit(600),
+    admin.from("support_matrix").select("id,network_id,currency_id,adapter_type").limit(1200),
+    admin.from("admin_settings").select("key,value,description,updated_by,updated_at").limit(300),
     admin.from("profiles").select("created_at").gte("created_at", last30Iso).limit(5000),
     admin.from("requests").select("created_at").gte("created_at", last30Iso).limit(5000),
     admin.from("deals").select("created_at").gte("created_at", last30Iso).limit(5000),
@@ -409,12 +497,17 @@ export async function GET(request: NextRequest) {
   const ledgerEntries = (ledgerRes.data || []) as LedgerRow[];
   const sellerVerifications = (verificationsRes.data || []) as SellerVerificationRow[];
   const inviteCodes = (inviteCodesRes.data || []) as InviteCodeRow[];
+  const inviteUsages = (inviteUsageRes.data || []) as InviteUsageRow[];
   const sellerInviteClaims = (sellerInviteClaimsRes.data || []) as SellerInviteClaimRow[];
   const messages = (messagesRes.data || []) as MessageRow[];
   const notifications = (notificationsRes.data || []) as NotificationRow[];
   const proxyOrders = (proxyOrdersRes.data || []) as ProxyOrderRow[];
   const auditLogs = (auditLogsRes.data || []) as AuditLogRow[];
   const follows = (followsRes.data || []) as { follower_id: string; following_id: string }[];
+  const networks = (networksRes.data || []) as NetworkRow[];
+  const currencies = (currenciesRes.data || []) as CurrencyRow[];
+  const supportMatrix = (supportMatrixRes.data || []) as SupportMatrixRow[];
+  const adminSettings = (adminSettingsRes.data || []) as AdminSettingRow[];
 
   const profileById = new Map<string, ProfileRow>();
   profiles.forEach((profile) => profileById.set(profile.id, profile));
@@ -451,10 +544,18 @@ export async function GET(request: NextRequest) {
     if (!inviteClaimByUserId.has(claim.user_id)) inviteClaimByUserId.set(claim.user_id, claim);
   });
 
-  const inviteByUsedUser = new Map<string, InviteCodeRow>();
-  inviteCodes.forEach((invite) => {
-    if (invite.used_by && !inviteByUsedUser.has(invite.used_by)) {
-      inviteByUsedUser.set(invite.used_by, invite);
+  const inviteUsagesByCode = new Map<string, InviteUsageRow[]>();
+  inviteUsages.forEach((usage) => {
+    const code = String(usage.code || "");
+    const items = inviteUsagesByCode.get(code) || [];
+    items.push(usage);
+    inviteUsagesByCode.set(code, items);
+  });
+
+  const inviteByUsedUser = new Map<string, InviteUsageRow>();
+  inviteUsages.forEach((usage) => {
+    if (usage.user_id && !inviteByUsedUser.has(usage.user_id)) {
+      inviteByUsedUser.set(usage.user_id, usage);
     }
   });
 
@@ -476,6 +577,16 @@ export async function GET(request: NextRequest) {
     const items = escrowActionsByPayment.get(action.payment_id) || [];
     items.push(action);
     escrowActionsByPayment.set(action.payment_id, items);
+  });
+  const userAuditByTarget = new Map<string, AuditLogRow[]>();
+  auditLogs.forEach((log) => {
+    const directTarget = String(log.target_id || "").trim();
+    const metadataTarget = String(log.metadata?.raw_target_id || "").trim();
+    const target = directTarget || metadataTarget;
+    if (!target) return;
+    const items = userAuditByTarget.get(target) || [];
+    items.push(log);
+    userAuditByTarget.set(target, items);
   });
 
   const identitySet = new Set<string>();
@@ -523,6 +634,30 @@ export async function GET(request: NextRequest) {
       chartPoints[key].gmv += toNumber(row.amount);
     }
   });
+
+  const paymentStatusChart = Object.entries(
+    listingPayments.reduce<Record<string, number>>((acc, payment) => {
+      const key = String(payment.status || "unknown");
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([status, value]) => ({ status, value }));
+
+  const dealStatusChart = Object.entries(
+    deals.reduce<Record<string, number>>((acc, deal) => {
+      const key = String(deal.status || "unknown");
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([status, value]) => ({ status, value }));
+
+  const ledgerFlowChart = Object.entries(
+    ledgerEntries.reduce<Record<string, number>>((acc, entry) => {
+      const key = String(entry.type || "unknown");
+      acc[key] = (acc[key] || 0) + toNumber(entry.amount);
+      return acc;
+    }, {})
+  ).map(([type, value]) => ({ type, value }));
 
   const gmv = listingPayments
     .filter((payment) => ["funded_to_escrow", "awaiting_release", "released"].includes(payment.status))
@@ -579,9 +714,59 @@ export async function GET(request: NextRequest) {
       users: Array.from(userIds),
     }));
 
+  const duplicateEmailMap = new Map<string, Set<string>>();
+  profiles.forEach((profile) => {
+    const email = String(profile.email || authById.get(profile.id)?.email || "")
+      .trim()
+      .toLowerCase();
+    if (!email) return;
+    const set = duplicateEmailMap.get(email) || new Set<string>();
+    set.add(profile.id);
+    duplicateEmailMap.set(email, set);
+  });
+  const duplicateEmailRisks = Array.from(duplicateEmailMap.entries())
+    .filter(([, userIds]) => userIds.size > 1)
+    .map(([email, userIds]) => ({
+      email,
+      userCount: userIds.size,
+      users: Array.from(userIds),
+    }));
+
+  const allowedIdentityProviders = new Set([
+    "walletconnect",
+    "metamask",
+    "trustwallet",
+    "wallet",
+    "google",
+    "apple",
+    "telegram",
+  ]);
+  const suspiciousProviders = identities
+    .filter((identity) => !allowedIdentityProviders.has(String(identity.provider || "").toLowerCase()))
+    .map((identity) => ({
+      auth_subject: identity.auth_subject,
+      provider: identity.provider,
+      user_id: identity.supabase_user_id,
+      created_at: identity.created_at,
+    }));
+
+  const flaggedMessages = messages
+    .filter((row) => isRiskMessage(row.content))
+    .map((row) => ({
+      ...row,
+      sender_handle: displayHandle(profileById.get(row.sender_id)),
+      risk_flags: riskFlagsForMessage(row.content),
+    }));
+
   const staleEscrowQueue = listingPayments.filter((payment) => {
     if (!["pending", "funded_to_escrow", "awaiting_release"].includes(payment.status)) return false;
     const ageMs = now - new Date(payment.created_at).getTime();
+    return ageMs > 24 * 60 * 60 * 1000;
+  }).length;
+
+  const stalePaymentIntents = paymentIntents.filter((intent) => {
+    if (!["created", "awaiting_payment", "detected", "confirming"].includes(intent.status)) return false;
+    const ageMs = now - new Date(intent.created_at).getTime();
     return ageMs > 24 * 60 * 60 * 1000;
   }).length;
 
@@ -591,6 +776,7 @@ export async function GET(request: NextRequest) {
     const linkedIdentities = identitiesByUserId.get(profile.id) || [];
     const inviteClaim = inviteClaimByUserId.get(profile.id) || null;
     const usedInvite = inviteByUsedUser.get(profile.id) || null;
+    const changeHistory = (userAuditByTarget.get(profile.id) || []).slice(0, 20);
     return {
       id: profile.id,
       handle: normalizeHandle(profile.username || ""),
@@ -614,6 +800,7 @@ export async function GET(request: NextRequest) {
       session_force_logout_at: profile.session_force_logout_at || null,
       created_at: profile.created_at || null,
       updated_at: profile.updated_at || null,
+      change_history: changeHistory,
     };
   });
 
@@ -623,12 +810,16 @@ export async function GET(request: NextRequest) {
       totalUsers: profiles.length,
       dau,
       wau,
+      activeSellers: profiles.filter((profile) => profile.seller_status === "verified").length,
       sellerPending: profiles.filter((profile) => profile.seller_status === "pending_telegram").length,
       sellerVerified: profiles.filter((profile) => profile.seller_status === "verified").length,
       requestsOpen: requests.filter((row) => row.status === "open").length,
       offersPending: offers.filter((row) => row.status === "pending").length,
       dealsVerification: deals.filter((row) => row.status === "verification").length,
       listingPaymentsAwaitingRelease: listingPayments.filter((row) => row.status === "awaiting_release").length,
+      proxyOrdersOpen: proxyOrders.filter((row) => !["COMPLETED", "CANCELLED"].includes(row.status)).length,
+      unreadNotifications: notifications.filter((row) => !row.read_at).length,
+      flaggedMessages: flaggedMessages.length,
       paymentIntentsDisputed: paymentIntentDisputed,
       gmv,
       feesGenerated: fees,
@@ -641,9 +832,13 @@ export async function GET(request: NextRequest) {
       dealCreationRate:
         requests.length > 0 ? Number(((deals.length / requests.length) * 100).toFixed(2)) : 0,
       staleEscrowQueue,
+      stalePaymentIntents,
     },
     charts: {
       activity: Object.values(chartPoints),
+      payment_status: paymentStatusChart,
+      deal_status: dealStatusChart,
+      ledger_flow: ledgerFlowChart,
     },
     sections: {
       users: usersSection,
@@ -651,7 +846,19 @@ export async function GET(request: NextRequest) {
         ...row,
         used_by_handle: displayHandle(profileById.get(row.used_by_user_id || "")),
       })),
-      invites: inviteCodes,
+      invites: inviteCodes.map((invite) => ({
+        ...invite,
+        created_by_handle: displayHandle(profileById.get(invite.created_by || "")),
+        last_used_by_handle: displayHandle(profileById.get(invite.last_used_by || "")),
+        usages: (inviteUsagesByCode.get(invite.code) || []).slice(0, 30).map((usage) => ({
+          ...usage,
+          user_handle: displayHandle(profileById.get(usage.user_id || "")),
+        })),
+      })),
+      invite_usages: inviteUsages.map((usage) => ({
+        ...usage,
+        user_handle: displayHandle(profileById.get(usage.user_id || "")),
+      })),
       seller_invite_claims: sellerInviteClaims,
       identities,
       wallets,
@@ -681,7 +888,7 @@ export async function GET(request: NextRequest) {
       })),
       ledger_entries: ledgerEntries,
       disputes: paymentIntents
-        .filter((row) => row.status === "disputed")
+        .filter((row) => ["disputed", "refunded", "failed"].includes(row.status))
         .map((row) => ({
           id: row.id,
           status: row.status,
@@ -694,6 +901,7 @@ export async function GET(request: NextRequest) {
           currency: row.pay_token_id,
           chain: row.pay_chain_id,
           tx_hash: row.detected_tx_hash,
+          timeline: (userAuditByTarget.get(row.id) || []).slice(0, 20),
           created_at: row.created_at,
           updated_at: row.updated_at,
         })),
@@ -701,6 +909,7 @@ export async function GET(request: NextRequest) {
         ...row,
         sender_handle: displayHandle(profileById.get(row.sender_id)),
         risk_flag: isRiskMessage(row.content),
+        risk_flags: riskFlagsForMessage(row.content),
       })),
       notifications: notifications.map((row) => ({
         ...row,
@@ -715,20 +924,23 @@ export async function GET(request: NextRequest) {
       risk: {
         reused_wallets: reusedWalletRisks,
         duplicate_telegrams: duplicateTelegramRisks,
-        high_risk_messages: messages
-          .filter((row) => isRiskMessage(row.content))
+        duplicate_emails: duplicateEmailRisks,
+        suspicious_providers: suspiciousProviders,
+        high_risk_messages: flaggedMessages
           .slice(0, 100)
           .map((row) => ({
             id: row.id,
             deal_id: row.deal_id,
             sender_id: row.sender_id,
             sender_handle: displayHandle(profileById.get(row.sender_id)),
+            risk_flags: riskFlagsForMessage(row.content),
             preview: row.content.slice(0, 160),
             created_at: row.created_at,
           })),
       },
       system: {
         stale_escrow_queue: staleEscrowQueue,
+        stale_payment_intents: stalePaymentIntents,
         pending_verifications_old: sellerVerifications.filter((row) => {
           if (row.status !== "issued") return false;
           const ageMs = now - new Date(row.issued_at).getTime();
@@ -736,6 +948,62 @@ export async function GET(request: NextRequest) {
         }).length,
         notifications_unread: notifications.filter((row) => !row.read_at).length,
         failed_payments: listingPayments.filter((row) => row.status === "failed").length,
+        failed_payment_intents: paymentIntents.filter((row) => row.status === "failed").length,
+      },
+      config: {
+        networks,
+        currencies,
+        support_matrix: supportMatrix,
+        admin_settings: adminSettings.map((row) => ({
+          ...row,
+          updated_by_handle: displayHandle(profileById.get(row.updated_by || "")),
+        })),
+      },
+      business: {
+        totals: {
+          users: profiles.length,
+          sellers_verified: profiles.filter((profile) => profile.seller_status === "verified").length,
+          requests: requests.length,
+          offers: offers.length,
+          deals: deals.length,
+          listing_payments: listingPayments.length,
+          payment_intents: paymentIntents.length,
+          proxy_orders: proxyOrders.length,
+        },
+        conversion: {
+          deal_creation_rate: requests.length > 0 ? Number(((deals.length / requests.length) * 100).toFixed(2)) : 0,
+          payment_conversion_rate:
+            paymentIntentTotal > 0 ? Number(((paymentIntentConverted / paymentIntentTotal) * 100).toFixed(2)) : 0,
+          refund_rate: paymentIntentTotal > 0 ? Number(((paymentIntentRefunded / paymentIntentTotal) * 100).toFixed(2)) : 0,
+          dispute_rate: paymentIntentTotal > 0 ? Number(((paymentIntentDisputed / paymentIntentTotal) * 100).toFixed(2)) : 0,
+        },
+        gmv,
+        fees,
+      },
+      diagnostics: {
+        query_errors: {
+          wallets: walletsRes.error?.message || null,
+          identities: identitiesRes.error?.message || null,
+          requests: requestsRes.error?.message || null,
+          offers: offersRes.error?.message || null,
+          deals: dealsRes.error?.message || null,
+          listing_payments: listingPaymentsRes.error?.message || null,
+          escrow_actions: escrowActionsRes.error?.message || null,
+          payment_intents: paymentIntentsRes.error?.message || null,
+          ledger_entries: ledgerRes.error?.message || null,
+          seller_verifications: verificationsRes.error?.message || null,
+          invite_codes: inviteCodesRes.error?.message || null,
+          invite_code_usages: inviteUsageRes.error?.message || null,
+          messages: messagesRes.error?.message || null,
+          notifications: notificationsRes.error?.message || null,
+          proxy_orders: proxyOrdersRes.error?.message || null,
+          audit_logs: auditLogsRes.error?.message || null,
+          networks: networksRes.error?.message || null,
+          currencies: currenciesRes.error?.message || null,
+          support_matrix: supportMatrixRes.error?.message || null,
+          admin_settings: adminSettingsRes.error?.message || null,
+          auth_users: authUsersRes.error?.message || null,
+        },
       },
     },
   });

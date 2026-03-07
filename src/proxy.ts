@@ -5,16 +5,13 @@ import { verifyToken } from "@/lib/auth";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const isProduction = process.env.NODE_ENV === "production";
   if (pathname === "/testlogin" || pathname.startsWith("/testlogin/")) {
     const url = new URL("/login", request.url);
     request.nextUrl.searchParams.forEach((value, key) => {
       url.searchParams.set(key, value);
     });
     return NextResponse.redirect(url);
-  }
-
-  if (pathname === "/admintest" || pathname.startsWith("/admintest/")) {
-    return NextResponse.next();
   }
 
   const supabaseResponse = NextResponse.next({ request });
@@ -60,6 +57,23 @@ export async function proxy(request: NextRequest) {
   };
 
   if (pathname === "/admin/login") {
+    if (!isProduction) {
+      const response = NextResponse.next();
+      response.cookies.set("admin_login_attempts", "0", {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 30,
+        sameSite: "lax",
+      });
+      response.cookies.set("founder_admin_gate", "1", {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 10,
+        sameSite: "strict",
+      });
+      return withSupabaseCookies(response);
+    }
+
     const attemptCookie = request.cookies.get("admin_login_attempts")?.value;
     const previousAttempts = Number.parseInt(attemptCookie || "0", 10);
     const safePreviousAttempts = Number.isFinite(previousAttempts) ? previousAttempts : 0;
@@ -122,8 +136,12 @@ export async function proxy(request: NextRequest) {
     return withSupabaseCookies(response);
   }
 
-  // Protect /admin routes with admin token.
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+  // Protect admin routes with admin token.
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/admintest") ||
+    pathname.startsWith("/api/admin")
+  ) {
     if (pathname === "/api/admin/login") {
       return withSupabaseCookies(NextResponse.next());
     }

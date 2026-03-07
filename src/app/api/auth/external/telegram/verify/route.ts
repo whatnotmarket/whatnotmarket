@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Telegram payload expired" }, { status: 401 });
   }
 
-  const inviteResolution = mode === "signup" ? resolveInviteCode(inviteCode) : null;
+  const inviteResolution = mode === "signup" ? await resolveInviteCode(inviteCode) : null;
   if (mode === "signup" && inviteResolution && !inviteResolution.isValid) {
     return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
   }
@@ -105,4 +105,3 @@ export async function POST(request: NextRequest) {
 
   return response;
 }
-

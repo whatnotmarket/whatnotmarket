@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase-admin";
-import { resolveInviteCode } from "@/lib/invite-codes";
+import { registerInviteUsage, resolveInviteCode } from "@/lib/invite-codes";
 
 export type DesiredRole = "buyer" | "seller";
 
@@ -103,23 +103,26 @@ export async function applyRoleAssignmentForUser(input: {
 }): Promise<RoleAssignmentResult> {
   let finalRole: DesiredRole = "buyer";
   let message: string | null = null;
+  const inviteResolution = await resolveInviteCode(input.inviteCode);
 
   if (input.desiredRole === "seller") {
-    const inviteResolution = resolveInviteCode(input.inviteCode);
-
     if (
       inviteResolution.isValid &&
       inviteResolution.role === "seller" &&
       inviteResolution.normalizedCode
     ) {
-      const claimResult = await claimSellerInviteCode(
-        inviteResolution.normalizedCode,
-        input.userId,
-        input.email ?? ""
-      );
+      if (inviteResolution.source === "environment") {
+        const claimResult = await claimSellerInviteCode(
+          inviteResolution.normalizedCode,
+          input.userId,
+          input.email ?? ""
+        );
 
-      finalRole = claimResult.claimed ? "seller" : "buyer";
-      message = claimResult.message;
+        finalRole = claimResult.claimed ? "seller" : "buyer";
+        message = claimResult.message;
+      } else {
+        finalRole = "seller";
+      }
     } else {
       finalRole = "buyer";
       message = "Invalid seller invite code. Account set as buyer.";
@@ -128,9 +131,17 @@ export async function applyRoleAssignmentForUser(input: {
 
   await upsertProfileRole(input.userId, input.email, finalRole);
 
+  if (inviteResolution.isValid && inviteResolution.normalizedCode && inviteResolution.source === "database") {
+    await registerInviteUsage({
+      code: inviteResolution.normalizedCode,
+      userId: input.userId,
+      email: input.email,
+      source: "role_assignment",
+    });
+  }
+
   return {
     role: finalRole,
     message,
   };
 }
-
