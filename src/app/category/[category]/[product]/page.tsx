@@ -12,7 +12,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/primitives/container";
 import { Card } from "@/components/ui/primitives/card";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Squircle } from "@/components/ui/Squircle";
 import { MarketplaceMenu } from "./navbar/MarketplaceMenu";
 import { CryptoSelector } from "./navbar/CryptoSelector";

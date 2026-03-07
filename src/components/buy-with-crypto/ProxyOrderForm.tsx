@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { PickupCityForm } from "./PickupCityForm";
 
 // Fallback for missing UI components

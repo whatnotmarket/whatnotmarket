@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { StepProps } from "./types";
 import { TelegramProfilePreview } from "./TelegramProfilePreview";
 

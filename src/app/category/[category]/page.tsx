@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/primitives/container";
 import { Section } from "@/components/ui/primitives/section";

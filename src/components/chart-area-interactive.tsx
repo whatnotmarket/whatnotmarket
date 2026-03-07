@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card"
+} from "@/components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
@@ -140,9 +140,31 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive() {
+type ActivityPoint = {
+  date: string
+  users?: number
+  requests?: number
+}
+
+export function ChartAreaInteractive({
+  activityData,
+}: {
+  activityData?: ActivityPoint[]
+}) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("90d")
+  const sourceData = React.useMemo(() => {
+    if (!activityData?.length) return chartData
+
+    return activityData
+      .filter((item) => item?.date)
+      .map((item) => ({
+        date: item.date,
+        desktop: Number(item.users || 0),
+        mobile: Number(item.requests || 0),
+      }))
+  }, [activityData])
+  const isAdminActivity = Boolean(activityData?.length)
 
   React.useEffect(() => {
     if (isMobile) {
@@ -150,9 +172,12 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
-  const filteredData = chartData.filter((item) => {
+  const filteredData = sourceData.filter((item) => {
     const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
+    const lastDate = sourceData[sourceData.length - 1]?.date
+    const referenceDate = lastDate ? new Date(lastDate) : new Date()
+    if (Number.isNaN(referenceDate.getTime())) return true
+
     let daysToSubtract = 90
     if (timeRange === "30d") {
       daysToSubtract = 30
@@ -167,12 +192,16 @@ export function ChartAreaInteractive() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Total Visitors</CardTitle>
+        <CardTitle>{isAdminActivity ? "Admin Activity" : "Total Visitors"}</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Total for the last 3 months
+            {isAdminActivity
+              ? "Users and requests for the selected range"
+              : "Total for the last 3 months"}
           </span>
-          <span className="@[540px]/card:hidden">Last 3 months</span>
+          <span className="@[540px]/card:hidden">
+            {isAdminActivity ? "Activity range" : "Last 3 months"}
+          </span>
         </CardDescription>
         <CardAction>
           <ToggleGroup

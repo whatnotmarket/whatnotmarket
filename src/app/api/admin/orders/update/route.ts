@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { getOrderById, saveOrder, OrderStatus } from "@/lib/orders-db";
+import type { NextRequest } from "next/server";
+import { assertAdminRequest } from "@/lib/admin-auth";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  try {
+    await assertAdminRequest(req);
+  } catch {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { orderId, status, message, metadata } = body;

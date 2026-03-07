@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { StepProps } from "./types";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 

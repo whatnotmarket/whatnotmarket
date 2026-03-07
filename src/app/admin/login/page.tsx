@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 
 export default function AdminLoginPage() {

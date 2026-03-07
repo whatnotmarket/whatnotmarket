@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ProxyOrder, OrderStatus } from "@/lib/orders-db";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Squircle } from "@/components/ui/Squircle";
 import { toast } from "sonner";
 

@@ -25,8 +25,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 

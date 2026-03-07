@@ -15,14 +15,33 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
 
-const data = {
+type AppSidebarUser = {
+  name: string
+  email: string
+  avatar: string
+}
+
+type AppSidebarItem = {
+  title: string
+  url: string
+  icon: React.ReactNode
+  isActive?: boolean
+}
+
+type AppSidebarDocument = {
+  name: string
+  url: string
+  icon: React.ReactNode
+}
+
+const defaultData = {
   user: {
     name: "shadcn",
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
-  },
+  } satisfies AppSidebarUser,
   navMain: [
     {
       title: "Dashboard",
@@ -64,64 +83,7 @@ const data = {
         />
       ),
     },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: (
-        <CameraIcon
-        />
-      ),
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
+  ] satisfies AppSidebarItem[],
   navSecondary: [
     {
       title: "Settings",
@@ -173,10 +135,27 @@ const data = {
         />
       ),
     },
-  ],
+  ] satisfies AppSidebarDocument[],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  navMainItems = defaultData.navMain,
+  documentItems = defaultData.documents,
+  navSecondaryItems = defaultData.navSecondary,
+  user = defaultData.user,
+  brandName = "Acme Inc.",
+  brandHref = "#",
+  showQuickCreate = true,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  navMainItems?: AppSidebarItem[]
+  documentItems?: AppSidebarDocument[]
+  navSecondaryItems?: AppSidebarItem[]
+  user?: AppSidebarUser
+  brandName?: string
+  brandHref?: string
+  showQuickCreate?: boolean
+}) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -186,21 +165,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href="#">
+              <a href={brandHref}>
                 <CommandIcon className="size-5!" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">{brandName}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navMainItems} showQuickCreate={showQuickCreate} />
+        {documentItems.length ? <NavDocuments items={documentItems} /> : null}
+        <NavSecondary items={navSecondaryItems} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

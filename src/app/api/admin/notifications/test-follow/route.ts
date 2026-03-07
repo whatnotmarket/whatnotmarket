@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { checkRateLimit, RateLimitResponse } from "@/lib/rate-limit";
+import type { NextRequest } from "next/server";
+import { assertAdminRequest } from "@/lib/admin-auth";
 
 type ProfileRow = {
   id: string;
@@ -55,7 +57,13 @@ async function findProfileByHandle(admin: ReturnType<typeof createAdminClient>, 
   );
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  try {
+    await assertAdminRequest(req);
+  } catch {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!checkRateLimit(req, 30)) {
     return RateLimitResponse();
   }
@@ -127,4 +135,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Failed to run follow notification test" }, { status: 500 });
   }
 }
-

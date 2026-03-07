@@ -7,7 +7,7 @@ import { OrderSummaryCard } from "@/components/buy-with-crypto/OrderSummaryCard"
 import { CryptoPaymentGateway } from "@/components/buy-with-crypto/CryptoPaymentGateway";
 import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
 import Link from "next/link";

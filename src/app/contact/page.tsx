@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 // Custom Telegram Icon since it's not in Lucide
 const TelegramIcon = ({ className }: { className?: string }) => (

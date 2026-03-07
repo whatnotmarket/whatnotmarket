@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { MapPin, Clock, DollarSign, ArrowLeft, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { toast } from "sonner";

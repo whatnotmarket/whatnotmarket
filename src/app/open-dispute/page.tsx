@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/primitives/card";
 import { Navbar } from "@/components/Navbar";
 import { ArrowLeft, AlertTriangle, Upload, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/primitives/input";
 import { Textarea } from "@/components/ui/primitives/textarea";
 import { motion } from "framer-motion";

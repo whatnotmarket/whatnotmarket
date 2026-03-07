@@ -8,7 +8,7 @@ import * as z from "zod";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/primitives/input";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/primitives/card";
 import { Container } from "@/components/ui/primitives/container";

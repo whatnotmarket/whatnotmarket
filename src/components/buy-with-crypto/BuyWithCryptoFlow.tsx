@@ -9,7 +9,7 @@ import { CryptoPaymentGateway } from "@/components/buy-with-crypto/CryptoPayment
 import { Squircle } from "@/components/ui/Squircle";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 type Step = "input" | "details" | "payment" | "confirmed";

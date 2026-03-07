@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Squircle } from "@/components/ui/Squircle";
 import { Copy, Check, QrCode, RefreshCcw, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 interface CryptoPaymentGatewayProps {
   amount: number;

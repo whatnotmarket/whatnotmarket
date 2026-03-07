@@ -3,6 +3,7 @@ import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
+import { FaviconAttention } from "@/components/FaviconAttention";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,6 +19,36 @@ export const metadata: Metadata = {
   title: "Whatnot Market",
   description: "Secure buyer/seller marketplace.",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      {
+        url: "/favicons/favicon-base-32.png",
+        sizes: "32x32",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicons/favicon-base-16.png",
+        sizes: "16x16",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicons/favicon-alert-32.png",
+        sizes: "32x32",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/favicons/favicon-alert-16.png",
+        sizes: "16x16",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    apple: [{ url: "/pwa-assets/pwa-192.png", sizes: "192x192", type: "image/png" }],
+    shortcut: ["/favicons/favicon-base-32.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -64,6 +95,7 @@ export default function RootLayout({
         </Providers>
         <Analytics />
         <SpeedInsights />
+        <FaviconAttention />
       </body>
     </html>
   );

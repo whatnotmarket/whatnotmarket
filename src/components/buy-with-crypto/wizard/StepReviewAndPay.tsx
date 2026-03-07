@@ -1,7 +1,7 @@
 "use client";
 
 import { Squircle } from "@/components/ui/Squircle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { StepProps } from "./types";
 import { Edit2 } from "lucide-react";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";

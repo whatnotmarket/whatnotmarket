@@ -13,6 +13,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (pathname === "/admintest" || pathname.startsWith("/admintest/")) {
+    return NextResponse.next();
+  }
+
   const supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -37,6 +41,19 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const clearAuthCookies = (response: NextResponse) => {
+    request.cookies.getAll().forEach((cookie) => {
+      if (
+        cookie.name === "admin_token" ||
+        cookie.name.startsWith("sb-") ||
+        cookie.name.startsWith("supabase")
+      ) {
+        response.cookies.set(cookie.name, "", { path: "/", maxAge: 0 });
+      }
+    });
+    return response;
+  };
+
   const withSupabaseCookies = (response: NextResponse) => {
     supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
     return response;
@@ -57,15 +74,7 @@ export async function proxy(request: NextRequest) {
         sameSite: "lax",
       });
       if (nextAttempts >= 3) {
-        request.cookies.getAll().forEach((cookie) => {
-          if (
-            cookie.name === "admin_token" ||
-            cookie.name.startsWith("sb-") ||
-            cookie.name.startsWith("supabase")
-          ) {
-            response.cookies.set(cookie.name, "", { path: "/", maxAge: 0 });
-          }
-        });
+        clearAuthCookies(response);
       }
       return withSupabaseCookies(response);
     }
@@ -92,15 +101,7 @@ export async function proxy(request: NextRequest) {
         sameSite: "lax",
       });
       if (nextAttempts >= 3) {
-        request.cookies.getAll().forEach((cookie) => {
-          if (
-            cookie.name === "admin_token" ||
-            cookie.name.startsWith("sb-") ||
-            cookie.name.startsWith("supabase")
-          ) {
-            response.cookies.set(cookie.name, "", { path: "/", maxAge: 0 });
-          }
-        });
+        clearAuthCookies(response);
       }
       return withSupabaseCookies(response);
     }
@@ -162,6 +163,28 @@ export async function proxy(request: NextRequest) {
 
   if (user && isAuthRoute) {
     return withSupabaseCookies(NextResponse.redirect(new URL("/market", request.url)));
+  }
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const accountStatus = String((profile as { account_status?: string } | null)?.account_status || "active");
+    const forceLogoutAt = (profile as { session_force_logout_at?: string | null } | null)
+      ?.session_force_logout_at;
+    const lastSignInAt = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+    const forcedAt = forceLogoutAt ? new Date(forceLogoutAt).getTime() : 0;
+
+    if (["banned", "suspended"].includes(accountStatus) || (forcedAt && lastSignInAt && lastSignInAt < forcedAt)) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("reason", "session_reset");
+      const response = NextResponse.redirect(loginUrl);
+      clearAuthCookies(response);
+      return withSupabaseCookies(response);
+    }
   }
 
   return supabaseResponse;

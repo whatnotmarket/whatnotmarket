@@ -23,6 +23,8 @@ export function Footer() {
     pathname.startsWith("/auth/") ||
     pathname === "/login" ||
     pathname.startsWith("/login/") ||
+    pathname === "/admintest" ||
+    pathname.startsWith("/admintest/") ||
     pathname === "/admin" ||
     pathname.startsWith("/admin/")
   ) {

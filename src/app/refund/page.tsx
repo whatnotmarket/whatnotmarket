@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/primitives/card";
 import { Navbar } from "@/components/Navbar";
 import { ShieldCheck, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 export default function RefundPage() {
