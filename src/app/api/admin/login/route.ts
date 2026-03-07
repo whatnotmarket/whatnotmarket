@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual, createHash } from "crypto";
 import { signToken } from "@/lib/auth";
 import { checkRateLimit, RateLimitResponse } from "@/lib/rate-limit";
 
-function safePasswordEquals(input: string, expected: string) {
-  const left = Buffer.from(input);
-  const right = Buffer.from(expected);
-
-  if (left.length !== right.length) {
+/**
+ * Constant-time comparison using SHA-256 hashes.
+ * This prevents timing attacks that could leak password length or content.
+ */
+function safePasswordEquals(input: string, expected: string): boolean {
+  try {
+    const inputHash = createHash("sha256").update(input).digest();
+    const expectedHash = createHash("sha256").update(expected).digest();
+    
+    // Both hashes will always be 32 bytes long, so timingSafeEqual works safely.
+    return timingSafeEqual(inputHash, expectedHash);
+  } catch {
     return false;
   }
-
-  return timingSafeEqual(left, right);
 }
 
 export async function POST(req: Request) {
@@ -23,45 +28,39 @@ export async function POST(req: Request) {
   try {
     const isProduction = process.env.NODE_ENV === "production";
     const cookieStore = await cookies();
-    const founderGate = cookieStore.get("founder_admin_gate")?.value;
-    if (isProduction && founderGate !== "1") {
-      return NextResponse.json(
-        { ok: false, error: "Forbidden" },
-        { status: 403 }
-      );
-    }
-
+    // Removed founderGate check as it relied on client-side cookies which can be manipulated.
+    // The admin password is the primary defense.
+    
     const { password } = await req.json();
-    const passwordCandidates = [
-      process.env.ADMIN_PASSWORD || "",
-      ...(isProduction ? [] : ["admin123"]),
-    ].filter(Boolean);
+    
+    // Only use the environment variable password. Removed insecure fallback 'admin123'.
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    if (passwordCandidates.length === 0) {
+    if (!adminPassword) {
+      console.error("ADMIN_PASSWORD environment variable is not set.");
       return NextResponse.json(
         { ok: false, error: "Admin login is not configured" },
         { status: 500 }
       );
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 500)); // Small fixed delay to reduce brute-force speed.
+    // Artificial delay to mitigate brute-force attacks
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const isValidPassword =
-      typeof password === "string" &&
-      passwordCandidates.some((candidate) => safePasswordEquals(password, candidate));
-
-    if (isValidPassword) {
-      // Create a signed JWT
+    if (typeof password === "string" && safePasswordEquals(password, adminPassword)) {
+      // Create a signed JWT with reduced lifespan
       const token = await signToken({ role: "admin" });
 
       // Set a secure cookie
       cookieStore.set("admin_token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
         sameSite: "strict",
         path: "/",
-        maxAge: 60 * 60 * 24 // 1 day
+        maxAge: 60 * 60 // 1 hour (reduced from 24h)
       });
+      
+      // Clear any legacy gate cookies
       cookieStore.set("founder_admin_gate", "", {
         path: "/",
         maxAge: 0,

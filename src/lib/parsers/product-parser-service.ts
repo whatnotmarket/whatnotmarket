@@ -38,7 +38,42 @@ export class ProductParserService {
     return this.fallbackParser.parse(url, html);
   }
 
+  private validateUrl(url: string): void {
+    try {
+      const parsedUrl = new URL(url);
+      
+      // 1. Protocol check
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('Invalid protocol. Only HTTP/HTTPS are allowed.');
+      }
+
+      // 2. Hostname check for local/private IPs
+      const hostname = parsedUrl.hostname;
+      
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') {
+        throw new Error('Access to local resources is forbidden.');
+      }
+
+      // Private IP ranges (basic check)
+      // 10.0.0.0 - 10.255.255.255
+      // 172.16.0.0 - 172.31.255.255
+      // 192.168.0.0 - 192.168.255.255
+      if (
+        hostname.startsWith('10.') || 
+        hostname.startsWith('192.168.') || 
+        (hostname.startsWith('172.') && parseInt(hostname.split('.')[1]) >= 16 && parseInt(hostname.split('.')[1]) <= 31)
+      ) {
+        throw new Error('Access to private network resources is forbidden.');
+      }
+
+    } catch (e) {
+      throw new Error(`Invalid URL: ${e instanceof Error ? e.message : 'Unknown error'}`);
+    }
+  }
+
   private async fetchHtml(url: string): Promise<string> {
+    this.validateUrl(url);
+
     // PRIVACY: We use a generic, rotating or static non-identifying User-Agent.
     // We do NOT forward the client's User-Agent or IP.
     // This request is made from the server, so the target site only sees the server's IP.
