@@ -24,8 +24,8 @@ const carouselImages = ["/affiliate-bg.svg", "/framehero.svg", "/notifiche.svg"]
 const carouselDragThreshold = 60;
 
 const buttonBase =
-  "relative flex h-[50px] w-full cursor-pointer items-center justify-center rounded-[14px] border border-[#3b3b3b] font-[Inter] text-[16px] transition-transform duration-150 active:scale-[0.99] motion-reduce:transition-none sm:h-[52px] sm:text-[17px]";
-const buttonBlue = `${buttonBase} bg-[#2761f3] text-white`;
+  "relative flex h-[50px] w-full cursor-pointer items-center justify-center rounded-[14px] border border-[#3b3b3b] font-[Inter] text-[16px] transition-[background-color,opacity,transform] duration-150 active:scale-[0.99] motion-reduce:transition-none sm:h-[52px] sm:text-[17px]";
+const buttonBlue = `${buttonBase} border-[#2D9CD4] bg-[#2D9CD4] text-white hover:bg-[#43A9DC]`;
 const buttonWhite = `${buttonBase} bg-white text-black`;
 
 type ProviderKey = "walletConnect" | "metamask" | "trust" | "google" | "apple";
@@ -845,7 +845,7 @@ function TestLoginContent() {
                   onClick={() => void submitInviteCode()}
                   disabled={isInviteLoading}
                   className={`${buttonBase} border-white bg-white px-4 text-black ${
-                    isInviteLoading ? "cursor-wait opacity-80" : ""
+                    isInviteLoading ? "cursor-wait opacity-80" : "hover:bg-white/90"
                   }`}
                 >
                   <span className="font-[Inter] font-[800]">Continua</span>
@@ -854,7 +854,7 @@ function TestLoginContent() {
                   type="button"
                   onClick={() => setShowInviteBox(false)}
                   disabled={isInviteLoading}
-                  className={`${buttonBase} border-[#3b3b3b] bg-[#202020] px-4 text-white`}
+                  className={`${buttonBase} border-[#3b3b3b] bg-[#202020] px-4 text-white hover:bg-[#181818]`}
                 >
                   Torna ai metodi di accesso
                 </button>
@@ -862,7 +862,7 @@ function TestLoginContent() {
             ) : (
               <div className="space-y-3">
                 <button
-                  className={`${buttonBase} ${buttonLoadingClass("walletConnect")} border-[#3B99FC] bg-[#3B99FC] px-4 text-white`}
+                  className={`${buttonBase} ${buttonLoadingClass("walletConnect")} border-[#3B99FC] bg-[#3B99FC] px-4 text-white hover:bg-[#58ABFD]`}
                   onClick={() => void startProviderAuth("walletConnect")}
                   type="button"
                   disabled={Boolean(loadingProvider)}
@@ -876,7 +876,7 @@ function TestLoginContent() {
                 </button>
 
                 <button
-                  className={`${buttonBase} ${buttonLoadingClass("metamask")} border-[#3b3b3b] bg-[#202020] px-4 text-white`}
+                  className={`${buttonBase} ${buttonLoadingClass("metamask")} border-[#3b3b3b] bg-[#202020] px-4 text-white hover:bg-[#181818]`}
                   onClick={() => void startProviderAuth("metamask")}
                   type="button"
                   disabled={Boolean(loadingProvider)}
@@ -890,7 +890,7 @@ function TestLoginContent() {
                 </button>
 
                 <button
-                  className={`${buttonBase} ${buttonLoadingClass("trust")} border-[#3b3b3b] bg-[#202020] px-4 text-white`}
+                  className={`${buttonBase} ${buttonLoadingClass("trust")} border-[#3b3b3b] bg-[#202020] px-4 text-white hover:bg-[#181818]`}
                   onClick={() => void startProviderAuth("trust")}
                   type="button"
                   disabled={Boolean(loadingProvider)}
@@ -911,7 +911,6 @@ function TestLoginContent() {
 
                 <button
                   className={`${buttonBlue} ${buttonLoadingClass("telegram")} px-4`}
-                  style={{ backgroundColor: "#2D9CD4" }}
                   onClick={startTelegramAuth}
                   type="button"
                   disabled={Boolean(loadingProvider)}
@@ -931,7 +930,7 @@ function TestLoginContent() {
                 >
                   {showGoogleOption ? (
                     <button
-                      className={`${buttonWhite} ${buttonLoadingClass("google")} px-3`}
+                      className={`${buttonWhite} ${buttonLoadingClass("google")} px-3 hover:bg-white/90`}
                       onClick={() => void startProviderAuth("google")}
                       type="button"
                       disabled={Boolean(loadingProvider)}
@@ -945,7 +944,7 @@ function TestLoginContent() {
 
                   {showAppleOption ? (
                     <button
-                      className={`${buttonBase} ${buttonLoadingClass("apple")} border-0 bg-black px-3 text-white`}
+                      className={`${buttonBase} ${buttonLoadingClass("apple")} border-0 bg-black px-3 text-white hover:opacity-90`}
                       onClick={() => void startProviderAuth("apple")}
                       type="button"
                       disabled={Boolean(loadingProvider)}
