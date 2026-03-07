@@ -121,24 +121,30 @@ function createScopedToast(scope: NotificationScope): ScopedToast {
     action(message, options) {
       return sileo.action(buildOptions(scope, message, "action", options));
     },
-    promise<T>(promise: Promise<T> | (() => Promise<T>), config: ToastPromiseConfig<T>) {
+    promise<T>(
+      promise: Promise<T> | (() => Promise<T>),
+      config: {
+        loading: ToastInput;
+        success: ToastInput | ((data: T) => ToastInput);
+        error: ToastInput | ((error: unknown) => ToastInput);
+        action?: ToastInput | ((data: T) => ToastInput);
+      }
+    ) {
       return sileo.promise<T>(promise, {
         loading: buildOptions(scope, config.loading, "loading"),
-        success:
-          typeof config.success === "function"
-            ? (data) => buildOptions(scope, config.success(data), "success")
-            : buildOptions(scope, config.success, "success"),
-        error:
-          typeof config.error === "function"
-            ? (error) => buildOptions(scope, config.error(error), "error")
-            : buildOptions(scope, config.error, "error"),
-        action:
-          typeof config.action === "function"
-            ? (data) => buildOptions(scope, config.action?.(data) ?? "", "action")
-            : config.action
-              ? buildOptions(scope, config.action, "action")
-              : undefined,
-        position: notificationScopePosition[scope],
+        success: (data: T) => {
+          const message =
+            typeof config.success === "function"
+              ? config.success(data)
+              : config.success;
+          return buildOptions(scope, message, "success");
+        },
+        error: (err: unknown) => {
+          const message =
+            typeof config.error === "function" ? config.error(err) : config.error;
+          return buildOptions(scope, message, "error");
+        },
+        action: undefined,
       });
     },
     dismiss(id?: string) {
