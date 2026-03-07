@@ -17,12 +17,45 @@ type WalletAuthTx = {
   desiredRole: "buyer" | "seller";
   inviteCode: string | null;
   nextPath: string;
+  provider: "walletconnect" | "metamask" | "trustwallet" | "google" | "apple" | "wallet";
+  displayName: string | null;
 };
+
+function normalizeProvider(raw: string | undefined): WalletAuthTx["provider"] {
+  const value = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (value === "metamask") return "metamask";
+  if (value === "trustwallet" || value === "trust") return "trustwallet";
+  if (value === "google") return "google";
+  if (value === "apple") return "apple";
+  if (value === "walletconnect") return "walletconnect";
+  return "wallet";
+}
 
 function parseTx(raw: string | undefined): WalletAuthTx | null {
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as WalletAuthTx;
+    const parsed = JSON.parse(raw) as Partial<WalletAuthTx>;
+    if (!parsed.nonce || !parsed.address || !parsed.chain || !parsed.nextPath) {
+      return null;
+    }
+
+    return {
+      nonce: parsed.nonce,
+      address: parsed.address,
+      chain: parsed.chain,
+      mode: parsed.mode === "signup" ? "signup" : "signin",
+      desiredRole: parsed.desiredRole === "seller" ? "seller" : "buyer",
+      inviteCode: parsed.inviteCode ?? null,
+      nextPath: parsed.nextPath,
+      provider: normalizeProvider(parsed.provider),
+      displayName:
+        typeof parsed.displayName === "string" && parsed.displayName.trim()
+          ? parsed.displayName.trim().slice(0, 80)
+          : null,
+    };
   } catch {
     return null;
   }
@@ -55,9 +88,9 @@ export async function POST(request: NextRequest) {
   const subject = `wallet:${tx.chain}:${tx.address.toLowerCase()}`;
   const bridgeIdentity = await ensureBridgeUser({
     subject,
-    provider: "wallet",
+    provider: tx.provider,
     email: null,
-    fullName: tx.address,
+    fullName: tx.displayName || tx.address,
     avatarUrl: null,
   });
 
@@ -92,7 +125,7 @@ export async function POST(request: NextRequest) {
         user_id: bridgeIdentity.userId,
         address: tx.address,
         chain: tx.chain,
-        provider: "walletconnect",
+        provider: tx.provider,
         verified_at: new Date().toISOString(),
       },
       {
@@ -110,4 +143,3 @@ export async function POST(request: NextRequest) {
 
   return response;
 }
-

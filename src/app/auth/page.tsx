@@ -25,4 +25,3 @@ export default function AuthRedirectPage({
   const target = query ? `/login?${query}` : "/login";
   redirect(target);
 }
-

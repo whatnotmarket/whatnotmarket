@@ -10,7 +10,33 @@ type Payload = {
   mode?: "signin" | "signup";
   inviteCode?: string;
   next?: string;
+  provider?: string;
+  displayName?: string;
 };
+
+const providerAliases: Record<string, "walletconnect" | "metamask" | "trustwallet" | "google" | "apple" | "wallet"> = {
+  walletconnect: "walletconnect",
+  metamask: "metamask",
+  trustwallet: "trustwallet",
+  trust: "trustwallet",
+  google: "google",
+  apple: "apple",
+  wallet: "wallet",
+};
+
+function normalizeProvider(raw: string | undefined) {
+  const value = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+
+  return providerAliases[value] ?? "wallet";
+}
+
+function normalizeDisplayName(raw: string | undefined) {
+  const value = String(raw ?? "").trim();
+  if (!value) return null;
+  return value.slice(0, 80);
+}
 
 function normalizeNext(raw: string | undefined) {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) {
@@ -39,6 +65,8 @@ export async function POST(request: NextRequest) {
   const mode = body.mode === "signup" ? "signup" : "signin";
   const inviteCode = body.inviteCode?.trim().toUpperCase() || null;
   const nextPath = normalizeNext(body.next);
+  const provider = normalizeProvider(body.provider);
+  const displayName = normalizeDisplayName(body.displayName);
   const desiredRole =
     mode === "signup" ? resolveInviteCode(inviteCode).role : ("buyer" as const);
 
@@ -71,6 +99,8 @@ export async function POST(request: NextRequest) {
       desiredRole,
       inviteCode,
       nextPath,
+      provider,
+      displayName,
     }),
     {
       path: "/",
@@ -83,4 +113,3 @@ export async function POST(request: NextRequest) {
 
   return response;
 }
-

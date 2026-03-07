@@ -4,15 +4,35 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProfileClient } from "@/components/profile/ProfileClient";
 
+function normalizeHandleParam(raw: string | null) {
+  if (!raw) return null;
+  let value = raw.trim();
+
+  for (let i = 0; i < 2; i += 1) {
+    try {
+      const decoded = decodeURIComponent(value);
+      if (decoded === value) break;
+      value = decoded;
+    } catch {
+      break;
+    }
+  }
+
+  value = value.replace(/^@+/, "");
+  value = value.replace(/[^a-zA-Z0-9._-]/g, "");
+  return value || null;
+}
+
 function ProfileSearchPageContent() {
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
   const routeRole = roleParam === "buyer" || roleParam === "seller" ? roleParam : null;
+  const normalizedHandle = normalizeHandleParam(searchParams.get("handle"));
 
   return (
     <ProfileClient
       targetProfileId={searchParams.get("id")}
-      targetHandle={searchParams.get("handle")}
+      targetHandle={normalizedHandle}
       routeRole={routeRole}
     />
   );

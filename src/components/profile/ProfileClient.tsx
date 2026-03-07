@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Calendar,
@@ -96,7 +97,7 @@ function normalizeHandle(raw: string) {
 
 function toDisplayHandle(raw: string | null | undefined) {
   const clean = normalizeHandle(raw || "");
-  return clean ? `@${clean}` : "@set-handle";
+  return clean ? `@${clean}` : "@";
 }
 
 function formatMemberSince(createdAt: string | null | undefined) {
@@ -123,7 +124,7 @@ function getSellerRanking(totalSales: number) {
 function getRoleDefaults(isSeller: boolean) {
   return {
     name: isSeller ? "Seller" : "Buyer",
-    handle: "@set-handle",
+    handle: "@",
     avatar: isSeller
       ? "https://ui-avatars.com/api/?name=Seller&background=10b981&color=fff"
       : "https://ui-avatars.com/api/?name=Buyer&background=3b82f6&color=fff",
@@ -157,6 +158,7 @@ export function ProfileClient({
   targetHandle = null,
   routeRole = null,
 }: ProfileClientProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { role } = useUser();
   const viewerRole = role === "seller" ? "seller" : "buyer";
@@ -559,6 +561,7 @@ export function ProfileClient({
 
       setPendingImages({ avatar: null, banner: null });
       setIsEditing(false);
+      router.replace(`/profile/${normalizedHandle}`);
       toast.success("Profile updated successfully.");
     } catch (error) {
       console.error("Save profile error:", error);
@@ -858,7 +861,7 @@ export function ProfileClient({
                 value={editForm.handle}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, handle: e.target.value }))}
                 className="mt-2 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
-                placeholder="@yourhandle"
+                placeholder="@"
               />
             </div>
                   </div>

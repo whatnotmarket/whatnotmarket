@@ -18,7 +18,12 @@ import { CurrencyIcon } from "@/components/market/CurrencyIcon";
 
 export function Footer() {
   const pathname = usePathname();
-  if (pathname === "/login" || pathname.startsWith("/login/") || pathname === "/auth" || pathname.startsWith("/auth/")) {
+  if (
+    pathname === "/auth" ||
+    pathname.startsWith("/auth/") ||
+  pathname === "/login" ||
+  pathname.startsWith("/login/")
+  ) {
     return null;
   }
 

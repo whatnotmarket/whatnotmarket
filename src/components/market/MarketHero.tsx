@@ -10,7 +10,7 @@ export function MarketHero() {
   return (
     <Section spacing="none" className="z-0 mb-[-80px] min-h-[500px]">
       <Container size="full" className="relative h-full px-5 pt-24 pb-32 sm:px-10">
-      <div className="absolute inset-3 md:inset-5 overflow-hidden rounded-[32px] md:rounded-[48px] border-[8px] md:border-[12px] border-white bg-zinc-900/50 shadow-2xl">
+      <div className="absolute inset-0 overflow-hidden rounded-[30px] border border-white/10 bg-white/5">
         <Image
           src="/framehero.svg"
           alt="Hero Background"

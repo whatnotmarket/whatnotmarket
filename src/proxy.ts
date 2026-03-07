@@ -5,6 +5,13 @@ import { verifyToken } from "@/lib/auth";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (pathname === "/testlogin" || pathname.startsWith("/testlogin/")) {
+    const url = new URL("/login", request.url);
+    request.nextUrl.searchParams.forEach((value, key) => {
+      url.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(url);
+  }
 
   // Protect /admin routes with admin token.
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
@@ -35,11 +42,10 @@ export async function proxy(request: NextRequest) {
 
   // Public routes for authentication pages.
   const isAuthRoute =
-    pathname === "/login" ||
-    pathname.startsWith("/login/") ||
     pathname === "/auth" ||
     pathname.startsWith("/auth/") ||
-    pathname === "/testlogin";
+    pathname === "/login" ||
+    pathname.startsWith("/login/");
 
   const supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

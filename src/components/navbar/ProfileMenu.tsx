@@ -30,6 +30,22 @@ function walletNameFromBridgeSubject(rawSubject: string | null | undefined) {
   return address;
 }
 
+function walletAddressFromText(raw: string | null | undefined) {
+  const value = String(raw || "").trim().toLowerCase();
+  if (/^0x[a-f0-9]{40}$/.test(value)) {
+    return value;
+  }
+  return null;
+}
+
+function normalizeHandle(raw: string | null | undefined) {
+  return String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
 const CustomUserIcon = ({ className }: { className?: string }) => (
     <svg 
         width="24" 
@@ -71,7 +87,13 @@ export function ProfileMenu() {
       const bridgeProvider = String(userMetadata.bridge_provider || "")
         .trim()
         .toLowerCase();
-      const isWalletProvider = bridgeProvider === "wallet" || bridgeProvider === "walletconnect";
+      const isWalletProvider =
+        bridgeProvider === "wallet" ||
+        bridgeProvider === "walletconnect" ||
+        bridgeProvider === "metamask" ||
+        bridgeProvider === "trustwallet" ||
+        bridgeProvider === "google" ||
+        bridgeProvider === "apple";
       const metadataFullName = String(userMetadata.full_name || "").trim();
       const walletDisplayName = walletNameFromBridgeSubject(String(userMetadata.bridge_subject || ""));
       const defaultFullName =
@@ -139,8 +161,6 @@ export function ProfileMenu() {
         }
       }
 
-      const rolePreference = profile.role_preference === "seller" ? "seller" : "buyer";
-
       if (!profile.role_preference) {
         const { error: roleUpdateError } = await supabase
           .from("profiles")
@@ -152,7 +172,20 @@ export function ProfileMenu() {
       }
 
       if (!active) return;
-      setProfileHref(`/profile?id=${user.id}&role=${rolePreference}`);
+      const normalizedUsername = normalizeHandle(profile.username);
+      const walletAddressSlug =
+        walletDisplayName?.toLowerCase() || walletAddressFromText(profile.full_name);
+      if (normalizedUsername) {
+        setProfileHref(`/profile/${normalizedUsername}`);
+        return;
+      }
+
+      if (isWalletProvider && walletAddressSlug) {
+        setProfileHref(`/profile/${walletAddressSlug}`);
+        return;
+      }
+
+      setProfileHref("/profile");
     };
 
     const setup = async () => {
@@ -188,7 +221,7 @@ export function ProfileMenu() {
       profileChannel?.unsubscribe();
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [isOpen, supabase]);
 
   const handleLogout = async () => {
     if (isSigningOut) return;
@@ -226,7 +259,7 @@ export function ProfileMenu() {
 
     logout();
     setIsOpen(false);
-    router.replace("/login");
+      router.replace("/login");
     router.refresh();
     setTimeout(() => {
       window.location.href = "/login";

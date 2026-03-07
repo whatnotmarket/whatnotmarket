@@ -40,15 +40,31 @@ function walletAddressFromSubject(subject: string) {
   return address;
 }
 
+const providerNameFallback: Record<string, string> = {
+  wallet: "Wallet",
+  walletconnect: "WalletConnect",
+  metamask: "MetaMask",
+  trustwallet: "Trust Wallet",
+  google: "Google",
+  apple: "Apple",
+  telegram: "Telegram",
+};
+
+const walletProviderSet = new Set(["wallet", "walletconnect", "metamask", "trustwallet"]);
+
 function resolveBridgeFullName(identity: BridgeIdentityInput, normalizedEmail: string | null) {
   const explicitName = String(identity.fullName ?? "").trim();
   if (explicitName) return explicitName;
 
-  if (identity.provider === "wallet") {
+  if (walletProviderSet.has(identity.provider)) {
     return walletAddressFromSubject(identity.subject) || normalizedEmail || "Wallet User";
   }
 
-  return toNameFromEmail(normalizedEmail) || "User";
+  return (
+    providerNameFallback[identity.provider] ||
+    toNameFromEmail(normalizedEmail) ||
+    "User"
+  );
 }
 
 function getBridgeSecret() {
