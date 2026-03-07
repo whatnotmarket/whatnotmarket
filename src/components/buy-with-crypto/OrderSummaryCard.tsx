@@ -1,7 +1,6 @@
 "use client";
 
 import { Squircle } from "@/components/ui/Squircle";
-import { formatCurrency } from "@/lib/utils"; // Assuming this exists or define it
 import { ShieldCheck } from "lucide-react";
 
 interface OrderSummaryCardProps {
@@ -18,8 +17,11 @@ export function OrderSummaryCard({ productPrice, quantity, currency }: OrderSumm
   const serviceFee = Math.max(subtotal * serviceFeeRate, minFee);
   const total = subtotal + serviceFee;
 
-  const format = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const format = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(val);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">

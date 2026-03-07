@@ -6,7 +6,7 @@ import { ArrowRight, Clock, Ghost } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { HoverTooltip as Tooltip } from "@/components/ui/Tooltip";
 import { TrendingCategoryTabs } from "@/components/market/TrendingCategoryTabs";
 import { CurrencyIcon } from "@/components/market/CurrencyIcon";
 import { useCrypto } from "@/contexts/CryptoContext";
