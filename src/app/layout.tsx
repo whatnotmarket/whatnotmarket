@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
@@ -32,6 +32,10 @@ export const metadata: Metadata = {
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { Footer } from "@/components/Footer";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 export default function RootLayout({
   children,
@@ -42,7 +46,7 @@ export default function RootLayout({
     <html 
       lang={ORIGINAL_LANGUAGE.code} 
       translate="no" 
-      className="dark notranslate"
+      className={cn("dark notranslate", "font-sans", geist.variable)}
       style={{ colorScheme: "dark" }}
       suppressHydrationWarning
     >
