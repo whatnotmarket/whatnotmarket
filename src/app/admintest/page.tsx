@@ -56,7 +56,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Modal } from "@/components/ui/Modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { DashboardData, EscrowDashboardData, ProxyDashboardData, CryptoWalletsPayload, User, Deal, Payment, ProxyOrder } from "./types";
+import type { DashboardData, EscrowDashboardData, ProxyDashboardData, CryptoWalletsPayload, CryptoWallet, User, Deal, Payment, ProxyOrder } from "./types";
 import { AdminOverview } from "./components/AdminOverview";
 
 type SectionKey =
@@ -633,8 +633,8 @@ export default function AdminPage() {
     const users = data?.sections.users || [];
     const q = userSearch.toLowerCase().trim();
     if (!q) return users;
-    return users.filter((user: any) => {
-      const wallets = Array.isArray(user.wallets) ? user.wallets.map((w: any) => String(w.address || "")).join(" ") : "";
+    return users.filter((user) => {
+      const wallets = Array.isArray(user.wallets) ? user.wallets.map((w) => String(w.address || "")).join(" ") : "";
       return (
         String(user.id || "").toLowerCase().includes(q) ||
         String(user.email || "").toLowerCase().includes(q) ||
@@ -858,7 +858,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {(cryptoWalletsData?.wallets || []).map((wallet: any) => (
+                {(cryptoWalletsData?.wallets || []).map((wallet) => (
                   <tr key={wallet.id} className="border-b border-zinc-900">
                     <td className="p-2">{wallet.label || "-"}</td>
                     <td className="p-2">{wallet.network}</td>
@@ -1627,7 +1627,7 @@ export default function AdminPage() {
                   {!loading && data ? (
                     <>
                 {active === "search" && renderSearchEverything()}
-                {active === "overview" && renderOverview()}
+                {active === "overview" && <AdminOverview data={data} />}
                 {active === "admin_activity" && renderAdminActivity()}
                 {active === "users" && renderUsers()}
                 {active === "sellers" && (

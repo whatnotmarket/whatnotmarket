@@ -6,6 +6,10 @@ export interface User {
   created_at: string;
   last_sign_in_at?: string;
   raw_user_meta_data?: Record<string, unknown>;
+  username?: string;
+  telegram_username?: string;
+  telegram_user_id?: string;
+  wallets?: Array<{ address: string; chain: string }>;
 }
 
 export interface Deal {
@@ -17,6 +21,7 @@ export interface Deal {
   seller_id: string;
   created_at: string;
   updated_at: string;
+  title?: string;
 }
 
 export interface Payment {
@@ -28,6 +33,7 @@ export interface Payment {
   transaction_id?: string;
   created_at: string;
   metadata?: Record<string, unknown>;
+  chain?: string;
 }
 
 export interface ProxyOrder {
@@ -39,6 +45,7 @@ export interface ProxyOrder {
   created_at: string;
   updated_at: string;
   tracking_id?: string;
+  shipping_address?: Record<string, unknown>;
 }
 
 export interface DashboardData {
@@ -60,6 +67,8 @@ export interface DashboardData {
     deals?: Deal[];
     payments?: Payment[];
     proxy_orders?: ProxyOrder[];
+    listing_payments?: Payment[];
+    ledger_entries?: Array<{ type: string; amount: number; created_at: string }>;
     [key: string]: unknown[] | undefined;
   };
 }
@@ -76,7 +85,19 @@ export interface ProxyDashboardData {
   orders: ProxyOrder[];
 }
 
+export interface CryptoWallet {
+  id: string;
+  label: string;
+  network: string;
+  currency: string;
+  address: string;
+  memo_tag?: string;
+  notes?: string;
+  is_active: boolean;
+  updated_at: string;
+}
+
 export interface CryptoWalletsPayload {
-  wallets: Array<Record<string, unknown>>;
+  wallets: CryptoWallet[];
   warning?: string;
 }
