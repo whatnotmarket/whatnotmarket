@@ -70,6 +70,11 @@ export function StepVerification({
                         <Input 
                             value={telegramCode}
                             onChange={(e) => setTelegramCode(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && telegramCode && !loading) {
+                                    onSubmit();
+                                }
+                            }}
                             placeholder="TG-XXXXXX" 
                             className="h-12 font-mono text-center text-lg tracking-widest bg-zinc-900/50 border-zinc-800 focus:border-[#2AABEE]"
                         />

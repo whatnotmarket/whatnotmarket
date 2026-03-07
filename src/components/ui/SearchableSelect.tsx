@@ -156,6 +156,12 @@ export function SearchableSelect({
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && filteredOptions.length > 0) {
+                        e.preventDefault();
+                        handleSelect(filteredOptions[0].value);
+                      }
+                    }}
                     placeholder={searchPlaceholder}
                     className="w-full h-10 pl-9 pr-4 bg-[#252527] border border-white/5 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-colors"
                     autoFocus

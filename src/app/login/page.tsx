@@ -871,6 +871,11 @@ function TestLoginContent() {
                   spellCheck={false}
                   value={inviteCode}
                   onChange={(event) => setInviteCode(event.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      void submitInviteCode();
+                    }
+                  }}
                   placeholder="Codice invito"
                   className="h-[50px] w-full rounded-[12px] border border-[#3b3b3b] bg-[#0f0f0f] px-4 font-[Inter] text-[16px] text-white outline-none transition focus:border-[#3b3b3b] focus:outline-none focus:ring-0 sm:h-[52px]"
                 />

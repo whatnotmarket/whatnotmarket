@@ -51,6 +51,11 @@ export function StepPayout({
                 <Input 
                     value={payoutAddress}
                     onChange={(e) => setPayoutAddress(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && payoutAddress && feeAcknowledged && !loading) {
+                            onSubmit();
+                        }
+                    }}
                     placeholder="0x..." 
                     className="h-12 font-mono bg-zinc-900/50 border-zinc-800 focus:border-white/20"
                 />

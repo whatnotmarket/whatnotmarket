@@ -28,6 +28,24 @@ export function ConfirmationModal({
   isDestructive = false
 }: ConfirmationModalProps) {
   
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onConfirm();
+        onClose();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onConfirm, onClose]);
+
   // Prevent body scroll
   useEffect(() => {
     if (isOpen) {

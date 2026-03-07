@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Squircle } from "@/components/ui/Squircle";
 import dynamic from "next/dynamic";
 
@@ -15,6 +16,7 @@ const SearchAutocomplete = dynamic(() => import("@/components/search/SearchAutoc
 export function MarketSearch() {
   const [search, setSearch] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="relative z-10 mx-auto mt-8 w-full max-w-2xl">
@@ -31,6 +33,11 @@ export function MarketSearch() {
           className="w-full flex-1 bg-transparent px-4 py-3 text-lg text-black outline-none placeholder:text-zinc-400"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && search.trim()) {
+              router.push(`/market?search=${encodeURIComponent(search.trim())}`);
+            }
+          }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
         />

@@ -130,6 +130,11 @@ export function OfferModal({
                         type="text"
                         value={offerAmount.toLocaleString()}
                         onChange={handleInputChange}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSend();
+                          }
+                        }}
                         className="w-full bg-zinc-900/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-3xl font-bold text-white text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
                       />
                     </div>
@@ -187,6 +192,11 @@ export function OfferModal({
                       <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                            handleSend();
+                          }
+                        }}
                         placeholder="Hi, would you accept this offer for a quick sale?"
                         className="w-full h-24 bg-zinc-900/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 resize-none transition-all text-sm"
                       />
