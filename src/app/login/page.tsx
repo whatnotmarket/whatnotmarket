@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { useAppKitWallet } from "@reown/appkit-wallet-button/react";
@@ -912,7 +913,7 @@ function TestLoginContent() {
   );
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#000000] p-3 md:p-4">
       <div className="h-full w-full rounded-[34px] bg-[#101010] p-4 md:p-5">
@@ -921,5 +922,13 @@ export default function LoginPage() {
         </AppKitProvider>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen overflow-hidden bg-[#000000]" />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

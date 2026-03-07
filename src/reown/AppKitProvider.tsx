@@ -28,7 +28,7 @@ createAppKit({
   features: {
     analytics: false,
     email: true,
-    socials: true,
+    socials: ["google", "apple"],
   },
 });
 
