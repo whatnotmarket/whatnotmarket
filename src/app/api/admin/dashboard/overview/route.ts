@@ -297,6 +297,85 @@ function toNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function parseMissingColumnError(message: string | undefined) {
+  const match = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(
+    String(message || "")
+  );
+  if (!match) return null;
+  return {
+    column: match[1],
+    table: match[2],
+  };
+}
+
+async function selectInviteCodes(
+  admin: ReturnType<typeof createAdminClient>
+) {
+  const withMetadata = await admin
+    .from("invite_codes")
+    .select(
+      "code,type,status,single_use,usage_limit,usage_count,created_by,last_used_by,last_used_at,notes,metadata,expires_at,created_at"
+    )
+    .order("created_at", { ascending: false })
+    .limit(300);
+
+  if (!withMetadata.error) return withMetadata;
+
+  const missing = parseMissingColumnError(withMetadata.error.message);
+  if (!missing || missing.table !== "invite_codes" || missing.column !== "metadata") {
+    return withMetadata;
+  }
+
+  const withoutMetadata = await admin
+    .from("invite_codes")
+    .select(
+      "code,type,status,single_use,usage_limit,usage_count,created_by,last_used_by,last_used_at,notes,expires_at,created_at"
+    )
+    .order("created_at", { ascending: false })
+    .limit(300);
+
+  if (!withoutMetadata.error && Array.isArray(withoutMetadata.data)) {
+    return {
+      ...withoutMetadata,
+      data: withoutMetadata.data.map((row) => ({ ...row, metadata: null })),
+    };
+  }
+
+  return withoutMetadata;
+}
+
+async function selectInviteUsages(
+  admin: ReturnType<typeof createAdminClient>
+) {
+  const withMetadata = await admin
+    .from("invite_code_usages")
+    .select("id,code,user_id,email,ip_address,user_agent,source,used_at,metadata")
+    .order("used_at", { ascending: false })
+    .limit(800);
+
+  if (!withMetadata.error) return withMetadata;
+
+  const missing = parseMissingColumnError(withMetadata.error.message);
+  if (!missing || missing.table !== "invite_code_usages" || missing.column !== "metadata") {
+    return withMetadata;
+  }
+
+  const withoutMetadata = await admin
+    .from("invite_code_usages")
+    .select("id,code,user_id,email,ip_address,user_agent,source,used_at")
+    .order("used_at", { ascending: false })
+    .limit(800);
+
+  if (!withoutMetadata.error && Array.isArray(withoutMetadata.data)) {
+    return {
+      ...withoutMetadata,
+      data: withoutMetadata.data.map((row) => ({ ...row, metadata: null })),
+    };
+  }
+
+  return withoutMetadata;
+}
+
 const riskKeywordGroups: Array<{ label: string; tokens: string[] }> = [
   {
     label: "external_payment",
@@ -430,18 +509,8 @@ export async function GET(request: NextRequest) {
       .select("id,telegram_user_id,telegram_username,status,issued_at,expires_at,used_at,used_by_user_id")
       .order("issued_at", { ascending: false })
       .limit(300),
-    admin
-      .from("invite_codes")
-      .select(
-        "code,type,status,single_use,usage_limit,usage_count,created_by,last_used_by,last_used_at,notes,metadata,expires_at,created_at"
-      )
-      .order("created_at", { ascending: false })
-      .limit(300),
-    admin
-      .from("invite_code_usages")
-      .select("id,code,user_id,email,ip_address,user_agent,source,used_at,metadata")
-      .order("used_at", { ascending: false })
-      .limit(800),
+    selectInviteCodes(admin),
+    selectInviteUsages(admin),
     admin
       .from("seller_invite_code_claims")
       .select("code,user_id,email,claimed_at")

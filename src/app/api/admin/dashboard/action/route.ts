@@ -75,6 +75,58 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function parseMissingColumnError(message: string | undefined) {
+  const match = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(
+    String(message || "")
+  );
+  if (!match) return null;
+  return {
+    column: match[1],
+    table: match[2],
+  };
+}
+
+async function updateProfileWithFallback(
+  admin: ReturnType<typeof createAdminClient>,
+  targetId: string,
+  payload: Record<string, unknown>
+) {
+  const nextPayload = { ...payload };
+
+  while (true) {
+    if (Object.keys(nextPayload).length === 0) {
+      return { error: null };
+    }
+
+    const { error } = await admin.from("profiles").update(nextPayload).eq("id", targetId);
+    if (!error) return { error: null };
+
+    const missing = parseMissingColumnError(error.message);
+    if (!missing || missing.table !== "profiles" || !(missing.column in nextPayload)) {
+      return { error };
+    }
+
+    delete nextPayload[missing.column];
+  }
+}
+
+async function insertInviteWithFallback(
+  admin: ReturnType<typeof createAdminClient>,
+  payload: Record<string, unknown>
+) {
+  const initial = await admin.from("invite_codes").insert(payload);
+  if (!initial.error) return initial;
+
+  const missing = parseMissingColumnError(initial.error.message);
+  if (!missing || missing.table !== "invite_codes" || missing.column !== "metadata") {
+    return initial;
+  }
+
+  const retryPayload = { ...payload };
+  delete retryPayload.metadata;
+  return admin.from("invite_codes").insert(retryPayload);
+}
+
 async function resolveActorId() {
   try {
     const supabase = await createServerClient();
@@ -178,13 +230,13 @@ export async function POST(request: NextRequest) {
       ban_duration: duration,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    await admin
-      .from("profiles")
-      .update({
-        account_status: "banned",
-        account_note: note || null,
-      })
-      .eq("id", targetId);
+    const profileUpdate = await updateProfileWithFallback(admin, targetId, {
+      account_status: "banned",
+      account_note: note || null,
+    });
+    if (profileUpdate.error) {
+      return NextResponse.json({ error: profileUpdate.error.message }, { status: 500 });
+    }
     auditMetadata.duration = duration;
     targetType = "auth_user";
   } else if (action === "user.unban") {
@@ -193,13 +245,13 @@ export async function POST(request: NextRequest) {
       ban_duration: "none",
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    await admin
-      .from("profiles")
-      .update({
-        account_status: "active",
-        account_note: null,
-      })
-      .eq("id", targetId);
+    const profileUpdate = await updateProfileWithFallback(admin, targetId, {
+      account_status: "active",
+      account_note: null,
+    });
+    if (profileUpdate.error) {
+      return NextResponse.json({ error: profileUpdate.error.message }, { status: 500 });
+    }
     targetType = "auth_user";
   } else if (action === "user.setAccountStatus") {
     if (!targetId) return NextResponse.json({ error: "targetId is required" }, { status: 400 });
@@ -217,7 +269,7 @@ export async function POST(request: NextRequest) {
       profileUpdate.session_force_logout_at = null;
     }
 
-    const { error: profileError } = await admin.from("profiles").update(profileUpdate).eq("id", targetId);
+    const { error: profileError } = await updateProfileWithFallback(admin, targetId, profileUpdate);
     if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
 
     if (accountStatus === "active") {
@@ -233,10 +285,9 @@ export async function POST(request: NextRequest) {
     targetType = "profile";
   } else if (action === "user.forceLogout") {
     if (!targetId) return NextResponse.json({ error: "targetId is required" }, { status: 400 });
-    const { error } = await admin
-      .from("profiles")
-      .update({ session_force_logout_at: new Date().toISOString() })
-      .eq("id", targetId);
+    const { error } = await updateProfileWithFallback(admin, targetId, {
+      session_force_logout_at: new Date().toISOString(),
+    });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     targetType = "profile";
   } else if (action === "user.delete") {
@@ -273,7 +324,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "usageLimit must be > 0" }, { status: 400 });
     }
 
-    const { error } = await admin.from("invite_codes").insert({
+    const { error } = await insertInviteWithFallback(admin, {
       code,
       type,
       status: "active",

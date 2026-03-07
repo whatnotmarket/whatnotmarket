@@ -2,10 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import {
   AlertTriangle,
+  BarChart3,
   Bell,
   ClipboardList,
   Database,
@@ -23,24 +26,40 @@ import {
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AppSidebar } from "@/components/app-sidebar";
 import { ChartAreaInteractive } from "@/components/chart-area-interactive";
-import { SectionCards } from "@/components/section-cards";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Modal } from "@/components/ui/Modal";
 
 type SectionKey =
   | "overview"
+  | "admin_activity"
   | "users"
   | "sellers"
   | "wallets"
@@ -73,6 +92,7 @@ type DashboardData = {
 
 const sectionList: Array<{ key: SectionKey; slug: string; label: string; icon: React.ReactNode }> = [
   { key: "overview", slug: "", label: "Overview", icon: <ShieldCheck /> },
+  { key: "admin_activity", slug: "admin-activity", label: "Admin Activity", icon: <BarChart3 /> },
   { key: "users", slug: "users", label: "Users", icon: <Users /> },
   { key: "sellers", slug: "sellers", label: "Sellers & Verifications", icon: <UserCog /> },
   { key: "wallets", slug: "wallets", label: "Wallets & Identities", icon: <Wallet /> },
@@ -101,6 +121,17 @@ const chartConfig = {
   deals: { label: "Deals", color: "#a855f7" },
   payments: { label: "Payments", color: "#f59e0b" },
 } satisfies ChartConfig;
+
+const proxyStatuses = [
+  "CREATED",
+  "PLACED",
+  "PROCESSING",
+  "LOCKER_ASSIGNED",
+  "READY_FOR_PICKUP",
+  "PICKED_UP",
+  "COMPLETED",
+  "CANCELLED",
+];
 
 function short(value: string | null | undefined) {
   return value ? value.slice(0, 8) : "-";
@@ -182,6 +213,27 @@ export default function AdminPage() {
   });
   const [followDraft, setFollowDraft] = useState({ followerHandle: "", targetHandle: "whatnotmarket" });
   const [configDraft, setConfigDraft] = useState({ key: "", value: "{}", description: "" });
+  const [inviteDraft, setInviteDraft] = useState({
+    code: "",
+    type: "buyer",
+    singleUse: false,
+    usageLimit: "",
+    expiresAt: "",
+  });
+  const [overviewRange, setOverviewRange] = useState("30d");
+  const [releaseTxByPayment, setReleaseTxByPayment] = useState<Record<string, string>>({});
+  const [proxyDraftByOrder, setProxyDraftByOrder] = useState<
+    Record<string, { status: string; message: string }>
+  >({});
+  const [pendingNoteAction, setPendingNoteAction] = useState<{
+    action: string;
+    targetId: string;
+    value?: unknown;
+    success?: string;
+    title?: string;
+  } | null>(null);
+  const [pendingNoteText, setPendingNoteText] = useState("");
+  const [submittingNoteAction, setSubmittingNoteAction] = useState(false);
 
   useEffect(() => {
     const path = pathname || "/admintest";
@@ -238,31 +290,87 @@ export default function AdminPage() {
     return () => clearTimeout(timer);
   }, [globalSearch]);
 
-  const runAction = async (
+  const executeAction = async (
     action: string,
     targetId: string,
     value?: unknown,
-    options?: { requireNote?: boolean; success?: string }
+    note?: string | null,
+    success?: string
   ) => {
-    const needNote = options?.requireNote ?? false;
-    const note = needNote ? window.prompt("Nota interna obbligatoria")?.trim() || "" : "";
-    if (needNote && note.length < 3) {
-      toast.error("Nota obbligatoria (min 3 caratteri)");
-      return;
-    }
     try {
       const res = await adminFetch("/api/admin/dashboard/action", {
         method: "POST",
-        body: JSON.stringify({ action, targetId, value: value ?? null, note }),
+        body: JSON.stringify({ action, targetId, value: value ?? null, note: note || "" }),
       });
       const payload = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (!res.ok || !payload?.ok) throw new Error(payload?.error || "Action failed");
-      toast.success(options?.success || "Action completed");
+      toast.success(success || "Action completed");
       await loadDashboard(true);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Action failed");
     }
   };
+
+  const runAction = async (
+    action: string,
+    targetId: string,
+    value?: unknown,
+    options?: { requireNote?: boolean; success?: string; title?: string }
+  ) => {
+    const needNote = options?.requireNote ?? false;
+    if (needNote) {
+      setPendingNoteText("");
+      setPendingNoteAction({
+        action,
+        targetId,
+        value,
+        success: options?.success,
+        title: options?.title,
+      });
+      return;
+    }
+
+    await executeAction(action, targetId, value, null, options?.success);
+  };
+
+  const submitPendingAction = async () => {
+    if (!pendingNoteAction) return;
+    if (pendingNoteText.trim().length < 3) {
+      toast.error("Add an internal note (min 3 chars)");
+      return;
+    }
+
+    setSubmittingNoteAction(true);
+    try {
+      const justRanAction = pendingNoteAction.action;
+      await executeAction(
+        pendingNoteAction.action,
+        pendingNoteAction.targetId,
+        pendingNoteAction.value,
+        pendingNoteText.trim(),
+        pendingNoteAction.success
+      );
+      if (justRanAction === "invite.create") {
+        setInviteDraft({
+          code: "",
+          type: "buyer",
+          singleUse: false,
+          usageLimit: "",
+          expiresAt: "",
+        });
+      }
+      setPendingNoteAction(null);
+      setPendingNoteText("");
+    } finally {
+      setSubmittingNoteAction(false);
+    }
+  };
+
+  const getProxyDraft = (order: { id: string; status?: string }) =>
+    proxyDraftByOrder[order.id] || {
+      status: String(order.status || "CREATED"),
+      message: "",
+    };
 
   const filteredUsers = useMemo(() => {
     const users = data?.sections.users || [];
@@ -279,6 +387,61 @@ export default function AdminPage() {
       );
     });
   }, [data?.sections.users, userSearch]);
+
+  const overviewActivityData = useMemo(() => {
+    const source = data?.charts.activity || [];
+    if (!source.length) return [];
+
+    const days = overviewRange === "7d" ? 7 : overviewRange === "30d" ? 30 : 90;
+    const lastDateRaw = source[source.length - 1]?.date;
+    const referenceDate = lastDateRaw ? new Date(lastDateRaw) : new Date();
+    if (Number.isNaN(referenceDate.getTime())) return source;
+
+    const startDate = new Date(referenceDate);
+    startDate.setDate(startDate.getDate() - days);
+
+    return source.filter((row) => new Date(row.date) >= startDate);
+  }, [data?.charts.activity, overviewRange]);
+
+  const paymentStackData = useMemo(() => {
+    const rows = data?.sections.listing_payments || [];
+    if (!Array.isArray(rows)) return [];
+
+    const buckets: Record<string, { date: string; escrow: number; released: number; blocked: number }> = {};
+
+    rows.forEach((row: any) => {
+      const rawDate = String(row.created_at || "").slice(0, 10);
+      if (!rawDate) return;
+      if (!buckets[rawDate]) buckets[rawDate] = { date: rawDate, escrow: 0, released: 0, blocked: 0 };
+      const status = String(row.status || "");
+      if (["pending", "funded_to_escrow", "awaiting_release"].includes(status)) buckets[rawDate].escrow += 1;
+      else if (status === "released") buckets[rawDate].released += 1;
+      else if (["failed", "cancelled"].includes(status)) buckets[rawDate].blocked += 1;
+    });
+
+    return Object.values(buckets).sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+  }, [data?.sections.listing_payments]);
+
+  const ledgerFlowData = useMemo(() => {
+    const rows = data?.sections.ledger_entries || [];
+    if (!Array.isArray(rows)) return [];
+
+    const buckets: Record<string, { date: string; deposits: number; fees: number; payouts: number }> = {};
+
+    rows.forEach((row: any) => {
+      const rawDate = String(row.created_at || "").slice(0, 10);
+      if (!rawDate) return;
+      if (!buckets[rawDate]) buckets[rawDate] = { date: rawDate, deposits: 0, fees: 0, payouts: 0 };
+      const type = String(row.type || "");
+      const amount = Number(row.amount || 0);
+      if (!Number.isFinite(amount)) return;
+      if (type === "deposit") buckets[rawDate].deposits += amount;
+      else if (type === "fee") buckets[rawDate].fees += amount;
+      else if (type === "payout" || type === "refund" || type === "adjustment") buckets[rawDate].payouts += amount;
+    });
+
+    return Object.values(buckets).sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+  }, [data?.sections.ledger_entries]);
 
   const renderOverview = () => (
     <div className="space-y-4">
@@ -301,21 +464,62 @@ export default function AdminPage() {
           </Card>
         ))}
       </div>
-      <Card className="border-zinc-800 bg-zinc-950">
-        <CardHeader>
-          <CardTitle>Trend (30 days)</CardTitle>
-          <CardDescription>Users, requests, deals, payments.</CardDescription>
+      <Card className="pt-0 border-zinc-800 bg-zinc-950">
+        <CardHeader className="flex items-center gap-2 space-y-0 border-b border-zinc-800 py-5 sm:flex-row">
+          <div className="grid flex-1 gap-1">
+            <CardTitle>Trend 30 Days</CardTitle>
+            <CardDescription>Users, requests, deals and payments.</CardDescription>
+          </div>
+          <Select value={overviewRange} onValueChange={setOverviewRange}>
+            <SelectTrigger className="hidden w-[160px] rounded-lg border-zinc-700 bg-black sm:ml-auto sm:flex" aria-label="Select range">
+              <SelectValue placeholder="Last 30 days" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="90d" className="rounded-lg">Last 90 days</SelectItem>
+              <SelectItem value="30d" className="rounded-lg">Last 30 days</SelectItem>
+              <SelectItem value="7d" className="rounded-lg">Last 7 days</SelectItem>
+            </SelectContent>
+          </Select>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[320px] w-full">
-            <AreaChart data={data?.charts.activity || []}>
-              <CartesianGrid vertical={false} strokeDasharray="4 4" />
-              <XAxis dataKey="date" tickLine={false} axisLine={false} minTickGap={24} />
-              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-              <Area type="monotone" dataKey="users" stroke="#3b82f6" fillOpacity={0.08} fill="#3b82f6" strokeWidth={2} />
-              <Area type="monotone" dataKey="requests" stroke="#22c55e" fillOpacity={0.08} fill="#22c55e" strokeWidth={2} />
-              <Area type="monotone" dataKey="deals" stroke="#a855f7" fillOpacity={0} strokeWidth={2} />
-              <Area type="monotone" dataKey="payments" stroke="#f59e0b" fillOpacity={0} strokeWidth={2} />
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+            <AreaChart data={overviewActivityData}>
+              <defs>
+                <linearGradient id="fillUsers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-users)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-users)" stopOpacity={0.1} />
+                </linearGradient>
+                <linearGradient id="fillRequests" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-requests)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-requests)" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                }}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                    }}
+                    indicator="dot"
+                  />
+                }
+              />
+              <Area dataKey="requests" type="natural" fill="url(#fillRequests)" stroke="var(--color-requests)" stackId="a" />
+              <Area dataKey="users" type="natural" fill="url(#fillUsers)" stroke="var(--color-users)" stackId="a" />
+              <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
           </ChartContainer>
         </CardContent>
@@ -323,47 +527,69 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card className="border-zinc-800 bg-zinc-950">
           <CardHeader>
-            <CardTitle>Payments By Status</CardTitle>
-            <CardDescription>Escrow pipeline health.</CardDescription>
+            <CardTitle>Payment By Status</CardTitle>
+            <CardDescription>Escrow distribution over time (expanded).</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
-              config={{ value: { label: "Payments", color: "#22c55e" } }}
-              className="h-[280px] w-full"
+              config={{
+                escrow: { label: "Escrow", color: "var(--chart-1)" },
+                released: { label: "Released", color: "var(--chart-2)" },
+                blocked: { label: "Blocked", color: "var(--chart-3)" },
+              }}
             >
-              <BarChart data={data?.charts.payment_status || []}>
-                <CartesianGrid vertical={false} strokeDasharray="4 4" />
-                <XAxis dataKey="status" tickLine={false} axisLine={false} interval={0} angle={-25} textAnchor="end" height={70} />
-                <YAxis allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-                <Bar dataKey="value" fill="#22c55e" radius={[6, 6, 0, 0]} />
-              </BarChart>
+              <AreaChart data={paymentStackData} margin={{ left: 12, right: 12, top: 12 }} stackOffset="expand">
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => String(value).slice(5)}
+                />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                <Area dataKey="blocked" type="natural" fill="var(--color-blocked)" fillOpacity={0.2} stroke="var(--color-blocked)" stackId="a" />
+                <Area dataKey="released" type="natural" fill="var(--color-released)" fillOpacity={0.35} stroke="var(--color-released)" stackId="a" />
+                <Area dataKey="escrow" type="natural" fill="var(--color-escrow)" fillOpacity={0.35} stroke="var(--color-escrow)" stackId="a" />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
         <Card className="border-zinc-800 bg-zinc-950">
           <CardHeader>
             <CardTitle>Ledger Flow</CardTitle>
-            <CardDescription>Amounts by ledger type.</CardDescription>
+            <CardDescription>Deposits, fees and payouts over time (expanded).</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
-              config={{ value: { label: "Amount", color: "#f59e0b" } }}
-              className="h-[280px] w-full"
+              config={{
+                deposits: { label: "Deposits", color: "var(--chart-1)" },
+                fees: { label: "Fees", color: "var(--chart-2)" },
+                payouts: { label: "Payouts", color: "var(--chart-3)" },
+              }}
             >
-              <BarChart data={data?.charts.ledger_flow || []}>
-                <CartesianGrid vertical={false} strokeDasharray="4 4" />
-                <XAxis dataKey="type" tickLine={false} axisLine={false} />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-                <Bar dataKey="value" fill="#f59e0b" radius={[6, 6, 0, 0]} />
-              </BarChart>
+              <AreaChart data={ledgerFlowData} margin={{ left: 12, right: 12, top: 12 }} stackOffset="expand">
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => String(value).slice(5)}
+                />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                <Area dataKey="payouts" type="natural" fill="var(--color-payouts)" fillOpacity={0.2} stroke="var(--color-payouts)" stackId="a" />
+                <Area dataKey="fees" type="natural" fill="var(--color-fees)" fillOpacity={0.35} stroke="var(--color-fees)" stackId="a" />
+                <Area dataKey="deposits" type="natural" fill="var(--color-deposits)" fillOpacity={0.35} stroke="var(--color-deposits)" stackId="a" />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
       </div>
     </div>
   );
+
+  const renderAdminActivity = () => <ChartAreaInteractive activityData={data?.charts.activity} />;
 
   const renderUsers = () => (
     <Card className="border-zinc-800 bg-zinc-950">
@@ -456,12 +682,87 @@ export default function AdminPage() {
                 <td className="p-2">{p.amount} {p.currency} ({p.chain})</td>
                 <td className="p-2"><Badge variant="outline">{p.status}</Badge></td>
                 <td className="p-2 font-mono text-xs">IN:{p.tx_hash_in || "-"}<br />OUT:{p.tx_hash_out || "-"}</td>
-                <td className="p-2"><div className="grid grid-cols-2 gap-2">
-                  <Button size="sm" variant="outline" className="border-zinc-700" onClick={() => runAction("payment.transition", p.id, { status: "awaiting_release" }, { requireNote: true })}>Queue</Button>
-                  <Button size="sm" className="bg-emerald-500 text-black hover:bg-emerald-400" onClick={() => { const tx = window.prompt("Tx hash out")?.trim() || ""; if (!tx) return; runAction("payment.transition", p.id, { status: "released", txHashOut: tx }, { requireNote: true }); }}>Release</Button>
-                  <Button size="sm" variant="outline" className="border-red-800 text-red-300" onClick={() => runAction("payment.transition", p.id, { status: "failed" }, { requireNote: true })}>Fail</Button>
-                  <Button size="sm" variant="outline" className="border-zinc-700" onClick={() => runAction("payment.transition", p.id, { status: "cancelled" }, { requireNote: true })}>Cancel</Button>
-                </div></td>
+                <td className="p-2">
+                  <div className="space-y-2">
+                    <Input
+                      value={releaseTxByPayment[p.id] || ""}
+                      onChange={(event) =>
+                        setReleaseTxByPayment((prev) => ({
+                          ...prev,
+                          [p.id]: event.target.value,
+                        }))
+                      }
+                      placeholder="tx hash out for release"
+                      className="h-8 border-zinc-700 bg-black font-mono text-xs"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-zinc-700"
+                        onClick={() =>
+                          runAction(
+                            "payment.transition",
+                            p.id,
+                            { status: "awaiting_release" },
+                            { requireNote: true, title: "Queue Escrow Payment" }
+                          )
+                        }
+                      >
+                        Queue
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-500 text-black hover:bg-emerald-400"
+                        onClick={() => {
+                          const txHashOut = (releaseTxByPayment[p.id] || "").trim();
+                          if (!txHashOut) {
+                            toast.error("Tx hash out is required for release");
+                            return;
+                          }
+                          runAction(
+                            "payment.transition",
+                            p.id,
+                            { status: "released", txHashOut },
+                            { requireNote: true, title: "Release Escrow Payment" }
+                          );
+                        }}
+                      >
+                        Release
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-800 text-red-300"
+                        onClick={() =>
+                          runAction(
+                            "payment.transition",
+                            p.id,
+                            { status: "failed" },
+                            { requireNote: true, title: "Fail Escrow Payment" }
+                          )
+                        }
+                      >
+                        Fail
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-zinc-700"
+                        onClick={() =>
+                          runAction(
+                            "payment.transition",
+                            p.id,
+                            { status: "cancelled" },
+                            { requireNote: true, title: "Cancel Escrow Payment" }
+                          )
+                        }
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -553,15 +854,73 @@ export default function AdminPage() {
       <CardHeader><CardTitle>Proxy Orders Operations</CardTitle><CardDescription>Update status, notes, locker/pickup flow.</CardDescription></CardHeader>
       <CardContent className="overflow-auto">
         <table className="w-full min-w-[1200px] text-sm">
-          <thead><tr className="border-b border-zinc-800 text-left text-zinc-400"><th className="p-2">Order</th><th className="p-2">Tracking</th><th className="p-2">Product URL</th><th className="p-2">Status</th><th className="p-2">Action</th></tr></thead>
+          <thead><tr className="border-b border-zinc-800 text-left text-zinc-400"><th className="p-2">Order</th><th className="p-2">Tracking</th><th className="p-2">Product URL</th><th className="p-2">Status</th><th className="p-2">Update Status</th><th className="p-2">Update Message</th><th className="p-2">Action</th></tr></thead>
           <tbody>
-            {(data?.sections.proxy_orders || []).map((order: any) => (
-              <tr key={order.id} className="border-b border-zinc-900">
-                <td className="p-2 font-mono text-xs">{order.id}</td><td className="p-2">{order.tracking_id}</td>
-                <td className="p-2 max-w-[360px] truncate">{order.product_url}</td><td className="p-2"><Badge variant="outline">{order.status}</Badge></td>
-                <td className="p-2"><Button size="sm" variant="outline" className="border-zinc-700" onClick={() => { const status = window.prompt("New status (CREATED,PLACED,PROCESSING,LOCKER_ASSIGNED,READY_FOR_PICKUP,PICKED_UP,COMPLETED,CANCELLED)")?.trim() || ""; if (!status) return; const message = window.prompt("Update message")?.trim() || ""; if (!message) return; runAction("proxyOrder.updateStatus", order.id, { status, message }, { requireNote: true }); }}>Update</Button></td>
-              </tr>
-            ))}
+            {(data?.sections.proxy_orders || []).map((order: any) => {
+              const draft = getProxyDraft(order);
+              return (
+                <tr key={order.id} className="border-b border-zinc-900">
+                  <td className="p-2 font-mono text-xs">{order.id}</td>
+                  <td className="p-2">{order.tracking_id}</td>
+                  <td className="p-2 max-w-[360px] truncate">{order.product_url}</td>
+                  <td className="p-2"><Badge variant="outline">{order.status}</Badge></td>
+                  <td className="p-2">
+                    <Select
+                      value={draft.status}
+                      onValueChange={(status) =>
+                        setProxyDraftByOrder((prev) => ({
+                          ...prev,
+                          [order.id]: { ...draft, status },
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-[190px] border-zinc-700 bg-black"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {proxyStatuses.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="p-2">
+                    <Input
+                      value={draft.message}
+                      onChange={(event) =>
+                        setProxyDraftByOrder((prev) => ({
+                          ...prev,
+                          [order.id]: { ...draft, message: event.target.value },
+                        }))
+                      }
+                      placeholder="Internal update message"
+                      className="h-8 min-w-[260px] border-zinc-700 bg-black text-xs"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-zinc-700"
+                      onClick={() => {
+                        if (!draft.message.trim()) {
+                          toast.error("Update message is required");
+                          return;
+                        }
+                        runAction(
+                          "proxyOrder.updateStatus",
+                          order.id,
+                          { status: draft.status, message: draft.message.trim() },
+                          { requireNote: true, title: "Proxy Order Status Update" }
+                        );
+                      }}
+                    >
+                      Update
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </CardContent>
@@ -625,29 +984,29 @@ export default function AdminPage() {
 
   const title = sectionList.find((section) => section.key === active)?.label || "Overview";
   const routeBase = pathname?.startsWith("/admin") ? "/admin" : "/admintest";
-  const navMainItems = sectionList.slice(0, 8).map((section) => ({
-    title: section.label,
-    url: section.slug ? `${routeBase}/${section.slug}` : routeBase,
-    icon: section.icon,
-    isActive: active === section.key,
-  }));
-  const documentItems = sectionList.slice(8, 14).map((section) => ({
-    name: section.label,
-    url: section.slug ? `${routeBase}/${section.slug}` : routeBase,
-    icon: section.icon,
-  }));
-  const navSecondaryItems = [
-    ...sectionList.slice(14).map((section) => ({
-      title: section.label,
-      url: section.slug ? `${routeBase}/${section.slug}` : routeBase,
-      icon: section.icon,
-    })),
-    {
-      title: routeBase === "/admin" ? "Open Admin Test" : "Open Admin",
-      url: routeBase === "/admin" ? "/admintest" : "/admin",
-      icon: <ShieldAlert />,
-    },
+  const sectionByKey = new Map(sectionList.map((section) => [section.key, section]));
+  const sectionUrl = (key: SectionKey) => {
+    const section = sectionByKey.get(key);
+    if (!section) return routeBase;
+    return section.slug ? `${routeBase}/${section.slug}` : routeBase;
+  };
+
+  const sidebarGroups: Array<{ label: string; items: Array<{ key: SectionKey; label?: string }> }> = [
+    { label: "Overview", items: [{ key: "overview" }] },
+    { label: "Admin Activity", items: [{ key: "admin_activity", label: "Users and Requests" }] },
+    { label: "Users", items: [{ key: "users" }, { key: "sellers" }, { key: "wallets" }] },
+    { label: "Marketplace", items: [{ key: "requests" }, { key: "offers" }, { key: "deals" }, { key: "escrow" }] },
+    { label: "Documents", items: [{ key: "payment_intents" }, { key: "ledger" }, { key: "disputes" }] },
+    { label: "Messages", items: [{ key: "messages" }, { key: "notifications" }] },
+    { label: "Proxy Orders", items: [{ key: "proxy_orders" }] },
+    { label: "More", items: [{ key: "invites" }, { key: "audit" }, { key: "risk" }, { key: "system" }, { key: "config" }] },
   ];
+
+  const globalResultSummary = globalResults
+    ? Object.entries(globalResults)
+        .map(([key, rows]) => `${key}:${rows.length}`)
+        .join(" | ")
+    : "";
 
   return (
     <TooltipProvider>
@@ -659,52 +1018,96 @@ export default function AdminPage() {
           } as CSSProperties
         }
       >
-        <AppSidebar
-          variant="inset"
-          brandName="Whatnot Admin"
-          brandHref={routeBase}
-          navMainItems={navMainItems}
-          documentItems={documentItems}
-          navSecondaryItems={navSecondaryItems}
-          showQuickCreate={false}
-          user={{
-            name: "Admin Console",
-            email: "admin@whatnotmarket.local",
-            avatar: "/avatars/shadcn.jpg",
-          }}
-        />
+        <Sidebar variant="inset" collapsible="offcanvas" className="border-r border-zinc-900">
+          <SidebarHeader className="border-b border-zinc-900">
+            <Link href={routeBase} className="flex items-center gap-2 rounded-md px-1 py-1.5">
+              <Image src="/logowhite.svg" alt="WhatnotMarket logo" width={28} height={28} className="h-7 w-7 object-contain" />
+              <div className="flex flex-col leading-none">
+                <span className="text-sm font-semibold">WhatnotMarket</span>
+                <span className="text-[11px] uppercase tracking-wide text-zinc-500">Admin</span>
+              </div>
+            </Link>
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <Input
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
+                  placeholder="Search everything..."
+                  className="h-9 border-zinc-700 bg-black pl-8 text-sm"
+                />
+              </div>
+              <Button
+                onClick={() => loadDashboard(true)}
+                className="h-8 w-full rounded-lg bg-white text-xs font-bold text-black hover:bg-zinc-200"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                Refresh
+              </Button>
+            </div>
+            {globalResultSummary ? (
+              <div className="rounded border border-zinc-800 bg-zinc-950 p-2 text-[11px] text-zinc-300">
+                {globalResultSummary}
+              </div>
+            ) : null}
+          </SidebarHeader>
+          <SidebarContent>
+            {sidebarGroups.map((group) => (
+              <SidebarGroup key={group.label}>
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => {
+                      const section = sectionByKey.get(item.key);
+                      if (!section) return null;
+                      return (
+                        <SidebarMenuItem key={item.key}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={active === item.key}
+                            className="data-[active=true]:bg-zinc-100 data-[active=true]:font-semibold data-[active=true]:text-black"
+                          >
+                            <Link href={sectionUrl(item.key)}>
+                              {section.icon}
+                              <span>{item.label || section.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupLabel>Utility</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href={routeBase === "/admin" ? "/admintest" : "/admin"}>
+                        <ShieldAlert />
+                        <span>{routeBase === "/admin" ? "Open Admin Test" : "Open Admin"}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
         <SidebarInset>
-          <SiteHeader title={title} subtitle="Template dashboard + real /admin data/actions" />
+          <SiteHeader title={title} subtitle="Control center linked to real admin actions" />
           <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="@container/main flex flex-1 flex-col">
               <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                <SectionCards metrics={data?.metrics} />
-                <div className="px-4 lg:px-6">
-                  <ChartAreaInteractive activityData={data?.charts.activity} />
-                </div>
-                <div className="px-4 lg:px-6">
-                  <Card className="border-zinc-800 bg-zinc-950">
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="w-full max-w-md">
-                          <div className="relative">
-                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                            <Input value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} placeholder="Search everything..." className="h-9 border-zinc-700 bg-black pl-8 text-sm" />
-                          </div>
-                        </div>
-                        <Button onClick={() => loadDashboard(true)} className="rounded-xl border-0 bg-white px-4 font-bold text-black hover:bg-zinc-200" disabled={loading}>
-                          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Refresh
-                        </Button>
-                      </div>
-                      {globalResults ? <div className="mt-2 rounded border border-zinc-800 bg-zinc-950 p-2 text-xs text-zinc-300">{Object.entries(globalResults).map(([key, rows]) => `${key}:${rows.length}`).join(" | ")}</div> : null}
-                    </CardContent>
-                  </Card>
-                </div>
                 <main className="space-y-4 px-4 md:px-6">
                   {loading && !data ? <div className="flex min-h-[40vh] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-zinc-300" /></div> : null}
                   {!loading && data ? (
                     <>
                 {active === "overview" && renderOverview()}
+                {active === "admin_activity" && renderAdminActivity()}
                 {active === "users" && renderUsers()}
                 {active === "sellers" && (
                   <Card className="border-zinc-800 bg-zinc-950">
@@ -800,8 +1203,102 @@ export default function AdminPage() {
                 {active === "proxy_orders" && renderProxyOrders()}
                 {active === "invites" && (
                   <div className="space-y-4">
-                    <Card className="border-zinc-800 bg-zinc-950"><CardHeader><CardTitle>Invite Management</CardTitle><CardDescription>Create / revoke / delete invites</CardDescription></CardHeader>
-                      <CardContent><Button className="bg-white text-black hover:bg-zinc-200" onClick={() => { const code = window.prompt("Invite code")?.trim().toUpperCase() || ""; if (!code) return; const type = (window.prompt("Invite type: buyer | seller | founder")?.trim().toLowerCase() || "buyer"); const singleUse = (window.prompt("Single use? yes/no")?.trim().toLowerCase() || "no") === "yes"; const usageLimitRaw = window.prompt("Usage limit (empty = unlimited)")?.trim() || ""; const usageLimit = usageLimitRaw ? Number(usageLimitRaw) : null; const expiresAt = window.prompt("Expires at ISO (optional)")?.trim() || null; runAction("invite.create", code, { code, type, singleUse, usageLimit, expiresAt }, { success: "Invite created", requireNote: true }); }}>Create Invite</Button></CardContent>
+                    <Card className="border-zinc-800 bg-zinc-950">
+                      <CardHeader>
+                        <CardTitle>Invite Management</CardTitle>
+                        <CardDescription>Create / revoke / delete invites</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
+                          <Input
+                            placeholder="Code (e.g. SELLER-01)"
+                            value={inviteDraft.code}
+                            onChange={(event) =>
+                              setInviteDraft((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                            }
+                            className="border-zinc-700 bg-black"
+                          />
+                          <Select
+                            value={inviteDraft.type}
+                            onValueChange={(value) => setInviteDraft((prev) => ({ ...prev, type: value }))}
+                          >
+                            <SelectTrigger className="border-zinc-700 bg-black"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="buyer">buyer</SelectItem>
+                              <SelectItem value="seller">seller</SelectItem>
+                              <SelectItem value="founder">founder</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            placeholder="Usage limit (optional)"
+                            value={inviteDraft.usageLimit}
+                            onChange={(event) =>
+                              setInviteDraft((prev) => ({ ...prev, usageLimit: event.target.value }))
+                            }
+                            className="border-zinc-700 bg-black"
+                          />
+                          <Input
+                            placeholder="Expires at ISO (optional)"
+                            value={inviteDraft.expiresAt}
+                            onChange={(event) =>
+                              setInviteDraft((prev) => ({ ...prev, expiresAt: event.target.value }))
+                            }
+                            className="border-zinc-700 bg-black"
+                          />
+                          <Button
+                            variant={inviteDraft.singleUse ? "default" : "outline"}
+                            className={
+                              inviteDraft.singleUse
+                                ? "border-zinc-700 bg-white text-black hover:bg-zinc-200"
+                                : "border-zinc-700"
+                            }
+                            onClick={() =>
+                              setInviteDraft((prev) => ({ ...prev, singleUse: !prev.singleUse }))
+                            }
+                          >
+                            {inviteDraft.singleUse ? "Single-use: ON" : "Single-use: OFF"}
+                          </Button>
+                        </div>
+                        <Button
+                          className="bg-white text-black hover:bg-zinc-200"
+                          onClick={() => {
+                            const code = inviteDraft.code.trim().toUpperCase();
+                            if (!code) {
+                              toast.error("Invite code is required");
+                              return;
+                            }
+                            const usageLimitRaw = inviteDraft.usageLimit.trim();
+                            const usageLimit =
+                              usageLimitRaw.length > 0 ? Number(usageLimitRaw) : null;
+                            if (
+                              usageLimit !== null &&
+                              (!Number.isFinite(usageLimit) || usageLimit <= 0)
+                            ) {
+                              toast.error("Usage limit must be a positive number");
+                              return;
+                            }
+
+                            runAction(
+                              "invite.create",
+                              code,
+                              {
+                                code,
+                                type: inviteDraft.type,
+                                single_use: inviteDraft.singleUse,
+                                usage_limit: usageLimit,
+                                expires_at: inviteDraft.expiresAt.trim() || null,
+                              },
+                              {
+                                success: "Invite created",
+                                requireNote: true,
+                                title: "Create Invite Code",
+                              }
+                            );
+                          }}
+                        >
+                          Create Invite
+                        </Button>
+                      </CardContent>
                     </Card>
                     <Card className="border-zinc-800 bg-zinc-950">
                       <CardContent className="overflow-auto pt-6">
@@ -846,6 +1343,48 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+          <Modal
+            isOpen={Boolean(pendingNoteAction)}
+            onClose={() => {
+              if (submittingNoteAction) return;
+              setPendingNoteAction(null);
+              setPendingNoteText("");
+            }}
+            title={pendingNoteAction?.title || "Admin Action Note"}
+          >
+            <div className="space-y-3">
+              <p className="text-sm text-zinc-400">
+                Add a mandatory internal reason for this sensitive action.
+              </p>
+              <textarea
+                value={pendingNoteText}
+                onChange={(event) => setPendingNoteText(event.target.value)}
+                placeholder="Write internal note / reason..."
+                className="min-h-[120px] w-full rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm outline-none ring-offset-black focus:border-zinc-500"
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  className="border-zinc-700"
+                  onClick={() => {
+                    if (submittingNoteAction) return;
+                    setPendingNoteAction(null);
+                    setPendingNoteText("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-white text-black hover:bg-zinc-200"
+                  disabled={submittingNoteAction || pendingNoteText.trim().length < 3}
+                  onClick={submitPendingAction}
+                >
+                  {submittingNoteAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Confirm Action
+                </Button>
+              </div>
+            </div>
+          </Modal>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
