@@ -688,8 +688,6 @@ export default function AdminPage() {
 
 
 
-  const renderAdminActivity = () => <ChartAreaInteractive activityData={data?.charts.activity} />;
-
   const renderSearchEverything = () => (
     <div className="space-y-4">
       <Card className="border-zinc-800 bg-zinc-950">
