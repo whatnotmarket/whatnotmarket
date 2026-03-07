@@ -1286,7 +1286,7 @@ export default function AdminPage() {
           </div>
         </CardContent>
       </Card>
-      <JsonTable title="Notifications" rows={data?.sections.notifications || []} />
+      <JsonTable title="Notifications" rows={(data?.sections.notifications || []) as Record<string, any>[]} />
     </div>
   );
 
@@ -1483,10 +1483,10 @@ export default function AdminPage() {
           </Button>
         </CardContent>
       </Card>
-      <JsonTable title="Admin Settings" rows={data?.sections.config?.admin_settings || []} />
-      <JsonTable title="Support Matrix" rows={data?.sections.config?.support_matrix || []} />
-      <JsonTable title="Networks" rows={data?.sections.config?.networks || []} />
-      <JsonTable title="Currencies" rows={data?.sections.config?.currencies || []} />
+      <JsonTable title="Admin Settings" rows={(data?.sections.config as any)?.admin_settings || []} />
+      <JsonTable title="Support Matrix" rows={(data?.sections.config as any)?.support_matrix || []} />
+      <JsonTable title="Networks" rows={(data?.sections.config as any)?.networks || []} />
+      <JsonTable title="Currencies" rows={(data?.sections.config as any)?.currencies || []} />
     </div>
   );
 
@@ -1699,13 +1699,13 @@ export default function AdminPage() {
                 )}
                 {active === "crypto_wallets" && renderCryptoWallets()}
                 {active === "requests" &&
-                  renderStatusSection("Requests", data.sections.requests || [], "request.setStatus", [
+                  renderStatusSection("Requests", (data.sections.requests as Record<string, any>[]) || [], "request.setStatus", [
                     "open",
                     "accepted",
                     "closed",
                   ])}
                 {active === "offers" &&
-                  renderStatusSection("Offers", data.sections.offers || [], "offer.setStatus", [
+                  renderStatusSection("Offers", (data.sections.offers as Record<string, any>[]) || [], "offer.setStatus", [
                     "pending",
                     "accepted",
                     "rejected",
@@ -1717,10 +1717,10 @@ export default function AdminPage() {
                     "cancelled",
                   ])}
                 {active === "escrow" && renderEscrow()}
-                {active === "payment_intents" && <JsonTable title="Payment Intents" rows={data.sections.payment_intents || []} />}
+                {active === "payment_intents" && <JsonTable title="Payment Intents" rows={(data.sections.payment_intents as Record<string, any>[]) || []} />}
                 {active === "ledger" && <JsonTable title="Ledger Entries" rows={data.sections.ledger_entries || []} />}
-                {active === "disputes" && <JsonTable title="Disputes" rows={data.sections.disputes || []} />}
-                {active === "messages" && <JsonTable title="Messages & Moderation" rows={data.sections.messages || []} />}
+                {active === "disputes" && <JsonTable title="Disputes" rows={(data.sections.disputes as Record<string, any>[]) || []} />}
+                {active === "messages" && <JsonTable title="Messages & Moderation" rows={(data.sections.messages as Record<string, any>[]) || []} />}
                 {active === "notifications" && renderNotifications()}
                 {active === "proxy_orders" && renderProxyOrders()}
                 {active === "invites" && (
@@ -1852,11 +1852,11 @@ export default function AdminPage() {
                         </table>
                       </CardContent>
                     </Card>
-                    <JsonTable title="Invite Usages" rows={data.sections.invite_usages || []} />
+                    <JsonTable title="Invite Usages" rows={(data.sections.invite_usages as Record<string, any>[]) || []} />
                   </div>
                 )}
-                {active === "audit" && <JsonTable title="Audit Logs" rows={data.sections.audit_logs || []} />}
-                {active === "risk" && <JsonTable title="Risk Signals" rows={[...(data.sections.risk?.reused_wallets || []), ...(data.sections.risk?.duplicate_telegrams || []), ...(data.sections.risk?.duplicate_emails || []), ...(data.sections.risk?.suspicious_providers || []), ...(data.sections.risk?.high_risk_messages || [])]} />}
+                {active === "audit" && <JsonTable title="Audit Logs" rows={(data.sections.audit_logs as Record<string, any>[]) || []} />}
+                {active === "risk" && <JsonTable title="Risk Signals" rows={[...((data.sections.risk as any)?.reused_wallets || []), ...((data.sections.risk as any)?.duplicate_telegrams || []), ...((data.sections.risk as any)?.duplicate_emails || []), ...((data.sections.risk as any)?.suspicious_providers || []), ...((data.sections.risk as any)?.high_risk_messages || [])]} />}
                 {active === "system" && <JsonTable title="System Health" rows={Object.entries(data.sections.system || {}).map(([key, value]) => ({ key, value }))} />}
                 {active === "config" && renderConfig()}
               </>
