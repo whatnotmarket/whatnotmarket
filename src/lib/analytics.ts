@@ -3,13 +3,12 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
+import posthog from "posthog-js";
 
 type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
 /**
- * Standardized analytics wrapper.
- * Currently logs to console in development and can be extended to support
- * Vercel Analytics custom events, PostHog, Segment, or Google Analytics.
+ * Standardized analytics wrapper using PostHog.
  */
 class Analytics {
   private static isDev = process.env.NODE_ENV === "development";
@@ -24,8 +23,9 @@ class Analytics {
       console.groupEnd();
     }
 
-    // TODO: Integrate with Vercel Analytics or other providers here
-    // Example: va.track(eventName, properties);
+    if (typeof window !== "undefined") {
+      posthog.capture(eventName, properties);
+    }
   }
 
   /**
@@ -38,19 +38,25 @@ class Analytics {
       console.groupEnd();
     }
     
-    // TODO: Integrate with Vercel Analytics or other providers here
+    if (typeof window !== "undefined") {
+      posthog.identify(userId, traits);
+    }
   }
 
   /**
    * Track a page view.
-   * Note: Next.js / Vercel Analytics handles this automatically for route changes,
-   * but manual tracking might be needed for virtual views or modals.
+   * Note: PostHog handles this automatically if configured, 
+   * but this can be used for virtual views or modals.
    */
   static page(name: string, properties?: EventProperties) {
     if (this.isDev) {
       console.groupCollapsed(`[Analytics] Page: ${name}`);
       console.log(properties);
       console.groupEnd();
+    }
+    
+    if (typeof window !== "undefined") {
+      posthog.capture("$pageview", { ...properties, title: name });
     }
   }
 }

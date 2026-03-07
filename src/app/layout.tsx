@@ -64,6 +64,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -85,14 +86,16 @@ export default function RootLayout({
         className={`${inter.variable} ${inter.className} notranslate antialiased bg-black text-white min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
-        <Providers>
-          <div className="relative z-10 flex-1 bg-black">
-            {children}
-          </div>
-          <div className="sticky bottom-0 z-0">
-            <Footer />
-          </div>
-        </Providers>
+        <PostHogProvider>
+          <Providers>
+            <div className="relative z-10 flex-1 bg-black">
+              {children}
+            </div>
+            <div className="sticky bottom-0 z-0">
+              <Footer />
+            </div>
+          </Providers>
+        </PostHogProvider>
         <Analytics />
         <SpeedInsights />
         <FaviconAttention />
