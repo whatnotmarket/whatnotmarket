@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { Bell, ChevronDown, X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Squircle } from "@/components/ui/Squircle";
 import { MarketplaceMenu } from "./navbar/MarketplaceMenu";
@@ -13,15 +12,14 @@ import { MoreMenu } from "./navbar/MoreMenu";
 import { ProfileMenu } from "./navbar/ProfileMenu";
 import { NotificationsMenu } from "./navbar/NotificationsMenu";
 import { AnnouncementBar } from "./AnnouncementBar";
-import { AnimatePresence, motion } from "framer-motion";
 import { useUser } from "@/contexts/UserContext";
 
 export function Navbar() {
-  const { role } = useUser();
+  const { role, isFounder } = useUser();
 
   return (
     <div className="sticky top-0 z-50 w-full flex flex-col">
-      <AnnouncementBar />
+      {!isFounder && <AnnouncementBar />}
 
       <div className="relative z-50 w-full">
         <Squircle 
@@ -64,13 +62,15 @@ export function Navbar() {
           {/* Right Side: Tools & Profile */}
           <div className="flex items-center gap-3 md:gap-4">
             {/* Selectors */}
-            <div className="hidden md:flex items-center gap-1 pr-1">
-              <CryptoSelector />
-              <LanguageSelector />
-            </div>
+            {!isFounder && (
+              <div className="hidden md:flex items-center gap-1 pr-1">
+                <CryptoSelector />
+                <LanguageSelector />
+              </div>
+            )}
 
             {/* Role CTA Button */}
-            {role === "buyer" && (
+            {!isFounder && role === "buyer" && (
               <Link href="/requests/new">
                 <Button 
                   size="sm" 
@@ -81,13 +81,24 @@ export function Navbar() {
               </Link>
             )}
 
-            {role === "seller" && (
+            {!isFounder && role === "seller" && (
               <Link href="/sell">
                 <Button 
                   size="sm" 
                   className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs h-8 px-4 rounded-lg transition-all"
                 >
                   Sell something
+                </Button>
+              </Link>
+            )}
+
+            {isFounder && (
+              <Link href="/admin">
+                <Button
+                  size="sm"
+                  className="bg-zinc-200 hover:bg-white text-black font-bold text-xs h-8 px-4 rounded-lg transition-all"
+                >
+                  Founder Panel
                 </Button>
               </Link>
             )}

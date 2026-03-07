@@ -9,6 +9,7 @@ export type UserRole = "guest" | "buyer" | "seller";
 // Define the context type
 type UserContextType = {
   role: UserRole;
+  isFounder: boolean;
   logout: () => void;
 };
 
@@ -18,6 +19,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 // Provider component
 export function UserProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>("guest");
+  const [isFounder, setIsFounder] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -32,18 +34,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (!user) {
         setRole("guest");
+        setIsFounder(false);
         localStorage.removeItem("whatnot_user_role");
         return;
       }
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role_preference")
+        .select("role_preference,username,is_admin")
         .eq("id", user.id)
         .maybeSingle();
 
       const nextRole: UserRole = profile?.role_preference === "seller" ? "seller" : "buyer";
+      const normalizedUsername = String(profile?.username || "")
+        .trim()
+        .toLowerCase()
+        .replace(/^@+/, "");
+      const nextIsFounder = Boolean(profile?.is_admin) || normalizedUsername === "whatnotmarket";
       setRole(nextRole);
+      setIsFounder(nextIsFounder);
       localStorage.setItem("whatnot_user_role", nextRole);
     };
 
@@ -63,11 +72,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setRole("guest");
+    setIsFounder(false);
     localStorage.removeItem("whatnot_user_role");
   };
 
   return (
-    <UserContext.Provider value={{ role, logout }}>
+    <UserContext.Provider value={{ role, isFounder, logout }}>
       {children}
     </UserContext.Provider>
   );

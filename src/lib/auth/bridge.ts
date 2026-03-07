@@ -168,6 +168,27 @@ async function updateProfileDetails(params: {
   }
 }
 
+async function autoFollowFounder(userId: string) {
+  const admin = createAdminClient();
+  const { data: founderProfile } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("username", "whatnotmarket")
+    .maybeSingle<{ id: string }>();
+
+  const founderId = founderProfile?.id || null;
+  if (!founderId || founderId === userId) return;
+
+  const { error } = await admin.from("profile_follows").insert({
+    follower_id: userId,
+    following_id: founderId,
+  });
+
+  if (error && error.code !== "23505") {
+    throw new Error(`Unable to auto-follow founder: ${error.message}`);
+  }
+}
+
 export async function ensureBridgeUser(identity: BridgeIdentityInput) {
   const admin = createAdminClient();
   const email = normalizeEmail(identity.email) ?? subjectToSyntheticEmail(identity.subject);
@@ -210,6 +231,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
       fullName: resolvedFullName,
       avatarUrl: identity.avatarUrl,
     });
+    await autoFollowFounder(mapping.supabase_user_id);
 
     return {
       userId: mapping.supabase_user_id,
@@ -265,6 +287,7 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
     fullName: resolvedFullName,
     avatarUrl: identity.avatarUrl,
   });
+  await autoFollowFounder(supabaseUserId);
 
   return {
     userId: supabaseUserId,

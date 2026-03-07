@@ -119,7 +119,10 @@ export default function AdminEscrowPage() {
               Manual release queue for listing wallet payments.
             </p>
           </div>
-          <Button onClick={refresh} variant="outline" className="border-zinc-700">
+          <Button
+            onClick={refresh}
+            className="rounded-xl border-0 bg-white font-bold text-black hover:bg-zinc-200"
+          >
             Refresh
           </Button>
         </div>
@@ -211,4 +214,3 @@ export default function AdminEscrowPage() {
     </div>
   );
 }
-

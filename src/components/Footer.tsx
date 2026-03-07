@@ -21,8 +21,10 @@ export function Footer() {
   if (
     pathname === "/auth" ||
     pathname.startsWith("/auth/") ||
-  pathname === "/login" ||
-  pathname.startsWith("/login/")
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/")
   ) {
     return null;
   }

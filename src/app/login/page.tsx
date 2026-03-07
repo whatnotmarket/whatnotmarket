@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
@@ -384,6 +383,9 @@ function TestLoginContent() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [loadingProvider, setLoadingProvider] = useState<ProviderKey | "telegram" | null>(null);
   const [pendingProvider, setPendingProvider] = useState<ProviderKey | null>(null);
+  const [showInviteBox, setShowInviteBox] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [isInviteLoading, setIsInviteLoading] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -741,6 +743,44 @@ function TestLoginContent() {
     }
   };
 
+  const submitInviteCode = async () => {
+    if (isInviteLoading) return;
+    const trimmedCode = inviteCode.trim();
+    if (!trimmedCode) {
+      toast.error("Inserisci un codice di invito.");
+      return;
+    }
+
+    setIsInviteLoading(true);
+    try {
+      const response = await fetch("/api/auth/invite-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: trimmedCode,
+          next: nextPath,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; redirectTo?: string; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok || !payload.redirectTo) {
+        throw new Error(payload?.error || "Codice invito non valido.");
+      }
+
+      toast.success("Accesso founder completato.");
+      window.location.assign(payload.redirectTo);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Codice invito non valido.");
+    } finally {
+      setIsInviteLoading(false);
+    }
+  };
+
   const buttonLoadingClass = (provider: ProviderKey | "telegram") =>
     loadingProvider === provider ? "cursor-wait opacity-80" : "";
 
@@ -768,7 +808,42 @@ function TestLoginContent() {
                 </p>
               </div>
 
-              <div className="mt-5 w-full space-y-3">
+              <div className="mt-5 w-full">
+                {showInviteBox ? (
+                  <div className="space-y-3 rounded-[16px] border border-[#2e2e2e] bg-[#141414] p-4">
+                    <p className="text-center font-[Inter] text-[16px] text-white">
+                      Inserisci il tuo codice di invito
+                    </p>
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={inviteCode}
+                      onChange={(event) => setInviteCode(event.target.value)}
+                      placeholder="Codice invito"
+                      className="h-[52px] w-full rounded-[12px] border border-[#3b3b3b] bg-[#0f0f0f] px-4 font-[Inter] text-[16px] text-white outline-none transition focus:border-[#3b3b3b] focus:outline-none focus:ring-0"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void submitInviteCode()}
+                      disabled={isInviteLoading}
+                      className={`${buttonBase} border-white bg-white px-4 text-black ${
+                        isInviteLoading ? "cursor-wait opacity-80" : ""
+                      }`}
+                    >
+                      <span className="font-[Inter] font-[800]">Continua</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowInviteBox(false)}
+                      disabled={isInviteLoading}
+                      className={`${buttonBase} border-[#3b3b3b] bg-[#202020] px-4 text-white`}
+                    >
+                      Torna ai metodi di accesso
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
                 <button
                   className={`${buttonBase} ${buttonLoadingClass("walletConnect")} border-[#3B99FC] bg-[#3B99FC] px-4 text-white`}
                   onClick={() => void startProviderAuth("walletConnect")}
@@ -858,10 +933,16 @@ function TestLoginContent() {
                 </div>
                 <p className="w-full whitespace-nowrap pt-2 text-center font-[Inter] text-sm text-zinc-200">
                   Do you have an invite code?{" "}
-                  <Link href="/login" className="font-black underline underline-offset-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteBox(true)}
+                    className="font-black underline underline-offset-2"
+                  >
                     Click here
-                  </Link>
+                  </button>
                 </p>
+                  </div>
+                )}
               </div>
             </section>
 
