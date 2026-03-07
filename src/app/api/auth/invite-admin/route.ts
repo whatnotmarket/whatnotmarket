@@ -2,18 +2,12 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ensureBridgeUser, signInBridgeUserOnRoute } from "@/lib/auth/bridge";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { getRedirectPath } from "@/lib/redirects";
 
 type Payload = {
   code?: string;
   next?: string;
 };
-
-function normalizeNextPath(rawNext: string | undefined) {
-  const next = String(rawNext || "").trim();
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/market";
-  if (next === "/login" || next.startsWith("/login/")) return "/market";
-  return next;
-}
 
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as Payload;
@@ -94,7 +88,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const redirectTo = normalizeNextPath(body.next);
+  const redirectTo = getRedirectPath(body.next);
   const response = NextResponse.json({ ok: true, redirectTo });
 
   await signInBridgeUserOnRoute({

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { analytics } from "@/lib/analytics";
 import { authToast as toast } from "@/lib/notifications";
 import { updateRolePreference, submitPayoutInfo, verifySellerCode, generateMockTelegramCode } from "./actions";
 
@@ -30,6 +31,17 @@ export default function OnboardingPage() {
   const [mockBotOpen, setMockBotOpen] = useState(false);
   const [generatedCode, setGeneratedCode] = useState("");
 
+  useEffect(() => {
+    analytics.track("onboarding_started");
+  }, []);
+
+  useEffect(() => {
+    analytics.track("onboarding_step_viewed", {
+      step_index: step,
+      step_name: STEPS[step],
+    });
+  }, [step]);
+
   const handleRoleSubmit = async () => {
     if (!role) return;
     setLoading(true);
@@ -38,11 +50,13 @@ export default function OnboardingPage() {
     if (role === "buyer") {
       await updateRolePreference(role);
       toast.success("All set! Welcome to the market.");
+      analytics.track("onboarding_completed", { role: "buyer" });
       router.push("/market");
       return;
     }
 
     // Otherwise proceed to payout
+    analytics.track("onboarding_role_selected", { role });
     setLoading(false);
     setStep(1);
   };
@@ -58,6 +72,11 @@ export default function OnboardingPage() {
       currency: payoutCurrency,
     });
     
+    analytics.track("onboarding_payout_submitted", {
+      network: payoutNetwork,
+      currency: payoutCurrency,
+    });
+
     setLoading(false);
     setStep(2);
   };
@@ -77,10 +96,12 @@ export default function OnboardingPage() {
     
     if (result.error) {
       toast.error(result.error);
+      analytics.track("onboarding_verification_failed", { error: result.error });
       setLoading(false);
     } else {
       setLoading(false);
       setStep(3); // Complete
+      analytics.track("onboarding_completed", { role: "seller" });
       setTimeout(() => {
         router.push("/market");
       }, 2000);

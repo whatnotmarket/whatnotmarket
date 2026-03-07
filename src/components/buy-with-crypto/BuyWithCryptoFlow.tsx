@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { analytics } from "@/lib/analytics";
 
 type Step = "input" | "details" | "payment" | "confirmed";
 
@@ -33,6 +34,7 @@ export function BuyWithCryptoFlow() {
 
   const handleUrlSubmit = (submittedUrl: string, data?: any) => {
     setUrl(submittedUrl);
+    analytics.track("proxy_order_url_submitted", { url: submittedUrl });
     if (data) {
       setPreviewData(data);
     }
@@ -42,6 +44,12 @@ export function BuyWithCryptoFlow() {
 
   const handleDetailsSubmit = (details: WizardData) => {
     setOrderDetails(details);
+    analytics.track("proxy_order_details_submitted", {
+      quantity: details.quantity,
+      price: details.price,
+      currency: details.currency,
+      network: details.network,
+    });
     setStep("payment");
     setTimeout(scrollToTop, 100);
   };
@@ -65,11 +73,16 @@ export function BuyWithCryptoFlow() {
       if (data.ok) {
         setOrderId(data.orderId);
         setTrackingId(data.trackingId);
+        analytics.track("proxy_order_payment_completed", {
+          orderId: data.orderId,
+          amount: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5,
+          currency: orderDetails?.currency,
+        });
         setStep("confirmed");
       }
     } catch (e) {
       console.error("Failed to create order", e);
-      // Fallback or error handling
+      analytics.track("proxy_order_creation_failed", { error: String(e) });
     }
   };
 

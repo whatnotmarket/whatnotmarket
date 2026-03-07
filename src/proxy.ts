@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { verifyToken } from "@/lib/auth";
+import { getRedirectPath } from "@/lib/redirects";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -180,7 +181,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && isAuthRoute) {
-    return withSupabaseCookies(NextResponse.redirect(new URL("/market", request.url)));
+    const next = getRedirectPath(request.nextUrl.searchParams);
+    return withSupabaseCookies(NextResponse.redirect(new URL(next, request.url)));
   }
 
   if (user) {

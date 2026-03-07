@@ -15,7 +15,9 @@ import {
   useState,
   type PointerEvent,
 } from "react";
+import { analytics } from "@/lib/analytics";
 import { authToast as toast } from "@/lib/notifications";
+import { getRedirectPath } from "@/lib/redirects";
 import { createClient } from "@/lib/supabase";
 import { AppKitProvider } from "@/reown/AppKitProvider";
 import BlurText from "@/components/ui/blur-text";
@@ -64,25 +66,6 @@ const providerLabelMap: Record<WalletProviderValue, string> = {
   google: "Google",
   apple: "Apple",
 };
-
-function normalizeNextPath(rawNext: string | null) {
-  if (!rawNext || !rawNext.startsWith("/") || rawNext.startsWith("//")) {
-    return "/market";
-  }
-
-  if (
-    rawNext === "/login" ||
-    rawNext.startsWith("/login/") ||
-    rawNext === "/auth" ||
-    rawNext.startsWith("/auth/") ||
-    rawNext === "/login" ||
-    rawNext.startsWith("/login/")
-  ) {
-    return "/market";
-  }
-
-  return rawNext;
-}
 
 function toNameFromEmail(email: string | null | undefined) {
   if (!email) return null;
@@ -440,9 +423,13 @@ function TestLoginContent() {
   const authInFlightRef = useRef(false);
   const authTimeoutRef = useRef<number | null>(null);
 
-  const nextPath = useMemo(() => normalizeNextPath(searchParams.get("next")), [searchParams]);
+  const nextPath = useMemo(() => getRedirectPath(searchParams), [searchParams]);
   const showGoogleOption = mobilePlatform !== "ios";
   const showAppleOption = mobilePlatform !== "android";
+
+  useEffect(() => {
+    analytics.page("login_viewed", { nextPath });
+  }, [nextPath]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -593,10 +580,13 @@ function TestLoginContent() {
 
     if (authStatus === "cancelled") {
       toast.info(authMessage || "Authentication cancelled.");
+      analytics.track("login_cancelled", { message: authMessage });
     } else if (authStatus === "success") {
       toast.success(authMessage || "Authentication successful.");
+      analytics.track("login_succeeded", { message: authMessage });
     } else if (authStatus === "error") {
       toast.error(authMessage || "Authentication failed.");
+      analytics.track("login_failed", { message: authMessage });
     }
 
     const params = new URLSearchParams(searchParams.toString());
@@ -708,6 +698,7 @@ function TestLoginContent() {
   const startProviderAuth = async (provider: ProviderKey) => {
     if (loadingProvider) return;
 
+    analytics.track("login_started", { provider });
     setLoadingProvider(provider);
     setPendingProvider(provider);
 
@@ -731,6 +722,7 @@ function TestLoginContent() {
       return;
     }
 
+    analytics.track("login_started", { provider: "telegram" });
     setLoadingProvider("telegram");
 
     try {
@@ -775,12 +767,14 @@ function TestLoginContent() {
         toast.info(payload.roleMessage);
       } else {
         toast.success("Telegram authentication successful.");
+        analytics.track("login_succeeded", { provider: "telegram" });
       }
 
       window.location.assign(payload.redirectTo);
     } catch (error) {
       setLoadingProvider(null);
       toast.error(error instanceof Error ? error.message : "Telegram authentication failed.");
+      analytics.track("login_failed", { provider: "telegram", error: String(error) });
     }
   };
 
@@ -792,6 +786,7 @@ function TestLoginContent() {
       return;
     }
 
+    analytics.track("login_started", { provider: "invite_admin" });
     setIsInviteLoading(true);
     try {
       const response = await fetch("/api/auth/invite-admin", {
@@ -814,9 +809,11 @@ function TestLoginContent() {
       }
 
       toast.success("Accesso founder completato.");
+      analytics.track("login_succeeded", { provider: "invite_admin" });
       window.location.assign(payload.redirectTo);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Codice invito non valido.");
+      analytics.track("login_failed", { provider: "invite_admin", error: String(error) });
     } finally {
       setIsInviteLoading(false);
     }

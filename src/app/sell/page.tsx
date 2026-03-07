@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import Image from "next/image";
 import { SearchableSelect, Option } from "@/components/ui/SearchableSelect";
+import { analytics } from "@/lib/analytics";
 
 const CATEGORY_OPTIONS: Option[] = [
   { value: "accounts", label: "Accounts & Access", icon: "🔐", subtitle: "Netflix, Spotify, VPNs, etc." },
@@ -68,6 +69,10 @@ export default function SellPage() {
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
+  useEffect(() => {
+    analytics.track("sell_page_viewed");
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -105,8 +110,15 @@ export default function SellPage() {
 
   const onSubmit = async (data: SellFormValues) => {
     setLoading(true);
+    analytics.track("listing_submitted", {
+      category: data.category,
+      condition: data.condition,
+      price: data.price,
+      deliveryTime: data.deliveryTime,
+      paymentMethods: data.paymentMethods.join(","),
+    });
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     console.log("Sell Form Data:", data);
     toast.success("Product listed successfully!");
     router.push("/market");

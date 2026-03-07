@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Loader2, Wallet, XCircle } from "lucide-react";
 import { parseEther } from "viem";
@@ -298,7 +299,7 @@ export function ListingWalletPayment({
         asChild
         className="w-full bg-zinc-200 text-black hover:bg-white"
       >
-                  <a href={`/login?next=${encodeURIComponent("/market")}`}>Login to pay with wallet</a>
+        <Link href={`/login?next=${encodeURIComponent("/market")}`}>Login to pay with wallet</Link>
       </Button>
     );
   }
