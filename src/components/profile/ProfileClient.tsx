@@ -1177,7 +1177,8 @@ export function ProfileClient({
                       {isFollowLoading ? "Updating..." : isFollowing ? "Following" : "Follow"}
                     </button>
                     
-                    <button
+                    <Link
+                       href={`/inbox?userId=${resolvedTargetId}`}
                        className="w-full h-9 md:h-10 rounded-xl font-bold bg-black text-white hover:bg-zinc-900 border border-white/10 flex items-center justify-center gap-2 transition-all text-sm md:text-base"
                      >
                        <Image 
@@ -1188,7 +1189,7 @@ export function ProfileClient({
                          className="w-4 h-4 md:w-5 md:h-5 object-contain" 
                        />
                        Chat
-                     </button>
+                     </Link>
 
                      <div className="flex gap-2 pt-1 md:pt-2">
                         <button className="flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all group">

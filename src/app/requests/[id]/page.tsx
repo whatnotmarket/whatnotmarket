@@ -233,6 +233,11 @@ export default function RequestDetailPage() {
       setOfferPrice("");
       setOfferMessage("");
       setReloadToken((value) => value + 1);
+      
+      // Redirect to chat with request owner
+      if (requestRow?.created_by) {
+        router.push(`/inbox?userId=${requestRow.created_by}`);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Unexpected error while sending offer");
@@ -257,8 +262,14 @@ export default function RequestDetailPage() {
         return;
       }
 
-      toast.success("Offer accepted. Opening deal room...");
-      router.push(`/deals/${payload.dealId}`);
+      toast.success("Offer accepted. Opening chat...");
+      
+      const acceptedOffer = offers.find((o) => o.id === offerId);
+      if (acceptedOffer?.created_by) {
+        router.push(`/inbox?userId=${acceptedOffer.created_by}`);
+      } else {
+        router.push(`/deals/${payload.dealId}`);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Unexpected error while accepting offer");
