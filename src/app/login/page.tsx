@@ -786,10 +786,14 @@ function TestLoginContent() {
       return;
     }
 
-    analytics.track("login_started", { provider: "invite_admin" });
+    const isTest = trimmedCode.toUpperCase() === "TEST";
+    const provider = isTest ? "invite_buyer" : "invite_admin";
+    const endpoint = isTest ? "/api/auth/invite-buyer" : "/api/auth/invite-admin";
+
+    analytics.track("login_started", { provider });
     setIsInviteLoading(true);
     try {
-      const response = await fetch("/api/auth/invite-admin", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -808,12 +812,12 @@ function TestLoginContent() {
         throw new Error(payload?.error || "Codice invito non valido.");
       }
 
-      toast.success("Accesso founder completato.");
-      analytics.track("login_succeeded", { provider: "invite_admin" });
+      toast.success(isTest ? "Accesso buyer test completato." : "Accesso founder completato.");
+      analytics.track("login_succeeded", { provider });
       window.location.assign(payload.redirectTo);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Codice invito non valido.");
-      analytics.track("login_failed", { provider: "invite_admin", error: String(error) });
+      analytics.track("login_failed", { provider, error: String(error) });
     } finally {
       setIsInviteLoading(false);
     }

@@ -185,7 +185,8 @@ async function autoFollowFounder(userId: string) {
   });
 
   if (error && error.code !== "23505") {
-    throw new Error(`Unable to auto-follow founder: ${error.message}`);
+    // throw new Error(`Unable to auto-follow founder: ${error.message}`);
+    console.warn(`Unable to auto-follow founder: ${error.message}`);
   }
 }
 

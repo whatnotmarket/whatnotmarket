@@ -1,13 +1,17 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export function useChatScroll<T>(dep: T) {
-  const ref = useRef<HTMLDivElement>(null)
+  const [node, setNode] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current.scrollTop = ref.current.scrollHeight
+    if (node) {
+      node.scrollTop = node.scrollHeight
     }
-  }, [dep])
+  }, [dep, node])
+
+  const ref = useCallback((element: HTMLDivElement | null) => {
+    setNode(element)
+  }, [])
 
   return ref
 }

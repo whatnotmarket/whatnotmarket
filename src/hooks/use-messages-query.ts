@@ -11,24 +11,50 @@ export function useMessagesQuery(roomName: string) {
       if (!roomName) return
 
       const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('room_id', roomName)
-        .order('created_at', { ascending: true })
+        .storage
+        .from('chat-messages')
+        .list(roomName, {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'name', order: 'asc' },
+        })
 
       if (error) {
-        console.error('Error fetching messages:', error)
+        console.error('Error fetching messages from storage:', error)
         return
       }
 
       if (data) {
-        const mappedMessages: ChatMessage[] = data.map((msg: any) => ({
-          id: msg.id,
-          content: msg.content,
-          user: { name: msg.user_name },
-          createdAt: msg.created_at
-        }))
-        setMessages(mappedMessages)
+        // Fetch content for each message
+        const messagesPromises = data.map(async (file) => {
+          if (!file.name.endsWith('.json')) return null
+
+          const { data: content, error: downloadError } = await supabase
+            .storage
+            .from('chat-messages')
+            .download(`${roomName}/${file.name}`)
+
+          if (downloadError || !content) {
+             console.error('Error downloading message:', file.name, downloadError)
+             return null
+          }
+
+          try {
+             const text = await content.text()
+             return JSON.parse(text) as ChatMessage
+          } catch (e) {
+             console.error('Error parsing message:', file.name, e)
+             return null
+          }
+        })
+
+        const resolved = await Promise.all(messagesPromises)
+        const validMessages = resolved.filter((m): m is ChatMessage => m !== null)
+        
+        // Sort by createdAt just in case filename sort wasn't enough (though timestamp prefix helps)
+        validMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        
+        setMessages(validMessages)
       }
     }
 
