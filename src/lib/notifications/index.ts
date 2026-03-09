@@ -12,6 +12,10 @@ type ToastInput =
       title?: string;
       description?: ReactNode | string;
       duration?: number | null;
+      action?: {
+        label: string;
+        onClick: () => void;
+      };
     };
 
 type ToastOverrides = Partial<
@@ -80,6 +84,10 @@ function normalizeToastInput(
     title: input.title ?? fallbackTitleByState[tone],
     description: input.description,
     duration: input.duration,
+    button: input.action ? {
+      title: input.action.label,
+      onClick: input.action.onClick
+    } : undefined,
   };
 }
 

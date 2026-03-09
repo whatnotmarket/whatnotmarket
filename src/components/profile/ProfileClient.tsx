@@ -21,6 +21,8 @@ import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Modal } from "@/components/ui/Modal";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { profileToast as toast } from "@/lib/notifications";
@@ -42,6 +44,9 @@ type StoredProfile = {
   bio: string | null;
   created_at: string | null;
   role_preference: "buyer" | "seller" | "both" | null;
+  telegram_handle: string | null;
+  twitter_handle: string | null;
+  website: string | null;
 };
 
 type ProfileState = {
@@ -54,6 +59,9 @@ type ProfileState = {
   followers: number;
   following: number;
   description: string;
+  telegram?: string;
+  twitter?: string;
+  website?: string;
   isOnline: boolean;
   successfulDeliveries: number;
   sellerRanking: string;
@@ -288,6 +296,12 @@ export function ProfileClient({
   const [isProfileMissing, setIsProfileMissing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
   const [bannerObjectFit, setBannerObjectFit] = useState<"cover" | "fill">("cover");
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
   const [offerItems, setOfferItems] = useState<OfferItem[]>([]);
@@ -299,6 +313,9 @@ export function ProfileClient({
     avatar: "",
     banner: "",
     description: "",
+    telegram: "",
+    twitter: "",
+    website: "",
     bannerPosition: 50,
   });
   const [pendingImages, setPendingImages] = useState<Record<EditableImageType, File | null>>({
@@ -427,15 +444,15 @@ export function ProfileClient({
       ] = await Promise.all([
         supabase
           .from("profiles")
-          .select("full_name,username,avatar_url,banner_url,bio,created_at,role_preference")
+          .select("full_name,username,avatar_url,banner_url,bio,created_at,role_preference,telegram_handle,twitter_handle,website")
           .eq("id", targetId)
           .maybeSingle(),
         supabase
-          .from("profile_follows")
+          .from("follows")
           .select("following_id", { count: "exact", head: true })
           .eq("following_id", targetId),
         supabase
-          .from("profile_follows")
+          .from("follows")
           .select("follower_id", { count: "exact", head: true })
           .eq("follower_id", targetId),
         supabase
@@ -630,6 +647,9 @@ export function ProfileClient({
         avatar: dbProfile?.avatar_url || defaults.avatar,
         banner: dbProfile?.banner_url || defaults.banner,
         description: dbProfile?.bio || "",
+        telegram: dbProfile?.telegram_handle || "",
+        twitter: dbProfile?.twitter_handle || "",
+        website: dbProfile?.website || "",
         memberSince: formatMemberSince(dbProfile?.created_at),
         followers,
         following,
@@ -651,7 +671,7 @@ export function ProfileClient({
 
       if (viewerId && viewerId !== targetId) {
         const { data: followRow, error: followError } = await supabase
-          .from("profile_follows")
+          .from("follows")
           .select("follower_id")
           .eq("follower_id", viewerId)
           .eq("following_id", targetId)
@@ -674,6 +694,49 @@ export function ProfileClient({
     };
   }, [hasExplicitTarget, normalizedTargetHandle, routeRole, supabase, validTargetProfileId, viewerRole]);
 
+  useEffect(() => {
+    if (!currentUserId || !resolvedTargetId || currentUserId === resolvedTargetId) {
+      setIsBlocked(false);
+      return;
+    }
+
+    async function checkBlockStatus() {
+      if (!currentUserId || !resolvedTargetId) return;
+
+      const { data, error } = await supabase
+        .from("user_blocks")
+        .select("*")
+        .eq("blocker_id", currentUserId)
+        .eq("blocked_id", resolvedTargetId)
+        .maybeSingle();
+
+      if (!error && data) {
+        setIsBlocked(true);
+      } else {
+        setIsBlocked(false);
+      }
+    }
+
+    checkBlockStatus();
+
+    // Subscribe to block changes
+    const channel = supabase
+      .channel(`profile-blocks-${resolvedTargetId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'user_blocks',
+        filter: `blocker_id=eq.${currentUserId}` 
+      }, () => {
+        checkBlockStatus();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, resolvedTargetId, supabase]);
+
   const handleEditClick = () => {
     if (!isOwnProfile) return;
     setEditForm({
@@ -682,6 +745,9 @@ export function ProfileClient({
       avatar: profile?.avatar ?? "",
       banner: profile?.banner ?? "",
       description: profile?.description ?? "",
+      telegram: profile?.telegram ?? "",
+      twitter: profile?.twitter ?? "",
+      website: profile?.website ?? "",
       bannerPosition: profile?.bannerPosition ?? 50,
     });
     setIsEditing(true);
@@ -762,6 +828,9 @@ export function ProfileClient({
           bio: editForm.description,
           avatar_url: nextAvatar,
           banner_url: nextBanner,
+          telegram_handle: editForm.telegram,
+          twitter_handle: editForm.twitter,
+          website: editForm.website,
         })
         .eq("id", currentUserId);
 
@@ -781,6 +850,9 @@ export function ProfileClient({
           avatar: nextAvatar,
           banner: nextBanner,
           description: editForm.description,
+          telegram: editForm.telegram,
+          twitter: editForm.twitter,
+          website: editForm.website,
           bannerPosition: editForm.bannerPosition,
         };
       });
@@ -796,6 +868,36 @@ export function ProfileClient({
     }
   };
 
+  useEffect(() => {
+    async function checkFollowStatus() {
+        if (!currentUserId || !resolvedTargetId) {
+            console.log("CheckFollowStatus: Missing IDs", { currentUserId, resolvedTargetId });
+            return;
+        }
+        
+        try {
+            console.log("Checking follow status for:", { follower: currentUserId, following: resolvedTargetId });
+            const { data, error } = await supabase
+                .from("follows")
+                .select("*")
+                .eq("follower_id", currentUserId)
+                .eq("following_id", resolvedTargetId); // Removed .maybeSingle() to debug array result
+            
+            if (error) {
+                console.error("Supabase Follow Check Error:", error);
+                throw error;
+            }
+
+            console.log("Follow Status Data:", data);
+            setIsFollowing(data && data.length > 0);
+        } catch (error) {
+            console.error("Error checking follow status:", error);
+        }
+    }
+
+    checkFollowStatus();
+  }, [currentUserId, resolvedTargetId, supabase]);
+
   const handleFollowToggle = async () => {
     if (!currentUserId) {
       toast.error("Sign in to follow users.");
@@ -809,32 +911,152 @@ export function ProfileClient({
 
     try {
       if (isFollowing) {
+        // Optimistic update
+        setIsFollowing(false);
+        setProfile((prev) => prev ? ({ ...prev, followers: Math.max(0, prev.followers - 1) }) : prev);
+
         const { error } = await supabase
-          .from("profile_follows")
+          .from("follows")
           .delete()
           .eq("follower_id", currentUserId)
           .eq("following_id", targetId);
 
-        if (error) throw error;
+        if (error) {
+           console.error("Unfollow Error:", error);
+           // Revert if error
+           setIsFollowing(true);
+           setProfile((prev) => prev ? ({ ...prev, followers: prev.followers + 1 }) : prev);
+           toast.error(`Failed to unfollow: ${error.message}`);
+           return;
+        }
 
-        setIsFollowing(false);
-        setProfile((prev) => prev ? ({ ...prev, followers: Math.max(0, prev.followers - 1) }) : prev);
+        toast.success("Unfollowed successfully");
       } else {
-        const { error } = await supabase.from("profile_follows").insert({
+        // Optimistic update
+        setIsFollowing(true);
+        setProfile((prev) => prev ? ({ ...prev, followers: prev.followers + 1 }) : prev);
+
+        // Explicitly check for existing record first to debug state mismatch
+        const { data: existing } = await supabase
+            .from("follows")
+            .select("*")
+            .eq("follower_id", currentUserId)
+            .eq("following_id", targetId)
+            .maybeSingle();
+        
+        if (existing) {
+             console.log("Follow relationship already exists in DB, skipping insert.");
+             toast.success("Following successfully");
+             return;
+        }
+
+        // Use insert instead of upsert to see if explicit error helps debug
+        const { error } = await supabase.from("follows").insert({
           follower_id: currentUserId,
           following_id: targetId,
         });
 
-        if (error) throw error;
+        if (error) {
+            console.error("Follow Error:", error);
+            // Revert if error
+            setIsFollowing(false);
+            setProfile((prev) => prev ? ({ ...prev, followers: Math.max(0, prev.followers - 1) }) : prev);
+            
+            if (error.code === '23505') {
+                 // Duplicate key error - means we are already following!
+                 // Sync state to true
+                 setIsFollowing(true);
+                 setProfile((prev) => prev ? ({ ...prev, followers: prev.followers + 1 }) : prev);
+                 toast.success("Following successfully (synced)");
+            } else {
+                 toast.error(`Failed to follow: ${error.message}`);
+            }
+            return;
+        }
 
-        setIsFollowing(true);
-        setProfile((prev) => prev ? ({ ...prev, followers: prev.followers + 1 }) : prev);
+        toast.success("Following successfully");
       }
     } catch (error) {
       console.error("Follow toggle error:", error);
       toast.error("Failed to update follow status.");
     } finally {
       setIsFollowLoading(false);
+    }
+  };
+
+  const handleBlockToggle = async () => {
+    if (!currentUserId || !resolvedTargetId || currentUserId === resolvedTargetId) return;
+    
+    if (!isBlocked) {
+      setIsBlockModalOpen(true);
+      return;
+    }
+    
+    // Unblock directly
+    confirmBlock();
+  };
+
+  const confirmBlock = async () => {
+    if (!currentUserId || !resolvedTargetId) return;
+    setIsBlocking(true);
+
+    try {
+      if (isBlocked) {
+        // Unblock
+        const { error } = await supabase
+          .from("user_blocks")
+          .delete()
+          .eq("blocker_id", currentUserId)
+          .eq("blocked_id", resolvedTargetId);
+
+        if (error) throw error;
+        setIsBlocked(false);
+        toast.success("User unblocked successfully");
+      } else {
+        // Block
+        const { error } = await supabase.from("user_blocks").insert({
+          blocker_id: currentUserId,
+          blocked_id: resolvedTargetId,
+        });
+
+        if (error) throw error;
+        setIsBlocked(true);
+        toast.success("User blocked successfully");
+        setIsBlockModalOpen(false);
+      }
+    } catch (error) {
+      console.error("Block toggle error:", error);
+      toast.error("Failed to update block status.");
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!currentUserId || !resolvedTargetId || currentUserId === resolvedTargetId) return;
+    setIsReportModalOpen(true);
+  };
+
+  const submitReport = async () => {
+    if (!currentUserId || !resolvedTargetId || !reportReason.trim()) return;
+
+    setIsReporting(true);
+    try {
+      const { error } = await supabase.from("user_reports").insert({
+        reporter_id: currentUserId,
+        reported_id: resolvedTargetId,
+        reason: reportReason.trim(),
+      });
+
+      if (error) throw error;
+      toast.success("User reported successfully. Admins will review.");
+      setIsReportModalOpen(false);
+      setReportReason("");
+    } catch (error) {
+      console.error("Report error:", error);
+      toast.error("Failed to submit report.");
+    } finally {
+      setIsReporting(false);
     }
   };
 
@@ -972,7 +1194,8 @@ export function ProfileClient({
       <div
         ref={bannerRef}
         className={cn(
-          "relative -mt-4 md:-mt-6 h-80 md:h-[30rem] w-full overflow-hidden rounded-b-[24px] border-x border-b border-zinc-800 group select-none",
+          "relative -mt-4 md:-mt-6 w-full rounded-b-[24px] border-x border-b border-zinc-800 group select-none transition-all duration-300",
+          isEditing ? "h-auto min-h-[40rem] pb-10" : "h-80 md:h-[30rem] overflow-hidden",
           isEditing && "cursor-move"
         )}
         onMouseDown={handleBannerMouseDown}
@@ -1051,8 +1274,8 @@ export function ProfileClient({
           )}
         </div>
 
-        <div className={cn("absolute inset-0 z-20 flex items-center justify-center", isEditing ? "pointer-events-auto" : "pointer-events-none")}>
-          <div className={cn("flex w-full max-w-3xl flex-col items-center px-4 text-center mt-8 md:mt-0", isEditing && "mt-32 md:mt-0")}>
+        <div className={cn("z-20 flex items-center justify-center", isEditing ? "relative py-20" : "absolute inset-0 pointer-events-none")}>
+          <div className={cn("flex w-full max-w-3xl flex-col items-center px-4 text-center mt-8 md:mt-0", isEditing && "mt-16 md:mt-0")}>
             <div className="relative mb-3 pointer-events-auto">
               <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-[#1C1C1E] overflow-hidden relative z-10 bg-zinc-800">
                 <Image
@@ -1117,21 +1340,52 @@ export function ProfileClient({
                 )}
               </h2>
               {isEditing ? (
-                <textarea
-                  value={editForm.description}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val.length <= 250) {
-                      setEditForm((prev) => ({ ...prev, description: val }));
-                    }
-                  }}
-                  className="h-[120px] w-full resize-none border-none bg-transparent text-sm leading-relaxed text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0 md:text-base overflow-y-auto"
-                  placeholder="Write your bio (max 250 characters)..."
-                />
+                <>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.length <= 250) {
+                        setEditForm((prev) => ({ ...prev, description: val }));
+                      }
+                    }}
+                    className="h-[80px] w-full resize-none border-none bg-transparent text-sm leading-relaxed text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0 md:text-base overflow-y-auto"
+                    placeholder="Write your bio (max 250 characters)..."
+                  />
+                  
+                  <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="white"/>
+                        </svg>
+                      </div>
+                      <input
+                        value={editForm.twitter}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, twitter: e.target.value }))}
+                        className="flex-1 bg-transparent border-none text-sm text-white placeholder:text-zinc-600 focus:ring-0 focus:outline-none px-0"
+                        placeholder="X (Twitter) handle"
+                      />
+                    </div>
+                  </div>
+                </>
               ) : (
-                <p className="text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap md:text-base">
-                  <BioText text={profile.description || ""} isWhatnotMarket={normalizeHandle(profile.handle) === "whatnotmarket"} />
-                </p>
+                <div className="space-y-4">
+                  <p className="text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap md:text-base">
+                    <BioText text={profile.description || ""} isWhatnotMarket={normalizeHandle(profile.handle) === "whatnotmarket"} />
+                  </p>
+                  
+                  {profile.twitter && (
+                    <div className="pt-3 border-t border-white/10">
+                      <a href={`https://twitter.com/${profile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="white"/>
+                        </svg>
+                        <span className="text-xs font-medium text-white">{profile.twitter}</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -1177,28 +1431,41 @@ export function ProfileClient({
                       {isFollowLoading ? "Updating..." : isFollowing ? "Following" : "Follow"}
                     </button>
                     
-                    <Link
-                       href={`/inbox?userId=${resolvedTargetId}`}
-                       className="w-full h-9 md:h-10 rounded-xl font-bold bg-black text-white hover:bg-zinc-900 border border-white/10 flex items-center justify-center gap-2 transition-all text-sm md:text-base"
-                     >
-                       <Image 
-                         src="/chat.png" 
-                         alt="Chat" 
-                         width={20} 
-                         height={20} 
-                         className="w-4 h-4 md:w-5 md:h-5 object-contain" 
-                       />
-                       Chat
-                     </Link>
+                    {!isBlocked && (
+                      <Link
+                        href={`/inbox?userId=${resolvedTargetId}`}
+                        className="w-full h-9 md:h-10 rounded-xl font-bold bg-black text-white hover:bg-zinc-900 border border-white/10 flex items-center justify-center gap-2 transition-all text-sm md:text-base"
+                      >
+                        <Image 
+                          src="/chat.png" 
+                          alt="Chat" 
+                          width={20} 
+                          height={20} 
+                          className="w-4 h-4 md:w-5 md:h-5 object-contain" 
+                        />
+                        Chat
+                      </Link>
+                    )}
 
                      <div className="flex gap-2 pt-1 md:pt-2">
-                        <button className="flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all group">
-                           <Ban className="w-3 h-3 md:w-3.5 md:h-3.5 group-hover:text-red-500" />
-                           Block
+                        <button 
+                          onClick={handleBlockToggle}
+                          disabled={isBlocking}
+                          className={cn(
+                            "flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all group",
+                            isBlocked && "text-red-500 bg-red-500/5 border-red-500/20"
+                          )}
+                        >
+                           <Ban className={cn("w-3 h-3 md:w-3.5 md:h-3.5 group-hover:text-red-500", isBlocked && "text-red-500")} />
+                           {isBlocking ? "..." : isBlocked ? "Unblock" : "Block"}
                         </button>
-                        <button className="flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-white border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all">
+                        <button 
+                          onClick={handleReport}
+                          disabled={isReporting}
+                          className="flex-1 h-8 md:h-9 rounded-lg font-medium text-[10px] md:text-xs bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-white border border-white/5 flex items-center justify-center gap-1 md:gap-1.5 transition-all"
+                        >
                            <Flag className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                           Report
+                           {isReporting ? "..." : "Report"}
                         </button>
                      </div>
                    </div>
@@ -1382,6 +1649,65 @@ export function ProfileClient({
           </div>
         </div>
       </main>
+
+      <Modal
+        isOpen={isReportModalOpen}
+        onClose={() => {
+          setIsReportModalOpen(false);
+          setReportReason("");
+        }}
+        title="Report User"
+        className="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-zinc-400">
+            Please provide a reason for reporting this user. This information will be reviewed by our moderators.
+          </p>
+          <textarea
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            placeholder="Reason for reporting..."
+            className="w-full h-32 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all resize-none"
+            autoFocus
+          />
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => {
+                setIsReportModalOpen(false);
+                setReportReason("");
+              }}
+              className="flex-1 h-10 rounded-xl font-bold bg-zinc-800 text-white hover:bg-zinc-700 transition-all text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submitReport}
+              disabled={isReporting || !reportReason.trim()}
+              className="flex-1 h-10 rounded-xl font-bold bg-white text-black hover:bg-zinc-200 disabled:opacity-50 disabled:hover:bg-white transition-all text-sm flex items-center justify-center gap-2"
+            >
+              {isReporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                  Reporting...
+                </>
+              ) : (
+                "Submit Report"
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmationModal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        onConfirm={confirmBlock}
+        title="Block User"
+        description={`Are you sure you want to block ${profile?.handle || 'this user'}? You won't be able to exchange messages anymore.`}
+        confirmLabel="Block User"
+        cancelLabel="Cancel"
+        isDestructive={true}
+      />
     </div>
   );
 }

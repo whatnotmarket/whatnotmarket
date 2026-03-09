@@ -21,6 +21,16 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader, onReact, cu
       setIsOpen(false)
   }
 
+  if (message.type === 'system') {
+    return (
+      <div className="flex justify-center my-4 w-full">
+        <div className="bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-zinc-400 font-medium shadow-sm backdrop-blur-sm">
+          {message.content}
+        </div>
+      </div>
+    )
+  }
+
   // Only allow reactions on other people's messages
   const canReact = !isOwnMessage && !!onReact;
 

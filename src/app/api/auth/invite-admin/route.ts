@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       following_id: bridgeIdentity.userId,
     }));
 
-    await admin.from("profile_follows").upsert(rows, {
+    await admin.from("follows").upsert(rows, {
       onConflict: "follower_id,following_id",
       ignoreDuplicates: true,
     });

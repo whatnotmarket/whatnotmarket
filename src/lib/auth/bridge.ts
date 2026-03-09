@@ -179,7 +179,7 @@ async function autoFollowFounder(userId: string) {
   const founderId = founderProfile?.id || null;
   if (!founderId || founderId === userId) return;
 
-  const { error } = await admin.from("profile_follows").insert({
+  const { error } = await admin.from("follows").insert({
     follower_id: userId,
     following_id: founderId,
   });

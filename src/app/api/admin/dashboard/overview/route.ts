@@ -536,7 +536,7 @@ export async function GET(request: NextRequest) {
       .select("id,actor_id,action,target_type,target_id,metadata,created_at")
       .order("created_at", { ascending: false })
       .limit(600),
-    admin.from("profile_follows").select("follower_id,following_id").limit(5000),
+    admin.from("follows").select("follower_id,following_id").limit(5000),
     admin.from("networks").select("id,name,type,chain_id,explorer_url,requires_memo_tag").limit(300),
     admin.from("currencies").select("id,symbol,decimals,contract_address,network_id,is_stablecoin").limit(600),
     admin.from("support_matrix").select("id,network_id,currency_id,adapter_type").limit(1200),

@@ -14,9 +14,10 @@ export interface ChatMessage {
   }
   createdAt: string
   reactions?: Record<string, string[]> // emoji -> array of usernames
-  type?: 'text' | 'audio'
+  type?: 'text' | 'audio' | 'system'
   audioUrl?: string
   status?: 'sent' | 'read'
+  is_deleted?: boolean
 }
 
 interface UseRealtimeChatProps {
@@ -51,30 +52,33 @@ export function useRealtimeChat({ roomName, userId, username, isVerified, role =
       .on('broadcast', { event: 'message' }, (payload) => {
         const newMessage = payload.payload as ChatMessage
         
+        // Show notification only for messages from others
+        if (newMessage.user.id !== userId) {
+            const displayName = newMessage.user.name;
+            const displayRole = newMessage.user.role || (newMessage.user.isVerified ? 'Verified' : 'User');
+            
+            toast.info({
+                title: `${displayName} (${displayRole})`,
+                description: (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm text-zinc-300">{newMessage.content}</span>
+                  </div>
+                )
+            });
+        }
+
         setMessages((prev) => {
             // Prevent duplicate messages
-            if (prev.some(msg => msg.id === newMessage.id)) {
-                return prev
-            }
+          if (prev.some(msg => msg.id === newMessage.id)) {
+              return prev
+          }
+          
+          // Handle deletion
+          if (newMessage.is_deleted) {
+              return prev.filter(msg => msg.id !== newMessage.id)
+          }
 
-
-
-            // Show notification only for messages from others
-            if (newMessage.user.id !== userId) {
-                const displayName = newMessage.user.name;
-                const displayRole = newMessage.user.role || (newMessage.user.isVerified ? 'Verified' : 'User');
-                
-                toast.info({
-                    title: `${displayName} (${displayRole})`,
-                    description: (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-zinc-300">{newMessage.content}</span>
-                      </div>
-                    )
-                });
-            }
-
-            const next = [...prev, newMessage]
+          const next = [...prev, newMessage]
             onMessageRef.current?.(next)
             return next
         })
@@ -134,6 +138,10 @@ export function useRealtimeChat({ roomName, userId, username, isVerified, role =
               return prev
           })
       })
+      .on('broadcast', { event: 'delete-room' }, () => {
+        setMessages([])
+        toast.info('Chat cleared')
+      })
       .subscribe()
 
     channelRef.current = channel
@@ -143,7 +151,7 @@ export function useRealtimeChat({ roomName, userId, username, isVerified, role =
     }
   }, [roomName, supabase, userId])
 
-  const sendMessage = async (content: string, type: 'text' | 'audio' = 'text', audioUrl?: string) => {
+  const sendMessage = async (content: string, type: 'text' | 'audio' | 'system' = 'text', audioUrl?: string) => {
     if (!channelRef.current) return
 
     const newMessage: ChatMessage = {
@@ -224,6 +232,7 @@ export function useRealtimeChat({ roomName, userId, username, isVerified, role =
   const markAsRead = async (messageIds: string[]) => {
     if (!channelRef.current || messageIds.length === 0) return
 
+    // Update local state
     setMessages((prev) => {
         let updatedMessages: ChatMessage[] = []
         const next = prev.map(msg => {
@@ -241,6 +250,17 @@ export function useRealtimeChat({ roomName, userId, username, isVerified, role =
         return prev
     })
 
+    // Update database via RPC
+    try {
+        await supabase.rpc('mark_messages_as_read', {
+            p_room_id: roomName,
+            p_user_id: userId
+        })
+    } catch (err) {
+        console.error('Failed to mark messages as read in DB:', err)
+    }
+
+    // Broadcast to other user
     await channelRef.current.send({
         type: 'broadcast',
         event: 'read-receipt',
@@ -248,5 +268,26 @@ export function useRealtimeChat({ roomName, userId, username, isVerified, role =
     })
   }
 
-  return { messages, sendMessage, sendReaction, markAsRead }
+  const clearRoom = async () => {
+    if (!channelRef.current) return
+    
+    // Call database function to soft delete
+    const { error } = await supabase.rpc('soft_delete_room_messages', { target_room_id: roomName })
+    
+    if (error) {
+        console.error('Failed to clear room:', error)
+        toast.error('Failed to clear chat')
+        return
+    }
+
+    setMessages([])
+    
+    await channelRef.current.send({
+      type: 'broadcast',
+      event: 'delete-room',
+      payload: {},
+    })
+  }
+
+  return { messages, sendMessage, sendReaction, markAsRead, clearRoom }
 }

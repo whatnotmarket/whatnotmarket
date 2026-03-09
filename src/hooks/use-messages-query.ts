@@ -11,50 +11,53 @@ export function useMessagesQuery(roomName: string) {
       if (!roomName) return
 
       const { data, error } = await supabase
-        .storage
-        .from('chat-messages')
-        .list(roomName, {
-          limit: 100,
-          offset: 0,
-          sortBy: { column: 'name', order: 'asc' },
-        })
+        .from('chat_messages')
+        .select(`
+          id,
+          content,
+          created_at,
+          sender_id,
+          type,
+          metadata,
+          is_read,
+          is_deleted,
+          sender:profiles(id, full_name, username, role_preference, seller_status, is_admin)
+        `)
+        .eq('room_id', roomName)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true })
 
       if (error) {
-        console.error('Error fetching messages from storage:', error)
+        console.error('Error fetching messages from DB:', error)
         return
       }
 
       if (data) {
-        // Fetch content for each message
-        const messagesPromises = data.map(async (file) => {
-          if (!file.name.endsWith('.json')) return null
-
-          const { data: content, error: downloadError } = await supabase
-            .storage
-            .from('chat-messages')
-            .download(`${roomName}/${file.name}`)
-
-          if (downloadError || !content) {
-             console.error('Error downloading message:', file.name, downloadError)
-             return null
+        const mappedMessages: ChatMessage[] = data.map((msg: any) => {
+          // Construct user object from profile join or metadata snapshot
+          const profile = msg.sender
+          const snapshot = msg.metadata?.user_snapshot
+          
+          const user = {
+            id: msg.sender_id,
+            name: profile?.full_name || profile?.username || snapshot?.name || 'Unknown User',
+            isVerified: profile?.is_admin || profile?.seller_status === 'verified' || snapshot?.isVerified,
+            role: profile?.is_admin ? 'Admin' : (profile?.seller_status === 'verified' ? 'Seller' : (snapshot?.role || 'User'))
           }
 
-          try {
-             const text = await content.text()
-             return JSON.parse(text) as ChatMessage
-          } catch (e) {
-             console.error('Error parsing message:', file.name, e)
-             return null
+          return {
+            id: msg.id,
+            content: msg.content,
+            user,
+            createdAt: msg.created_at,
+            reactions: msg.metadata?.reactions || {},
+            type: msg.type as 'text' | 'audio',
+            audioUrl: msg.metadata?.audioUrl,
+            status: msg.is_read ? 'read' : (msg.metadata?.status || 'sent')
           }
         })
-
-        const resolved = await Promise.all(messagesPromises)
-        const validMessages = resolved.filter((m): m is ChatMessage => m !== null)
         
-        // Sort by createdAt just in case filename sort wasn't enough (though timestamp prefix helps)
-        validMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        
-        setMessages(validMessages)
+        setMessages(mappedMessages)
       }
     }
 

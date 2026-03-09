@@ -91,7 +91,8 @@ export function NotificationsMenu() {
         .limit(30);
 
       if (error) {
-        console.error("Failed to load notifications:", error);
+        // Silently fail if notifications table is missing or RLS error
+        // console.error("Failed to load notifications:", error); 
         if (active) {
           setNotifications([]);
           setIsLoading(false);

@@ -12,6 +12,7 @@ type UserContextType = {
   user: User | null;
   role: UserRole;
   isFounder: boolean;
+  username: string | null;
   isLoading: boolean;
   logout: () => void;
 };
@@ -24,6 +25,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole>("guest");
   const [isFounder, setIsFounder] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setRole("guest");
           setIsFounder(false);
+          setUsername(null);
           localStorage.removeItem("whatnot_user_role");
           return;
         }
@@ -56,13 +59,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         const nextRole: UserRole = profile?.role_preference === "seller" ? "seller" : "buyer";
-        const normalizedUsername = String(profile?.username || "")
+        const currentUsername = profile?.username || null;
+        const normalizedUsername = String(currentUsername || "")
           .trim()
           .toLowerCase()
           .replace(/^@+/, "");
         const nextIsFounder = Boolean(profile?.is_admin) || normalizedUsername === "whatnotmarket";
         setRole(nextRole);
         setIsFounder(nextIsFounder);
+        setUsername(currentUsername);
         localStorage.setItem("whatnot_user_role", nextRole);
       } catch (error) {
         console.error("Failed to resolve user role:", error);
@@ -91,11 +96,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setRole("guest");
     setIsFounder(false);
+    setUsername(null);
     localStorage.removeItem("whatnot_user_role");
   };
 
   return (
-    <UserContext.Provider value={{ user, role, isFounder, isLoading, logout }}>
+    <UserContext.Provider value={{ user, role, isFounder, username, isLoading, logout }}>
       {children}
     </UserContext.Provider>
   );

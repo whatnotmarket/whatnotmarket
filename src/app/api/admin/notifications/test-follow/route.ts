@@ -102,12 +102,12 @@ export async function POST(req: NextRequest) {
 
     // Ensure trigger fires every test run.
     await admin
-      .from("profile_follows")
+      .from("follows")
       .delete()
       .eq("follower_id", follower.id)
       .eq("following_id", target.id);
 
-    const { error: insertError } = await admin.from("profile_follows").insert({
+    const { error: insertError } = await admin.from("follows").insert({
       follower_id: follower.id,
       following_id: target.id,
     });

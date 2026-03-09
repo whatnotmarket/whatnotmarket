@@ -12,20 +12,31 @@ export async function storeMessages(messages: ChatMessage[], roomName: string, u
     if (!messageToStore) continue
 
     try {
-      const timestamp = new Date(messageToStore.createdAt).getTime()
-      const filename = `${roomName}/${timestamp}_${messageToStore.id}.json`
-      
+      const payload = {
+        id: messageToStore.id,
+        room_id: roomName,
+        sender_id: messageToStore.user.id,
+        content: messageToStore.content,
+        type: messageToStore.type || 'text',
+        is_read: messageToStore.status === 'read',
+        created_at: messageToStore.createdAt,
+        metadata: {
+          audioUrl: messageToStore.audioUrl,
+          reactions: messageToStore.reactions,
+          status: messageToStore.status,
+          user_snapshot: messageToStore.user // Store user snapshot for quick display
+        }
+      }
+
+      // Use upsert to prevent duplicate key errors and handle updates in one call
       const { error } = await supabase
-        .storage
-        .from('chat-messages')
-        .upload(filename, JSON.stringify(messageToStore), {
-          contentType: 'application/json',
-          upsert: true
-        })
+        .from('chat_messages')
+        .upsert(payload, { onConflict: 'id' })
 
       if (error) {
-        console.error('Error storing message to storage:', error)
+        console.error('Error storing message:', JSON.stringify(error, null, 2))
       }
+
     } catch (err) {
       console.error('Failed to store message:', err)
     }
