@@ -9,101 +9,63 @@ import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Check, CheckCircle2, Copy } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { CopyMap } from "@/lib/copy-system";
-import { calculateOrderCost } from "@/lib/pricing";
 
 type Step = "input" | "details" | "payment" | "confirmed";
-
-type ProxyOrderDetails = {
-  quantity: number;
-  options: string;
-  pickupDetails: {
-    city: string;
-    country: string;
-    region: string;
-  };
-  notes: string;
-  price: number;
-};
-
-type CreateOrderResponse = {
-  ok: boolean;
-  orderId?: string;
-  trackingId?: string;
-  error?: string;
-};
-
-const PAYMENT_CURRENCY = "USDC";
-const PAYMENT_NETWORK = "ERC20";
 
 export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
   const [step, setStep] = useState<Step>("input");
   const [url, setUrl] = useState("");
-  const [orderDetails, setOrderDetails] = useState<ProxyOrderDetails | null>(null);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending");
   const [orderId, setOrderId] = useState("");
   const [trackingId, setTrackingId] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const input = copy["input"] || {};
-  const details = copy["details"] || {};
-  const payment = copy["payment"] || {};
-  const confirmed = copy["confirmed"] || {};
-  const actions = copy["actions"] || {};
-
-  const pricing = orderDetails
-    ? calculateOrderCost(orderDetails.price, orderDetails.quantity)
-    : null;
-  const trackingLink = trackingId ? `/track/${trackingId}` : "/track";
+  const input = copy['input'] || {};
+  const details = copy['details'] || {};
+  const payment = copy['payment'] || {};
+  const confirmed = copy['confirmed'] || {};
+  const actions = copy['actions'] || {};
 
   const handleUrlSubmit = (submittedUrl: string) => {
     setUrl(submittedUrl);
     setStep("details");
   };
 
-  const handleDetailsSubmit = (submittedDetails: ProxyOrderDetails) => {
-    setOrderDetails(submittedDetails);
+  const handleDetailsSubmit = (details: any) => {
+    setOrderDetails(details);
     setStep("payment");
   };
 
   const handlePaymentSuccess = async () => {
-    if (!orderDetails) return;
-
+    setPaymentStatus("success");
+    
     try {
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productUrl: url,
-          price: orderDetails.price,
-          quantity: orderDetails.quantity,
-          currency: PAYMENT_CURRENCY,
-          network: PAYMENT_NETWORK,
-          city: orderDetails.pickupDetails.city,
-          country: orderDetails.pickupDetails.country,
-          region: orderDetails.pickupDetails.region,
-          totalPaid: pricing?.total ?? 0,
-        }),
+          ...orderDetails,
+          totalPaid: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5
+        })
       });
-
-      const data = (await res.json()) as CreateOrderResponse;
-      if (!data.ok || !data.orderId || !data.trackingId) {
-        console.error("Failed to create order", data.error || "Unknown response");
-        return;
+      
+      const data = await res.json();
+      if (data.ok) {
+        setOrderId(data.orderId);
+        setTrackingId(data.trackingId);
+        setStep("confirmed");
       }
-
-      setOrderId(data.orderId);
-      setTrackingId(data.trackingId);
-      setStep("confirmed");
-    } catch (error) {
-      console.error("Failed to create order", error);
+    } catch (e) {
+      console.error("Failed to create order", e);
     }
   };
 
   const copyTrackingLink = () => {
-    if (!trackingId) return;
-
     navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -113,15 +75,17 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
     <div className="min-h-screen bg-black text-white selection:bg-zinc-800 selection:text-white">
       <Navbar />
 
-      <main className="relative mx-auto max-w-4xl space-y-12 px-4 py-12">
-        <div className="pointer-events-none absolute top-0 left-1/2 h-[500px] w-full -translate-x-1/2 rounded-full bg-emerald-500/5 blur-[120px]" />
+      <main className="mx-auto max-w-4xl px-4 py-12 space-y-12 relative">
+        {/* Background Ambient Light */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
 
+        {/* Back Button */}
         {step !== "input" && step !== "confirmed" && (
           <button
             onClick={() => setStep(step === "payment" ? "details" : "input")}
-            className="absolute top-4 left-4 flex items-center gap-2 text-zinc-500 transition-colors hover:text-white md:left-0"
+            className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors absolute top-4 left-4 md:left-0"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="w-4 h-4" />
             {actions.back || "Back"}
           </button>
         )}
@@ -133,11 +97,11 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex min-h-[60vh] w-full flex-col items-center justify-center"
+              className="w-full flex flex-col items-center justify-center min-h-[60vh]"
             >
-              <ProductUrlInput
-                onUrlSubmit={handleUrlSubmit}
-                placeholderText={input.placeholder}
+              <ProductUrlInput 
+                onUrlSubmit={handleUrlSubmit} 
+                placeholderText={input.placeholder}={input.placeholder}
                 buttonText={input.button}
               />
             </motion.div>
@@ -151,21 +115,20 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
               exit={{ opacity: 0, x: -20 }}
               className="w-full"
             >
-              <h1 className="mb-8 text-center text-3xl font-bold">
-                {details.title || "Conferma Dettagli"}
-              </h1>
-              <div className="grid gap-8 md:grid-cols-2">
-                <ProxyOrderForm initialUrl={url} onSubmit={handleDetailsSubmit} />
+              <h1 className="text-3xl font-bold text-center mb-8">{details.title || "Conferma Dettagli"}</h1>
+              <div className="grid md:grid-cols-2 gap-8">
+                <ProxyOrderForm productUrl={url} onSubmit={handleDetailsSubmit} />
                 <div className="hidden md:block">
-                  <div className="flex h-full items-center justify-center rounded-2xl border border-white/10 bg-[#1C1C1E] p-6 text-zinc-500">
-                    Product Preview
-                  </div>
+                   {/* Placeholder for preview or info */}
+                   <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl p-6 h-full flex items-center justify-center text-zinc-500">
+                      Product Preview
+                   </div>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {step === "payment" && orderDetails && pricing && (
+          {step === "payment" && orderDetails && (
             <motion.div
               key="payment"
               initial={{ opacity: 0, x: 20 }}
@@ -173,20 +136,17 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
               exit={{ opacity: 0, x: -20 }}
               className="w-full"
             >
-              <h1 className="mb-8 text-center text-3xl font-bold">
-                {payment.title || "Pagamento Sicuro"}
-              </h1>
-              <div className="grid gap-8 md:grid-cols-[1fr_350px]">
-                <CryptoPaymentGateway
-                  amount={pricing.total}
-                  currency={PAYMENT_CURRENCY}
-                  network={PAYMENT_NETWORK}
-                  onSuccess={handlePaymentSuccess}
+              <h1 className="text-3xl font-bold text-center mb-8">{payment.title || "Pagamento Sicuro"}</h1>
+              <div className="grid md:grid-cols-[1fr_350px] gap-8">
+                <CryptoPaymentGateway 
+                  amount={orderDetails.price * orderDetails.quantity * 1.1 + 20} // Mock calc
+                  currency={orderDetails.paymentMethod || "USDT"}
+                  onSuccess={handlePaymentSuccess} 
                 />
-                <OrderSummaryCard
-                  productPrice={orderDetails.price}
-                  quantity={orderDetails.quantity}
-                  currency="USD"
+                <OrderSummaryCard 
+                  items={[{ name: "Proxy Item", price: orderDetails.price, quantity: orderDetails.quantity }]}
+                  fees={{ service: orderDetails.price * 0.1, shipping: 15 }}
+                  total={orderDetails.price * orderDetails.quantity * 1.1 + 20}
                 />
               </div>
             </motion.div>
@@ -197,7 +157,7 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
               key="confirmed"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mx-auto w-full max-w-md"
+              className="w-full max-w-md mx-auto"
             >
               <Squircle
                 radius={32}
@@ -205,47 +165,28 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
                 className="w-full shadow-2xl shadow-emerald-900/20"
                 innerClassName="bg-[#1C1C1E] border border-emerald-500/20 p-8 text-center"
               >
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
-                  <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                 </div>
-
-                <h2 className="mb-2 text-2xl font-bold text-white">
-                  {confirmed.title || "Ordine Creato!"}
-                </h2>
-                <p className="mb-8 text-zinc-400">
-                  {confirmed.subtitle ||
-                    "Il tuo ordine proxy e' stato avviato. Segui lo stato con il tracking ID."}
+                
+                <h2 className="text-2xl font-bold text-white mb-2">{confirmed.title || "Ordine Creato!"}</h2>
+                <p className="text-zinc-400 mb-8">
+                  {confirmed.subtitle || "Il tuo ordine proxy è stato avviato. Segui lo stato con il tracking ID."}
                 </p>
 
-                <div className="mb-8 space-y-3">
-                  <div className="rounded-xl border border-white/5 bg-black/30 p-4 text-left">
-                    <p className="mb-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
-                      Order ID
-                    </p>
-                    <code className="font-mono text-sm text-white">{orderId}</code>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-xl border border-white/5 bg-black/30 p-4">
-                    <code className="text-lg font-mono text-emerald-400">{trackingId}</code>
-                    <button
-                      onClick={copyTrackingLink}
-                      className="rounded-lg p-2 transition-colors hover:bg-white/10"
-                    >
-                      {copied ? (
-                        <Check className="h-5 w-5 text-emerald-500" />
-                      ) : (
-                        <Copy className="h-5 w-5 text-zinc-400" />
-                      )}
-                    </button>
-                  </div>
+                <div className="bg-black/30 rounded-xl p-4 mb-8 flex items-center justify-between border border-white/5">
+                  <code className="text-emerald-400 font-mono text-lg">{trackingId || "TRK-12345678"}</code>
+                  <button 
+                    onClick={copyTrackingLink}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    {copied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5 text-zinc-400" />}
+                  </button>
                 </div>
 
                 <div className="space-y-3">
-                  <Button
-                    asChild
-                    className="h-12 w-full rounded-xl bg-emerald-600 font-bold text-white hover:bg-emerald-700"
-                  >
-                    <Link href={trackingLink}>{actions.track_order || "Traccia Ordine"}</Link>
+                  <Button asChild className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
+                    <Link href={`/track/${trackingId}`}>{actions.track_order || "Traccia Ordine"}</Link>
                   </Button>
                   <Button asChild variant="ghost" className="w-full text-zinc-400 hover:text-white">
                     <Link href="/market">{actions.back_home || "Torna alla Home"}</Link>
