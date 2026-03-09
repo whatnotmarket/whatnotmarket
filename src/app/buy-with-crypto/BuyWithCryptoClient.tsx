@@ -101,7 +101,7 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
             >
               <ProductUrlInput 
                 onUrlSubmit={handleUrlSubmit} 
-                placeholderText={input.placeholder}={input.placeholder}
+                placeholderText={input.placeholder}
                 buttonText={input.button}
               />
             </motion.div>
@@ -144,10 +144,10 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
                   onSuccess={handlePaymentSuccess} 
                 />
                 <OrderSummaryCard 
-                  items={[{ name: "Proxy Item", price: orderDetails.price, quantity: orderDetails.quantity }]}
-                  fees={{ service: orderDetails.price * 0.1, shipping: 15 }}
-                  total={orderDetails.price * orderDetails.quantity * 1.1 + 20}
-                />
+  productPrice={orderDetails.price}
+  quantity={orderDetails.quantity}
+  currency={orderDetails.paymentMethod || "USDT"}
+/>
               </div>
             </motion.div>
           )}
