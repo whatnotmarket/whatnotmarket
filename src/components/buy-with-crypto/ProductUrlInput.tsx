@@ -4,44 +4,57 @@ import { useState } from "react";
 import { Squircle } from "@/components/ui/Squircle";
 import { ArrowRight, Link as LinkIcon, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-
 import Image from "next/image";
 
+type ProductPreviewData = {
+  title?: string;
+  image?: string;
+  price?: number;
+  currency?: string;
+  error?: string;
+};
+
 interface ProductUrlInputProps {
-  onUrlSubmit: (url: string, previewData?: any) => void;
+  onUrlSubmit: (url: string, previewData?: ProductPreviewData) => void;
   isLoading?: boolean;
+  placeholderText?: string;
+  buttonText?: string;
 }
 
-export function ProductUrlInput({ onUrlSubmit, isLoading: externalLoading }: ProductUrlInputProps) {
+export function ProductUrlInput({
+  onUrlSubmit,
+  isLoading: externalLoading,
+  placeholderText,
+  buttonText,
+}: ProductUrlInputProps) {
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!url.trim()) {
       setError("Please enter a product URL");
       return;
     }
-    
-    // Simple URL validation
+
     try {
       new URL(url);
       setError("");
       setIsChecking(true);
-      
+
       try {
         const res = await fetch("/api/link-preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
         });
-        
-        const data = await res.json();
+
+        const data = (await res.json()) as ProductPreviewData;
         onUrlSubmit(url, data);
       } catch (err) {
         console.error("Link preview failed", err);
-        // Fallback: proceed without preview data
         onUrlSubmit(url);
       } finally {
         setIsChecking(false);
@@ -54,29 +67,32 @@ export function ProductUrlInput({ onUrlSubmit, isLoading: externalLoading }: Pro
   const isLoading = externalLoading || isChecking;
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-8">
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Image 
-            src="/thinsmooth.svg" 
-            alt="Smart Search" 
-            width={24} 
-            height={24} 
-            className="w-6 h-6 brightness-0 invert" 
+    <div className="mx-auto w-full max-w-2xl space-y-8">
+      <div className="space-y-4 text-center">
+        <div className="mb-2 flex items-center justify-center gap-2">
+          <Image
+            src="/thinsmooth.svg"
+            alt="Smart Search"
+            width={24}
+            height={24}
+            className="h-6 w-6 brightness-0 invert"
           />
-          <span className="text-sm font-bold text-white uppercase tracking-wider">Buy Anywhere with Crypto</span>
+          <span className="text-sm font-bold uppercase tracking-wider text-white">
+            Buy Anywhere with Crypto
+          </span>
         </div>
-        
-        <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+
+        <h2 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
           Paste your link
         </h2>
-        
-        <p className="text-lg text-zinc-400 max-w-lg mx-auto leading-relaxed">
-          Paste any product link (Amazon, Nike, E-commerce, etc...) and we'll purchase it for you using crypto — privately and securely.
+
+        <p className="mx-auto max-w-lg text-lg leading-relaxed text-zinc-400">
+          Paste any product link (Amazon, Nike, E-commerce, etc...) and we&apos;ll purchase
+          it for you using crypto, privately and securely.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="relative group max-w-xl mx-auto">
+      <form onSubmit={handleSubmit} className="group relative mx-auto max-w-xl">
         <Squircle
           radius={24}
           smoothing={1}
@@ -87,9 +103,9 @@ export function ProductUrlInput({ onUrlSubmit, isLoading: externalLoading }: Pro
           innerClassName="bg-[#1C1C1E] p-2 flex items-center gap-3"
         >
           <div className="pl-4 text-zinc-500">
-            <LinkIcon className="w-5 h-5" />
+            <LinkIcon className="h-5 w-5" />
           </div>
-          
+
           <input
             type="text"
             value={url}
@@ -97,33 +113,33 @@ export function ProductUrlInput({ onUrlSubmit, isLoading: externalLoading }: Pro
               setUrl(e.target.value);
               if (error) setError("");
             }}
-            placeholder="Paste any product link..."
-            className="flex-1 bg-transparent border-none text-white placeholder:text-zinc-600 focus:ring-0 focus:outline-none py-3 text-lg font-medium"
+            placeholder={placeholderText || "Paste any product link..."}
+            className="flex-1 border-none bg-transparent py-3 text-lg font-medium text-white placeholder:text-zinc-600 focus:outline-none focus:ring-0"
             autoFocus
           />
 
           <button
             type="submit"
             disabled={isLoading || !url}
-            className="bg-white text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+            className="flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-6 py-3 font-bold text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <span className="animate-pulse">Checking...</span>
             ) : (
               <>
-                Start Proxy Order <ArrowRight className="w-4 h-4" />
+                {buttonText || "Start Proxy Order"} <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
         </Squircle>
-        
+
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute -bottom-8 left-4 flex items-center gap-2 text-red-400 text-sm"
+            className="absolute -bottom-8 left-4 flex items-center gap-2 text-sm text-red-400"
           >
-            <AlertCircle className="w-4 h-4" />
+            <AlertCircle className="h-4 w-4" />
             {error}
           </motion.div>
         )}

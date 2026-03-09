@@ -13,7 +13,6 @@ import {
   Package,
   Camera,
   Move,
-  MessageSquare,
   Ban,
   Flag,
 } from "lucide-react";
@@ -27,12 +26,6 @@ import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { profileToast as toast } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase";
-
-const MOCK_LISTINGS = [
-  { id: 1, title: "Netflix 4K UHD Lifetime", price: 15.0, image: "NFX", sold: 120 },
-  { id: 2, title: "Spotify Premium Upgrade", price: 8.5, image: "SPF", sold: 450 },
-  { id: 3, title: "NordVPN 2 Year Account", price: 12.0, image: "VPN", sold: 85 },
-];
 
 type EditableImageType = "avatar" | "banner";
 
@@ -90,6 +83,14 @@ type OfferItem = {
   price: number;
   status: string;
   createdAt: string;
+};
+
+type OfferRow = {
+  id: string;
+  price: number | string | null;
+  status: string | null;
+  created_at: string | null;
+  requests: { title: string | null } | Array<{ title: string | null }> | null;
 };
 
 type DealSummaryRow = {
@@ -627,14 +628,17 @@ export function ProfileClient({
         totalOffersCount = offersCount || 0;
 
         if (offersData) {
-          offers = offersData.map((offer) => ({
-            id: offer.id,
-            // @ts-ignore: join result
-            title: offer.requests?.title || "Unknown Request",
-            price: Number(offer.price),
-            status: offer.status,
-            createdAt: offer.created_at,
-          }));
+          offers = (offersData as OfferRow[]).map((offer) => {
+            const request = Array.isArray(offer.requests) ? offer.requests[0] : offer.requests;
+
+            return {
+              id: offer.id,
+              title: request?.title || "Unknown Request",
+              price: Number(offer.price || 0),
+              status: offer.status || "pending",
+              createdAt: offer.created_at || new Date(0).toISOString(),
+            };
+          });
         }
       }
 

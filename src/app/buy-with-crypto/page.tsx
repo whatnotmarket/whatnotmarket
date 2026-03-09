@@ -108,7 +108,7 @@ export default function BuyWithCryptoPage() {
                 <h2 className="text-3xl font-bold">Configure Order</h2>
                 <p className="text-zinc-400">Review details and confirm price.</p>
               </div>
-              <ProxyOrderForm onSubmit={handleDetailsSubmit} initialUrl={url} />
+              <ProxyOrderForm onSubmit={handleDetailsSubmit} productUrl={url} />
             </motion.div>
           )}
 

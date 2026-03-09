@@ -167,14 +167,16 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Public routes for authentication pages.
+  // Public routes for authentication and open access pages.
   const isAuthRoute =
     pathname === "/auth" ||
     pathname.startsWith("/auth/") ||
     pathname === "/login" ||
     pathname.startsWith("/login/");
+  const isOpenAccessRoute = pathname === "/global-chat" || pathname.startsWith("/global-chat/");
+  const isPublicRoute = isAuthRoute || isOpenAccessRoute;
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublicRoute) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return withSupabaseCookies(NextResponse.redirect(loginUrl));
