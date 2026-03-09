@@ -715,9 +715,12 @@ export function ProfileClient({
       setIsEditing(false);
       setPendingImages({ avatar: null, banner: null });
       toast.success("Profile updated successfully");
-    } catch (error) {
-      console.error("Save profile error:", error);
-      toast.error("Failed to save profile changes");
+    } catch (error: any) {
+      console.error("Save profile error full object:", JSON.stringify(error, null, 2));
+      console.error("Save profile error message:", error?.message);
+      console.error("Save profile error details:", error?.details);
+      console.error("Save profile error hint:", error?.hint);
+      toast.error(`Failed to save profile: ${error?.message || "Unknown error"}`);
     } finally {
       setIsSaving(false);
     }
