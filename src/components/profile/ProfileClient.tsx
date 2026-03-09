@@ -618,13 +618,170 @@ export function ProfileClient({
     setPendingImages({ avatar: null, banner: null });
   };
   
-  const handleSave = async () => { /* ... */ };
-  const handleImageUpload = (e: any, type: any) => { /* ... */ };
-  const handleBannerMouseDown = (e: any) => { /* ... */ };
+  const handleSave = async () => {
+    if (!currentUserId || !profile) return;
+    setIsSaving(true);
+
+    try {
+      let avatarUrl = editForm.avatar || profile.avatar;
+      let bannerUrl = editForm.banner || profile.banner;
+
+      // Upload Avatar
+      if (pendingImages.avatar) {
+        const file = pendingImages.avatar;
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${currentUserId}/avatar-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(fileName);
+        
+        avatarUrl = publicUrl;
+      }
+
+      // Upload Banner
+      if (pendingImages.banner) {
+        const file = pendingImages.banner;
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${currentUserId}/banner-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("banners")
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("banners")
+          .getPublicUrl(fileName);
+        
+        bannerUrl = publicUrl;
+      }
+
+      // Validate Handle
+      const cleanHandle = normalizeHandle(editForm.handle);
+      if (cleanHandle && cleanHandle !== normalizeHandle(profile.handle)) {
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", cleanHandle)
+          .neq("id", currentUserId)
+          .maybeSingle();
+        
+        if (existing) {
+          toast.error("Handle already taken");
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      // Update Profile
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: editForm.name,
+          username: cleanHandle || null,
+          bio: editForm.description,
+          avatar_url: avatarUrl,
+          banner_url: bannerUrl,
+          telegram_handle: editForm.telegram || null,
+          twitter_handle: editForm.twitter || null,
+          website: editForm.website || null,
+          banner_position: editForm.bannerPosition,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currentUserId);
+
+      if (error) throw error;
+
+      // Update Local State
+      setProfile((prev) => prev ? ({
+        ...prev,
+        name: editForm.name,
+        handle: toDisplayHandle(cleanHandle),
+        description: editForm.description,
+        avatar: avatarUrl,
+        banner: bannerUrl,
+        telegram: editForm.telegram,
+        twitter: editForm.twitter,
+        website: editForm.website,
+        bannerPosition: editForm.bannerPosition,
+      }) : null);
+
+      setIsEditing(false);
+      setPendingImages({ avatar: null, banner: null });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Save profile error:", error);
+      toast.error("Failed to save profile changes");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setEditForm((prev) => ({ ...prev, [type]: objectUrl }));
+    setPendingImages((prev) => ({ ...prev, [type]: file }));
+  };
+
+  const handleBannerMouseDown = (e: React.MouseEvent) => {
+    if (!isEditing || !bannerRef.current) return;
+    setIsDraggingBanner(true);
+    startY.current = e.clientY;
+    startPos.current = editForm.bannerPosition;
+  };
 
   // Effects for banner drag and fit
-  useEffect(() => { /* ... */ }, [isDraggingBanner]);
-  useEffect(() => { /* ... */ }, [displayBannerSrc]);
+  useEffect(() => {
+    if (!isDraggingBanner) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY.current;
+      // Convert pixels to percentage (approximate, assuming banner height ~300px)
+      // A delta of 300px should move 100%. So delta / 3.
+      const deltaPercent = deltaY / 3; 
+      const newPos = Math.max(0, Math.min(100, startPos.current - deltaPercent));
+      
+      setEditForm((prev) => ({ ...prev, bannerPosition: newPos }));
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingBanner(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingBanner]);
+
+  useEffect(() => {
+    const img = new window.Image();
+    img.src = displayBannerSrc;
+    img.onload = () => {
+      if (bannerRef.current) {
+        const aspect = img.width / img.height;
+        const containerAspect = bannerRef.current.clientWidth / bannerRef.current.clientHeight;
+        setBannerObjectFit(aspect > containerAspect ? "cover" : "fill");
+      }
+    };
+  }, [displayBannerSrc]);
   useEffect(() => { /* ... */ }, [currentUserId, resolvedTargetId, supabase]);
 
   if (isProfileLoading || !profile) {
