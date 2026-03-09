@@ -36,7 +36,7 @@ interface ProxyOrderFormProps {
     notes: string;
     price: number;
   }) => void;
-  initialUrl: string;
+  productUrl?: string; // Renamed from initialUrl to match usage
   initialData?: {
     title?: string;
     image?: string;
@@ -45,7 +45,7 @@ interface ProxyOrderFormProps {
   };
 }
 
-export function ProxyOrderForm({ onSubmit, initialUrl, initialData }: ProxyOrderFormProps) {
+export function ProxyOrderForm({ onSubmit, productUrl, initialData }: ProxyOrderFormProps) {
   const [quantity, setQuantity] = useState(1);
   const [options, setOptions] = useState("");
   
@@ -86,7 +86,7 @@ export function ProxyOrderForm({ onSubmit, initialUrl, initialData }: ProxyOrder
             )}
             <div className="flex-1 min-w-0">
               <h4 className="font-bold text-white truncate">{initialData.title || "Product"}</h4>
-              <p className="text-sm text-zinc-400 break-all line-clamp-1">{initialUrl}</p>
+              <p className="text-sm text-zinc-400 break-all line-clamp-1">{productUrl}</p>
               {initialData.price && (
                 <p className="text-emerald-400 font-mono text-sm mt-1">
                   Detected Price: {initialData.price} {initialData.currency || "USD"}
@@ -100,7 +100,7 @@ export function ProxyOrderForm({ onSubmit, initialUrl, initialData }: ProxyOrder
           <div className="space-y-2">
             <h3 className="text-xl font-bold text-white">Order Details</h3>
             <p className="text-sm text-zinc-400 break-all">
-              Buying from: <span className="text-white">{initialUrl}</span>
+              Buying from: <span className="text-white">{productUrl}</span>
             </p>
           </div>
         )}
