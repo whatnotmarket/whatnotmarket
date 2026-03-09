@@ -1112,8 +1112,8 @@ export function ProfileClient({
             ? "They will be able to see your profile and message you again."
             : "They will no longer be able to message you or see your profile details."
         }
-        confirmText={isBlocked ? (actionsCopy.unblock || "Unblock") : (actionsCopy.block || "Block")}
-        variant="danger"
+        confirmLabel={isBlocked ? (actionsCopy.unblock || "Unblock") : (actionsCopy.block || "Block")}
+        isDestructive
       />
 
       <Modal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)}>
