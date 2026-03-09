@@ -126,7 +126,7 @@ export function PrivacyCard() {
   if (!isVisible) return null;
 
   return (
-    <div className="absolute bottom-8 right-8 z-50 w-[400px] overflow-hidden rounded-3xl border border-white/10 bg-[#000000]/95 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed bottom-4 right-4 z-50 w-[400px] overflow-hidden rounded-3xl border border-white/10 bg-[#000000]/95 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
       <div className="p-6">
         <div className="space-y-4">
           <div className="space-y-2">
