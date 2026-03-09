@@ -65,6 +65,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { PrivacyCard } from "@/components/global-chat/PrivacyCard";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -92,6 +93,7 @@ export default function RootLayout({
               {children}
             </div>
             <Footer />
+            <PrivacyCard />
           </Providers>
         </PostHogProvider>
         <Analytics />
