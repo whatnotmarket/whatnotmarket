@@ -16,15 +16,24 @@ export async function POST(request: NextRequest) {
       .trim()
       .toUpperCase();
 
-    if (code !== "TEST") {
+    // Allow TEST or LUCA (or potentially verify against DB if we want strictness)
+    // For now, strict check to match user request
+    if (code !== "TEST" && code !== "LUCA") {
       return NextResponse.json({ error: "Invalid invite code" }, { status: 401 });
     }
 
+    // Dynamic user identity based on code
+    const isLuca = code === "LUCA";
+    const subject = isLuca ? "invite:test:buyer:luca" : "invite:test:buyer";
+    const email = isLuca ? "test-buyer-luca@whatnotmarket.app" : "test-buyer@whatnotmarket.app";
+    const fullName = isLuca ? "Test Buyer Luca" : "Test Buyer";
+    const username = isLuca ? "lucatest" : "testbuyer";
+
     const bridgeIdentity = await ensureBridgeUser({
-      subject: "invite:test:buyer",
+      subject,
       provider: "walletconnect", // Simulate wallet login
-      email: "test-buyer@whatnotmarket.app",
-      fullName: "Test Buyer",
+      email,
+      fullName,
       avatarUrl: null,
     });
 
@@ -32,7 +41,7 @@ export async function POST(request: NextRequest) {
     const { error: baseProfileError } = await admin
       .from("profiles")
       .update({
-        full_name: "Test Buyer",
+        full_name: fullName,
         role_preference: "buyer",
       })
       .eq("id", bridgeIdentity.userId);
@@ -58,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     const { error: usernameError } = await admin
       .from("profiles")
-      .update({ username: "testbuyer" })
+      .update({ username })
       .eq("id", bridgeIdentity.userId);
 
     // Ignore unique violation for username if it's already set (e.g. from previous run)

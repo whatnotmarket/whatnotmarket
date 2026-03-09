@@ -786,7 +786,7 @@ function TestLoginContent() {
       return;
     }
 
-    const isTest = trimmedCode.toUpperCase() === "TEST";
+    const isTest = trimmedCode.toUpperCase() === "TEST" || trimmedCode.toUpperCase() === "LUCA";
     const provider = isTest ? "invite_buyer" : "invite_admin";
     const endpoint = isTest ? "/api/auth/invite-buyer" : "/api/auth/invite-admin";
 
