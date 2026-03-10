@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { ensureBridgeUser, signInBridgeUserOnRoute } from "@/lib/auth/bridge";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { getRedirectPath } from "@/lib/redirects";
+import { registerInviteUsage, resolveRequiredInviteCode } from "@/lib/invite-codes";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
+import { isInviteCodeDirectLoginEnabled } from "@/lib/security/auth-guards";
 
 type Payload = {
   code?: string;
@@ -11,71 +15,64 @@ type Payload = {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isInviteCodeDirectLoginEnabled()) {
+      return NextResponse.json({ error: "Invite code login is disabled" }, { status: 403 });
+    }
+
+    const rateLimit = checkRateLimitDetailed(request, { action: "invite_buyer_login" });
+    if (!rateLimit.allowed) {
+      return RateLimitResponse(rateLimit);
+    }
+
+    const abuseGuard = await enforceAbuseGuard({
+      request,
+      action: "invite_buyer_login",
+      endpointGroup: "auth",
+    });
+    if (!abuseGuard.allowed) {
+      return AbuseGuardResponse(abuseGuard);
+    }
+
     const body = (await request.json().catch(() => ({}))) as Payload;
     const code = String(body.code || "")
       .trim()
       .toUpperCase();
 
-    // Allow TEST or LUCA (or potentially verify against DB if we want strictness)
-    // For now, strict check to match user request
-    if (code !== "TEST" && code !== "LUCA") {
+    const inviteResolution = await resolveRequiredInviteCode(code, {
+      allowedTypes: ["buyer"],
+    });
+
+    if (!inviteResolution.isValid || !inviteResolution.normalizedCode) {
       return NextResponse.json({ error: "Invalid invite code" }, { status: 401 });
     }
 
-    // Dynamic user identity based on code
-    const isLuca = code === "LUCA";
-    const subject = isLuca ? "invite:test:buyer:luca" : "invite:test:buyer";
-    const email = isLuca ? "test-buyer-luca@whatnotmarket.app" : "test-buyer@whatnotmarket.app";
-    const fullName = isLuca ? "Test Buyer Luca" : "Test Buyer";
-    const username = isLuca ? "lucatest" : "testbuyer";
+    const normalizedCode = inviteResolution.normalizedCode;
+    const email = `invite-buyer+${normalizedCode.toLowerCase()}@whatnotmarket.app`;
 
     const bridgeIdentity = await ensureBridgeUser({
-      subject,
-      provider: "walletconnect", // Simulate wallet login
+      subject: `invite:buyer:${normalizedCode}`,
+      provider: "walletconnect",
       email,
-      fullName,
+      fullName: "Invite Buyer",
       avatarUrl: null,
     });
 
     const admin = createAdminClient();
-    const { error: baseProfileError } = await admin
+    const { error: profileError } = await admin
       .from("profiles")
       .update({
-        full_name: fullName,
+        full_name: "Invite Buyer",
         role_preference: "buyer",
-      })
-      .eq("id", bridgeIdentity.userId);
-
-    if (baseProfileError) {
-      console.error("Profile update error:", baseProfileError);
-      return NextResponse.json(
-        {
-          error: `Unable to activate test buyer profile: ${baseProfileError.message}`,
-        },
-        { status: 500 }
-      );
-    }
-
-    // Ensure onboarding is completed so they can use the app
-    await admin
-      .from("profiles")
-      .update({
         onboarding_status: "completed",
         is_admin: false,
       })
       .eq("id", bridgeIdentity.userId);
 
-    const { error: usernameError } = await admin
-      .from("profiles")
-      .update({ username })
-      .eq("id", bridgeIdentity.userId);
-
-    // Ignore unique violation for username if it's already set (e.g. from previous run)
-    if (usernameError && usernameError.code !== "23505") {
-      console.error("Username update error:", usernameError);
+    if (profileError) {
+      console.error("Profile update error:", profileError);
       return NextResponse.json(
         {
-          error: `Unable to set test buyer handle: ${usernameError.message}`,
+          error: `Unable to activate buyer profile: ${profileError.message}`,
         },
         { status: 500 }
       );
@@ -89,6 +86,15 @@ export async function POST(request: NextRequest) {
       response,
       email: bridgeIdentity.email,
       password: bridgeIdentity.password,
+    });
+
+    await registerInviteUsage({
+      code: normalizedCode,
+      userId: bridgeIdentity.userId,
+      email: bridgeIdentity.email,
+      source: "invite_buyer_login",
+      ipAddress: request.headers.get("x-forwarded-for"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return response;

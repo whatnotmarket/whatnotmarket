@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { profileToast as toast } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase";
 import { CopyMap } from "@/lib/copy-system";
+import { isReservedProfileHandle } from "@/lib/security/identity-guards";
 
 const MOCK_LISTINGS = [
   { id: 1, title: "Netflix 4K UHD Lifetime", price: 15.0, image: "NFX", sold: 120 },
@@ -48,6 +49,8 @@ type StoredProfile = {
   telegram_handle: string | null;
   twitter_handle: string | null;
   website: string | null;
+  seller_status: string | null;
+  is_admin: boolean | null;
 };
 
 type ProfileState = {
@@ -76,6 +79,8 @@ type ProfileState = {
   deliveryRate: number;
   totalLifetimeOrders: number;
   last30DaysScore: number;
+  isAdmin: boolean;
+  isVerifiedSeller: boolean;
 };
 
 type PurchaseItem = {
@@ -178,6 +183,8 @@ function getBaseProfile(isSeller: boolean): ProfileState {
     deliveryRate: 100,
     totalLifetimeOrders: 0,
     last30DaysScore: 100,
+    isAdmin: false,
+    isVerifiedSeller: false,
   };
 }
 
@@ -229,10 +236,10 @@ function ProfileEditPencilIcon() {
   );
 }
 
-function BioText({ text, isWhatnotMarket }: { text: string; isWhatnotMarket: boolean }) {
+function BioText({ text, isOfficialProfile }: { text: string; isOfficialProfile: boolean }) {
   if (!text) return "No bio yet.";
   
-  if (!isWhatnotMarket) {
+  if (!isOfficialProfile) {
     return <>{text}</>;
   }
 
@@ -487,9 +494,9 @@ export function ProfileClient({
       let deliveryRate = 100;
       let last30DaysScore = 100;
       
-      const isWhatnotProfile = toDisplayHandle(dbProfile?.username) === "@whatnotmarket";
+      const isOfficialProfile = dbProfile?.is_admin === true;
 
-      if (isWhatnotProfile) {
+      if (isOfficialProfile) {
          const { count } = await supabase.from("deals").select("id", { count: "exact", head: true }).eq("status", "completed");
          const globalDeliveries = count || 0;
          totalLifetimeOrders = globalDeliveries;
@@ -539,6 +546,8 @@ export function ProfileClient({
         deliveryRate,
         totalLifetimeOrders,
         last30DaysScore,
+        isAdmin: dbProfile.is_admin === true,
+        isVerifiedSeller: dbProfile.seller_status === "verified",
       });
 
       setPurchaseItems(purchases);
@@ -552,7 +561,53 @@ export function ProfileClient({
   // ... (keeping other handlers like follow, block, report, save, upload)
   // I will just copy them from the original file content logic but keep it concise for the tool
   
-  const handleFollowToggle = async () => { /* ... */ };
+  const handleFollowToggle = async () => {
+    if (!currentUserId || !resolvedTargetId || isOwnProfile) return;
+    setIsFollowLoading(true);
+
+    try {
+      const response = await fetch("/api/follows/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetUserId: resolvedTargetId,
+          action: isFollowing ? "unfollow" : "follow",
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; following?: boolean; followersCount?: number }
+        | null;
+
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(payload?.error || "Unable to update follow state");
+      }
+
+      const nextFollowing = payload.following === true;
+      setIsFollowing(nextFollowing);
+
+      setProfile((prev) => {
+        if (!prev) return prev;
+        const serverFollowersCount = payload.followersCount;
+        const nextFollowers =
+          typeof serverFollowersCount === "number"
+            ? serverFollowersCount
+            : Math.max(0, prev.followers + (nextFollowing ? 1 : -1));
+
+        return {
+          ...prev,
+          followers: nextFollowers,
+        };
+      });
+
+      toast.success(nextFollowing ? "Started following user" : "Unfollowed user");
+    } catch (error) {
+      console.error("Follow toggle error:", error);
+      toast.error("Failed to update follow status.");
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
   const handleBlockToggle = async () => {
     setIsBlockModalOpen(true);
   };
@@ -665,6 +720,12 @@ export function ProfileClient({
       // Validate Handle
       const cleanHandle = normalizeHandle(editForm.handle);
       if (cleanHandle && cleanHandle !== normalizeHandle(profile.handle)) {
+        if (isReservedProfileHandle(cleanHandle)) {
+          toast.error("This handle is reserved");
+          setIsSaving(false);
+          return;
+        }
+
         const { data: existing } = await supabase
           .from("profiles")
           .select("id")
@@ -820,7 +881,7 @@ export function ProfileClient({
   }
 
   const isSeller = profileRole === "seller";
-  const isFounderProfile = normalizeHandle(profile.handle) === "whatnotmarket";
+  const isFounderProfile = profile.isAdmin;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-zinc-800 selection:text-white pb-20">
@@ -961,7 +1022,7 @@ export function ProfileClient({
                   {isFounderProfile ? (
                     <FounderMark />
                   ) : (
-                    isSeller && <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 flex-shrink-0" />
+                    profile.isVerifiedSeller && <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 flex-shrink-0" />
                   )}
                 </h1>
                 <p className="text-zinc-300 text-xs md:text-sm mb-3 truncate max-w-[250px] sm:max-w-[350px] mx-auto">{profile.handle}</p>
@@ -995,7 +1056,7 @@ export function ProfileClient({
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap md:text-base">
-                    <BioText text={profile.description || ""} isWhatnotMarket={normalizeHandle(profile.handle) === "whatnotmarket"} />
+                    <BioText text={profile.description || ""} isOfficialProfile={profile.isAdmin} />
                   </p>
                   
                   {profile.twitter && (

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { buildEscrowReference } from "@/lib/payments/listing-escrow";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type Payload = {
   listingId?: string;
@@ -20,14 +23,38 @@ function normalizeAddress(raw: string | undefined) {
 }
 
 export async function POST(request: Request) {
+  const preAuthLimit = checkRateLimitDetailed(request, { action: "listing_payment_create" });
+  if (!preAuthLimit.allowed) {
+    return RateLimitResponse(preAuthLimit);
+  }
+
   const body = (await request.json().catch(() => ({}))) as Payload;
   const supabase = await createClient();
+  const admin = createAdminClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userLimit = checkRateLimitDetailed(request, {
+    action: "listing_payment_create",
+    identifier: user.id,
+  });
+  if (!userLimit.allowed) {
+    return RateLimitResponse(userLimit);
+  }
+
+  const userAbuse = await enforceAbuseGuard({
+    request,
+    action: "listing_payment_create",
+    endpointGroup: "payment",
+    userId: user.id,
+  });
+  if (!userAbuse.allowed) {
+    return AbuseGuardResponse(userAbuse);
   }
 
   const listingId = String(body.listingId ?? "").trim();
@@ -62,7 +89,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "currency and chain are required" }, { status: 400 });
   }
 
-  const { data: linkedWallet } = await supabase
+  const { data: linkedWallet } = await admin
     .from("wallets")
     .select("id")
     .eq("user_id", user.id)
@@ -78,7 +105,36 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: existingPayment } = await supabase
+  const { data: recipientWallet } = await admin
+    .from("wallets")
+    .select("user_id,address")
+    .eq("address", targetWalletAddress)
+    .eq("chain", chain)
+    .not("verified_at", "is", null)
+    .maybeSingle<{ user_id: string; address: string }>();
+
+  if (!recipientWallet) {
+    return NextResponse.json(
+      { error: "Recipient wallet is not verified on this platform" },
+      { status: 400 }
+    );
+  }
+
+  if (body.payeeUserId && body.payeeUserId !== recipientWallet.user_id) {
+    return NextResponse.json(
+      { error: "payeeUserId does not match the verified recipient wallet owner" },
+      { status: 400 }
+    );
+  }
+
+  if (recipientWallet.user_id === user.id) {
+    return NextResponse.json(
+      { error: "Self-directed listing payments are not allowed" },
+      { status: 400 }
+    );
+  }
+
+  const { data: existingPayment } = await admin
     .from("listing_payments")
     .select("*")
     .eq("payer_user_id", user.id)
@@ -92,14 +148,14 @@ export async function POST(request: Request) {
     });
   }
 
-  const { data: insertedPayment, error: insertError } = await supabase
+  const { data: insertedPayment, error: insertError } = await admin
     .from("listing_payments")
     .insert({
       listing_id: listingId,
       payer_user_id: user.id,
-      payee_user_id: body.payeeUserId ?? null,
+      payee_user_id: recipientWallet.user_id,
       payer_wallet_address: payerWalletAddress,
-      target_wallet_address: targetWalletAddress,
+      target_wallet_address: recipientWallet.address.toLowerCase(),
       amount,
       currency,
       chain,
@@ -112,7 +168,7 @@ export async function POST(request: Request) {
 
   if (insertError || !insertedPayment) {
     if (insertError?.code === "23505") {
-      const { data: racePayment } = await supabase
+      const { data: racePayment } = await admin
         .from("listing_payments")
         .select("*")
         .eq("payer_user_id", user.id)
@@ -130,7 +186,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to create payment" }, { status: 500 });
   }
 
-  await supabase.from("escrow_actions").insert({
+  await admin.from("escrow_actions").insert({
     payment_id: insertedPayment.id,
     action_type: "pending",
     performed_by_user_id: user.id,
@@ -142,4 +198,3 @@ export async function POST(request: Request) {
     idempotent: false,
   });
 }
-

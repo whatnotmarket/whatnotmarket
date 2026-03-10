@@ -2,8 +2,16 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { applyRoleAssignmentForUser } from "@/lib/auth/role-assignment";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { ensureBridgeUser, signInBridgeUserOnRoute } from "@/lib/auth/bridge";
+import {
+  BridgeIdentityNotFoundError,
+  ensureBridgeUser,
+  signInBridgeUserOnRoute,
+} from "@/lib/auth/bridge";
 import { verifyWalletChallengeSignature } from "@/lib/auth/external-wallet";
+import { resolveRequiredInviteCode } from "@/lib/invite-codes";
+import { shouldAllowBridgeUserCreation } from "@/lib/security/auth-guards";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type Payload = {
   signature?: string;
@@ -62,12 +70,34 @@ function parseTx(raw: string | undefined): WalletAuthTx | null {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimitDetailed(request, { action: "auth_wallet_verify" });
+  if (!rateLimit.allowed) {
+    return RateLimitResponse(rateLimit);
+  }
+
+  const abuseGuard = await enforceAbuseGuard({
+    request,
+    action: "auth_wallet_verify",
+    endpointGroup: "auth",
+  });
+  if (!abuseGuard.allowed) {
+    return AbuseGuardResponse(abuseGuard);
+  }
+
   const body = (await request.json().catch(() => ({}))) as Payload;
   const signature = String(body.signature ?? "");
   const tx = parseTx(request.cookies.get("wm_wallet_auth_tx")?.value);
 
   if (!tx) {
     return NextResponse.json({ error: "Missing wallet auth transaction" }, { status: 400 });
+  }
+
+  const scopedLimit = checkRateLimitDetailed(request, {
+    action: "auth_wallet_verify",
+    identifier: `${tx.chain}:${tx.address.toLowerCase()}`,
+  });
+  if (!scopedLimit.allowed) {
+    return RateLimitResponse(scopedLimit);
   }
 
   if (!signature) {
@@ -86,21 +116,48 @@ export async function POST(request: NextRequest) {
   }
 
   const subject = `wallet:${tx.chain}:${tx.address.toLowerCase()}`;
-  const bridgeIdentity = await ensureBridgeUser({
-    subject,
-    provider: tx.provider,
-    email: null,
-    fullName: tx.displayName || tx.address,
-    avatarUrl: null,
-  });
+  let desiredRole: "buyer" | "seller" = "buyer";
+  let inviteCode: string | null = null;
+
+  if (tx.mode === "signup") {
+    const inviteResolution = await resolveRequiredInviteCode(tx.inviteCode, {
+      allowedTypes: ["buyer", "seller"],
+    });
+    if (!inviteResolution.isValid) {
+      return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
+    }
+    desiredRole = inviteResolution.role;
+    inviteCode = inviteResolution.normalizedCode;
+  }
+
+  let bridgeIdentity;
+  try {
+    bridgeIdentity = await ensureBridgeUser(
+      {
+        subject,
+        provider: tx.provider,
+        email: null,
+        fullName: tx.displayName || tx.address,
+        avatarUrl: null,
+      },
+      {
+        allowCreate: shouldAllowBridgeUserCreation(tx.mode),
+      }
+    );
+  } catch (error) {
+    if (error instanceof BridgeIdentityNotFoundError) {
+      return NextResponse.json({ error: "Invalid authentication credentials" }, { status: 401 });
+    }
+    throw error;
+  }
 
   let roleMessage: string | null = null;
   if (tx.mode === "signup") {
     const assignment = await applyRoleAssignmentForUser({
       userId: bridgeIdentity.userId,
       email: bridgeIdentity.email,
-      desiredRole: tx.desiredRole,
-      inviteCode: tx.inviteCode,
+      desiredRole,
+      inviteCode,
     });
     roleMessage = assignment.message;
   }

@@ -11,6 +11,7 @@ import {
   validateMessageShape,
 } from "@/lib/chat/global-chat-moderation";
 import { z } from "zod";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 
 const postSchema = z.object({
   room: z.string().trim().min(1),
@@ -105,6 +106,14 @@ export async function POST(req: Request) {
   if (!user) {
     const error = buildAuthError();
     return NextResponse.json(error, { status: statusCodeForError(error) });
+  }
+
+  const rateLimit = checkRateLimitDetailed(req, {
+    action: "global_chat_post",
+    identifier: user.id,
+  });
+  if (!rateLimit.allowed) {
+    return RateLimitResponse(rateLimit);
   }
 
   const body = await req.json().catch(() => null);

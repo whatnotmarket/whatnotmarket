@@ -20,6 +20,17 @@ type BridgeIdentityRow = {
   email: string | null;
 };
 
+type EnsureBridgeUserOptions = {
+  allowCreate?: boolean;
+};
+
+export class BridgeIdentityNotFoundError extends Error {
+  constructor(subject: string) {
+    super(`Bridge identity mapping not found for subject ${subject}`);
+    this.name = "BridgeIdentityNotFoundError";
+  }
+}
+
 function toNameFromEmail(email: string | null) {
   if (!email) return null;
   const localPart = email.split("@")[0]?.trim();
@@ -146,6 +157,26 @@ async function upsertBridgeIdentity(row: {
   }
 }
 
+async function getBridgeIdentityMapping(subject: string) {
+  const admin = createAdminClient();
+  const { data: mapping, error } = await admin
+    .from("auth_bridge_identities")
+    .select("auth_subject,provider,supabase_user_id,email")
+    .eq("auth_subject", subject)
+    .maybeSingle<BridgeIdentityRow>();
+
+  if (error && error.code !== "PGRST116") {
+    throw new Error(`Unable to read identity mapping: ${error.message}`);
+  }
+
+  return mapping ?? null;
+}
+
+export async function hasBridgeIdentity(subject: string) {
+  const mapping = await getBridgeIdentityMapping(subject);
+  return Boolean(mapping?.supabase_user_id);
+}
+
 async function updateProfileDetails(params: {
   userId: string;
   email: string;
@@ -173,7 +204,9 @@ async function autoFollowFounder(userId: string) {
   const { data: founderProfile } = await admin
     .from("profiles")
     .select("id")
-    .eq("username", "whatnotmarket")
+    .eq("is_admin", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle<{ id: string }>();
 
   const founderId = founderProfile?.id || null;
@@ -190,21 +223,17 @@ async function autoFollowFounder(userId: string) {
   }
 }
 
-export async function ensureBridgeUser(identity: BridgeIdentityInput) {
+export async function ensureBridgeUser(
+  identity: BridgeIdentityInput,
+  options: EnsureBridgeUserOptions = {}
+) {
   const admin = createAdminClient();
   const email = normalizeEmail(identity.email) ?? subjectToSyntheticEmail(identity.subject);
   const resolvedFullName = resolveBridgeFullName(identity, email);
   const password = deriveBridgePassword(identity.subject);
+  const allowCreate = options.allowCreate !== false;
 
-  const { data: mapping, error: mappingError } = await admin
-    .from("auth_bridge_identities")
-    .select("auth_subject,provider,supabase_user_id,email")
-    .eq("auth_subject", identity.subject)
-    .maybeSingle<BridgeIdentityRow>();
-
-  if (mappingError && mappingError.code !== "PGRST116") {
-    throw new Error(`Unable to read identity mapping: ${mappingError.message}`);
-  }
+  const mapping = await getBridgeIdentityMapping(identity.subject);
 
   if (mapping?.supabase_user_id) {
     await admin.auth.admin.updateUserById(mapping.supabase_user_id, {
@@ -239,6 +268,10 @@ export async function ensureBridgeUser(identity: BridgeIdentityInput) {
       email,
       password,
     };
+  }
+
+  if (!allowCreate) {
+    throw new BridgeIdentityNotFoundError(identity.subject);
   }
 
   let supabaseUserId = await resolveSupabaseUserIdByEmail(email);

@@ -786,33 +786,45 @@ function TestLoginContent() {
       return;
     }
 
-    const isTest = trimmedCode.toUpperCase() === "TEST" || trimmedCode.toUpperCase() === "LUCA";
-    const provider = isTest ? "invite_buyer" : "invite_admin";
-    const endpoint = isTest ? "/api/auth/invite-buyer" : "/api/auth/invite-admin";
+    const provider = "invite_code";
+    const endpoints = ["/api/auth/invite-buyer", "/api/auth/invite-admin"];
 
     analytics.track("login_started", { provider });
     setIsInviteLoading(true);
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: trimmedCode,
-          next: nextPath,
-        }),
-      });
+      let payload: { ok?: boolean; redirectTo?: string; error?: string } | null = null;
+      let success = false;
+      let lastError = "Codice invito non valido.";
 
-      const payload = (await response.json().catch(() => null)) as
-        | { ok?: boolean; redirectTo?: string; error?: string }
-        | null;
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code: trimmedCode,
+            next: nextPath,
+          }),
+        });
 
-      if (!response.ok || !payload?.ok || !payload.redirectTo) {
-        throw new Error(payload?.error || "Codice invito non valido.");
+        payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; redirectTo?: string; error?: string }
+          | null;
+
+        if (response.ok && payload?.ok && payload.redirectTo) {
+          success = true;
+          break;
+        }
+
+        lastError = payload?.error || lastError;
       }
 
-      toast.success(isTest ? "Accesso buyer test completato." : "Accesso founder completato.");
+      if (!success || !payload?.redirectTo) {
+        throw new Error(lastError);
+      }
+
+      toast.success("Accesso con codice invito completato.");
       analytics.track("login_succeeded", { provider });
       window.location.assign(payload.redirectTo);
     } catch (error) {

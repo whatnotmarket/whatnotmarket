@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 export async function POST(req: Request) {
+  const rateLimit = checkRateLimitDetailed(req, { action: "telegram_profile_lookup" });
+  if (!rateLimit.allowed) {
+    return RateLimitResponse(rateLimit);
+  }
+
+  const abuseGuard = await enforceAbuseGuard({
+    request: req,
+    action: "telegram_profile_lookup",
+    endpointGroup: "profile_lookup",
+  });
+  if (!abuseGuard.allowed) {
+    return AbuseGuardResponse(abuseGuard);
+  }
+
   try {
     const { username } = await req.json();
 

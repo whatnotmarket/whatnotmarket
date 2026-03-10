@@ -9,57 +9,80 @@ import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Copy, Check } from "lucide-react";
 import Link from "next/link";
 
 type Step = "input" | "details" | "payment" | "confirmed";
+type ProxyOrderDetails = {
+  price: number;
+  quantity: number;
+  currency?: string;
+  network?: string;
+  paymentMethod?: string;
+  [key: string]: unknown;
+};
 
 export default function BuyWithCryptoPage() {
   const [step, setStep] = useState<Step>("input");
   const [url, setUrl] = useState("");
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending");
+  const [orderDetails, setOrderDetails] = useState<ProxyOrderDetails | null>(null);
   const [orderId, setOrderId] = useState("");
   const [trackingId, setTrackingId] = useState("");
+  const [trackingAccessToken, setTrackingAccessToken] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   const handleUrlSubmit = (submittedUrl: string) => {
     setUrl(submittedUrl);
     setStep("details");
   };
 
-  const handleDetailsSubmit = (details: any) => {
+  const handleDetailsSubmit = async (details: ProxyOrderDetails) => {
+    if (isCreatingOrder) return;
+    setIsCreatingOrder(true);
     setOrderDetails(details);
-    setStep("payment");
-  };
-
-  const handlePaymentSuccess = async () => {
-    setPaymentStatus("success");
-    
     try {
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productUrl: url,
-          ...orderDetails,
-          totalPaid: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5
-        })
+          ...details,
+        }),
       });
-      
-      const data = await res.json();
-      if (data.ok) {
-        setOrderId(data.orderId);
-        setTrackingId(data.trackingId);
-        setStep("confirmed");
+
+      const data = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            orderId?: string;
+            trackingId?: string;
+            trackingAccessToken?: string;
+            error?: string;
+          }
+        | null;
+
+      if (!res.ok || !data?.ok || !data.orderId || !data.trackingId || !data.trackingAccessToken) {
+        throw new Error(data?.error || "Unable to create order");
       }
+
+      setOrderId(data.orderId);
+      setTrackingId(data.trackingId);
+      setTrackingAccessToken(data.trackingAccessToken);
+      setStep("payment");
     } catch (e) {
       console.error("Failed to create order", e);
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
+  const handlePaymentSuccess = async () => {
+    setStep("confirmed");
+  };
+
   const copyTrackingLink = () => {
-    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}`);
+    const accessQuery = trackingAccessToken ? `?access=${encodeURIComponent(trackingAccessToken)}` : "";
+    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}${accessQuery}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -112,7 +135,7 @@ export default function BuyWithCryptoPage() {
             </motion.div>
           )}
 
-          {step === "payment" && orderDetails && (
+          {step === "payment" && orderDetails && orderId && (
             <motion.div
               key="payment"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -132,6 +155,8 @@ export default function BuyWithCryptoPage() {
               
               <div className="space-y-8">
                 <CryptoPaymentGateway
+                  orderId={orderId}
+                  orderAccessToken={trackingAccessToken}
                   amount={orderDetails.price * orderDetails.quantity * 1.1 + 15 + 5} // Includes 10% fee + $15 shipping + $5 network
                   currency="USDC"
                   onSuccess={handlePaymentSuccess}
@@ -168,7 +193,7 @@ export default function BuyWithCryptoPage() {
                     <label className="text-sm font-medium text-white">Tracking Link</label>
                     <div className="flex gap-2">
                       <div className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-zinc-300 font-semibold text-sm truncate">
-                        https://whatnotmarket.app/track/{trackingId}
+                        {`https://whatnotmarket.app/track/${trackingId}?access=***`}
                       </div>
                       <Button
                         onClick={copyTrackingLink}
@@ -178,7 +203,7 @@ export default function BuyWithCryptoPage() {
                       </Button>
                     </div>
                     <p className="text-xs text-zinc-500">
-                      Share this link to view real-time updates. No account required.
+                      Keep this link private. Anyone with it can view order updates.
                     </p>
                   </div>
                 </Squircle>

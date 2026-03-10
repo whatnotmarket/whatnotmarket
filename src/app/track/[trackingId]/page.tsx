@@ -1,18 +1,25 @@
-import { getOrderByTrackingId } from "@/lib/orders-db";
+import { getOrderByTrackingAccess } from "@/lib/orders-db";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Squircle } from "@/components/ui/Squircle";
-import { CheckCircle2, Clock, Package, MapPin, Truck, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { MapPin } from "lucide-react";
 
 interface PageProps {
   params: {
     trackingId: string;
   };
+  searchParams?: {
+    access?: string;
+  };
 }
 
-export default async function TrackingPage({ params }: PageProps) {
-  const order = await getOrderByTrackingId(params.trackingId);
+export default async function TrackingPage({ params, searchParams }: PageProps) {
+  const accessToken = typeof searchParams?.access === "string" ? searchParams.access : "";
+  if (!accessToken) {
+    return notFound();
+  }
+
+  const order = await getOrderByTrackingAccess(params.trackingId, accessToken);
 
   if (!order) {
     return notFound();

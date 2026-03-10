@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { checkRateLimit, RateLimitResponse } from "@/lib/rate-limit";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import type { NextRequest } from "next/server";
 import { assertAdminRequest } from "@/lib/admin-auth";
 
@@ -64,8 +64,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(req, 30)) {
-    return RateLimitResponse();
+  const rateLimit = checkRateLimitDetailed(req, { action: "admin_follow_test" });
+  if (!rateLimit.allowed) {
+    return RateLimitResponse(rateLimit);
   }
 
   try {

@@ -14,12 +14,13 @@ export interface OrderUpdate {
   status: OrderStatus;
   message: string;
   timestamp: string;
-  metadata?: any;
+  metadata?: unknown;
 }
 
 export interface ProxyOrder {
   id: string;
   trackingId: string;
+  trackingAccessToken?: string;
   productUrl: string;
   productName?: string;
   price: number;
@@ -42,26 +43,55 @@ export interface ProxyOrder {
   };
 }
 
+type ProxyOrderRow = {
+  id: string;
+  tracking_id: string;
+  tracking_access_token: string | null;
+  product_url: string;
+  product_name: string | null;
+  price: number;
+  quantity: number;
+  currency: string;
+  network: string | null;
+  total_paid: number;
+  telegram_username: string | null;
+  status: string;
+  updates: OrderUpdate[] | null;
+  created_at: string;
+  city: string | null;
+  country: string | null;
+  region: string | null;
+  locker_details:
+    | {
+        id: string;
+        city: string;
+        region: string;
+        code?: string;
+      }
+    | null;
+};
+
 // Map database row to ProxyOrder interface
-function mapRowToOrder(row: any): ProxyOrder {
+function mapRowToOrder(row: ProxyOrderRow): ProxyOrder {
   return {
     id: row.id,
     trackingId: row.tracking_id,
+    trackingAccessToken: row.tracking_access_token ?? undefined,
     productUrl: row.product_url,
-    productName: row.product_name,
+    productName: row.product_name ?? undefined,
     price: row.price,
     quantity: row.quantity,
     currency: row.currency,
-    network: row.network,
+    network: row.network ?? undefined,
     totalPaid: row.total_paid,
-    telegramUsername: row.telegram_username,
+    telegramUsername: row.telegram_username ?? undefined,
     status: row.status as OrderStatus,
     updates: row.updates || [],
     createdAt: row.created_at,
-    city: row.city,
-    country: row.country,
-    region: row.region,
-    lockerDetails: row.locker_details,
+    city: row.city ?? undefined,
+    country: row.country ?? undefined,
+    region: row.region ?? undefined,
+    lockerDetails: row.locker_details ?? undefined,
   };
 }
 
@@ -77,16 +107,17 @@ export async function getOrders(): Promise<ProxyOrder[]> {
     return [];
   }
 
-  return data.map(mapRowToOrder);
+  return (data as ProxyOrderRow[]).map(mapRowToOrder);
 }
 
 export async function saveOrder(order: ProxyOrder): Promise<void> {
   const supabase = createAdminClient();
   
   // Prepare data for insertion/update
-  const orderData = {
+  const orderData: Record<string, unknown> = {
     id: order.id,
     tracking_id: order.trackingId,
+    tracking_access_token: order.trackingAccessToken ?? null,
     product_url: order.productUrl,
     product_name: order.productName,
     price: order.price,
@@ -120,6 +151,25 @@ export async function getOrderByTrackingId(trackingId: string): Promise<ProxyOrd
     .from("proxy_orders")
     .select("*")
     .eq("tracking_id", trackingId)
+    .single();
+
+  if (error || !data) {
+    return undefined;
+  }
+
+  return mapRowToOrder(data);
+}
+
+export async function getOrderByTrackingAccess(
+  trackingId: string,
+  accessToken: string
+): Promise<ProxyOrder | undefined> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("proxy_orders")
+    .select("*")
+    .eq("tracking_id", trackingId)
+    .eq("tracking_access_token", accessToken)
     .single();
 
   if (error || !data) {

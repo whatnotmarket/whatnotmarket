@@ -61,6 +61,13 @@ interface RealtimeChatProps {
   }
 }
 
+type SlashCommand = {
+  command: string
+  description: string
+  action: string
+  localOnly: boolean
+}
+
 const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9]+\.[a-zA-Z]{2,}\/)/i;
 
 export function RealtimeChat({ roomName, userId, username, isVerified, role, onMessage, messages: initialMessages, targetUser }: RealtimeChatProps) {
@@ -225,27 +232,34 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
   const toggleFollow = async () => {
     if (!targetUser?.id) return
     const targetId = targetUser.id
-    
+
     try {
-      if (panelData.isFollowing) {
-        const { error } = await supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', userId)
-          .eq('following_id', targetId)
-        
-        if (error) throw error
-        setPanelData(prev => ({ ...prev, isFollowing: false, followers: Math.max(0, prev.followers - 1) }))
-        toast.success(`Non segui più ${targetUser.name}`)
-      } else {
-        const { error } = await supabase
-          .from('follows')
-          .insert({ follower_id: userId, following_id: targetId })
-        
-        if (error) throw error
-        setPanelData(prev => ({ ...prev, isFollowing: true, followers: prev.followers + 1 }))
-        toast.success(`Ora segui ${targetUser.name}`)
+      const nextAction = panelData.isFollowing ? 'unfollow' : 'follow'
+      const response = await fetch('/api/follows/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId: targetId,
+          action: nextAction,
+        }),
+      })
+
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; following?: boolean; followersCount?: number }
+        | null
+
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(payload?.error || 'Failed to update follow state')
       }
+
+      const following = payload.following === true
+      const followersCount =
+        typeof payload.followersCount === 'number'
+          ? payload.followersCount
+          : Math.max(0, panelData.followers + (following ? 1 : -1))
+
+      setPanelData((prev) => ({ ...prev, isFollowing: following, followers: followersCount }))
+      toast.success(following ? `Ora segui ${targetUser.name}` : `Non segui più ${targetUser.name}`)
     } catch (err) {
       console.error('Error toggling follow:', err)
       toast.error('Errore durante l\'operazione')
@@ -352,9 +366,10 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
     console.log('Current username for commands:', username)
 
     if (targetUser) {
-        // Updated roles based on standard names
-        const isBuyer = username === 'testbuyer' || username === 'buyer'
-        const isSeller = username === 'whatnotmarket' || username === 'admin' || username === 'seller'
+        // Use canonical role from server-derived profile data, never username heuristics.
+        const normalizedRole = String(role || "").trim().toLowerCase()
+        const isBuyer = normalizedRole === 'buyer'
+        const isSeller = normalizedRole === 'seller' || normalizedRole === 'admin'
 
         console.log('Role check:', { isBuyer, isSeller })
 
@@ -388,7 +403,7 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
       }
   }
 
-  const handleCommandSelect = async (cmd: any) => {
+  const handleCommandSelect = async (cmd: SlashCommand) => {
       setInputValue('')
       setShowCommands(false)
       
@@ -407,10 +422,20 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
                   .maybeSingle()
               
               if (activeDeal) {
-                  await supabase
-                      .from('deals')
-                      .update({ status: 'cancelled' })
-                      .eq('id', activeDeal.id)
+                  const cancelRes = await fetch('/api/deals/transition', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        dealId: activeDeal.id,
+                        action: 'cancel',
+                      }),
+                  })
+
+                  if (!cancelRes.ok) {
+                      console.warn('Deal cancel transition rejected while clearing room')
+                  }
               }
           } catch (e) {
               console.error("Failed to cancel deal on chat clear", e)
@@ -857,15 +882,15 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
                   <div className="space-y-2">
                     <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                       <div className="text-[11px] text-zinc-400">Escrow Status</div>
-                      <div className="text-sm text-white">Platinum Escrow</div>
+                      <div className="text-sm text-white">Not escrow-verified</div>
                     </div>
                     <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                       <div className="text-[11px] text-zinc-400">Ranking</div>
-                      <div className="text-sm text-white">Maximum Coverage</div>
+                      <div className="text-sm text-white">No verified platform rank</div>
                     </div>
                     <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                       <div className="text-[11px] text-zinc-400">Protection Level</div>
-                      <div className="text-sm text-white">Maximum Coverage</div>
+                      <div className="text-sm text-white">Standard chat protections</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">

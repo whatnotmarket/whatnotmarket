@@ -104,7 +104,7 @@ export function ProfileMenu() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("username,role_preference,email,full_name")
+        .select("username,role_preference,full_name")
         .eq("id", user.id)
         .maybeSingle();
       let profile = data;
@@ -136,7 +136,7 @@ export function ProfileMenu() {
 
         const { data: bootstrapProfile, error: bootstrapFetchError } = await supabase
           .from("profiles")
-          .select("username,role_preference,email,full_name")
+          .select("username,role_preference,full_name")
           .eq("id", user.id)
           .maybeSingle();
 

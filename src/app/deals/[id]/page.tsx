@@ -195,18 +195,27 @@ export default function DealRoomPage() {
   const handleCompleteDeal = async () => {
     if (!deal) return;
 
-    const { error } = await supabase
-      .from("deals")
-      .update({ status: "completed" })
-      .eq("id", deal.id);
+    const response = await fetch("/api/deals/transition", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        dealId: deal.id,
+        action: "complete",
+      }),
+    });
 
-    if (error) {
-      console.error(error);
-      toast.error("Failed to update deal status");
+    const payload = (await response.json().catch(() => null)) as
+      | { deal?: DealRow; error?: string }
+      | null;
+
+    if (!response.ok || !payload?.deal) {
+      toast.error(payload?.error || "Failed to update deal status");
       return;
     }
 
-    setDeal({ ...deal, status: "completed" });
+    setDeal(payload.deal);
     toast.success("Deal marked as completed");
   };
 

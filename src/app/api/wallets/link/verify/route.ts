@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase-server";
 import { verifyWalletChallengeSignature } from "@/lib/auth/external-wallet";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type Payload = {
   signature?: string;
@@ -26,6 +28,11 @@ function parseLinkTx(raw: string | undefined): LinkTx | null {
 }
 
 export async function POST(request: Request) {
+  const preAuthLimit = checkRateLimitDetailed(request, { action: "wallet_link_verify" });
+  if (!preAuthLimit.allowed) {
+    return RateLimitResponse(preAuthLimit);
+  }
+
   const body = (await request.json().catch(() => ({}))) as Payload;
   const signature = String(body.signature ?? "");
   const provider = body.provider?.trim() || "walletconnect";
@@ -41,6 +48,24 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userLimit = checkRateLimitDetailed(request, {
+    action: "wallet_link_verify",
+    identifier: user.id,
+  });
+  if (!userLimit.allowed) {
+    return RateLimitResponse(userLimit);
+  }
+
+  const userAbuse = await enforceAbuseGuard({
+    request,
+    action: "wallet_link_verify",
+    endpointGroup: "wallet",
+    userId: user.id,
+  });
+  if (!userAbuse.allowed) {
+    return AbuseGuardResponse(userAbuse);
   }
 
   const cookieStore = await cookies();
@@ -89,4 +114,3 @@ export async function POST(request: Request) {
     wallet: data,
   });
 }
-

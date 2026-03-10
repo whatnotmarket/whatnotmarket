@@ -24,7 +24,6 @@ export async function storeMessages(messages: ChatMessage[], roomName: string, u
           audioUrl: messageToStore.audioUrl,
           reactions: messageToStore.reactions,
           status: messageToStore.status,
-          user_snapshot: messageToStore.user // Store user snapshot for quick display
         }
       }
 

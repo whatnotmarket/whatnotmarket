@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -7,6 +9,11 @@ function isUuid(value: string) {
 
 export async function POST(req: Request) {
   try {
+    const preAuthLimit = checkRateLimitDetailed(req, { action: "offer_create" });
+    if (!preAuthLimit.allowed) {
+      return RateLimitResponse(preAuthLimit);
+    }
+
     const { requestId, price, message } = await req.json();
 
     if (!requestId || !isUuid(requestId)) {
@@ -27,6 +34,24 @@ export async function POST(req: Request) {
 
     if (userError || !user) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userLimit = checkRateLimitDetailed(req, {
+      action: "offer_create",
+      identifier: user.id,
+    });
+    if (!userLimit.allowed) {
+      return RateLimitResponse(userLimit);
+    }
+
+    const userAbuse = await enforceAbuseGuard({
+      request: req,
+      action: "offer_create",
+      endpointGroup: "marketplace",
+      userId: user.id,
+    });
+    if (!userAbuse.allowed) {
+      return AbuseGuardResponse(userAbuse);
     }
 
     const { data: request, error: requestError } = await supabase

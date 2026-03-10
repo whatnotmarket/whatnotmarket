@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { verifyToken } from "@/lib/auth";
 import { getRedirectPath } from "@/lib/redirects";
+import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -66,12 +67,6 @@ export async function proxy(request: NextRequest) {
         maxAge: 60 * 30,
         sameSite: "lax",
       });
-      response.cookies.set("founder_admin_gate", "1", {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 10,
-        sameSite: "strict",
-      });
       return withSupabaseCookies(response);
     }
 
@@ -94,19 +89,13 @@ export async function proxy(request: NextRequest) {
       return withSupabaseCookies(response);
     }
 
-    const { data: founderProfile } = await supabase
+    const { data: adminProfile } = await supabase
       .from("profiles")
-      .select("username,is_admin")
+      .select("is_admin")
       .eq("id", user.id)
-      .maybeSingle<{ username: string | null; is_admin: boolean | null }>();
+      .maybeSingle<{ is_admin: boolean | null }>();
 
-    const normalizedUsername = String(founderProfile?.username || "")
-      .trim()
-      .toLowerCase()
-      .replace(/^@+/, "");
-    const isFounder = Boolean(founderProfile?.is_admin) || normalizedUsername === "whatnotmarket";
-
-    if (!isFounder) {
+    if (!hasCanonicalAdminAccess(adminProfile)) {
       const response = NextResponse.redirect(new URL("/market", request.url));
       const nextAttempts = safePreviousAttempts + 1;
       response.cookies.set("admin_login_attempts", String(nextAttempts), {
@@ -127,12 +116,6 @@ export async function proxy(request: NextRequest) {
       httpOnly: true,
       maxAge: 60 * 30,
       sameSite: "lax",
-    });
-    response.cookies.set("founder_admin_gate", "1", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 10,
-      sameSite: "strict",
     });
     return withSupabaseCookies(response);
   }

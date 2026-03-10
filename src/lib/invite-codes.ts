@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase-admin";
+import { enforceRequiredInvite } from "@/lib/security/invite-guards";
 
 export type InviteRole = "buyer" | "seller";
 export type InviteCodeType = InviteRole | "founder";
@@ -14,7 +15,14 @@ export type InviteResolution = {
   requiresSellerClaim: boolean;
   source: InviteSource;
   inviteType: InviteCodeType | null;
-  reason: "ok" | "missing" | "invalid" | "expired" | "limit_reached" | "inactive";
+  reason:
+    | "ok"
+    | "missing"
+    | "invalid"
+    | "expired"
+    | "limit_reached"
+    | "inactive"
+    | "type_mismatch";
 };
 
 type DbInviteRow = {
@@ -65,8 +73,7 @@ function fallbackResolution(normalizedCode: string): InviteResolution {
   }
 
   const buyerCodes = getBuyerCodes();
-  // Ensure TEST is always allowed locally
-  if (normalizedCode === 'TEST' || buyerCodes.has(normalizedCode)) {
+  if (buyerCodes.has(normalizedCode)) {
     return {
       isValid: true,
       role: "buyer",
@@ -181,6 +188,16 @@ export async function resolveInviteCode(rawCode: string | null | undefined): Pro
   }
 
   return fallbackResolution(normalizedCode);
+}
+
+export async function resolveRequiredInviteCode(
+  rawCode: string | null | undefined,
+  options?: { allowedTypes?: InviteCodeType[] }
+): Promise<InviteResolution> {
+  const resolution = await resolveInviteCode(rawCode);
+  return enforceRequiredInvite(resolution, {
+    allowedTypes: options?.allowedTypes,
+  });
 }
 
 export async function registerInviteUsage(input: {

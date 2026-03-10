@@ -4,10 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { RealtimeChat } from "@/components/realtime-chat/realtime-chat";
 import { useUser } from "@/contexts/UserContext";
 import { useMessagesQuery } from "@/hooks/use-messages-query";
-import { storeMessages } from "@/lib/store-messages";
 import { Navbar } from "@/components/Navbar";
 import { Loader2 } from "lucide-react";
-import { ChatMessage } from "@/hooks/use-realtime-chat";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -22,6 +20,14 @@ import { Search, Plus, MessageSquarePlus, X } from "lucide-react";
 import { toast } from "@/lib/notifications";
 import { CopyMap } from "@/lib/copy-system";
 
+type ChatListEntry = {
+  userId: string;
+  lastMessage: string;
+  lastMessageType: string;
+  lastMessageTime: string;
+  unreadCount: number;
+};
+
 export function ChatClient({ copy }: { copy: CopyMap }) {
   const params = useParams();
   const rawUserId = params.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null;
@@ -32,12 +38,11 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
     image?: string | null;
     handle?: string | null;
   } | null>(null);
-  const { user, isLoading } = useUser();
+  const { user, isLoading, role: appRole, isFounder } = useUser();
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [recentChats, setRecentChats] = useState<{ 
     userId: string, 
-    walletAddress?: string,
     name: string, 
     avatarUrl: string | null,
     lastMessage: string,
@@ -71,38 +76,9 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
             setTargetUserId(rawUserId);
             return;
         }
-        
-        // Assume it's a wallet address
-        try {
-            // First check wallet_address column (if migration applied)
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('wallet_address', rawUserId)
-                .maybeSingle();
-                
-            if (data) {
-                setTargetUserId(data.id);
-                return;
-            }
 
-            // Fallback: check payout_address
-            const { data: data2 } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('payout_address', rawUserId)
-                .maybeSingle();
-                
-            if (data2) {
-                setTargetUserId(data2.id);
-                return;
-            }
-            
-            console.warn("User not found for param:", rawUserId);
-            // setTargetUserId(null); // Keep null if not found
-        } catch (e) {
-            console.error("Error resolving user:", e);
-        }
+        // Security hardening: do not resolve direct chats by wallet/payout address.
+        setTargetUserId(null);
     }
     resolveUser();
   }, [rawUserId, supabase]);
@@ -120,7 +96,7 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
           id: existingChat.userId,
           name: existingChat.name,
           image: existingChat.avatarUrl,
-          handle: existingChat.walletAddress ?? null,
+          handle: null,
         });
         return;
       }
@@ -174,7 +150,7 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
       if (error) throw error;
 
       // Group by user
-      const chatsMap = new Map<string, any>();
+      const chatsMap = new Map<string, ChatListEntry>();
       
       messages?.forEach(msg => {
         const otherUserId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
@@ -191,7 +167,9 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
         // Count unread from others
         if (msg.receiver_id === user.id && !msg.is_read) {
           const chat = chatsMap.get(otherUserId);
-          chat.unreadCount++;
+          if (chat) {
+            chat.unreadCount++;
+          }
         }
       });
 
@@ -200,7 +178,7 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, username, full_name, avatar_url, wallet_address')
+          .select('id, username, full_name, avatar_url')
           .in('id', userIds);
 
         // Fetch active deals
@@ -210,22 +188,25 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
           .or(`buyer_id.in.(${userIds.join(',')}),seller_id.in.(${userIds.join(',')})`)
           .eq('status', 'active'); // Only active deals
 
-        const finalChats = userIds.map(id => {
+        const finalChats = userIds.flatMap(id => {
           const chat = chatsMap.get(id);
+          if (!chat) {
+            return [];
+          }
+
           const profile = profiles?.find(p => p.id === id);
           const deal = deals?.find(d => (d.buyer_id === id && d.seller_id === user.id) || (d.seller_id === id && d.buyer_id === user.id));
           
-          return {
+          return [{
             ...chat,
             name: profile?.full_name || profile?.username || "Unknown User",
             avatarUrl: profile?.avatar_url,
-            walletAddress: profile?.wallet_address,
             deal: deal ? {
               id: deal.id,
               status: deal.status,
               price: deal.price
             } : undefined
-          };
+          }];
         });
 
         setRecentChats(finalChats);
@@ -276,11 +257,8 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
   const roomName = targetUserId ? [user.id, targetUserId].sort().join("_") : null;
   const username =
     user.user_metadata?.username || user.user_metadata?.full_name || user.email || user.id;
-  const isVerified =
-    user.user_metadata?.is_admin === true || user.user_metadata?.seller_status === "verified";
-  const role = user.user_metadata?.is_admin === true
-    ? "Admin"
-    : (user.user_metadata?.seller_status === "verified" ? "Seller" : "Buyer");
+  const isVerified = isFounder || appRole === "seller";
+  const role = isFounder ? "Admin" : appRole === "seller" ? "Seller" : "Buyer";
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">

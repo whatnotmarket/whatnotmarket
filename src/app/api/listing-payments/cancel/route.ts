@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type Payload = {
   paymentId?: string;
@@ -7,6 +9,11 @@ type Payload = {
 };
 
 export async function POST(request: Request) {
+  const preAuthLimit = checkRateLimitDetailed(request, { action: "listing_payment_cancel" });
+  if (!preAuthLimit.allowed) {
+    return RateLimitResponse(preAuthLimit);
+  }
+
   const body = (await request.json().catch(() => ({}))) as Payload;
   const paymentId = String(body.paymentId ?? "").trim();
   const reason = String(body.reason ?? "Cancelled by payer").trim();
@@ -22,6 +29,24 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userLimit = checkRateLimitDetailed(request, {
+    action: "listing_payment_cancel",
+    identifier: user.id,
+  });
+  if (!userLimit.allowed) {
+    return RateLimitResponse(userLimit);
+  }
+
+  const userAbuse = await enforceAbuseGuard({
+    request,
+    action: "listing_payment_cancel",
+    endpointGroup: "payment",
+    userId: user.id,
+  });
+  if (!userAbuse.allowed) {
+    return AbuseGuardResponse(userAbuse);
   }
 
   const { data: updated, error } = await supabase
@@ -68,4 +93,3 @@ export async function POST(request: Request) {
     payment: updated,
   });
 }
-

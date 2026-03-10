@@ -3,14 +3,13 @@
 import { useState, useRef } from "react";
 import { ProductUrlInput } from "@/components/buy-with-crypto/ProductUrlInput";
 import { BuyAnywhereWizard } from "@/components/buy-with-crypto/wizard/BuyAnywhereWizard";
-import { WizardData } from "@/components/buy-with-crypto/wizard/types";
+import type { WizardData, WizardProps } from "@/components/buy-with-crypto/wizard/types";
 import { OrderSummaryCard } from "@/components/buy-with-crypto/OrderSummaryCard";
 import { CryptoPaymentGateway } from "@/components/buy-with-crypto/CryptoPaymentGateway";
 import { Squircle } from "@/components/ui/Squircle";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { analytics } from "@/lib/analytics";
 
 type Step = "input" | "details" | "payment" | "confirmed";
@@ -18,12 +17,13 @@ type Step = "input" | "details" | "payment" | "confirmed";
 export function BuyWithCryptoFlow() {
   const [step, setStep] = useState<Step>("input");
   const [url, setUrl] = useState("");
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<WizardProps["initialData"]>();
   const [orderDetails, setOrderDetails] = useState<WizardData | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending");
   const [orderId, setOrderId] = useState("");
   const [trackingId, setTrackingId] = useState("");
+  const [trackingAccessToken, setTrackingAccessToken] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const scrollToTop = () => {
@@ -32,7 +32,7 @@ export function BuyWithCryptoFlow() {
     }
   };
 
-  const handleUrlSubmit = (submittedUrl: string, data?: any) => {
+  const handleUrlSubmit = (submittedUrl: string, data?: WizardProps["initialData"]) => {
     setUrl(submittedUrl);
     analytics.track("proxy_order_url_submitted", { url: submittedUrl });
     if (data) {
@@ -42,52 +42,66 @@ export function BuyWithCryptoFlow() {
     setTimeout(scrollToTop, 100);
   };
 
-  const handleDetailsSubmit = (details: WizardData) => {
+  const handleDetailsSubmit = async (details: WizardData) => {
+    if (isCreatingOrder) return;
+    setIsCreatingOrder(true);
     setOrderDetails(details);
-    analytics.track("proxy_order_details_submitted", {
-      quantity: details.quantity,
-      price: details.price,
-      currency: details.currency,
-      network: details.network,
-    });
-    setStep("payment");
-    setTimeout(scrollToTop, 100);
-  };
-
-  const handlePaymentSuccess = async () => {
-    setPaymentStatus("success");
-    
-    // Create order via API
     try {
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productUrl: url,
-          ...orderDetails,
-          totalPaid: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5 // Recalculate or pass from previous step
-        })
+          ...details,
+        }),
       });
-      
-      const data = await res.json();
-      if (data.ok) {
-        setOrderId(data.orderId);
-        setTrackingId(data.trackingId);
-        analytics.track("proxy_order_payment_completed", {
-          orderId: data.orderId,
-          amount: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5,
-          currency: orderDetails?.currency,
-        });
-        setStep("confirmed");
+
+      const data = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            orderId?: string;
+            trackingId?: string;
+            trackingAccessToken?: string;
+            error?: string;
+          }
+        | null;
+
+      if (!res.ok || !data?.ok || !data.orderId || !data.trackingId || !data.trackingAccessToken) {
+        throw new Error(data?.error || "Unable to create secure order");
       }
-    } catch (e) {
-      console.error("Failed to create order", e);
-      analytics.track("proxy_order_creation_failed", { error: String(e) });
+
+      setOrderId(data.orderId);
+      setTrackingId(data.trackingId);
+      setTrackingAccessToken(data.trackingAccessToken);
+      analytics.track("proxy_order_details_submitted", {
+        quantity: details.quantity,
+        price: details.price,
+        currency: details.currency,
+        network: details.network,
+        orderId: data.orderId,
+      });
+      setStep("payment");
+      setTimeout(scrollToTop, 100);
+    } catch (error) {
+      console.error("Failed to create order before payment", error);
+      analytics.track("proxy_order_creation_failed", { error: String(error) });
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
+  const handlePaymentSuccess = async () => {
+    analytics.track("proxy_order_payment_completed", {
+      orderId,
+      amount: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5,
+      currency: orderDetails?.currency,
+    });
+    setStep("confirmed");
+  };
+
   const copyTrackingLink = () => {
-    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}`);
+    const accessQuery = trackingAccessToken ? `?access=${encodeURIComponent(trackingAccessToken)}` : "";
+    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}${accessQuery}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -95,11 +109,11 @@ export function BuyWithCryptoFlow() {
   const resetFlow = () => {
     setStep("input");
     setUrl("");
-    setPreviewData(null);
+    setPreviewData(undefined);
     setOrderDetails(null);
-    setPaymentStatus("pending");
     setOrderId("");
     setTrackingId("");
+    setTrackingAccessToken("");
   };
 
   return (
@@ -146,7 +160,7 @@ export function BuyWithCryptoFlow() {
           </motion.div>
         )}
 
-        {step === "payment" && orderDetails && (
+        {step === "payment" && orderDetails && orderId && (
           <motion.div
             key="payment"
             initial={{ opacity: 0, scale: 0.98 }}
@@ -166,6 +180,8 @@ export function BuyWithCryptoFlow() {
             
             <div className="space-y-8">
               <CryptoPaymentGateway
+                orderId={orderId}
+                orderAccessToken={trackingAccessToken}
                 amount={(orderDetails.price || 0) * orderDetails.quantity * 1.1 + 15 + 5}
                 currency={orderDetails.currency || "USDC"}
                 network={orderDetails.network}
@@ -203,7 +219,7 @@ export function BuyWithCryptoFlow() {
                   <label className="text-sm font-medium text-white">Tracking Link</label>
                   <div className="flex gap-2">
                     <div className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-zinc-300 font-semibold text-sm truncate">
-                      https://whatnotmarket.app/track/{trackingId}
+                      {`https://whatnotmarket.app/track/${trackingId}?access=***`}
                     </div>
                     <Button
                       onClick={copyTrackingLink}
@@ -213,7 +229,7 @@ export function BuyWithCryptoFlow() {
                     </Button>
                   </div>
                   <p className="text-xs text-zinc-500">
-                    Share this link to view real-time updates. No account required.
+                    Keep this link private. Anyone with it can view order updates.
                   </p>
                 </div>
               </Squircle>

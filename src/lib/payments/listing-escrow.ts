@@ -9,7 +9,7 @@ export type ListingPaymentStatus =
   | "cancelled";
 
 const allowedTransitions: Record<ListingPaymentStatus, ListingPaymentStatus[]> = {
-  pending: ["funded_to_escrow", "failed", "cancelled"],
+  pending: ["funded_to_escrow", "awaiting_release", "failed", "cancelled"],
   funded_to_escrow: ["awaiting_release", "failed"],
   awaiting_release: ["released", "failed"],
   released: [],
@@ -36,4 +36,3 @@ export function toWeiHex(amount: number) {
   const value = BigInt(Math.round(amount * 1_000_000_000_000_000_000));
   return `0x${value.toString(16)}`;
 }
-

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
 
 // Define the role type
 export type UserRole = "guest" | "buyer" | "seller";
@@ -60,11 +61,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         const nextRole: UserRole = profile?.role_preference === "seller" ? "seller" : "buyer";
         const currentUsername = profile?.username || null;
-        const normalizedUsername = String(currentUsername || "")
-          .trim()
-          .toLowerCase()
-          .replace(/^@+/, "");
-        const nextIsFounder = Boolean(profile?.is_admin) || normalizedUsername === "whatnotmarket";
+        const nextIsFounder = hasCanonicalAdminAccess(profile);
         setRole(nextRole);
         setIsFounder(nextIsFounder);
         setUsername(currentUsername);

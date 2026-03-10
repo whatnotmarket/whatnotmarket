@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
 
   await supabase.auth.signOut();
   response.cookies.set("wm_signup_context", "", { path: "/", maxAge: 0 });
+  response.cookies.set("admin_token", "", { path: "/", maxAge: 0 });
 
   return response;
 }

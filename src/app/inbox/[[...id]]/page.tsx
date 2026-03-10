@@ -4,10 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { RealtimeChat } from "@/components/realtime-chat/realtime-chat";
 import { useUser } from "@/contexts/UserContext";
 import { useMessagesQuery } from "@/hooks/use-messages-query";
-import { storeMessages } from "@/lib/store-messages";
 import { Navbar } from "@/components/Navbar";
 import { Loader2 } from "lucide-react";
-import { ChatMessage } from "@/hooks/use-realtime-chat";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -21,6 +19,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Plus, MessageSquarePlus, X } from "lucide-react";
 import { toast } from "@/lib/notifications";
 
+type FoundUser = {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+};
+
+type ChatMessageRecord = {
+  room_id: string;
+  content: string;
+  created_at: string;
+  sender_id: string;
+  is_read: boolean;
+  receiver_id?: string;
+  type?: string;
+  is_deleted?: boolean;
+};
+
+type CurrentUser = {
+  id: string;
+  email?: string | null;
+  user_metadata?: {
+    username?: string | null;
+    full_name?: string | null;
+    is_admin?: boolean;
+    seller_status?: string | null;
+  };
+};
+
 export default function ChatPage() {
   const params = useParams();
   // Get raw ID from URL path (e.g. /inbox/123 or /inbox/wallet)
@@ -32,7 +59,6 @@ export default function ChatPage() {
   const supabase = useMemo(() => createClient(), []);
   const [recentChats, setRecentChats] = useState<{ 
     userId: string, 
-    walletAddress?: string,
     name: string, 
     avatarUrl: string | null,
     lastMessage: string,
@@ -63,38 +89,9 @@ export default function ChatPage() {
             setTargetUserId(rawUserId);
             return;
         }
-        
-        // Assume it's a wallet address
-        try {
-            // First check wallet_address column (if migration applied)
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('wallet_address', rawUserId)
-                .maybeSingle();
-                
-            if (data) {
-                setTargetUserId(data.id);
-                return;
-            }
 
-            // Fallback: check payout_address
-            const { data: data2 } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('payout_address', rawUserId)
-                .maybeSingle();
-                
-            if (data2) {
-                setTargetUserId(data2.id);
-                return;
-            }
-            
-            console.warn("User not found for param:", rawUserId);
-            // setTargetUserId(null); // Keep null if not found
-        } catch (e) {
-            console.error("Error resolving user:", e);
-        }
+        // Security hardening: do not resolve direct chats by wallet/payout address.
+        setTargetUserId(null);
     }
     resolveUser();
   }, [rawUserId, supabase]);
@@ -104,7 +101,7 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [searchUserQuery, setSearchUserQuery] = useState("");
-  const [foundUsers, setFoundUsers] = useState<any[]>([]);
+  const [foundUsers, setFoundUsers] = useState<FoundUser[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
 
   const handleSearchUsers = async (query: string) => {
@@ -118,8 +115,8 @@ export default function ChatPage() {
       try {
         const { data } = await supabase
             .from('profiles')
-            .select('id, username, full_name, avatar_url, payout_address, wallet_address')
-            .or(`username.ilike.%${query}%,full_name.ilike.%${query}%,payout_address.eq.${query},wallet_address.eq.${query}`)
+            .select('id, username, full_name, avatar_url')
+            .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
             .neq('id', user?.id) // Exclude self
             .limit(5);
             
@@ -150,8 +147,8 @@ export default function ChatPage() {
         },
         async (payload) => {
           console.log('Inbox Realtime Event:', payload);
-          const newMessage = payload.new as any;
-          const oldMessage = payload.old as any;
+          const newMessage = payload.new as ChatMessageRecord;
+          const oldMessage = payload.old as ChatMessageRecord;
           const roomId = newMessage?.room_id || oldMessage?.room_id;
           
           if (!roomId || typeof roomId !== 'string') return;
@@ -175,7 +172,7 @@ export default function ChatPage() {
            
            if (isIncoming && !isCurrentChat && payload.eventType === 'INSERT') {
                let senderName = 'Qualcuno';
-               const { data: profile } = await supabase.from('profiles').select('full_name, username, wallet_address').eq('id', otherUserId).single();
+               const { data: profile } = await supabase.from('profiles').select('full_name, username').eq('id', otherUserId).single();
                if (profile) senderName = profile.full_name || profile.username || 'Utente';
 
                toast.info({
@@ -187,7 +184,7 @@ export default function ChatPage() {
                    ),
                    action: {
                        label: 'Vedi',
-                       onClick: () => router.push(`/inbox/${profile?.wallet_address || otherUserId}`)
+                       onClick: () => router.push(`/inbox/${otherUserId}`)
                    }
                });
            }
@@ -237,10 +234,10 @@ export default function ChatPage() {
       )
       .subscribe();
 
-    async function fetchProfileAndAdd(userId: string, message: any) {
+    async function fetchProfileAndAdd(userId: string, message: ChatMessageRecord) {
         const { data: profile } = await supabase
             .from('profiles')
-            .select('id, full_name, username, email, avatar_url, wallet_address')
+            .select('id, full_name, username, avatar_url')
             .eq('id', userId)
             .single();
             
@@ -250,8 +247,7 @@ export default function ChatPage() {
                 
                 const newChat = {
                     userId: profile.id,
-                    walletAddress: profile.wallet_address,
-                    name: profile.full_name || profile.username || profile.email || 'Utente',
+                    name: profile.full_name || profile.username || 'Utente',
                     avatarUrl: profile.avatar_url,
                     lastMessage: message.content,
                     lastMessageType: message.type || 'text',
@@ -317,7 +313,7 @@ export default function ChatPage() {
           if (userIds.size > 0) {
               const { data: profiles } = await supabase
                 .from('profiles')
-                .select('id, full_name, username, email, avatar_url, wallet_address')
+                .select('id, full_name, username, avatar_url')
                 .in('id', Array.from(userIds));
 
               // Fetch related deals
@@ -343,10 +339,17 @@ export default function ChatPage() {
                         (d.seller_id === p.id && d.buyer_id === user.id)
                       );
                       
+                      const offersData = (userDeal?.offers ?? null) as
+                        | { price: number }
+                        | Array<{ price: number }>
+                        | null;
+                      const dealPrice = Array.isArray(offersData)
+                        ? (offersData[0]?.price ?? 0)
+                        : (offersData?.price ?? 0);
+
                       return {
                           userId: p.id,
-                          walletAddress: p.wallet_address,
-                          name: p.full_name || p.username || p.email || 'Utente',
+                          name: p.full_name || p.username || 'Utente',
                           avatarUrl: p.avatar_url,
                           lastMessage: stats?.lastMessage || '',
                           lastMessageType: stats?.lastMessageType || 'text',
@@ -355,7 +358,7 @@ export default function ChatPage() {
                           deal: userDeal ? {
                             id: userDeal.id,
                             status: userDeal.status,
-                            price: (userDeal.offers as any)?.price || 0,
+                            price: dealPrice,
                             currency: 'USDC'
                           } : undefined
                       };
@@ -443,7 +446,7 @@ export default function ChatPage() {
   const renderChatItem = (chat: typeof recentChats[0]) => (
     <div 
        key={chat.userId}
-       onClick={() => router.push(`/inbox/${chat.walletAddress || chat.userId}`)}
+      onClick={() => router.push(`/inbox/${chat.userId}`)} 
        className={cn(
            "p-3 rounded-xl cursor-pointer transition-all flex items-center gap-3 border border-transparent group",
            targetUserId === chat.userId 
@@ -538,7 +541,7 @@ export default function ChatPage() {
                                     <div className="relative">
                                         <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
                                         <Input 
-                                            placeholder="Cerca username o wallet address..." 
+                                            placeholder="Cerca username..." 
                                             className="pl-9 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-500 focus-visible:ring-offset-0 focus-visible:ring-white/20"
                                             value={searchUserQuery}
                                             onChange={(e) => handleSearchUsers(e.target.value)}
@@ -552,13 +555,13 @@ export default function ChatPage() {
                                                 <button 
                                                     key={u.id}
                                                     onClick={() => {
-                                                        router.push(`/inbox/${u.wallet_address || u.id}`);
+                        router.push(`/inbox/${u.id}`);
                                                         setIsNewChatOpen(false);
                                                     }}
                                                     className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg transition-colors text-left"
                                                 >
                                                     <Avatar className="h-10 w-10 border border-white/10">
-                                                        <AvatarImage src={u.avatar_url} />
+                                                        <AvatarImage src={u.avatar_url || undefined} />
                                                         <AvatarFallback>{(u.full_name || u.username || '?').substring(0, 2).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1 overflow-hidden">
@@ -670,7 +673,7 @@ export default function ChatPage() {
 
 import { Squircle } from "@/components/ui/Squircle";
 
-function ChatContainer({ roomId, currentUser, targetUserId }: { roomId: string, currentUser: any, targetUserId: string }) {
+function ChatContainer({ roomId, currentUser, targetUserId }: { roomId: string, currentUser: CurrentUser, targetUserId: string }) {
     const { data: messages } = useMessagesQuery(roomId);
     const [targetProfile, setTargetProfile] = useState<{ id: string, name: string, image?: string, handle?: string } | null>(null);
     const supabase = useMemo(() => createClient(), []);
@@ -695,26 +698,6 @@ function ChatContainer({ roomId, currentUser, targetUserId }: { roomId: string, 
         loadProfile();
     }, [targetUserId, supabase]);
     
-    const handleMessage = useCallback((msgs: ChatMessage[], updatedMessage?: ChatMessage | ChatMessage[]) => {
-        // Only store if we are the sender
-        // If updatedMessage is an array, we check the first one (assuming batch is from same user)
-        // If updatedMessage is single, check it.
-        // If updatedMessage is undefined, check msgs last item.
-        
-        let messageToCheck: ChatMessage | undefined;
-        if (Array.isArray(updatedMessage)) {
-            messageToCheck = updatedMessage[0];
-        } else if (updatedMessage) {
-            messageToCheck = updatedMessage;
-        } else if (msgs.length > 0) {
-            messageToCheck = msgs[msgs.length - 1];
-        }
-
-        if (messageToCheck && messageToCheck.user.id === currentUser.id) {
-            storeMessages(msgs, roomId, updatedMessage);
-        }
-    }, [roomId, currentUser.id]);
-
     const username = currentUser.user_metadata?.username || currentUser.user_metadata?.full_name || currentUser.email || currentUser.id;
     // Check if user is verified (admin or seller verified)
     const isVerified = currentUser.user_metadata?.is_admin === true || currentUser.user_metadata?.seller_status === 'verified';
@@ -738,7 +721,6 @@ function ChatContainer({ roomId, currentUser, targetUserId }: { roomId: string, 
                 isVerified={isVerified}
                 role={role}
                 messages={messages} 
-                onMessage={handleMessage} 
                 targetUser={targetProfile || undefined}
             />
         </Squircle>

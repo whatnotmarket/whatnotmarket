@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { evaluateFundingSubmission } from "@/lib/security/payment-guards";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type Payload = {
   paymentId?: string;
@@ -11,6 +14,11 @@ function isLikelyTxHash(value: string) {
 }
 
 export async function POST(request: Request) {
+  const preAuthLimit = checkRateLimitDetailed(request, { action: "listing_payment_fund" });
+  if (!preAuthLimit.allowed) {
+    return RateLimitResponse(preAuthLimit);
+  }
+
   const body = (await request.json().catch(() => ({}))) as Payload;
   const paymentId = String(body.paymentId ?? "").trim();
   const txHashIn = String(body.txHashIn ?? "").trim();
@@ -32,6 +40,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userLimit = checkRateLimitDetailed(request, {
+    action: "listing_payment_fund",
+    identifier: user.id,
+  });
+  if (!userLimit.allowed) {
+    return RateLimitResponse(userLimit);
+  }
+
+  const userAbuse = await enforceAbuseGuard({
+    request,
+    action: "listing_payment_fund",
+    endpointGroup: "payment",
+    userId: user.id,
+  });
+  if (!userAbuse.allowed) {
+    return AbuseGuardResponse(userAbuse);
+  }
+
   const { data: payment } = await supabase
     .from("listing_payments")
     .select("*")
@@ -43,29 +69,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
   }
 
-  if (payment.status !== "pending") {
-    if (
-      payment.status === "funded_to_escrow" ||
-      payment.status === "awaiting_release" ||
-      payment.status === "released"
-    ) {
-      return NextResponse.json({ payment, idempotent: true });
-    }
-    return NextResponse.json({ error: `Cannot fund payment in status ${payment.status}` }, { status: 409 });
+  const fundingGuard = evaluateFundingSubmission({
+    status: payment.status,
+    existingTxHash: payment.tx_hash_in,
+    incomingTxHash: txHashIn,
+  });
+
+  if (!fundingGuard.allowed) {
+    return NextResponse.json({ error: fundingGuard.reason }, { status: 409 });
   }
 
-  const { data: funded, error: fundedError } = await supabase
+  if (fundingGuard.idempotent) {
+    return NextResponse.json({
+      payment,
+      idempotent: true,
+      requiresReview: true,
+    });
+  }
+
+  const { data: updatedPayment, error: updateError } = await supabase
     .from("listing_payments")
     .update({
-      status: "funded_to_escrow",
       tx_hash_in: txHashIn,
     })
     .eq("id", payment.id)
-    .eq("status", "pending")
+    .is("tx_hash_in", null)
     .select("*")
     .maybeSingle();
 
-  if (fundedError || !funded) {
+  if (updateError || !updatedPayment) {
     const { data: raceState } = await supabase
       .from("listing_payments")
       .select("*")
@@ -73,41 +105,27 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (raceState) {
-      return NextResponse.json({ payment: raceState, idempotent: true });
+      return NextResponse.json({
+        payment: raceState,
+        idempotent: true,
+        requiresReview: true,
+      });
     }
 
-    return NextResponse.json({ error: "Unable to move payment to funded_to_escrow" }, { status: 500 });
+    return NextResponse.json({ error: "Unable to persist funding proof" }, { status: 500 });
   }
 
-  await supabase.from("escrow_actions").insert([
-    {
-      payment_id: funded.id,
-      action_type: "funded_to_escrow",
-      performed_by_user_id: user.id,
-      tx_hash: txHashIn,
-      notes: "Payer submitted wallet transaction to escrow.",
-    },
-    {
-      payment_id: funded.id,
-      action_type: "awaiting_release",
-      performed_by_user_id: user.id,
-      notes: "Escrow funding detected. Waiting for admin release.",
-    },
-  ]);
-
-  const { data: awaitingRelease } = await supabase
-    .from("listing_payments")
-    .update({
-      status: "awaiting_release",
-    })
-    .eq("id", funded.id)
-    .eq("status", "funded_to_escrow")
-    .select("*")
-    .maybeSingle();
+  await supabase.from("escrow_actions").insert({
+    payment_id: updatedPayment.id,
+    action_type: "funding_submitted",
+    performed_by_user_id: user.id,
+    tx_hash: txHashIn,
+    notes: "Funding proof submitted by payer. Waiting for server-side/admin verification.",
+  });
 
   return NextResponse.json({
-    payment: awaitingRelease ?? funded,
+    payment: updatedPayment,
     idempotent: false,
+    requiresReview: true,
   });
 }
-

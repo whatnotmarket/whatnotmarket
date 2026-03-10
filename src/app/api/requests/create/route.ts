@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type CreateRequestPayload = {
   title?: string;
@@ -14,6 +16,11 @@ type CreateRequestPayload = {
 
 export async function POST(req: Request) {
   try {
+    const preAuthLimit = checkRateLimitDetailed(req, { action: "request_create" });
+    if (!preAuthLimit.allowed) {
+      return RateLimitResponse(preAuthLimit);
+    }
+
     const payload = (await req.json()) as CreateRequestPayload;
 
     const title = typeof payload.title === "string" ? payload.title.trim() : "";
@@ -59,6 +66,24 @@ export async function POST(req: Request) {
 
     if (userError || !user) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userLimit = checkRateLimitDetailed(req, {
+      action: "request_create",
+      identifier: user.id,
+    });
+    if (!userLimit.allowed) {
+      return RateLimitResponse(userLimit);
+    }
+
+    const userAbuse = await enforceAbuseGuard({
+      request: req,
+      action: "request_create",
+      endpointGroup: "marketplace",
+      userId: user.id,
+    });
+    if (!userAbuse.allowed) {
+      return AbuseGuardResponse(userAbuse);
     }
 
     const { data, error } = await supabase

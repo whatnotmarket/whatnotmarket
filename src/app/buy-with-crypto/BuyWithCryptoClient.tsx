@@ -14,15 +14,24 @@ import Link from "next/link";
 import { CopyMap } from "@/lib/copy-system";
 
 type Step = "input" | "details" | "payment" | "confirmed";
+type ProxyOrderDetails = {
+  price: number;
+  quantity: number;
+  paymentMethod?: string;
+  currency?: string;
+  network?: string;
+  [key: string]: unknown;
+};
 
 export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
   const [step, setStep] = useState<Step>("input");
   const [url, setUrl] = useState("");
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending");
+  const [orderDetails, setOrderDetails] = useState<ProxyOrderDetails | null>(null);
   const [orderId, setOrderId] = useState("");
   const [trackingId, setTrackingId] = useState("");
+  const [trackingAccessToken, setTrackingAccessToken] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   const input = copy['input'] || {};
   const details = copy['details'] || {};
@@ -35,38 +44,49 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
     setStep("details");
   };
 
-  const handleDetailsSubmit = (details: any) => {
+  const handleDetailsSubmit = async (details: ProxyOrderDetails) => {
+    if (isCreatingOrder) return;
+    setIsCreatingOrder(true);
     setOrderDetails(details);
-    setStep("payment");
-  };
-
-  const handlePaymentSuccess = async () => {
-    setPaymentStatus("success");
-    
     try {
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productUrl: url,
-          ...orderDetails,
-          totalPaid: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5
-        })
+          ...details,
+        }),
       });
-      
-      const data = await res.json();
-      if (data.ok) {
-        setOrderId(data.orderId);
-        setTrackingId(data.trackingId);
-        setStep("confirmed");
+      const data = (await res.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            orderId?: string;
+            trackingId?: string;
+            trackingAccessToken?: string;
+            error?: string;
+          }
+        | null;
+      if (!res.ok || !data?.ok || !data.orderId || !data.trackingId || !data.trackingAccessToken) {
+        throw new Error(data?.error || "Unable to create order");
       }
+      setOrderId(data.orderId);
+      setTrackingId(data.trackingId);
+      setTrackingAccessToken(data.trackingAccessToken);
+      setStep("payment");
     } catch (e) {
       console.error("Failed to create order", e);
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
+  const handlePaymentSuccess = async () => {
+    setStep("confirmed");
+  };
+
   const copyTrackingLink = () => {
-    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}`);
+    const accessQuery = trackingAccessToken ? `?access=${encodeURIComponent(trackingAccessToken)}` : "";
+    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}${accessQuery}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -128,7 +148,7 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
             </motion.div>
           )}
 
-          {step === "payment" && orderDetails && (
+          {step === "payment" && orderDetails && orderId && (
             <motion.div
               key="payment"
               initial={{ opacity: 0, x: 20 }}
@@ -139,6 +159,8 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
               <h1 className="text-3xl font-bold text-center mb-8">{payment.title || "Pagamento Sicuro"}</h1>
               <div className="grid md:grid-cols-[1fr_350px] gap-8">
                 <CryptoPaymentGateway 
+                  orderId={orderId}
+                  orderAccessToken={trackingAccessToken}
                   amount={orderDetails.price * orderDetails.quantity * 1.1 + 20} // Mock calc
                   currency={orderDetails.paymentMethod || "USDT"}
                   onSuccess={handlePaymentSuccess} 
@@ -186,7 +208,11 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
 
                 <div className="space-y-3">
                   <Button asChild className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
-                    <Link href={`/track/${trackingId}`}>{actions.track_order || "Traccia Ordine"}</Link>
+                    <Link
+                      href={`/track/${encodeURIComponent(trackingId)}?access=${encodeURIComponent(trackingAccessToken)}`}
+                    >
+                      {actions.track_order || "Traccia Ordine"}
+                    </Link>
                   </Button>
                   <Button asChild variant="ghost" className="w-full text-zinc-400 hover:text-white">
                     <Link href="/market">{actions.back_home || "Torna alla Home"}</Link>

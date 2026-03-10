@@ -2,7 +2,9 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createWalletChallengeMessage } from "@/lib/auth/external-wallet";
-import { resolveInviteCode } from "@/lib/invite-codes";
+import { resolveRequiredInviteCode } from "@/lib/invite-codes";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 
 type Payload = {
   address?: string;
@@ -46,6 +48,20 @@ function normalizeNext(raw: string | undefined) {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimitDetailed(request, { action: "auth_wallet_challenge" });
+  if (!rateLimit.allowed) {
+    return RateLimitResponse(rateLimit);
+  }
+
+  const abuseGuard = await enforceAbuseGuard({
+    request,
+    action: "auth_wallet_challenge",
+    endpointGroup: "auth",
+  });
+  if (!abuseGuard.allowed) {
+    return AbuseGuardResponse(abuseGuard);
+  }
+
   const body = (await request.json().catch(() => ({}))) as Payload;
   const address = String(body.address ?? "")
     .trim()
@@ -62,16 +78,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Chain is required" }, { status: 400 });
   }
 
+  const addressRateLimit = checkRateLimitDetailed(request, {
+    action: "auth_wallet_challenge",
+    identifier: `${chain}:${address}`,
+  });
+  if (!addressRateLimit.allowed) {
+    return RateLimitResponse(addressRateLimit);
+  }
+
   const mode = body.mode === "signup" ? "signup" : "signin";
   const inviteCode = body.inviteCode?.trim().toUpperCase() || null;
   const nextPath = normalizeNext(body.next);
   const provider = normalizeProvider(body.provider);
   const displayName = normalizeDisplayName(body.displayName);
 
-  let inviteResolution: Awaited<ReturnType<typeof resolveInviteCode>> | null = null;
+  let inviteResolution: Awaited<ReturnType<typeof resolveRequiredInviteCode>> | null = null;
 
   if (mode === "signup") {
-    inviteResolution = await resolveInviteCode(inviteCode);
+    inviteResolution = await resolveRequiredInviteCode(inviteCode, {
+      allowedTypes: ["buyer", "seller"],
+    });
     if (!inviteResolution.isValid) {
       return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
     }

@@ -34,6 +34,7 @@ import {
 } from "lucide-react"
 import { Deal, DealStatus, Wallet } from "@/types/trade"
 import { cn } from "@/lib/utils"
+import { normalizeDealAction, type DealTransitionAction } from "@/lib/security/deal-guards"
 
 interface TradePanelProps {
   userId: string
@@ -58,6 +59,24 @@ const FIAT_METHODS = [
   { id: 'bank_transfer', name: 'Bank Transfer', icon: '🏦' },
 ]
 
+type OfferFormProps = {
+  isCounter?: boolean
+  isBuying: boolean
+  setIsBuying: (value: boolean) => void
+  offerPrice: string
+  setOfferPrice: (value: string) => void
+  offerToken: string
+  setOfferToken: (value: string) => void
+  paymentType: "crypto" | "fiat"
+  setPaymentType: (value: "crypto" | "fiat") => void
+  fiatMethod: string
+  setFiatMethod: (value: string) => void
+  handleCounterOffer: () => Promise<void>
+  handleMakeOffer: () => Promise<void>
+  disableRoleToggle: boolean
+  loading?: boolean
+}
+
 function OfferForm({ 
   isCounter = false, 
   isBuying, 
@@ -72,10 +91,9 @@ function OfferForm({
   setFiatMethod, 
   handleCounterOffer, 
   handleMakeOffer, 
-  isTestBuyer, 
-  isWhatnotMarket,
+  disableRoleToggle,
   loading
-}: any) {
+}: OfferFormProps) {
     
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value
@@ -89,7 +107,7 @@ function OfferForm({
     <div className="space-y-4">
       <h4 className="font-medium leading-none">{isCounter ? 'Counter Offer' : 'Create Offer'}</h4>
       <div className="grid gap-4">
-        {!isCounter && !isTestBuyer && !isWhatnotMarket && (
+        {!isCounter && !disableRoleToggle && (
             <div className="flex items-center gap-2">
             <Button 
                 variant={isBuying ? "default" : "outline"} 
@@ -198,6 +216,12 @@ function OfferForm({
 }
 
 export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, onStatusChange }: TradePanelProps) {
+  type TradePanelProfile = {
+    is_admin: boolean | null
+    role_preference: "buyer" | "seller" | "both" | null
+    seller_status: string | null
+  }
+
   const [deal, setDeal] = useState<Deal | null>(null)
   const [loading, setLoading] = useState(true)
   const [showOfferModal, setShowOfferModal] = useState(false)
@@ -218,32 +242,36 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
     isCreatingNewRef.current = isCreatingNew
   }, [isCreatingNew])
   
-  const [targetUsername, setTargetUsername] = useState<string>("")
-  const [currentUsername, setCurrentUsername] = useState<string>("")
+  const [currentProfile, setCurrentProfile] = useState<TradePanelProfile | null>(null)
 
   const supabase = createClient()
 
   useEffect(() => {
-    // Resolve specific usernames for hardcoded roles
-    async function resolveUsernames() {
-        const { data: currentUser } = await supabase.from('profiles').select('username').eq('id', userId).single()
-        const { data: targetUser } = await supabase.from('profiles').select('username').eq('id', targetUserId).single()
-        
-        if (currentUser) setCurrentUsername(currentUser.username || "")
-        if (targetUser) setTargetUsername(targetUser.username || "")
-    }
-    resolveUsernames()
-  }, [userId, targetUserId])
+    async function resolveProfile() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("is_admin,role_preference,seller_status")
+        .eq("id", userId)
+        .maybeSingle<TradePanelProfile>()
 
-  // Determine fixed roles
-  const isTestBuyer = currentUsername === 'testbuyer' || currentUsername === 'buyer'
-  const isWhatnotMarket = currentUsername === 'whatnotmarket' || currentUsername === 'admin'
+      if (data) {
+        setCurrentProfile(data)
+      }
+    }
+    resolveProfile()
+  }, [supabase, userId])
+
+  const isCurrentUserAdmin = currentProfile?.is_admin === true
+  const shouldForceBuyerMode = currentProfile?.role_preference === "buyer"
+  const shouldForceSellerMode =
+    !isCurrentUserAdmin &&
+    (currentProfile?.role_preference === "seller" || currentProfile?.seller_status === "verified")
   
-  // Force buying mode based on username if applicable
+  // Canonical role bootstrap: derive defaults from server-authoritative profile fields.
   useEffect(() => {
-      if (isTestBuyer) setIsBuying(true)
-      if (isWhatnotMarket) setIsBuying(false)
-  }, [isTestBuyer, isWhatnotMarket])
+      if (isCurrentUserAdmin || shouldForceSellerMode) setIsBuying(false)
+      if (shouldForceBuyerMode) setIsBuying(true)
+  }, [isCurrentUserAdmin, shouldForceBuyerMode, shouldForceSellerMode])
 
   // Listen to system messages as a backup for realtime
   useEffect(() => {
@@ -394,6 +422,76 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
     setShowOfferModal(true)
   }
 
+  async function createDealOffer() {
+    const price = parseFloat(offerPrice)
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error("Invalid offer price")
+      return null
+    }
+
+    const response = await fetch("/api/deals/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        counterpartyUserId: targetUserId,
+        isBuying,
+        price,
+        offerToken,
+        paymentType,
+        fiatMethod,
+      }),
+    })
+
+    const payload = (await response.json().catch(() => null)) as
+      | { deal?: Deal; error?: string }
+      | null
+
+    if (!response.ok || !payload?.deal) {
+      toast.error(payload?.error || "Failed to create offer")
+      return null
+    }
+
+    return payload.deal
+  }
+
+  async function transitionDeal(
+    action: DealTransitionAction,
+    options?: {
+      price?: number
+      offerToken?: string
+      paymentType?: "crypto" | "fiat"
+      fiatMethod?: string
+      resolution?: "completed" | "cancelled"
+    }
+  ) {
+    if (!deal) return null
+
+    const response = await fetch("/api/deals/transition", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        dealId: deal.id,
+        action,
+        ...options,
+      }),
+    })
+
+    const payload = (await response.json().catch(() => null)) as
+      | { deal?: Deal; error?: string }
+      | null
+
+    if (!response.ok || !payload?.deal) {
+      toast.error(payload?.error || "Failed to update deal")
+      return null
+    }
+
+    return payload.deal
+  }
+
   async function handleMakeOffer() {
     if (!offerPrice) return
     
@@ -401,47 +499,21 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
 
     // Clear any previous deal state just in case
     setDeal(null)
-    
-    const price = parseFloat(offerPrice)
+
     const qty = 1
-    const fee = price * 0.01 // Mock fee 1%
+    const createdDeal = await createDealOffer()
 
-    const payload = {
-      buyer_id: isBuying ? userId : targetUserId,
-      seller_id: isBuying ? targetUserId : userId,
-      status: (isBuying ? 'buyer_offer_sent' : 'offer_sent') as DealStatus, // Initial state
-      price,
-      // quantity: qty, // Removed quantity from payload
-      token_symbol: paymentType === 'fiat' ? 'USD' : offerToken,
-      // TODO: Uncomment after migration applied
-      // payment_type: paymentType,
-      // fiat_method: paymentType === 'fiat' ? fiatMethod : null,
-      fee,
-      deal_type: 'direct',
-      sender_id: userId,
-      last_action_by: userId,
-      created_at: new Date().toISOString()
-    }
-
-    const { data, error } = await supabase
-      .from("deals")
-      .insert(payload)
-      .select()
-      .single()
-
-    if (error) {
-      toast.error("Failed to create offer")
-      console.error(error)
+    if (!createdDeal) {
       setIsSubmitting(false)
       return
     }
 
-    setDeal(data as Deal)
-    onStatusChange?.(data.status)
+    setDeal(createdDeal)
+    onStatusChange?.(createdDeal.status)
     setShowOfferModal(false)
     setIsCreatingNew(false)
     setIsSubmitting(false)
-    onSystemMessage(`Offer sent: ${qty}x for ${price} ${offerToken}`)
+    onSystemMessage(`Offer sent: ${qty}x for ${offerPrice} ${offerToken}`)
   }
 
   async function handleCounterOffer() {
@@ -450,52 +522,28 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
     setIsSubmitting(true)
 
     const price = parseFloat(offerPrice)
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error("Invalid counter offer price")
+      setIsSubmitting(false)
+      return
+    }
+
     const qty = 1
     
-    // Determine new status based on who is countering
-    // If I am the Buyer, and I counter -> BUYER_COUNTER_OFFER
-    // If I am the Seller, and I counter -> SELLER_COUNTER_OFFER
-    
-    // Check if I am buyer or seller in the deal
-    const iAmBuyer = deal.buyer_id === userId
-    const newStatus: DealStatus = iAmBuyer ? 'buyer_counter_offer' : 'seller_counter_offer'
-    
-    const { error } = await supabase
-        .from("deals")
-        .update({
-            status: newStatus,
-            price: price,
-            // quantity: qty, // Removed quantity
-            token_symbol: paymentType === 'fiat' ? 'USD' : offerToken,
-            // TODO: Uncomment after migration applied
-            // payment_type: paymentType,
-            // fiat_method: paymentType === 'fiat' ? fiatMethod : null,
-            sender_id: userId, // I am now the sender of the current offer
-            last_action_by: userId
-        })
-        .eq("id", deal.id)
-        
-    if (error) {
-        console.error("Counter offer failed:", error)
-        toast.error("Failed to send counter offer")
-        setIsSubmitting(false)
-        return
+    const updatedDeal = await transitionDeal("counter", {
+      price,
+      offerToken,
+      paymentType,
+      fiatMethod,
+    })
+
+    if (!updatedDeal) {
+      setIsSubmitting(false)
+      return
     }
-    
-    // Optimistic update
-    const updatedDeal = {
-        ...deal,
-        status: newStatus,
-        price,
-        // quantity: qty, // Removed quantity
-        token_symbol: paymentType === 'fiat' ? 'USD' : offerToken,
-        // payment_type: paymentType,
-        // fiat_method: paymentType === 'fiat' ? fiatMethod : undefined,
-        sender_id: userId,
-        last_action_by: userId
-    }
+
     setDeal(updatedDeal)
-    onStatusChange?.(newStatus)
+    onStatusChange?.(updatedDeal.status)
     
     setShowOfferModal(false)
     setIsCountering(false)
@@ -507,31 +555,32 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
     if (!deal) return
 
     console.log(`Updating status to ${newStatus} for deal ${deal.id}`)
-
-    const { error } = await supabase
-      .from("deals")
-      .update({ 
-          status: newStatus,
-          last_action_by: userId
-      })
-      .eq("id", deal.id)
-
-    if (error) {
-      console.error("Update status failed:", error)
-      toast.error("Failed to update status")
+    const action = normalizeDealAction(newStatus)
+    if (!action) {
+      toast.error("Unsupported deal action")
       return
     }
 
+    const updatedDeal = await transitionDeal(action)
+    if (!updatedDeal) return
+
     console.log("Status updated successfully")
-    setDeal({ ...deal, status: newStatus, last_action_by: userId })
-    onStatusChange?.(newStatus)
+    setDeal(updatedDeal)
+    onStatusChange?.(updatedDeal.status)
     onSystemMessage(message)
   }
 
   async function handleResolveDispute() {
     if (!disputeReason.trim()) return
-    
-    await updateStatus('completed', `Dispute resolved by admin: ${disputeReason}`)
+
+    const updatedDeal = await transitionDeal("resolve_dispute", {
+      resolution: "completed",
+    })
+    if (!updatedDeal) return
+
+    setDeal(updatedDeal)
+    onStatusChange?.(updatedDeal.status)
+    onSystemMessage(`Dispute resolved by admin: ${disputeReason}`)
     setShowDisputeModal(false)
     setDisputeReason("")
   }
@@ -655,8 +704,7 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
                         setFiatMethod={setFiatMethod}
                         handleCounterOffer={handleCounterOffer}
                         handleMakeOffer={handleMakeOffer}
-                        isTestBuyer={isTestBuyer}
-                        isWhatnotMarket={isWhatnotMarket}
+                        disableRoleToggle={isCurrentUserAdmin}
                       />
                     </PopoverContent>
                   </Popover>
@@ -769,8 +817,7 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
                  setFiatMethod={setFiatMethod}
                  handleCounterOffer={handleCounterOffer}
                  handleMakeOffer={handleMakeOffer}
-                 isTestBuyer={isTestBuyer}
-                 isWhatnotMarket={isWhatnotMarket}
+                 disableRoleToggle={isCurrentUserAdmin}
                />
              </PopoverContent>
            </Popover>
@@ -815,8 +862,7 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
                                     setFiatMethod={setFiatMethod}
                                     handleCounterOffer={handleCounterOffer}
                                     handleMakeOffer={handleMakeOffer}
-                                    isTestBuyer={isTestBuyer}
-                                    isWhatnotMarket={isWhatnotMarket}
+                                    disableRoleToggle={isCurrentUserAdmin}
                                 />
                             </PopoverContent>
                         </Popover>
@@ -874,13 +920,13 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
           </>
         )}
         
-        {deal?.status === 'completed' && (isBuying || isTestBuyer) && !isWhatnotMarket && (
+        {deal?.status === 'completed' && !isCurrentUserAdmin && (
             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleNewOfferClick}>
                 New Offer
             </Button>
         )}
 
-        {deal?.status === 'cancelled' && (isBuying || isTestBuyer) && !isWhatnotMarket && (
+        {deal?.status === 'cancelled' && !isCurrentUserAdmin && (
             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleNewOfferClick}>
                 New Offer
             </Button>
@@ -891,7 +937,7 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
              <div className="text-xs text-red-400 flex items-center bg-red-950/30 px-3 py-1 rounded border border-red-900/50">
                <AlertTriangle className="w-3 h-3 mr-2" /> Dispute in progress
              </div>
-             {isWhatnotMarket && (
+             {isCurrentUserAdmin && (
                <Popover open={showDisputeModal} onOpenChange={setShowDisputeModal}>
                  <PopoverTrigger asChild>
                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white h-7 text-xs">
@@ -906,7 +952,7 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
            </div>
         )}
         
-        {deal?.status === 'offer_rejected' && (isBuying || isTestBuyer) && !isWhatnotMarket && (
+        {deal?.status === 'offer_rejected' && !isCurrentUserAdmin && (
             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleNewOfferClick}>
                 New Offer
             </Button>

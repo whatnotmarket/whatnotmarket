@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
-import { saveOrder, ProxyOrder, OrderStatus } from "@/lib/orders-db";
+import { saveOrder, ProxyOrder } from "@/lib/orders-db";
 import { calculateOrderCost } from "@/lib/pricing";
-import { checkRateLimit, RateLimitResponse } from "@/lib/rate-limit";
+import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
+import {
+  buildTrackingPath,
+  generateOrderId,
+  generateTrackingAccessToken,
+  generateTrackingId,
+} from "@/lib/security/order-tracking-guards";
 import { z } from "zod";
 
 const orderSchema = z.object({
@@ -17,8 +24,18 @@ const orderSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  if (!checkRateLimit(req, 10)) { 
-    return RateLimitResponse();
+  const rateLimit = checkRateLimitDetailed(req, { action: "order_create" });
+  if (!rateLimit.allowed) {
+    return RateLimitResponse(rateLimit);
+  }
+
+  const abuseGuard = await enforceAbuseGuard({
+    request: req,
+    action: "order_create",
+    endpointGroup: "payment",
+  });
+  if (!abuseGuard.allowed) {
+    return AbuseGuardResponse(abuseGuard);
   }
 
   try {
@@ -48,17 +65,16 @@ export async function POST(req: Request) {
     // Use consistent pricing logic
     const { total } = calculateOrderCost(price, quantity);
 
-    const orderId = Math.random().toString(36).substring(7).toUpperCase();
-    
-    // Generate tracking ID using telegram username (sanitized) + random code
-    // Example: @john_doe -> john_doe-AB12CD
+    const orderId = generateOrderId();
+
     const cleanUsername = telegramUsername ? telegramUsername.replace(/[^a-zA-Z0-9_]/g, "").trim() : "GUEST";
-    const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const trackingId = `${cleanUsername}-${randomCode}`;
+    const trackingId = generateTrackingId();
+    const trackingAccessToken = generateTrackingAccessToken();
 
     const newOrder: ProxyOrder = {
       id: orderId,
       trackingId,
+      trackingAccessToken,
       productUrl, // Already validated as URL
       price,
       quantity,
@@ -85,10 +101,12 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       trackingId,
+      trackingAccessToken,
+      trackingPath: buildTrackingPath(trackingId, trackingAccessToken),
       orderId
     });
 
-  } catch (error) {
+  } catch {
     console.error("Failed to create order"); // Removed error details from log to prevent leak
     return NextResponse.json(
       { ok: false, error: "Failed to create order" },

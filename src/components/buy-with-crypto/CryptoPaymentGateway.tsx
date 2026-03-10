@@ -2,17 +2,26 @@
 
 import { useState } from "react";
 import { Squircle } from "@/components/ui/Squircle";
-import { Copy, Check, QrCode, RefreshCcw, Loader2 } from "lucide-react";
+import { Copy, Check, QrCode, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CryptoPaymentGatewayProps {
+  orderId: string;
+  orderAccessToken?: string;
   amount: number;
   currency: string;
   network?: string;
   onSuccess: () => void;
 }
 
-export function CryptoPaymentGateway({ amount, currency, network, onSuccess }: CryptoPaymentGatewayProps) {
+export function CryptoPaymentGateway({
+  orderId,
+  orderAccessToken,
+  amount,
+  currency,
+  network,
+  onSuccess,
+}: CryptoPaymentGatewayProps) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<"awaiting" | "verifying" | "confirmed" | "error">("awaiting");
   
@@ -45,11 +54,10 @@ export function CryptoPaymentGateway({ amount, currency, network, onSuccess }: C
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderId: "mock-order-id", // In real app, pass order ID
+          orderId,
+          accessToken: orderAccessToken,
           currency,
           network,
-          expectedAmount: amount,
-          expectedAddress: address,
           txHash
         }),
       });
@@ -65,7 +73,7 @@ export function CryptoPaymentGateway({ amount, currency, network, onSuccess }: C
         setStatus("error");
         setErrorMsg(data.message || "Transaction verification failed");
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setErrorMsg("Failed to connect to verification server");
     }
@@ -73,16 +81,7 @@ export function CryptoPaymentGateway({ amount, currency, network, onSuccess }: C
 
   const simulatePayment = () => {
     setTxHash("0x123fakehash789mocktxid456");
-    setTimeout(() => {
-      handleVerify(); // This will fail with our mock logic unless we update it or allow this hash
-      // But since handleVerify is async and uses the state, we might need to wait or pass it directly.
-      // Actually, since setState is async, let's just force the success flow for dev button:
-      setStatus("verifying");
-      setTimeout(() => {
-        setStatus("confirmed");
-        setTimeout(onSuccess, 1000);
-      }, 1500);
-    }, 500);
+    void handleVerify();
   };
 
   return (
@@ -205,16 +204,17 @@ export function CryptoPaymentGateway({ amount, currency, network, onSuccess }: C
           </div>
         </div>
 
-        {/* Development Helper */}
-        <div className="pt-4">
-          <Button 
-            variant="outline" 
-            className="w-full text-xs text-zinc-500 hover:text-white border-dashed border-zinc-700"
-            onClick={simulatePayment}
-          >
-            [Dev] Simulate Payment
-          </Button>
-        </div>
+        {process.env.NODE_ENV === "development" && (
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              className="w-full text-xs text-zinc-500 hover:text-white border-dashed border-zinc-700"
+              onClick={simulatePayment}
+            >
+              [Dev] Simulate Payment
+            </Button>
+          </div>
+        )}
       </Squircle>
     </div>
   );

@@ -145,6 +145,14 @@ export function OnboardingClient({ copy }: { copy: CopyMap }) {
   const handleOpenTelegramBot = async () => {
     try {
       const result = await generateMockTelegramCode();
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      if (!result.code) {
+        toast.error("Unable to generate a verification code.");
+        return;
+      }
       setGeneratedCode(result.code);
       setMockBotOpen(true);
       toast.info("Telegram Bot: Your verification code is " + result.code);
