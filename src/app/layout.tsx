@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
 import { FaviconAttention } from "@/components/FaviconAttention";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -87,6 +88,18 @@ export default function RootLayout({
         className={`${inter.variable} ${inter.className} notranslate antialiased bg-black text-white min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || "G-2JRJJL8JZS"}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || "G-2JRJJL8JZS"}');
+          `}
+        </Script>
         <PostHogProvider>
           <Providers>
             <div className="flex-1 bg-black">

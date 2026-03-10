@@ -46,7 +46,7 @@ A buyer/seller marketplace web app built with Next.js, Tailwind CSS, and Supabas
    - Copy your project URL, anon key, and service-role key.
 
 3. **Environment Variables**:
-   - Copy `.env.local.example` to `.env.local`.
+   - Copy `.env.example` to `.env.local`.
    - Fill in the required values (Supabase + admin + wallet vars).
 
 4. **Run the development server**:
@@ -79,3 +79,25 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Security Checklist (Supabase + GitHub)
+
+- Do not expose secrets in the frontend
+  - Frontend uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` only
+  - Backend uses `SUPABASE_SERVICE_ROLE_KEY` (server-only)
+- Do not commit `.env` files
+  - `.gitignore` includes `.env*`; use `.env.example` for documentation
+- Do not hardcode keys in source
+  - Always read from `process.env.*`
+- Enforce Row Level Security (RLS)
+  - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`
+  - Policies restrict read/write by `auth.uid()` when appropriate
+- Keep migrations versioned
+  - Use `supabase/migrations/*.sql` for schema changes
+- Keep operational scripts private
+  - Use `supabase/scripts/private/` (ignored by Git)
+  - No real data or secrets inside the repository
+- Avoid public endpoints without auth
+  - Check auth in server routes and edge functions
+- Rate limiting and spam protection
+  - Flood and slow-mode checks are implemented for chat; add rate-limits where needed
