@@ -139,6 +139,20 @@ export async function POST(req: Request) {
     );
   }
 
+  const { data: roomState } = await admin
+    .from("global_chat_room_state")
+    .select("slow_mode_seconds,closed_until")
+    .eq("room_slug", room)
+    .maybeSingle<{ slow_mode_seconds: number; closed_until: string | null }>();
+
+  const closedUntilTs = roomState?.closed_until ? new Date(roomState.closed_until).getTime() : 0;
+  if (closedUntilTs && closedUntilTs > Date.now()) {
+    return NextResponse.json(
+      { ok: false, code: "ROOM_CLOSED", message: "Chat is temporarily closed." },
+      { status: 403 }
+    );
+  }
+
   const [{ data: phraseRows }, { data: userControl }, { data: latestMessage }] = await Promise.all([
     admin.from("global_chat_blocked_phrases").select("phrase").eq("is_active", true),
     admin
@@ -200,6 +214,32 @@ export async function POST(req: Request) {
     }
   }
 
+  if (roomState && roomState.slow_mode_seconds && roomState.slow_mode_seconds > 0) {
+    const windowAgoIso = new Date(now - roomState.slow_mode_seconds * 1000).toISOString();
+    const { data: recent } = await admin
+      .from("global_chat_messages")
+      .select("created_at")
+      .eq("user_id", user.id)
+      .eq("room", room)
+      .gte("created_at", windowAgoIso)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ created_at: string }>();
+    if (recent?.created_at) {
+      const diffMs = now - new Date(recent.created_at).getTime();
+      const remainingMs = roomState.slow_mode_seconds * 1000 - diffMs;
+      const remainingSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+      const error: ModerationError = { ok: false, code: "SLOW_MODE", message: `Slow mode active. You can post again in ${remainingSeconds} seconds.` };
+      await logModerationRejection({
+        userId: user.id,
+        room,
+        message,
+        code: error.code,
+        reason: error.message,
+      });
+      return NextResponse.json(error, { status: statusCodeForError(error) });
+    }
+  }
   // Role-based posting rules:
   // - sell-services: only sellers can start threads; buyers can reply in threads.
   // - buy-services: only buyers can start threads; sellers can reply in threads.

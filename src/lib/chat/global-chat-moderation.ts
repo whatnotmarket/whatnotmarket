@@ -18,6 +18,7 @@ export type ModerationErrorCode =
   | "BAN_ACTIVE"
   | "SLOW_MODE"
   | "ROLE_NOT_ALLOWED"
+  | "ROOM_CLOSED"
   | "AUTH_REQUIRED";
 
 export type ModerationError = {

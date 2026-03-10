@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { timingSafeEqual, createHash } from "crypto";
 import { signToken } from "@/lib/auth";
 import { checkRateLimit, RateLimitResponse } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase-server";
 
 /**
  * Constant-time comparison using SHA-256 hashes.
@@ -28,26 +29,33 @@ export async function POST(req: Request) {
   try {
     const isProduction = process.env.NODE_ENV === "production";
     const cookieStore = await cookies();
-    // Removed founderGate check as it relied on client-side cookies which can be manipulated.
-    // The admin password is the primary defense.
-    
-    const { password } = await req.json();
-    
-    // Only use the environment variable password. Removed insecure fallback 'admin123'.
-    const adminPassword = process.env.ADMIN_PASSWORD;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!adminPassword) {
-      console.error("ADMIN_PASSWORD environment variable is not set.");
-      return NextResponse.json(
-        { ok: false, error: "Admin login is not configured" },
-        { status: 500 }
-      );
+    const { password } = await req.json();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle<{ username: string | null }>();
+    const username = String(profile?.username || "").trim().toLowerCase();
+    if (username !== "whatnotmarket") {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
     // Artificial delay to mitigate brute-force attacks
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    if (typeof password === "string" && safePasswordEquals(password, adminPassword)) {
+    const { data: isValid } = await supabase.rpc("verify_admin_password", {
+      p_password: typeof password === "string" ? password : "",
+    });
+
+    if (isValid === true) {
       // Create a signed JWT with reduced lifespan
       const token = await signToken({ role: "admin" });
 
@@ -58,12 +66,6 @@ export async function POST(req: Request) {
         sameSite: "strict",
         path: "/",
         maxAge: 60 * 60 // 1 hour (reduced from 24h)
-      });
-      
-      // Clear any legacy gate cookies
-      cookieStore.set("founder_admin_gate", "", {
-        path: "/",
-        maxAge: 0,
       });
 
       return NextResponse.json({ ok: true });

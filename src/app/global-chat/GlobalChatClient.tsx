@@ -11,6 +11,7 @@ import {
   LogIn,
   Reply,
   Send,
+  Hourglass,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -26,8 +27,8 @@ import EnglishFlag from "@/flag/english.png";
 import { Squircle } from "@/components/ui/Squircle";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
-const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
-const LEGACY_MESSAGE_SELECT = `id,user_id,room,message,created_at,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
+const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
+const LEGACY_MESSAGE_SELECT = `id,user_id,room,message,created_at,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
 
 type ProfileRef = {
   username: string | null;
@@ -310,12 +311,22 @@ export function GlobalChatClient() {
   const [isModerator, setIsModerator] = useState<boolean>(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [hasAcceptedRules, setHasAcceptedRules] = useState(false);
+  const [mutedUntilTs, setMutedUntilTs] = useState<number>(0);
+  const [isBanned, setIsBanned] = useState<boolean>(false);
+  const [roomSlowSeconds, setRoomSlowSeconds] = useState<number>(0);
+  const [slowRemainingSeconds, setSlowRemainingSeconds] = useState<number>(0);
+  const [closedUntilTs, setClosedUntilTs] = useState<number>(0);
+  const [closedRemainingSeconds, setClosedRemainingSeconds] = useState<number>(0);
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const roomMenuRef = useRef<HTMLDivElement>(null);
   const canWrite = useMemo(() => {
     if (!user) return false;
+    if (isBanned) return false;
+    if (mutedUntilTs && mutedUntilTs > Date.now()) return false;
+    if (slowRemainingSeconds > 0) return false;
+    if (closedUntilTs && closedUntilTs > Date.now()) return false;
     const { isSeller, isBuyer } = resolveRoles(currentProfile);
     const isThreadReply = Boolean(replyTarget);
     if (activeRoom === "sell-services") {
@@ -331,7 +342,7 @@ export function GlobalChatClient() {
       return slowModeMinutes <= 0;
     }
     return true;
-  }, [activeRoom, currentProfile, replyTarget, slowModeMinutes, user, isModerator]);
+  }, [activeRoom, currentProfile, replyTarget, slowModeMinutes, user, isModerator, isBanned, mutedUntilTs, slowRemainingSeconds, closedRemainingSeconds]);
 
   const activeRoomLabel =
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
@@ -365,6 +376,7 @@ export function GlobalChatClient() {
     setMentionContext(null);
     setActiveMentionIndex(0);
     setIsRoomMenuOpen(false);
+    setRoomSlowSeconds(0);
   }, []);
 
   const currentHandle = useMemo(() => {
@@ -534,6 +546,7 @@ export function GlobalChatClient() {
       .from("global_chat_messages")
       .select(MESSAGE_SELECT)
       .eq("room", activeRoom)
+      .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(200);
 
@@ -564,6 +577,7 @@ export function GlobalChatClient() {
           .select(MESSAGE_SELECT)
           .eq("room", activeRoom)
           .is("reply_to_id", null)
+          .eq("is_deleted", false)
           .order("created_at", { ascending: false })
           .limit(200);
 
@@ -628,6 +642,26 @@ export function GlobalChatClient() {
             }
             return merged;
           });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "global_chat_messages",
+          filter: `room=eq.${activeRoom}`,
+        },
+        async (payload) => {
+          const updated = payload.new as { id?: string | null; is_deleted?: boolean };
+          if (!updated.id) return;
+          if (updated.is_deleted) {
+            setMessages((prev) => prev.filter((item) => item.id !== updated.id));
+            return;
+          }
+          const nextMessage = await fetchMessageById(updated.id);
+          if (!nextMessage) return;
+          setMessages((prev) => prev.map((item) => (item.id === nextMessage.id ? nextMessage : item)));
         }
       )
       .on("presence", { event: "sync" }, () => {
@@ -818,6 +852,142 @@ export function GlobalChatClient() {
     return map;
   }, [repliesByParentId, topLevelMessages]);
 
+  useEffect(() => {
+    const ctrlChannel = supabase
+      .channel(`global-chat:controls:${user?.id || "anon"}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "global_chat_user_controls",
+          filter: `user_id=eq.${user?.id || ""}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            is_banned?: boolean;
+            banned_until?: string | null;
+            is_muted?: boolean;
+            muted_until?: string | null;
+          };
+          const bannedUntil = row?.banned_until ? new Date(row.banned_until).getTime() : 0;
+          setIsBanned(Boolean(row?.is_banned) || Boolean(bannedUntil && bannedUntil > Date.now()));
+          const mUntil = row?.muted_until ? new Date(row.muted_until).getTime() : 0;
+          setMutedUntilTs(Boolean(row?.is_muted) ? mUntil || Date.now() + 60_000 : mUntil);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "global_chat_user_controls",
+          filter: `user_id=eq.${user?.id || ""}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            is_banned?: boolean;
+            banned_until?: string | null;
+            is_muted?: boolean;
+            muted_until?: string | null;
+          };
+          const bannedUntil = row?.banned_until ? new Date(row.banned_until).getTime() : 0;
+          setIsBanned(Boolean(row?.is_banned) || Boolean(bannedUntil && bannedUntil > Date.now()));
+          const mUntil = row?.muted_until ? new Date(row.muted_until).getTime() : 0;
+          setMutedUntilTs(Boolean(row?.is_muted) ? mUntil || Date.now() + 60_000 : mUntil);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ctrlChannel);
+    };
+  }, [supabase, user?.id]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchRoomState = async () => {
+      const { data } = await supabase
+        .from("global_chat_room_state")
+        .select("slow_mode_seconds,closed_until")
+        .eq("room_slug", activeRoom)
+        .maybeSingle<{ slow_mode_seconds: number; closed_until: string | null }>();
+      if (!active) return;
+      setRoomSlowSeconds(Number(data?.slow_mode_seconds || 0));
+      const closedTs = data?.closed_until ? new Date(data.closed_until).getTime() : 0;
+      setClosedUntilTs(closedTs);
+    };
+    fetchRoomState();
+    const channel = supabase
+      .channel(`global-chat:room-state:${activeRoom}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "global_chat_room_state", filter: `room_slug=eq.${activeRoom}` },
+        (payload) => {
+          const row = payload.new as { slow_mode_seconds?: number; closed_until?: string | null };
+          setRoomSlowSeconds(Number(row?.slow_mode_seconds || 0));
+          const closedTs = row?.closed_until ? new Date(row.closed_until).getTime() : 0;
+          setClosedUntilTs(closedTs);
+        }
+      )
+      .subscribe();
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [activeRoom, supabase]);
+
+  useEffect(() => {
+    if (!user) {
+      setSlowRemainingSeconds(0);
+      return;
+    }
+    let active = true;
+    let intervalId: number | undefined;
+    const compute = async () => {
+      if (!roomSlowSeconds || roomSlowSeconds <= 0) {
+        setSlowRemainingSeconds(0);
+        return;
+      }
+      const { data: recent } = await supabase
+        .from("global_chat_messages")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .eq("room", activeRoom)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ created_at: string }>();
+      const ts = recent?.created_at ? new Date(recent.created_at).getTime() : 0;
+      const diff = Date.now() - ts;
+      const remain = Math.max(0, Math.ceil((roomSlowSeconds * 1000 - diff) / 1000));
+      if (active) setSlowRemainingSeconds(remain);
+    };
+    compute();
+    intervalId = window.setInterval(() => {
+      setSlowRemainingSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => {
+      active = false;
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [activeRoom, roomSlowSeconds, supabase, user, messages.length]);
+
+  useEffect(() => {
+    let intervalId: number | undefined;
+    const tick = () => {
+      if (!closedUntilTs) {
+        setClosedRemainingSeconds(0);
+        return;
+      }
+      const remain = Math.max(0, Math.ceil((closedUntilTs - Date.now()) / 1000));
+      setClosedRemainingSeconds(remain);
+    };
+    tick();
+    intervalId = window.setInterval(tick, 1000);
+    return () => {
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [closedUntilTs]);
+
   const resolveThreadRootId = useCallback(
     (messageId: string) => {
       let current = messagesById.get(messageId);
@@ -920,16 +1090,22 @@ export function GlobalChatClient() {
     const loadModerator = async () => {
       if (!user) {
         setIsModerator(false);
+        setIsBanned(false);
+        setMutedUntilTs(0);
         return;
       }
       const { data } = await supabase
         .from("global_chat_user_controls")
-        .select("is_moderator,moderator_override")
+        .select("is_moderator,moderator_override,is_banned,banned_until,is_muted,muted_until")
         .eq("user_id", user.id)
-        .maybeSingle<{ is_moderator: boolean; moderator_override: boolean }>();
+        .maybeSingle<{ is_moderator: boolean; moderator_override: boolean; is_banned: boolean; banned_until: string | null; is_muted: boolean; muted_until: string | null }>();
       if (!active) return;
       const flag = Boolean(data?.is_moderator) || Boolean(data?.moderator_override);
       setIsModerator(flag);
+      const bannedUntil = data?.banned_until ? new Date(data.banned_until).getTime() : 0;
+      setIsBanned(Boolean(data?.is_banned) || Boolean(bannedUntil && bannedUntil > Date.now()));
+      const mutedUntil = data?.muted_until ? new Date(data.muted_until).getTime() : 0;
+      setMutedUntilTs(Boolean(data?.is_muted) ? mutedUntil || Date.now() + 60_000 : mutedUntil);
     };
     loadModerator();
     return () => {
@@ -1072,8 +1248,25 @@ export function GlobalChatClient() {
     const payload = (await response.json().catch(() => null)) as PostChatResponse | null;
     if (!payload || !payload.ok) {
       const fallback = "Unable to send message.";
-      const messageText = payload && "message" in payload ? payload.message : fallback;
-      toast.error(messageText);
+      const errorCode = payload && "code" in payload ? String(payload.code) : "";
+      if (errorCode === "BAN_ACTIVE" || errorCode === "MUTE_ACTIVE" || errorCode === "SLOW_MODE" || errorCode === "ROLE_NOT_ALLOWED" || errorCode === "ROOM_CLOSED") {
+        // Refresh user controls to reflect latest mute/ban state without showing global toast
+        try {
+          const { data } = await supabase
+            .from("global_chat_user_controls")
+            .select("is_banned,banned_until,is_muted,muted_until")
+            .eq("user_id", user.id)
+            .maybeSingle<{ is_banned: boolean; banned_until: string | null; is_muted: boolean; muted_until: string | null }>();
+          const bannedUntil = data?.banned_until ? new Date(data.banned_until).getTime() : 0;
+          setIsBanned(Boolean(data?.is_banned) || Boolean(bannedUntil && bannedUntil > Date.now()));
+          const mutedUntil = data?.muted_until ? new Date(data.muted_until).getTime() : 0;
+          setMutedUntilTs(Boolean(data?.is_muted) ? mutedUntil || Date.now() + 60_000 : mutedUntil);
+        } catch {}
+        // No toast for these cases; UI shows inline placeholders
+      } else {
+        const messageText = payload && "message" in payload ? payload.message : fallback;
+        toast.error(messageText);
+      }
       setIsSending(false);
       return;
     }
@@ -1521,6 +1714,40 @@ export function GlobalChatClient() {
                 </div>
               </Squircle>
             ) : null}
+            {isBanned ? (
+              <div className="mb-2 inline-flex items-center gap-2 text-sm text-[#ff0000]">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8ZM10.3128 12.4341C9.62116 12.7956 8.83445 13 8 13C5.23858 13 3 10.7614 3 8C3 7.16555 3.20441 6.37884 3.5659 5.68722L10.3128 12.4341ZM12.4341 10.3128L5.68722 3.5659C6.37884 3.20441 7.16555 3 8 3C10.7614 3 13 5.23858 13 8C13 8.83445 12.7956 9.62116 12.4341 10.3128Z" fill="#ff0000"></path>
+                </svg>
+                <span className="font-semibold">You are banned to write here</span>
+              </div>
+            ) : mutedUntilTs && mutedUntilTs > Date.now() ? (
+              <div className="mb-2 inline-flex items-center gap-2 text-sm text-white">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                  <path d="M5 5L19 19" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M9.68219 5.56134C10.0533 4.64576 10.9513 4 12 4C13.3807 4 14.5 5.11929 14.5 6.5V10.3792L9.68219 5.56134ZM12.7605 12.8822L9.5 9.62179V10.5C9.5 11.8807 10.6193 13 12 13C12.2651 13 12.5207 12.9587 12.7605 12.8822Z" fill="#ffffff"></path>
+                  <path d="M9.68219 5.56134L8.97509 6.26845L8.50647 5.79984L8.75544 5.18566L9.68219 5.56134ZM14.5 10.3792H15.5V12.7934L13.7929 11.0863L14.5 10.3792ZM12.7605 12.8822L13.4676 12.1751L14.6285 13.3361L13.0643 13.835L12.7605 12.8822ZM9.5 9.62179H8.5V7.20758L10.2071 8.91469L9.5 9.62179ZM8.75544 5.18566C9.27431 3.90569 10.5302 3 12 3V5C11.3723 5 10.8324 5.38583 10.6089 5.93702L8.75544 5.18566ZM12 3C13.933 3 15.5 4.567 15.5 6.5H13.5C13.5 5.67157 12.8284 5 12 5V3ZM15.5 6.5V10.3792H13.5V6.5H15.5ZM10.3893 4.85424L15.2071 9.67204L13.7929 11.0863L8.97509 6.26845L10.3893 4.85424ZM12.0533 13.5893L8.79289 10.3289L10.2071 8.91469L13.4676 12.1751L12.0533 13.5893ZM8.5 10.5V9.62179H10.5V10.5H8.5ZM12 14C10.067 14 8.5 12.433 8.5 10.5H10.5C10.5 11.3284 11.1716 12 12 12V14ZM13.0643 13.835C12.7274 13.9424 12.3695 14 12 14V12C12.1608 12 12.3139 11.975 12.4566 11.9295L13.0643 13.835Z" fill="#ffffff"></path>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M8.46291 13.7293C8.31338 13.1976 7.76117 12.8878 7.22951 13.0373C6.69785 13.1869 6.38808 13.7391 6.5376 14.2707C7.17394 16.5333 8.82364 18.063 11.0003 18.42V21C11.0003 21.5523 11.448 22 12.0003 22C12.5525 22 13.0003 21.5523 13.0003 21V18.42C13.7841 18.2914 14.4996 18.0108 15.124 17.5986L13.6608 16.1355C13.1713 16.3753 12.6119 16.5 12.0003 16.5C10.2727 16.5 8.9625 15.5056 8.46291 13.7293ZM15.7806 13.3054C16.0279 13.0495 16.4044 12.9342 16.771 13.0373C17.3027 13.1869 17.6124 13.7391 17.4629 14.2707C17.4108 14.456 17.3519 14.6363 17.2865 14.8114L15.7806 13.3054Z" fill="#ffffff"></path>
+                </svg>
+                <span className="font-semibold">You are muted to write here</span>
+              </div>
+            ) : closedUntilTs && closedUntilTs > Date.now() ? (
+              <div className="mb-2 inline-flex items-center gap-2 text-sm text-white">
+                <span className="font-semibold">
+                  {closedUntilTs > Date.now() + 365 * 24 * 60 * 60 * 1000
+                    ? "This chat is closed"
+                    : `This chat is closed for ${closedRemainingSeconds}s`}
+                </span>
+              </div>
+            ) : slowRemainingSeconds > 0 ? (
+              <div className="mb-2 flex items-center gap-2 text-sm text-white">
+                <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-zinc-300">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM7 3V8.41421L10.2929 11.7071L11.7071 10.2929L9 7.58579V3H7Z"></path>
+                </svg>
+                <span className="font-semibold">Slow mode attivo</span>
+                <span className="text-zinc-400">({slowRemainingSeconds}s)</span>
+              </div>
+            ) : null}
 
             <div className="mb-2 flex items-center gap-2">
               <div className="relative flex-1">
@@ -1633,8 +1860,22 @@ export function GlobalChatClient() {
                       handleSend();
                     }
                   }}
-                  placeholder={canWrite ? "Type your message (@ to mention)" : "Login to write in chat"}
-                  disabled={!canWrite || isSending}
+                  placeholder={
+                    canWrite
+                      ? "Type your message (@ to mention)"
+                      : !user
+                      ? "Login to write in chat"
+                      : isBanned
+                      ? "You are banned from global chat."
+                      : mutedUntilTs && mutedUntilTs > Date.now()
+                      ? `You are muted for ${Math.ceil((mutedUntilTs - Date.now()) / 1000)} seconds.`
+                      : closedUntilTs && closedUntilTs > Date.now()
+                      ? `This chat is closed`
+                      : slowRemainingSeconds > 0
+                      ? `Slow mode active`
+                      : `You are not ${requiredRoleText || "allowed"} to write here.`
+                  }
+                  disabled={!canWrite || isSending || isBanned || !!(mutedUntilTs && mutedUntilTs > Date.now()) || !!slowRemainingSeconds || !!(closedUntilTs && closedUntilTs > Date.now())}
                   className="h-11 w-full rounded-2xl border-2 border-white/20 bg-[#0A0A0A]/80 px-3 pr-28 text-base text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 />
                 <AnimatePresence>
@@ -1675,7 +1916,9 @@ export function GlobalChatClient() {
                 Online: {displayOnlineCount.toLocaleString("en-US")}
               </span>
 
-              {activeRoom === "help" && slowModeMinutes > 0 ? (
+              {mutedUntilTs && mutedUntilTs > Date.now() ? (
+                <span className="text-zinc-400">Muted: {Math.ceil((mutedUntilTs - Date.now()) / 1000)}s</span>
+              ) : activeRoom === "help" && slowModeMinutes > 0 ? (
                 <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
               ) : !user ? (
                 <Link
@@ -1686,7 +1929,7 @@ export function GlobalChatClient() {
                   Login to write
                 </Link>
               ) : !canWrite ? (
-                <span className="text-zinc-400">You are not {requiredRoleText || "allowed"} to write here.</span>
+                <span className="text-zinc-400">{isBanned ? "You are banned from global chat." : `You are not ${requiredRoleText || "allowed"} to write here.`}</span>
               ) : (
                 <span className="text-zinc-400">{draft.length}/180</span>
               )}
