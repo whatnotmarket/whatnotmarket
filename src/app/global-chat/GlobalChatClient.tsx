@@ -1119,12 +1119,22 @@ export function GlobalChatClient() {
             <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">
               <button
                 type="button"
-                onClick={() => openThreadForMessage(message)}
+                onClick={() => setReplyTarget(message)}
                 className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
               >
                 <Reply className="h-3.5 w-3.5" />
-                {repliesCount > 0 ? `Open thread (${repliesCount})` : "Open thread"}
+                Reply to message
               </button>
+              {repliesCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => openThreadForMessage(message)}
+                  className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
+                >
+                  <Reply className="h-3.5 w-3.5" />
+                  {`Show thread (${repliesCount})`}
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -1636,17 +1646,6 @@ export function GlobalChatClient() {
                       transition={{ duration: 0.15 }}
                       className="absolute inset-y-1 right-1 flex items-center"
                     >
-                      <Button
-                        type="button"
-                        onClick={() => setIsRulesOpen(true)}
-                        className="h-full px-3 rounded-2xl bg-zinc-800 text-white hover:bg-zinc-700 border border-white/10 mr-2 flex items-center justify-center"
-                      >
-                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="currentColor" aria-hidden="true">
-                          <g transform="translate(-414 -101)">
-                            <path d="M418,101 C415.791,101 414,102.791 414,105 L414,126 C414,128.209 415.885,129.313 418,130 L429,133 L429,104 C423.988,102.656 418,101 418,101 L418,101 Z M442,101 C442,101 436.212,102.594 430.951,104 L431,104 L431,133 C436.617,131.501 442,130 442,130 C444.053,129.469 446,128.209 446,126 L446,105 C446,102.791 444.209,101 442,101 L442,101 Z"></path>
-                          </g>
-                        </svg>
-                      </Button>
                       <Button
                         onClick={handleSend}
                         disabled={!canWrite || isSending}
