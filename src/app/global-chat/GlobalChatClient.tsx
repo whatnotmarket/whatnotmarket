@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
   ArrowLeft,
@@ -19,6 +20,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { authToast as toast } from "@/lib/notifications";
 import { GLOBAL_CHAT_ROOMS, type GlobalChatRoom } from "@/lib/chat/global-chat-config";
+import Image from "next/image";
+import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
+import EnglishFlag from "@/flag/english.png";
+import { Squircle } from "@/components/ui/Squircle";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
@@ -232,7 +237,52 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
         </span>
       );
     }
-    return <span key={`${part}-${index}`}>{part}</span>;
+    const segments = part.split(
+      /(https?:\/\/[^\s)]+|\bwww\.[^\s)]+|\b[a-z0-9.-]+\.(?:market|com)(?:\/[^\s)]*)?)/g
+    );
+    return segments.map((seg, j) => {
+      if (seg.startsWith("http") || seg.startsWith("www.") || /\.[a-z]/i.test(seg)) {
+        try {
+          const href = seg.startsWith("http")
+            ? seg
+            : seg.startsWith("www.")
+            ? `https://${seg}`
+            : `https://${seg}`;
+          const url = new URL(href);
+          const host = url.hostname.toLowerCase();
+          const allowed = new Set<string>([
+            "whatnot.market",
+            "www.whatnot.market",
+            "whatnotmarket.com",
+            "www.whatnotmarket.com",
+            "localhost",
+            "127.0.0.1",
+          ]);
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH0_BASE_URL || "";
+          if (appUrl) {
+            const u = new URL(appUrl);
+            if (u.hostname) allowed.add(u.hostname.toLowerCase());
+          }
+          const isAllowed =
+            allowed.has(host) ||
+            Array.from(allowed).some((root) => host === root || host.endsWith(`.${root}`));
+          if (isAllowed) {
+            return (
+              <a
+                key={`link-${index}-${j}`}
+                href={href}
+                className="underline text-zinc-200 hover:text-white break-words"
+              >
+                {url.href}
+              </a>
+            );
+          }
+        } catch {
+          /* noop */
+        }
+      }
+      return <span key={`text-${index}-${j}`}>{seg}</span>;
+    });
   });
 }
 
@@ -255,14 +305,57 @@ export function GlobalChatClient() {
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const [isChatClosed, setIsChatClosed] = useState(false);
+  const [slowModeMinutes, setSlowModeMinutes] = useState<number>(0);
+  const [isModerator, setIsModerator] = useState<boolean>(false);
+  const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [hasAcceptedRules, setHasAcceptedRules] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const roomMenuRef = useRef<HTMLDivElement>(null);
-  const canWrite = Boolean(user);
+  const canWrite = useMemo(() => {
+    if (!user) return false;
+    const { isSeller, isBuyer } = resolveRoles(currentProfile);
+    const isThreadReply = Boolean(replyTarget);
+    if (activeRoom === "sell-services") {
+      return isThreadReply ? isSeller || isBuyer : isSeller;
+    }
+    if (activeRoom === "buy-services") {
+      return isThreadReply ? isSeller || isBuyer : isBuyer;
+    }
+    if (activeRoom === "help") {
+      if (isThreadReply) {
+        return isModerator;
+      }
+      return slowModeMinutes <= 0;
+    }
+    return true;
+  }, [activeRoom, currentProfile, replyTarget, slowModeMinutes, user, isModerator]);
 
   const activeRoomLabel =
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
+
+  useEffect(() => {
+    try {
+      const flag = localStorage.getItem("global_chat_rules_accepted") === "1";
+      setHasAcceptedRules(Boolean(flag));
+    } catch {}
+  }, []);
+
+  const requiredRoleText = useMemo(() => {
+    const isThreadReply = Boolean(replyTarget);
+    if (activeRoom === "sell-services" && !isThreadReply) return "a seller";
+    if (activeRoom === "buy-services" && !isThreadReply) return "a buyer";
+    if (activeRoom === "help" && isThreadReply) return "a moderator";
+    return null;
+  }, [activeRoom, replyTarget]);
+
+  const { selectedCrypto } = useCrypto?.() || ({ selectedCrypto: "BTC" } as any);
+  const selectedCryptoData = useMemo(
+    () => CRYPTO_CURRENCIES.find((c) => c.code === selectedCrypto) || CRYPTO_CURRENCIES[0],
+    [selectedCrypto]
+  );
 
   const handleRoomChange = useCallback((nextRoom: GlobalChatRoom) => {
     setActiveRoom(nextRoom);
@@ -766,7 +859,83 @@ export function GlobalChatClient() {
   }, [activeThreadRootId, repliesByParentId]);
 
   const onlineCount = onlineUsers.length > 0 ? onlineUsers.length : participantsCount;
+  const [displayOnlineCount, setDisplayOnlineCount] = useState<number>(478);
 
+  useEffect(() => {
+    const minFloor = 283;
+    const inflateFactor = 4; // amplify real signal
+    const target = Math.max(minFloor, 478 + Math.round(onlineCount * inflateFactor));
+
+    const tick = () => {
+      setDisplayOnlineCount((current) => {
+        const diff = target - current;
+        if (diff === 0) return current;
+        const stepBase = Math.max(1, Math.min(20, Math.floor(Math.abs(diff) * 0.15)));
+        const jitter = Math.floor(Math.random() * 5) - 2; // [-2, +2]
+        const step = (diff > 0 ? 1 : -1) * (stepBase + jitter);
+        const next = current + step;
+        return Math.max(minFloor, next);
+      });
+    };
+
+    const interval = window.setInterval(tick, 4000 + Math.floor(Math.random() * 3000));
+    return () => window.clearInterval(interval);
+  }, [onlineCount]);
+
+  useEffect(() => {
+    let timer: number | null = null;
+    const fetchSlowMode = async () => {
+      if (!user || activeRoom !== "help") {
+        setSlowModeMinutes(0);
+        return;
+      }
+      const { data } = await supabase
+        .from("global_chat_messages")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .eq("room", "help")
+        .is("reply_to_id", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ created_at: string }>();
+      if (data?.created_at) {
+        const lastTs = new Date(data.created_at).getTime();
+        const diffMs = Date.now() - lastTs;
+        const remainingMs = Math.max(0, 3_600_000 - diffMs);
+        const remainingMin = Math.ceil(remainingMs / 60_000);
+        setSlowModeMinutes(remainingMin);
+      } else {
+        setSlowModeMinutes(0);
+      }
+    };
+    fetchSlowMode();
+    timer = window.setInterval(fetchSlowMode, 60_000);
+    return () => {
+      if (timer) window.clearInterval(timer);
+    };
+  }, [activeRoom, supabase, user?.id]);
+
+  useEffect(() => {
+    let active = true;
+    const loadModerator = async () => {
+      if (!user) {
+        setIsModerator(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("global_chat_user_controls")
+        .select("is_moderator,moderator_override")
+        .eq("user_id", user.id)
+        .maybeSingle<{ is_moderator: boolean; moderator_override: boolean }>();
+      if (!active) return;
+      const flag = Boolean(data?.is_moderator) || Boolean(data?.moderator_override);
+      setIsModerator(flag);
+    };
+    loadModerator();
+    return () => {
+      active = false;
+    };
+  }, [supabase, user?.id]);
   const loadThreadMessages = useCallback(
     async (rootId: string) => {
       setIsThreadLoading(true);
@@ -927,21 +1096,23 @@ export function GlobalChatClient() {
       <div
         key={message.id}
         className={cn(
-          "rounded-xl border px-3 py-2 text-sm leading-relaxed shadow-sm",
-          user?.id === message.userId ? "border-[#2f536b] bg-[#163246]" : "border-white/5 bg-[#102636]"
+          "px-3 py-2 text-sm leading-relaxed shadow-sm",
+          user?.id === message.userId
+            ? "rounded-2xl border-2 border-white/20 bg-[#101010]"
+            : "rounded-2xl border border-white/5 bg-[#101010]"
         )}
       >
         <div className="flex items-start gap-2">
           <Avatar size="sm" className="mt-0.5 shrink-0 border border-white/10">
             <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
-            <AvatarFallback className="bg-[#1d3f58] text-[10px] text-[#d7ecff]">
+            <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
               {getAvatarFallback(message.displayName)}
             </AvatarFallback>
           </Avatar>
 
             <div className="min-w-0 flex-1">
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-[#e4f3ff]">
-                <span className="text-sm font-bold text-[#d8ecff]">{message.displayName}</span>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
+                <span className="text-sm font-bold text-white">{message.displayName}</span>
                 <span className="min-w-0 break-words">{renderMessageWithMentions(message.text, currentHandle)}</span>
               </div>
 
@@ -949,7 +1120,7 @@ export function GlobalChatClient() {
               <button
                 type="button"
                 onClick={() => openThreadForMessage(message)}
-                className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-[#bfe2ff]"
+                className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
               >
                 <Reply className="h-3.5 w-3.5" />
                 {repliesCount > 0 ? `Open thread (${repliesCount})` : "Open thread"}
@@ -966,20 +1137,25 @@ export function GlobalChatClient() {
     return (
       <div
         key={message.id}
-        className="rounded-xl border border-white/5 bg-[#102636] px-3 py-2 shadow-sm"
+        className={cn(
+          "rounded-2xl px-3 py-2 shadow-sm",
+          user?.id === message.userId
+            ? "border-2 border-white/20 bg-[#101010]"
+            : "border border-white/5 bg-[#101010]"
+        )}
         style={{ marginLeft: Math.min((depth - 1) * 16, 64) }}
       >
         <div className="flex items-start gap-2">
           <Avatar size="sm" className="mt-0.5 shrink-0 border border-white/10">
             <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
-            <AvatarFallback className="bg-[#1d3f58] text-[10px] text-[#d7ecff]">
+            <AvatarFallback className="bg-[#151515] text:[10px] text-zinc-300">
               {getAvatarFallback(message.displayName)}
             </AvatarFallback>
           </Avatar>
 
           <div className="min-w-0 flex-1">
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-[#e4f3ff]">
-              <span className="text-sm font-bold text-[#d8ecff]">{message.displayName}</span>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
+              <span className="text-sm font-bold text-white">{message.displayName}</span>
               <span className="text-xs text-zinc-400">{formatRelativeTime(message.createdAt)}</span>
               <span className="min-w-0 break-words">{renderMessageWithMentions(message.text, currentHandle)}</span>
             </div>
@@ -988,7 +1164,7 @@ export function GlobalChatClient() {
               <button
                 type="button"
                 onClick={() => setReplyTarget(message)}
-                className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-[#bfe2ff]"
+                className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
               >
                 <Reply className="h-3.5 w-3.5" />
                 Reply
@@ -1001,28 +1177,57 @@ export function GlobalChatClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050d14] text-white">
+    <div className="min-h-screen bg-black text-white">
       <div className="mx-auto flex min-h-screen w-full">
-        <div className="relative hidden flex-1 overflow-hidden md:block">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(45,156,212,0.18),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(22,76,110,0.18),transparent_50%)]" />
-        </div>
+        <div className="relative hidden flex-1 md:block" />
 
+        {!isChatClosed && (
         <aside
           className={cn(
-            "flex h-screen w-full flex-col border-l border-white/10 bg-[#081a27] transition-[width] duration-200",
+            "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl bg-[#101010] transition-[width] duration-200 m-6 md:ml-auto",
             isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
           )}
         >
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
+          <div className="flex items-center justify-between px-4 py-4">
             <div className="relative" ref={roomMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsRoomMenuOpen((prev) => !prev)}
-                className="inline-flex h-9 min-w-[136px] items-center justify-between rounded-lg border border-[#2b4557] bg-[#0f2332] px-3 text-left text-sm font-semibold text-white transition hover:border-[#3d6582]"
+                className="inline-flex h-9 min-w-[136px] items-center justify-between rounded-2xl border-2 border-white/20 bg-[#101010] px-3 text-left text-sm font-semibold text-white transition hover:bg-[#151515]"
                 aria-haspopup="listbox"
                 aria-expanded={isRoomMenuOpen}
               >
-                <span>{activeRoomLabel}</span>
+                <span className="flex items-center gap-2">
+                  {activeRoom === "global" && (
+                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                      <path fill="#ffffff" d="M32,0C14.328,0,0,14.328,0,32s14.328,32,32,32s32-14.328,32-32S49.672,0,32,0z M52.812,20.078 c-2.293,1.973-4.105,3.762-7.457,3.887c-2.562,0.094-4.445,0.105-6.359-1.598c-2.727-2.477-0.859-5.777-0.758-9.504 C38.273,11.43,38.512,10.18,38.824,9C44.789,10.766,49.773,14.789,52.812,20.078z M9.867,41.289c2.09-2.031,5.508-3.109,7.949-5.816 c2.492-2.785,2.41-7.836,6.129-7.375c3.039,0.422,2.5,4.23,4.906,6.125c2.836,2.266,6.328,0.824,8.59,3.676 c2.969,3.77,2.277,8.066,0,12.293c-1.676,3.055-3.836,4.137-6.723,5.742C21.316,55.438,13.34,49.555,9.867,41.289z"/>
+                    </svg>
+                  )}
+                  {activeRoom === "buy-services" && (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                      <path d="M4.46785 10.2658C4.47574 10.3372 4.48376 10.4094 4.49187 10.4823L4.61751 11.6131C4.7057 12.4072 4.78218 13.0959 4.91562 13.6455C5.05917 14.2367 5.29582 14.7937 5.78931 15.2354C6.28281 15.6771 6.86251 15.8508 7.46598 15.9281C8.02694 16.0001 8.71985 16 9.51887 16H14.8723C15.4201 16 15.9036 16 16.3073 15.959C16.7448 15.9146 17.1698 15.8162 17.5785 15.5701C17.9872 15.324 18.2731 14.9944 18.5171 14.6286C18.7422 14.291 18.9684 13.8637 19.2246 13.3797L21.7141 8.67734C22.5974 7.00887 21.3879 4.99998 19.5 4.99998L9.39884 4.99998C8.41604 4.99993 7.57525 4.99988 6.90973 5.09287C6.5729 5.13994 6.24284 5.21529 5.93326 5.34375L5.78941 4.04912C5.65979 2.88255 4.67375 2 3.5 2H3C2.44772 2 2 2.44771 2 3C2 3.55228 2.44772 4 3 4H3.5C3.65465 4 3.78456 4.11628 3.80164 4.26998L4.46785 10.2658Z" fill="#ffffff"></path>
+                      <path fillRule="evenodd" clipRule="evenodd" d="M14 19.5C14 18.1193 15.1193 17 16.5 17C17.8807 17 19 18.1193 19 19.5C19 20.8807 17.8807 22 16.5 22C15.1193 22 14 20.8807 14 19.5Z" fill="#ffffff"></path>
+                      <path fillRule="evenodd" clipRule="evenodd" d="M5 19.5C5 18.1193 6.11929 17 7.5 17C8.88071 17 10 18.1193 10 19.5C10 20.8807 8.88071 22 7.5 22C6.11929 22 5 20.8807 5 19.5Z" fill="#ffffff"></path>
+                    </svg>
+                  )}
+                  {activeRoom === "sell-services" && (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12.052 1.25H11.948C11.0495 1.24997 10.3003 1.24995 9.70552 1.32991C9.07773 1.41432 8.51093 1.59999 8.05546 2.05546C7.59999 2.51093 7.41432 3.07773 7.32991 3.70552C7.27259 4.13189 7.25637 5.15147 7.25179 6.02566C5.22954 6.09171 4.01536 6.32778 3.17157 7.17157C2 8.34315 2 10.2288 2 14C2 17.7712 2 19.6569 3.17157 20.8284C4.34314 22 6.22876 22 9.99998 22H14C17.7712 22 19.6569 22 20.8284 20.8284C22 19.6569 22 17.7712 22 14C22 10.2288 22 8.34315 20.8284 7.17157C19.9846 6.32778 18.7705 6.09171 16.7482 6.02566C16.7436 5.15147 16.7274 4.13189 16.6701 3.70552C16.5857 3.07773 16.4 2.51093 15.9445 2.05546C15.4891 1.59999 14.9223 1.41432 14.2945 1.32991C13.6997 1.24995 12.9505 1.24997 12.052 1.25ZM15.2479 6.00188C15.2434 5.15523 15.229 4.24407 15.1835 3.9054C15.1214 3.44393 15.0142 3.24644 14.8839 3.11612C14.7536 2.9858 14.5561 2.87858 14.0946 2.81654C13.6116 2.7516 12.964 2.75 12 2.75C11.036 2.75 10.3884 2.7516 9.90539 2.81654C9.44393 2.87858 9.24644 2.9858 9.11612 3.11612C8.9858 3.24644 8.87858 3.44393 8.81654 3.9054C8.771 4.24407 8.75661 5.15523 8.75208 6.00188C9.1435 6 9.55885 6 10 6H14C14.4412 6 14.8565 6 15.2479 6.00188ZM12 9.25C12.4142 9.25 12.75 9.58579 12.75 10V10.0102C13.8388 10.2845 14.75 11.143 14.75 12.3333C14.75 12.7475 14.4142 13.0833 14 13.0833C13.5858 13.0833 13.25 12.7475 13.25 12.3333C13.25 11.9493 12.8242 11.4167 12 11.4167C11.1758 11.4167 10.75 11.9493 10.75 12.3333C10.75 12.7174 11.1758 13.25 12 13.25C13.3849 13.25 14.75 14.2098 14.75 15.6667C14.75 16.857 13.8388 17.7155 12.75 17.9898V18C12.75 18.4142 12.4142 18.75 12 18.75C11.5858 18.75 11.25 18.4142 11.25 18V17.9898C10.1612 17.7155 9.25 16.857 9.25 15.6667C9.25 15.2525 9.58579 14.9167 10 14.9167C10.4142 14.9167 10.75 15.2525 10.75 15.6667C10.75 16.0507 11.1758 16.5833 12 16.5833C12.8242 16.5833 13.25 16.0507 13.25 15.6667C13.25 15.2826 12.8242 14.75 12 14.75C10.6151 14.75 9.25 13.7903 9.25 12.3333C9.25 11.143 10.1612 10.2845 11.25 10.0102V10C11.25 9.58579 11.5858 9.25 12 9.25Z" fill="#ffffff"></path>
+                    </svg>
+                  )}
+                  {activeRoom === "crypto-talk" && (
+                    <Image src={selectedCryptoData.Icon} alt={selectedCryptoData.code} width={20} height={20} className="rounded-full" />
+                  )}
+                  {activeRoom === "help" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className="inline-block shrink-0">
+                      <path fill="currentColor" d="M12 1C6.49 1 2 5.34 2 10.67v4.61a1 1 0 0 0 .69.95l3.89 1.26c1.25.27 2.42-.68 2.42-1.96v-4.05c0-1.27-1.17-2.22-2.42-1.96l-2.55.55C4.35 6.12 7.8 3.01 12 3.01s7.65 3.12 7.97 7.06l-2.55-.55c-1.25-.27-2.42.68-2.42 1.96v4.05c0 1.27 1.17 2.22 2.42 1.96l2.58-.55v1.07c0 1.1-.9 2-2 2h-4v-.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v1.5c0 .55.45 1 1 1h6c2.21 0 4-1.79 4-4v-7.33c0-5.33-4.49-9.67-10-9.67z"></path>
+                    </svg>
+                  )}
+                  {activeRoom === "english" && (
+                    <Image src={EnglishFlag} alt="English" width={20} height={20} className="rounded-2xl" />
+                  )}
+                  <span>{activeRoomLabel}</span>
+                </span>
                 <ChevronDown
                   className={cn(
                     "ml-2 h-4 w-4 text-zinc-300 transition-transform",
@@ -1032,9 +1237,9 @@ export function GlobalChatClient() {
               </button>
 
               {isRoomMenuOpen ? (
-                <div className="absolute top-[calc(100%+4px)] left-0 z-40 w-[190px] overflow-hidden rounded-md border border-[#2e5067] bg-[#0b2537] shadow-2xl">
-                  <ul role="listbox" aria-label="Chat rooms">
-                    {GLOBAL_CHAT_ROOMS.map((room) => {
+                <div className="absolute top-[calc(100%+4px)] left-0 z-40 w-[190px] overflow-hidden rounded-2xl border-2 border-white/20 bg-[#101010] shadow-2xl p-2">
+                  <ul role="listbox" aria-label="Chat rooms" className="space-y-2">
+                    {GLOBAL_CHAT_ROOMS.filter((r) => r.slug !== "english").map((room) => {
                       const isActive = room.slug === activeRoom;
                       return (
                         <li key={room.slug}>
@@ -1044,12 +1249,60 @@ export function GlobalChatClient() {
                             aria-selected={isActive}
                             onClick={() => handleRoomChange(room.slug)}
                             className={cn(
-                              "block w-full px-4 py-2 text-left transition",
-                              isActive
-                                ? "bg-[#d4ebff] text-[#0d3550]"
-                                : "text-white hover:bg-[#23465c]"
+                              "flex items-center gap-2 w-full px-3 py-2 text-left transition rounded-2xl",
+                              isActive ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-white/5"
                             )}
                           >
+                            {room.slug === "global" && (
+                              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                                <path fill="#ffffff" d="M32,0C14.328,0,0,14.328,0,32s14.328,32,32,32s32-14.328,32-32S49.672,0,32,0z M52.812,20.078 c-2.293,1.973-4.105,3.762-7.457,3.887c-2.562,0.094-4.445,0.105-6.359-1.598c-2.727-2.477-0.859-5.777-0.758-9.504 C38.273,11.43,38.512,10.18,38.824,9C44.789,10.766,49.773,14.789,52.812,20.078z M9.867,41.289c2.09-2.031,5.508-3.109,7.949-5.816 c2.492-2.785,2.41-7.836,6.129-7.375c3.039,0.422,2.5,4.23,4.906,6.125c2.836,2.266,6.328,0.824,8.59,3.676 c2.969,3.77,2.277,8.066,0,12.293c-1.676,3.055-3.836,4.137-6.723,5.742C21.316,55.438,13.34,49.555,9.867,41.289z"/>
+                              </svg>
+                            )}
+                            {room.slug === "buy-services" && (
+                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                                <path d="M4.46785 10.2658C4.47574 10.3372 4.48376 10.4094 4.49187 10.4823L4.61751 11.6131C4.7057 12.4072 4.78218 13.0959 4.91562 13.6455C5.05917 14.2367 5.29582 14.7937 5.78931 15.2354C6.28281 15.6771 6.86251 15.8508 7.46598 15.9281C8.02694 16.0001 8.71985 16 9.51887 16H14.8723C15.4201 16 15.9036 16 16.3073 15.959C16.7448 15.9146 17.1698 15.8162 17.5785 15.5701C17.9872 15.324 18.2731 14.9944 18.5171 14.6286C18.7422 14.291 18.9684 13.8637 19.2246 13.3797L21.7141 8.67734C22.5974 7.00887 21.3879 4.99998 19.5 4.99998L9.39884 4.99998C8.41604 4.99993 7.57525 4.99988 6.90973 5.09287C6.5729 5.13994 6.24284 5.21529 5.93326 5.34375L5.78941 4.04912C5.65979 2.88255 4.67375 2 3.5 2H3C2.44772 2 2 2.44771 2 3C2 3.55228 2.44772 4 3 4H3.5C3.65465 4 3.78456 4.11628 3.80164 4.26998L4.46785 10.2658Z" fill="#ffffff"></path>
+                                <path fillRule="evenodd" clipRule="evenodd" d="M14 19.5C14 18.1193 15.1193 17 16.5 17C17.8807 17 19 18.1193 19 19.5C19 20.8807 17.8807 22 16.5 22C15.1193 22 14 20.8807 14 19.5Z" fill="#ffffff"></path>
+                                <path fillRule="evenodd" clipRule="evenodd" d="M5 19.5C5 18.1193 6.11929 17 7.5 17C8.88071 17 10 18.1193 10 19.5C10 20.8807 8.88071 22 7.5 22C6.11929 22 5 20.8807 5 19.5Z" fill="#ffffff"></path>
+                              </svg>
+                            )}
+                            {room.slug === "sell-services" && (
+                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M12.052 1.25H11.948C11.0495 1.24997 10.3003 1.24995 9.70552 1.32991C9.07773 1.41432 8.51093 1.59999 8.05546 2.05546C7.59999 2.51093 7.41432 3.07773 7.32991 3.70552C7.27259 4.13189 7.25637 5.15147 7.25179 6.02566C5.22954 6.09171 4.01536 6.32778 3.17157 7.17157C2 8.34315 2 10.2288 2 14C2 17.7712 2 19.6569 3.17157 20.8284C4.34314 22 6.22876 22 9.99998 22H14C17.7712 22 19.6569 22 20.8284 20.8284C22 19.6569 22 17.7712 22 14C22 10.2288 22 8.34315 20.8284 7.17157C19.9846 6.32778 18.7705 6.09171 16.7482 6.02566C16.7436 5.15147 16.7274 4.13189 16.6701 3.70552C16.5857 3.07773 16.4 2.51093 15.9445 2.05546C15.4891 1.59999 14.9223 1.41432 14.2945 1.32991C13.6997 1.24995 12.9505 1.24997 12.052 1.25ZM15.2479 6.00188C15.2434 5.15523 15.229 4.24407 15.1835 3.9054C15.1214 3.44393 15.0142 3.24644 14.8839 3.11612C14.7536 2.9858 14.5561 2.87858 14.0946 2.81654C13.6116 2.7516 12.964 2.75 12 2.75C11.036 2.75 10.3884 2.7516 9.90539 2.81654C9.44393 2.87858 9.24644 2.9858 9.11612 3.11612C8.9858 3.24644 8.87858 3.44393 8.81654 3.9054C8.771 4.24407 8.75661 5.15523 8.75208 6.00188C9.1435 6 9.55885 6 10 6H14C14.4412 6 14.8565 6 15.2479 6.00188ZM12 9.25C12.4142 9.25 12.75 9.58579 12.75 10V10.0102C13.8388 10.2845 14.75 11.143 14.75 12.3333C14.75 12.7475 14.4142 13.0833 14 13.0833C13.5858 13.0833 13.25 12.7475 13.25 12.3333C13.25 11.9493 12.8242 11.4167 12 11.4167C11.1758 11.4167 10.75 11.9493 10.75 12.3333C10.75 12.7174 11.1758 13.25 12 13.25C13.3849 13.25 14.75 14.2098 14.75 15.6667C14.75 16.857 13.8388 17.7155 12.75 17.9898V18C12.75 18.4142 12.4142 18.75 12 18.75C11.5858 18.75 11.25 18.4142 11.25 18V17.9898C10.1612 17.7155 9.25 16.857 9.25 15.6667C9.25 15.2525 9.58579 14.9167 10 14.9167C10.4142 14.9167 10.75 15.2525 10.75 15.6667C10.75 16.0507 11.1758 16.5833 12 16.5833C12.8242 16.5833 13.25 16.0507 13.25 15.6667C13.25 15.2826 12.8242 14.75 12 14.75C10.6151 14.75 9.25 13.7903 9.25 12.3333C9.25 11.143 10.1612 10.2845 11.25 10.0102V10C11.25 9.58579 11.5858 9.25 12 9.25Z" fill="#ffffff"></path>
+                              </svg>
+                            )}
+                            {room.slug === "crypto-talk" && (
+                              <Image src={selectedCryptoData.Icon} alt={selectedCryptoData.code} width={20} height={20} className="rounded-full" />
+                            )}
+                            {room.slug === "help" && (
+                              <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className="inline-block shrink-0">
+                                <path fill="currentColor" d="M12 1C6.49 1 2 5.34 2 10.67v4.61a1 1 0 0 0 .69.95l3.89 1.26c1.25.27 2.42-.68 2.42-1.96v-4.05c0-1.27-1.17-2.22-2.42-1.96l-2.55.55C4.35 6.12 7.8 3.01 12 3.01s7.65 3.12 7.97 7.06l-2.55-.55c-1.25-.27-2.42.68-2.42 1.96v4.05c0 1.27 1.17 2.22 2.42 1.96l2.58-.55v1.07c0 1.1-.9 2-2 2h-4v-.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v1.5c0 .55.45 1 1 1h6c2.21 0 4-1.79 4-4v-7.33c0-5.33-4.49-9.67-10-9.67z"></path>
+                              </svg>
+                            )}
+                            <span className="text-base font-semibold">{room.label}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+
+                    <li role="presentation">
+                      <div className="h-px bg-white/10 my-1" />
+                    </li>
+
+                    {GLOBAL_CHAT_ROOMS.filter((r) => r.slug === "english").map((room) => {
+                      const isActive = room.slug === activeRoom;
+                      return (
+                        <li key={room.slug}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={isActive}
+                            onClick={() => handleRoomChange(room.slug)}
+                            className={cn(
+                              "flex items-center gap-2 w-full px-3 py-2 text-left transition rounded-2xl",
+                              isActive ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-white/5"
+                            )}
+                          >
+                            <Image src={EnglishFlag} alt="English" width={20} height={20} className="rounded-2xl" />
                             <span className="text-base font-semibold">{room.label}</span>
                           </button>
                         </li>
@@ -1059,36 +1312,52 @@ export function GlobalChatClient() {
                 </div>
               ) : null}
             </div>
-            <button
-              type="button"
-              onClick={() => setIsChatExpanded((prev) => !prev)}
-              aria-label={isChatExpanded ? "Shrink chat width" : "Stretch chat width"}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2b4557] bg-[#181848] text-white transition hover:bg-[#22225a]"
-            >
-              <span className="relative inline-flex h-4 w-4 items-center justify-center">
-                <span
-                  className={cn(
-                    "absolute top-0 h-full w-px bg-white/80",
-                    isChatExpanded ? "left-0" : "right-0"
-                  )}
-                />
-                {isChatExpanded ? (
-                  <ArrowRight className="h-3.5 w-3.5" />
-                ) : (
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                )}
-              </span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsChatExpanded((prev) => !prev)}
+                aria-label={isChatExpanded ? "Shrink chat width" : "Stretch chat width"}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+              >
+                <svg className={cn("h-6 w-6 transition-transform", !isChatExpanded ? "rotate-180" : "")} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g stroke="#fff" strokeLinecap="round" strokeWidth="2">
+                    <path d="M18 16V8" />
+                    <path d="M5 12h8" />
+                    <path d="M10.1538 7.84619 13.8461 11.8462 10.1538 15.8462" />
+                  </g>
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsRulesOpen(true)}
+                aria-label="Open chat rules"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+              >
+                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                  <g transform="translate(-414 -101)">
+                    <path d="M418,101 C415.791,101 414,102.791 414,105 L414,126 C414,128.209 415.885,129.313 418,130 L429,133 L429,104 C423.988,102.656 418,101 418,101 L418,101 Z M442,101 C442,101 436.212,102.594 430.951,104 L431,104 L431,133 C436.617,131.501 442,130 442,130 C444.053,129.469 446,128.209 446,126 L446,105 C446,102.791 444.209,101 442,101 L442,101 Z"></path>
+                  </g>
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsChatClosed(true)}
+                aria-label="Close chat"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
           </div>
 
-          <div ref={listRef} className="relative flex-1 space-y-2 overflow-y-auto px-3 py-3">
+          <div ref={listRef} className="relative flex-1 space-y-2 overflow-y-auto no-scrollbar px-3 py-3">
             {showScrollToLatest ? (
               <div className="sticky top-0 z-20 -mx-3 px-3 pb-2">
                 <button
                   type="button"
                   onClick={scrollToLatestMessage}
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#8b5cf6]/30 bg-gradient-to-r from-[#6d38dc] to-[#7c3aed] text-sm font-semibold text-white shadow-lg transition hover:brightness-110"
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-2xl bg-white text-black text-sm font-semibold transition hover:bg-zinc-200"
                 >
                   <ArrowDown className="h-4 w-4" />
                   Scroll to last message
@@ -1097,16 +1366,16 @@ export function GlobalChatClient() {
             ) : null}
 
             {isFetching || isLoading ? (
-              <div className="rounded-xl border border-white/10 bg-[#102636] p-3 text-sm text-zinc-300">
+              <div className="rounded-xl border border-white/10 bg-[#101010] p-3 text-sm text-zinc-300">
                 Loading chat...
               </div>
             ) : messages.length === 0 ? (
-              <div className="rounded-xl border border-white/10 bg-[#102636] p-3 text-sm text-zinc-300">
+              <div className="rounded-xl border border-white/10 bg-[#101010] p-3 text-sm text-zinc-300">
                 No messages yet in this room.
               </div>
             ) : activeThreadRootId && threadRootMessage ? (
               <div className="space-y-3">
-                <div className="sticky top-0 z-10 -mx-3 border-b border-white/10 bg-[#081a27]/95 px-3 py-2 backdrop-blur">
+                <div className="sticky top-0 z-10 -mx-3 border-b border-white/10 bg-[#101010]/95 px-3 py-2 backdrop-blur">
                   <button
                     type="button"
                     onClick={() => {
@@ -1114,28 +1383,28 @@ export function GlobalChatClient() {
                       setReplyTarget(null);
                       setIsThreadLoading(false);
                     }}
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[#bfe2ff] hover:text-white"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-300 hover:text-white"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to chat
                   </button>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-[#102636] px-3 py-2 shadow-sm">
+                <div className="rounded-xl border border-white/10 bg-[#101010] px-3 py-2 shadow-sm">
                   <div className="flex items-start gap-2">
                     <Avatar size="sm" className="mt-0.5 shrink-0 border border-white/10">
                       <AvatarImage
                         src={threadRootMessage.avatarUrl || undefined}
                         alt={threadRootMessage.displayName}
                       />
-                      <AvatarFallback className="bg-[#1d3f58] text-[10px] text-[#d7ecff]">
+                      <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
                         {getAvatarFallback(threadRootMessage.displayName)}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="min-w-0 flex-1">
-                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-[#e4f3ff]">
-                        <span className="text-sm font-bold text-[#d8ecff]">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
+                        <span className="text-sm font-bold text-white">
                           {threadRootMessage.displayName}
                         </span>
                         <span className="text-xs text-zinc-400">
@@ -1150,7 +1419,7 @@ export function GlobalChatClient() {
                         <button
                           type="button"
                           onClick={() => setReplyTarget(threadRootMessage)}
-                          className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-[#bfe2ff]"
+                          className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
                         >
                           <Reply className="h-3.5 w-3.5" />
                           Reply
@@ -1161,7 +1430,7 @@ export function GlobalChatClient() {
                 </div>
 
                 {threadMessages.length === 0 ? (
-                  <div className="rounded-xl border border-white/10 bg-[#102636] p-3 text-sm text-zinc-300">
+                  <div className="rounded-xl border border-white/10 bg-[#101010] p-3 text-sm text-zinc-300">
                     {isThreadLoading
                       ? "Loading thread replies..."
                       : "No replies yet. Be the first to reply in this thread."}
@@ -1177,9 +1446,9 @@ export function GlobalChatClient() {
             )}
           </div>
 
-          <div className="border-t border-white/10 bg-[#091724] p-3">
+          <div className="border-t border-white/10 bg-[#101010] p-3 rounded-b-3xl">
             {replyTarget ? (
-              <div className="mb-2 flex items-center justify-between rounded-lg border border-white/10 bg-[#0d2434] px-3 py-2 text-xs text-[#b7ddff]">
+              <div className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-[#101010] px-3 py-2 text-xs text-zinc-300">
                 <div className="min-w-0">
                   <span className="font-semibold">Replying to {replyTarget.displayName}</span>
                   <span className="ml-2 text-zinc-300">{truncateMessage(replyTarget.text, 70)}</span>
@@ -1199,11 +1468,54 @@ export function GlobalChatClient() {
                 </button>
               </div>
             ) : null}
+            {isRulesOpen ? (
+              <Squircle
+                radius={22}
+                smoothing={1}
+                borderWidth={2}
+                borderColor="rgba(255,255,255,0.2)"
+                className="mb-2"
+                innerClassName="bg-[#101010] px-3 py-3 text-sm text-zinc-300"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-white font-semibold">Chat Rules</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsRulesOpen(false)}
+                    className="rounded p-1 text-zinc-400 transition hover:bg-white/5 hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <ul className="mt-2 list-disc pl-5 space-y-1">
+                  <li>No spamming</li>
+                  <li>No advertising</li>
+                  <li>Zero tolerance for harassment</li>
+                  <li>No slandering website, staff, or other players</li>
+                  <li>No sharing of socials or personal info</li>
+                  <li>No posting external links</li>
+                </ul>
+                <div className="mt-3">
+                  <Button
+                    onClick={() => {
+                      try {
+                        localStorage.setItem("global_chat_rules_accepted", "1");
+                      } catch {}
+                      setHasAcceptedRules(true);
+                      setIsRulesOpen(false);
+                    }}
+                    className="w-full py-3 px-4 rounded-2xl bg-white text-black hover:bg-zinc-200"
+                  >
+                    Accept Rules
+                  </Button>
+                </div>
+              </Squircle>
+            ) : null}
 
             <div className="mb-2 flex items-center gap-2">
               <div className="relative flex-1">
                 {mentionContext && mentionSuggestions.length > 0 ? (
-                  <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-20 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#06131d] p-1 shadow-2xl">
+                  <div className="absolute bottom-full left-0 right-0 mb-2 z-20 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#101010] p-1 shadow-2xl">
                     {mentionSuggestions.map((candidate, index) => (
                       <button
                         key={`${candidate.userId}-${candidate.handle}`}
@@ -1213,15 +1525,13 @@ export function GlobalChatClient() {
                           applyMention(candidate);
                         }}
                         className={cn(
-                          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition",
-                          index === activeMentionIndex
-                            ? "bg-[#1f4460] text-white"
-                            : "text-zinc-200 hover:bg-white/5"
+                          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition",
+                          index === activeMentionIndex ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-white/5"
                         )}
                       >
                         <Avatar size="sm" className="shrink-0 border border-white/10">
                           <AvatarImage src={candidate.avatarUrl || undefined} alt={candidate.displayName} />
-                          <AvatarFallback className="bg-[#1d3f58] text-[10px] text-[#d7ecff]">
+                          <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
                             {getAvatarFallback(candidate.displayName)}
                           </AvatarFallback>
                         </Avatar>
@@ -1229,7 +1539,7 @@ export function GlobalChatClient() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 text-sm">
                             <span className="truncate font-semibold">{candidate.displayName}</span>
-                            <span className="truncate text-xs text-[#9ed0f7]">@{candidate.handle}</span>
+                            <span className="truncate text-xs text-zinc-400">@{candidate.handle}</span>
                           </div>
                           <div className="flex items-center gap-2 text-[11px] text-zinc-400">
                             {candidate.isSeller ? <span>Seller</span> : null}
@@ -1248,6 +1558,12 @@ export function GlobalChatClient() {
                   onChange={(event) => {
                     setDraft(event.target.value);
                     syncMentionContextFromInput(event.currentTarget);
+                  }}
+                  maxLength={180}
+                  onFocus={() => {
+                    if (!hasAcceptedRules) {
+                      setIsRulesOpen(true);
+                    }
                   }}
                   onClick={(event) => {
                     syncMentionContextFromInput(event.currentTarget);
@@ -1309,40 +1625,76 @@ export function GlobalChatClient() {
                   }}
                   placeholder={canWrite ? "Type your message (@ to mention)" : "Login to write in chat"}
                   disabled={!canWrite || isSending}
-                  className="h-11 w-full rounded-lg border border-[#2f4a5d] bg-[#06131d] px-3 text-base text-white placeholder:text-zinc-500 focus:border-[#4d7b9b] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-11 w-full rounded-2xl border-2 border-white/20 bg-[#0A0A0A]/80 px-3 pr-28 text-base text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 />
+                <AnimatePresence>
+                  {draft.trim().length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute inset-y-1 right-1 flex items-center"
+                    >
+                      <Button
+                        type="button"
+                        onClick={() => setIsRulesOpen(true)}
+                        className="h-full px-3 rounded-2xl bg-zinc-800 text-white hover:bg-zinc-700 border border-white/10 mr-2 flex items-center justify-center"
+                      >
+                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                          <g transform="translate(-414 -101)">
+                            <path d="M418,101 C415.791,101 414,102.791 414,105 L414,126 C414,128.209 415.885,129.313 418,130 L429,133 L429,104 C423.988,102.656 418,101 418,101 L418,101 Z M442,101 C442,101 436.212,102.594 430.951,104 L431,104 L431,133 C436.617,131.501 442,130 442,130 C444.053,129.469 446,128.209 446,126 L446,105 C446,102.791 444.209,101 442,101 L442,101 Z"></path>
+                          </g>
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={handleSend}
+                        disabled={!canWrite || isSending}
+                        className="h-full px-4 rounded-2xl bg-white text-black hover:bg-zinc-200 flex items-center gap-2 font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Send
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <Button
-                onClick={handleSend}
-                disabled={!canWrite || isSending || !draft.trim()}
-                className="h-11 rounded-lg bg-[#2684d9] px-5 text-base font-bold text-white hover:bg-[#1f74be]"
-              >
-                <Send className="mr-2 h-4 w-4" />
-                Send
-              </Button>
             </div>
 
             <div className="flex items-center justify-between text-xs text-zinc-300">
               <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Online: {onlineCount.toLocaleString("en-US")}
+                <svg width="256px" height="256px" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#b8ffc0" strokeWidth="0.40800000000000003" className="h-6 w-6">
+                  <g strokeWidth="0"></g>
+                  <g strokeLinecap="round" strokeLinejoin="round"></g>
+                  <g>
+                    <path d="M12 9.5C13.3807 9.5 14.5 10.6193 14.5 12C14.5 13.3807 13.3807 14.5 12 14.5C10.6193 14.5 9.5 13.3807 9.5 12C9.5 10.6193 10.6193 9.5 12 9.5Z" fill="#04dc3a"></path>
+                  </g>
+                </svg>
+                Online: {displayOnlineCount.toLocaleString("en-US")}
               </span>
 
-              {canWrite ? (
-                <span className="text-zinc-400">Use @ to tag users online in this room</span>
-              ) : (
+              {activeRoom === "help" && slowModeMinutes > 0 ? (
+                <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
+              ) : !user ? (
                 <Link
                   href="/login?next=/global-chat"
-                  className="inline-flex items-center gap-1 text-[#8ecfff] hover:text-white"
+                  className="inline-flex items-center gap-1 text-zinc-300 hover:text-white"
                 >
                   <LogIn className="h-3.5 w-3.5" />
                   Login to write
                 </Link>
+              ) : !canWrite ? (
+                <span className="text-zinc-400">You are not {requiredRoleText || "allowed"} to write here.</span>
+              ) : (
+                <span className="text-zinc-400">{draft.length}/180</span>
               )}
             </div>
           </div>
         </aside>
+        )}
       </div>
     </div>
   );

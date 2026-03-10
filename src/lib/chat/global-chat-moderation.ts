@@ -16,6 +16,8 @@ export type ModerationErrorCode =
   | "DUPLICATE_SPAM"
   | "MUTE_ACTIVE"
   | "BAN_ACTIVE"
+  | "SLOW_MODE"
+  | "ROLE_NOT_ALLOWED"
   | "AUTH_REQUIRED";
 
 export type ModerationError = {
@@ -38,16 +40,26 @@ type BaseContext = {
   blockedPhrases?: string[];
 };
 
-const LINK_PATTERNS: RegExp[] = [
-  /https?:\/\//i,
-  /\bwww\./i,
-  /\bt\.me\b/i,
-  /\bdiscord\.gg\b/i,
-  /\bdiscord(?:app)?\.com\/invite\b/i,
-  /\btelegram\.(?:me|dog|org)\b/i,
-  /\binvite\s+link\b/i,
-  /\b[a-z0-9-]+\.(?:com|net|io|ru|xyz|org)\b/i,
-];
+function getAllowedHosts(): Set<string> {
+  const hosts = new Set<string>([
+    "whatnot.market",
+    "www.whatnot.market",
+    "whatnotmarket.com",
+    "www.whatnotmarket.com",
+    "localhost",
+    "127.0.0.1",
+  ]);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH0_BASE_URL || "";
+  try {
+    if (appUrl) {
+      const u = new URL(appUrl);
+      if (u.hostname) hosts.add(u.hostname.toLowerCase());
+    }
+  } catch {
+    // ignore invalid env URL
+  }
+  return hosts;
+}
 
 function trimAndNormalize(raw: string) {
   return raw.trim().replace(/\s+/g, " ");
@@ -66,7 +78,36 @@ function hasRepeatedCharacterBurst(message: string) {
 }
 
 function containsBlockedLink(message: string) {
-  return LINK_PATTERNS.some((pattern) => pattern.test(message));
+  const allowed = getAllowedHosts();
+  const schemeMatches = message.match(/https?:\/\/[^\s)]+/gi) || [];
+  const wwwMatches = message.match(/\bwww\.[^\s)]+/gi) || [];
+  const bareDomainMatches =
+    message.match(/\b[a-z0-9.-]+\.(?:com|net|org|io|ru|xyz|gg|me|app|co|dev|market)\b/gi) || [];
+
+  const tokens = [...schemeMatches, ...wwwMatches, ...bareDomainMatches];
+  if (tokens.length === 0) return false;
+
+  for (let raw of tokens) {
+    raw = raw.replace(/[.,);]+$/, "");
+    let host = "";
+    try {
+      if (/^https?:\/\//i.test(raw)) {
+        host = new URL(raw).hostname.toLowerCase();
+      } else {
+        const probe = new URL(`http://${raw}`);
+        host = probe.hostname.toLowerCase();
+      }
+    } catch {
+      return true;
+    }
+    const isAllowed =
+      allowed.has(host) ||
+      Array.from(allowed).some((root) => host === root || host.endsWith(`.${root}`));
+    if (!isAllowed) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function containsBlockedPhrase(messageLower: string, phrases: string[]) {
@@ -88,11 +129,11 @@ export function validateMessageShape({ room, message, blockedPhrases }: BaseCont
     };
   }
 
-  if (normalizedMessage.length > 300) {
+  if (normalizedMessage.length > 180) {
     return {
       ok: false,
       code: "MESSAGE_TOO_LONG",
-      message: "Message cannot exceed 300 characters.",
+      message: "Message cannot exceed 180 characters.",
     };
   }
 
@@ -100,7 +141,7 @@ export function validateMessageShape({ room, message, blockedPhrases }: BaseCont
     return {
       ok: false,
       code: "LINKS_NOT_ALLOWED",
-      message: "Links are not allowed in chat.",
+      message: "Only links to our site are allowed in chat.",
     };
   }
 

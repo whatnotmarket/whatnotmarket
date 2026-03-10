@@ -30,6 +30,7 @@ type UserControlRow = {
   muted_until: string | null;
   is_banned: boolean;
   banned_until: string | null;
+  is_moderator: boolean;
   moderator_override: boolean;
 };
 
@@ -67,6 +68,7 @@ function statusCodeForError(error: ModerationError) {
       return 403;
     case "FLOOD_LIMIT":
     case "DUPLICATE_SPAM":
+    case "SLOW_MODE":
       return 429;
     default:
       return 400;
@@ -141,7 +143,7 @@ export async function POST(req: Request) {
     admin.from("global_chat_blocked_phrases").select("phrase").eq("is_active", true),
     admin
       .from("global_chat_user_controls")
-      .select("user_id,is_muted,muted_until,is_banned,banned_until,moderator_override")
+      .select("user_id,is_muted,muted_until,is_banned,banned_until,is_moderator,moderator_override")
       .eq("user_id", user.id)
       .maybeSingle<UserControlRow>(),
     admin
@@ -195,6 +197,90 @@ export async function POST(req: Request) {
         reason: error.message,
       });
       return NextResponse.json(error, { status: statusCodeForError(error) });
+    }
+  }
+
+  // Role-based posting rules:
+  // - sell-services: only sellers can start threads; buyers can reply in threads.
+  // - buy-services: only buyers can start threads; sellers can reply in threads.
+  const { data: profileRow } = await admin
+    .from("profiles")
+    .select("role_preference,seller_status")
+    .eq("id", user.id)
+    .maybeSingle<{ role_preference: string | null; seller_status: string | null }>();
+
+  const rolePref = (profileRow?.role_preference || "").trim();
+  const sellerStatus = (profileRow?.seller_status || "").trim();
+  const isSeller = rolePref === "seller" || rolePref === "both" || sellerStatus === "verified";
+  const isBuyer = rolePref === "buyer" || rolePref === "both" || !isSeller;
+
+  if (!isThreadReply) {
+    if (room === "sell-services" && !isSeller) {
+      const error: ModerationError = { ok: false, code: "ROLE_NOT_ALLOWED", message: "Only sellers can start threads in Sell Services." };
+      await logModerationRejection({
+        userId: user.id,
+        room,
+        message,
+        code: error.code,
+        reason: error.message,
+      });
+      return NextResponse.json(error, { status: statusCodeForError(error) });
+    }
+    if (room === "buy-services" && !isBuyer) {
+      const error: ModerationError = { ok: false, code: "ROLE_NOT_ALLOWED", message: "Only buyers can start threads in Buy Services." };
+      await logModerationRejection({
+        userId: user.id,
+        room,
+        message,
+        code: error.code,
+        reason: error.message,
+      });
+      return NextResponse.json(error, { status: statusCodeForError(error) });
+    }
+  }
+
+  if (room === "help") {
+    if (isThreadReply) {
+      const isModerator = Boolean(userControl?.is_moderator) || Boolean(userControl?.moderator_override);
+      if (!isModerator) {
+        const error: ModerationError = { ok: false, code: "ROLE_NOT_ALLOWED", message: "Only moderators can reply in Help." };
+        await logModerationRejection({
+          userId: user.id,
+          room,
+          message,
+          code: error.code,
+          reason: error.message,
+        });
+        return NextResponse.json(error, { status: statusCodeForError(error) });
+      }
+    } else {
+      const { data: lastTopLevel } = await admin
+        .from("global_chat_messages")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .eq("room", "help")
+        .is("reply_to_id", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ created_at: string }>();
+
+      if (lastTopLevel?.created_at) {
+        const lastTs = new Date(lastTopLevel.created_at).getTime();
+        const diffMs = now - lastTs;
+        if (diffMs < 3_600_000) {
+          const remainingMs = 3_600_000 - diffMs;
+          const remainingMinutes = Math.max(1, Math.ceil(remainingMs / 60_000));
+          const error: ModerationError = { ok: false, code: "SLOW_MODE", message: `Slow mode active. You can post again in ${remainingMinutes} minutes.` };
+          await logModerationRejection({
+            userId: user.id,
+            room,
+            message,
+            code: error.code,
+            reason: error.message,
+          });
+          return NextResponse.json(error, { status: statusCodeForError(error) });
+        }
+      }
     }
   }
 
