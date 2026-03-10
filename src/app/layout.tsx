@@ -67,6 +67,8 @@ import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { PrivacyCard } from "@/components/global-chat/PrivacyCard";
+import AckeeTracker from "@/components/providers/AckeeTracker";
+import { Suspense } from "react";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -103,6 +105,9 @@ export default function RootLayout({
         <PostHogProvider>
           <Providers>
             <div className="flex-1 bg-black">
+              <Suspense fallback={null}>
+                <AckeeTracker />
+              </Suspense>
               {children}
             </div>
             <Footer />
