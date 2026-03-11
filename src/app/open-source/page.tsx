@@ -152,7 +152,7 @@ export default function OpenSourcePage() {
 
                         <div className="pt-4">
                             <Button 
-                                onClick={() => window.open("https://github.com/whatnotmarket", "_blank")}
+                                onClick={() => window.open("https://github.com/swaprmarket", "_blank")}
                                 className="h-12 px-8 font-bold bg-white text-black hover:bg-zinc-200 rounded-xl"
                             >
                                 <Github className="w-5 h-5 mr-2" /> Vai al Repository

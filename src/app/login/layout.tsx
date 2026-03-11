@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Join WhatnotMarket — The #1 Marketplace Where You Can Find Anything You Want",
+  title: "Join SwaprMarket — The #1 Marketplace Where You Can Find Anything You Want",
 };
 
 export default function LoginLayout({

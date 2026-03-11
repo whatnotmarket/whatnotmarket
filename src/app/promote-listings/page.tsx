@@ -101,7 +101,7 @@ I request to activate Sponsored Listings for my account.`;
   };
 
   const handleOpenTelegram = () => {
-    window.open("https://t.me/whatnotmarketbot?start=promote-listings", "_blank");
+    window.open("https://t.me/swaprmarketbot?start=promote-listings", "_blank");
   };
 
   return (

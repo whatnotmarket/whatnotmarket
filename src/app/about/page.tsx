@@ -84,7 +84,7 @@ export default function AboutPage() {
                     <Gem className="text-white w-6 h-6" /> Chi Siamo
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    Whatnot Market è una piattaforma globale dedicata allo scambio di beni e servizi digitali. 
+                    SwaprMarket è una piattaforma globale dedicata allo scambio di beni e servizi digitali. 
                     Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la <strong>privacy</strong> è al primo posto e la <strong>fiducia</strong> è garantita dalla tecnologia, non dalla burocrazia.
                   </p>
                   <p className="text-zinc-400 leading-relaxed">
@@ -208,7 +208,7 @@ export default function AboutPage() {
                   <div className="max-w-2xl mx-auto space-y-4">
                     <h2 className="text-2xl font-bold text-white">Unisciti alla Community</h2>
                     <p className="text-zinc-400">
-                      Che tu voglia vendere i tuoi servizi o trovare le migliori offerte digitali, Whatnot Market è il posto giusto.
+                      Che tu voglia vendere i tuoi servizi o trovare le migliori offerte digitali, SwaprMarket è il posto giusto.
                     </p>
                   </div>
 

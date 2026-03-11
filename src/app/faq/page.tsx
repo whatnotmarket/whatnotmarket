@@ -25,8 +25,8 @@ type FAQItem = {
 
 const buyerFAQs: FAQItem[] = [
   {
-    question: "Come funziona Whatnot Market?",
-    answer: "Whatnot Market è un marketplace 'Request-First'. Invece di sfogliare infinite liste di prodotti, pubblichi una richiesta specifica ('Cerco un account Netflix', 'Cerco uno script Python') e i venditori qualificati ti inviano offerte su misura."
+    question: "Come funziona SwaprMarket?",
+    answer: "SwaprMarket è un marketplace 'Request-First'. Invece di sfogliare infinite liste di prodotti, pubblichi una richiesta specifica ('Cerco un account Netflix', 'Cerco uno script Python') e i venditori qualificati ti inviano offerte su misura."
   },
   {
     question: "I miei fondi sono al sicuro?",

@@ -16,12 +16,12 @@ export function DisclaimerClient({ copy }: { copy: CopyMap }) {
           </h1>
           <div className="prose prose-invert prose-lg max-w-none text-zinc-300 space-y-6">
             <p>
-              {content.intro || "Benvenuto su Whatnot Market. Prima di utilizzare i nostri servizi, ti preghiamo di leggere attentamente il seguente disclaimer."}
+              {content.intro || "Benvenuto su SwaprMarket. Prima di utilizzare i nostri servizi, ti preghiamo di leggere attentamente il seguente disclaimer."}
             </p>
             
             <h2 className="text-2xl font-bold text-white pt-4">{content.role_title || "Ruolo della Piattaforma"}</h2>
             <p>
-              {content.role_text || "Whatnot Market opera esclusivamente come un intermediario tecnologico. La nostra piattaforma è un mezzo che permette agli utenti di pubblicare inserzioni per la vendita di beni o servizi. Non siamo proprietari, venditori, né gestori dei prodotti o servizi offerti nelle inserzioni."}
+              {content.role_text || "SwaprMarket opera esclusivamente come un intermediario tecnologico. La nostra piattaforma è un mezzo che permette agli utenti di pubblicare inserzioni per la vendita di beni o servizi. Non siamo proprietari, venditori, né gestori dei prodotti o servizi offerti nelle inserzioni."}
             </p>
 
             <h2 className="text-2xl font-bold text-white pt-4">{content.liability_title || "Nessuna Responsabilità sui Contenuti e sulle Transazioni"}</h2>
@@ -36,7 +36,7 @@ export function DisclaimerClient({ copy }: { copy: CopyMap }) {
                 {content.point2 || "Non siamo responsabili per ciò che gli utenti vendono. La qualità, la sicurezza, la legalità e la veridicità degli articoli o servizi offerti sono di esclusiva responsabilità dell'utente che pubblica l'inserzione. Non effettuiamo alcuna verifica preventiva sui contenuti pubblicati."}
               </li>
               <li>
-                {content.point3 || "Non siamo parte della transazione. Qualsiasi accordo, transazione o contratto stipulato tra gli utenti avviene direttamente tra di loro. Whatnot Market non è parte di tale rapporto e non assume alcuna responsabilità derivante da esso."}
+                {content.point3 || "Non siamo parte della transazione. Qualsiasi accordo, transazione o contratto stipulato tra gli utenti avviene direttamente tra di loro. SwaprMarket non è parte di tale rapporto e non assume alcuna responsabilità derivante da esso."}
               </li>
             </ul>
 
@@ -46,7 +46,7 @@ export function DisclaimerClient({ copy }: { copy: CopyMap }) {
             </p>
 
             <p className="pt-6 border-t border-white/10">
-              {content.footer || "Utilizzando Whatnot Market, accetti i termini di questo disclaimer e sollevi la piattaforma da qualsiasi responsabilità legata alle attività degli utenti e ai contenuti delle inserzioni."}
+              {content.footer || "Utilizzando SwaprMarket, accetti i termini di questo disclaimer e sollevi la piattaforma da qualsiasi responsabilità legata alle attività degli utenti e ai contenuti delle inserzioni."}
             </p>
           </div>
         </div>

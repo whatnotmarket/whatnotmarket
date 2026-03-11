@@ -252,10 +252,10 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
           const url = new URL(href);
           const host = url.hostname.toLowerCase();
           const allowed = new Set<string>([
-            "whatnot.market",
-            "www.whatnot.market",
-            "whatnotmarket.com",
-            "www.whatnotmarket.com",
+            "swaprmarket.market",
+            "www.swaprmarket.market",
+            "swaprmarket.com",
+            "www.swaprmarket.com",
             "localhost",
             "127.0.0.1",
           ]);

@@ -13,8 +13,8 @@ if (!projectId) {
 }
 
 const metadata = {
-  name: "whatnot-appkit-test",
-  description: "Whatnot Market AppKit test",
+  name: "swaprmarket-appkit-test",
+  description: "SwaprMarket AppKit test",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   icons: ["/logowhite.svg"],
 };

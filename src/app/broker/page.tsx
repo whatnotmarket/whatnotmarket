@@ -25,11 +25,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Escrow for Brokers | Whatnot Market",
+  title: "Escrow for Brokers | SwaprMarket",
   description:
     "Manage secure broker transactions between buyers and sellers with protected commissions, transparent escrow flow, and trusted infrastructure.",
   openGraph: {
-    title: "Escrow for Brokers | Whatnot Market",
+    title: "Escrow for Brokers | SwaprMarket",
     description:
       "A premium escrow solution for brokers managing buyer-seller deals with secure commission distribution.",
     type: "website",

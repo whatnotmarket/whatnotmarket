@@ -132,7 +132,7 @@ export function ContactClient({ copy }: { copy: CopyMap }) {
                             <p className="text-sm text-zinc-400">{email.desc || "Per questioni amministrative o partnership."}</p>
                         </div>
                         <Button variant="outline" className="border-white/10 hover:bg-white/5 text-white shrink-0">
-                            support@whatnot.market
+                            support@swaprmarket.market
                         </Button>
                     </div>
                 </section>

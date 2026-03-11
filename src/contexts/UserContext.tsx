@@ -47,7 +47,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setRole("guest");
           setIsFounder(false);
           setUsername(null);
-          localStorage.removeItem("whatnot_user_role");
+          localStorage.removeItem("swaprmarket_user_role");
           return;
         }
 
@@ -65,7 +65,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setRole(nextRole);
         setIsFounder(nextIsFounder);
         setUsername(currentUsername);
-        localStorage.setItem("whatnot_user_role", nextRole);
+        localStorage.setItem("swaprmarket_user_role", nextRole);
       } catch (error) {
         console.error("Failed to resolve user role:", error);
       } finally {
@@ -94,7 +94,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setRole("guest");
     setIsFounder(false);
     setUsername(null);
-    localStorage.removeItem("whatnot_user_role");
+    localStorage.removeItem("swaprmarket_user_role");
   };
 
   return (

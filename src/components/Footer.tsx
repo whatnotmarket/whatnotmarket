@@ -54,7 +54,7 @@ export function Footer() {
               <div className="relative w-40 h-10">
                 <Image 
                   src="/logowhite.svg" 
-                  alt="Whatnot Market" 
+                  alt="SwaprMarket" 
                   fill 
                   className="object-contain object-left" 
                   priority
@@ -77,9 +77,9 @@ export function Footer() {
             
             {/* Column 1 */}
             <div className="space-y-4">
-              <h4 className="font-bold text-white">About Whatnot</h4>
+              <h4 className="font-bold text-white">About SwaprMarket</h4>
               <ul className="space-y-2 text-zinc-400">
-                <li><Link href="/about" className="hover:text-white transition-colors">What is Whatnot?</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">What is SwaprMarket?</Link></li>
                 <li><Link href="/download" className="hover:text-white transition-colors">Download App</Link></li>
                 <li><Link href="/loyalty" className="hover:text-white transition-colors">Loyalty Program</Link></li>
                 <li><Link href="/news" className="hover:text-white transition-colors">Newsroom</Link></li>
@@ -120,7 +120,7 @@ export function Footer() {
               <ul className="space-y-2 text-zinc-400">
                 <li><Link href="/partners" className="hover:text-white transition-colors">Trusted Partners</Link></li>
                 <li><Link href="/media" className="hover:text-white transition-colors">Media Kit</Link></li>
-                <li><Link href="/business" className="hover:text-white transition-colors">Whatnot for Business</Link></li>
+                <li><Link href="/business" className="hover:text-white transition-colors">SwaprMarket for Business</Link></li>
                 <li><Link href="/referral" className="hover:text-white transition-colors">Referral Program</Link></li>
                 <li><Link href="/affiliate" className="hover:text-white transition-colors">Affiliate Program</Link></li>
                 <li><Link href="/api" className="hover:text-white transition-colors">API Integration</Link></li>
@@ -156,10 +156,10 @@ export function Footer() {
                 <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
                 <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                 <Link href="/refund" className="hover:text-white transition-colors">Refund Policy</Link>
-                <span>© 2026 Whatnot Market</span>
+                <span>© 2026 SwaprMarket</span>
             </div>
             <div className="text-center md:text-right">
-                Whatnot Market Ltd; 123 Blockchain Ave, Crypto City; REG NO: WM-2026-X
+                SwaprMarket Ltd; 123 Blockchain Ave, Crypto City; REG NO: WM-2026-X
             </div>
         </div>
       </Container>

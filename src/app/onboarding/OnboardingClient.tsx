@@ -196,7 +196,7 @@ export function OnboardingClient({ copy }: { copy: CopyMap }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-bold text-black">
               W
             </div>
-            <span className="text-lg font-bold tracking-wide">Whatnot Market</span>
+            <span className="text-lg font-bold tracking-wide">SwaprMarket</span>
           </div>
 
           <div className="space-y-6">

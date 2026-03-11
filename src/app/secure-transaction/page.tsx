@@ -85,7 +85,7 @@ export default function SecureTransactionPage() {
                     <Lock className="text-white w-6 h-6" /> Protezione Totale
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    Su Whatnot Market ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori.
+                    Su SwaprMarket ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori.
                     Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione.
                     Questo garantisce che nessuna delle due parti possa perdere i propri fondi durante il processo.
                   </p>
@@ -155,7 +155,7 @@ export default function SecureTransactionPage() {
                       <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
                         <h4 className="text-white font-bold text-sm mb-2">Escrow della piattaforma</h4>
                         <p className="text-xs text-zinc-400 leading-relaxed">
-                          In molti casi l’escrow viene gestito direttamente da Whatnot Market. Questo garantisce un ambiente controllato e sicuro per le transazioni tra utenti.
+                          In molti casi l’escrow viene gestito direttamente da SwaprMarket. Questo garantisce un ambiente controllato e sicuro per le transazioni tra utenti.
                         </p>
                       </div>
                       <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
@@ -244,7 +244,7 @@ export default function SecureTransactionPage() {
                   <div className="max-w-2xl mx-auto space-y-4">
                     <h2 className="text-2xl font-bold text-white">Inizia una transazione sicura</h2>
                     <p className="text-zinc-400">
-                      Utilizza il sistema escrow per acquistare o vendere in modo sicuro su Whatnot Market.
+                      Utilizza il sistema escrow per acquistare o vendere in modo sicuro su SwaprMarket.
                     </p>
                   </div>
 

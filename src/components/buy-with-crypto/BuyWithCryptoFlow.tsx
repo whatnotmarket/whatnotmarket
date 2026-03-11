@@ -101,7 +101,7 @@ export function BuyWithCryptoFlow() {
 
   const copyTrackingLink = () => {
     const accessQuery = trackingAccessToken ? `?access=${encodeURIComponent(trackingAccessToken)}` : "";
-    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}${accessQuery}`);
+    navigator.clipboard.writeText(`https://swaprmarket.app/track/${trackingId}${accessQuery}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -219,7 +219,7 @@ export function BuyWithCryptoFlow() {
                   <label className="text-sm font-medium text-white">Tracking Link</label>
                   <div className="flex gap-2">
                     <div className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-zinc-300 font-semibold text-sm truncate">
-                      {`https://whatnotmarket.app/track/${trackingId}?access=***`}
+                      {`https://swaprmarket.app/track/${trackingId}?access=***`}
                     </div>
                     <Button
                       onClick={copyTrackingLink}

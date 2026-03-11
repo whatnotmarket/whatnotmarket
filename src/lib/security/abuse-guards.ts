@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { evaluateAbuseSnapshot, type AbuseSnapshot } from "@/lib/security/abuse-scoring";
 
 const ABUSE_RETRY_AFTER_SECONDS = 120;
-const ABUSE_HASH_SALT = process.env.ABUSE_SIGNAL_SALT || "whatnotmarket-abuse-v1";
+const ABUSE_HASH_SALT = process.env.ABUSE_SIGNAL_SALT || "swaprmarket-abuse-v1";
 const DEFAULT_ENDPOINT_GROUP = "generic";
 
 export type AbuseGuardResult = {

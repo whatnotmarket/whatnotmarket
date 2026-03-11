@@ -264,7 +264,7 @@ I request to activate Sponsored Listings for my account.`;
                                 <div className="space-y-3">
                                     <Button 
                                         className="w-full h-14 text-base font-bold bg-[#229ED9] hover:bg-[#1E88B9] text-white rounded-xl gap-3 shadow-lg shadow-blue-900/20"
-                                        onClick={() => window.open(`https://t.me/whatnotmarket_support?start=${encodeURIComponent(generateTelegramMessage())}`, "_blank")}
+                                        onClick={() => window.open(`https://t.me/swaprmarket_support?start=${encodeURIComponent(generateTelegramMessage())}`, "_blank")}
                                     >
                                         Send on Telegram
                                     </Button>

@@ -8,7 +8,7 @@ export function createWalletChallengeMessage(params: {
   nonce: string;
 }) {
   return [
-    "Whatnot Market Wallet Authentication",
+    "SwaprMarket Wallet Authentication",
     "",
     `Address: ${params.address.toLowerCase()}`,
     `Chain: ${params.chain}`,

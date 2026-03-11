@@ -47,54 +47,54 @@
   - Query: room?, q?, limit?, userId?
   - Ritorna: messages (flagged), activeUsers, roomState, userHistory.
   - Autorizzazione: admin token.
-  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/api/admin/dashboard/public-chat/route.ts).
+  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/admin/dashboard/public-chat/route.ts).
 - POST /api/admin/dashboard/public-chat
   - Payload: { action, messageId?, userId?, reason?, muteMinutes? }
   - Azioni: delete_message, ban_message, mute_user, ban_user, unmute_user, unban_user.
   - Effetti: update su tabelle + inserimento global_chat_moderation_logs; realtime per riflesso lato client.
-  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/api/admin/dashboard/public-chat/route.ts#L160-L211).
+  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/admin/dashboard/public-chat/route.ts#L160-L211).
 - POST /api/moderation/public-chat/room-state
   - Payload: { action: "slow_mode"|"close"|"open", room, seconds?, minutes? }
   - Effetti: aggiorna slow_mode_seconds o closed_until; chiusura permanente se minutes<=0.
   - Autorizzazione: admin oppure moderatore.
-  - Implementazione: [room-state route](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/api/moderation/public-chat/room-state/route.ts).
+  - Implementazione: [room-state route](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/moderation/public-chat/room-state/route.ts).
 - POST /api/global-chat/messages
   - Enforcement: ban/mute/slow-mode/role; logging in global_chat_moderation_logs; errori senza toast lato client.
-  - Implementazione: [messages route](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/api/global-chat/messages/route.ts).
+  - Implementazione: [messages route](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/global-chat/messages/route.ts).
 
 ## Logica Side Client (Global Chat)
 - Realtime INSERT/UPDATE su global_chat_messages
   - INSERT: fetch del messaggio; merge; soft cap 300.
   - UPDATE: se is_deleted=true, rimuove immediatamente dalla UI; altrimenti aggiorna.
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/global-chat/GlobalChatClient.tsx#L600-L620).
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L600-L620).
 - Realtime UPDATE/INSERT su global_chat_user_controls (utente corrente)
   - Aggiorna stato banned/muted in tempo reale; blocca l’input; mostra banner inline (“You are banned…”, “You are muted…”); niente toast.
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/global-chat/GlobalChatClient.tsx#L852-L876).
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L852-L876).
 - Stato stanza realtime (global_chat_room_state)
   - slow_mode_seconds + closed_until; banner “Slow mode attivo (Xs)” o “This chat is closed”; blocco input; countdown per slow-mode e chiusura temporanea.
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/global-chat/GlobalChatClient.tsx#L880-L904).
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L880-L904).
 - Placeholder input coerente:
   - Banned: “You are banned from global chat.”
   - Muted: “You are muted for X seconds.”
   - Closed: “This chat is closed”
   - Slow-mode: “Slow mode active”
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/global-chat/GlobalChatClient.tsx#L1869-L1875).
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L1869-L1875).
 
 ## Dashboard Moderatore (Admin/Public Chat)
 - Top controls:
   - Language selector; search; indicatori Room (OPEN/CLOSED) e Slow (OFF/10s/30s/60s); Close room; Open room; Reload.
-  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/admin/public-chat/page.tsx#L104-L136).
+  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/admin/public-chat/page.tsx#L104-L136).
 - Stream messaggi (colonna sinistra):
   - Card con Username, Lingua, Timestamp, Testo; ‘Message removed’ per deleted; flagged con ring arancione.
   - Action visibili: Delete (neutro), Ban (rosso).
   - Menu “User ▾”: Mute 5m/30m/1h, Ban, Unmute, Unban, View history.
-  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/admin/public-chat/page.tsx#L145-L214).
+  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/admin/public-chat/page.tsx#L145-L214).
 - Active Users (colonna destra):
   - Lista con badge status: online, muted, banned; bottone Details; scheda dettaglio con azioni e storico recente.
-  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/app/admin/public-chat/page.tsx#L215-L281).
+  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/admin/public-chat/page.tsx#L215-L281).
 
 ## Sicurezza & RLS
-- Mai usare service role key nel frontend; solo in [supabase-admin.ts](file:///c:/Users/2VibesApp/Desktop/whatnotmarket/src/lib/supabase-admin.ts).
+- Mai usare service role key nel frontend; solo in [supabase-admin.ts](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/lib/supabase-admin.ts).
 - .gitignore esclude .env* e script privati; usare .env.example per documentare variabili richieste.
 - RLS:
   - global_chat_messages: SELECT pubblico con is_deleted=false; API controllano inserimenti.

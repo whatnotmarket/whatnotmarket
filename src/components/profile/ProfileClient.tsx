@@ -206,7 +206,7 @@ function FounderMark() {
         />
       </svg>
       <span className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-[9999] -translate-x-1/2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[11px] text-white opacity-0 shadow-lg transition-opacity group-hover/founder:opacity-100">
-        Founder of WhatnotMarket
+        Founder of SwaprMarket
       </span>
     </span>
   );
@@ -243,7 +243,7 @@ function BioText({ text, isOfficialProfile }: { text: string; isOfficialProfile:
     return <>{text}</>;
   }
 
-  // Regex migliorata per supportare domini come whatnotmarket.app anche senza http/www
+  // Regex migliorata per supportare domini come swaprmarket.app anche senza http/www
   const linkRegex = /((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
   const parts = text.split(linkRegex);
   
@@ -256,7 +256,7 @@ function BioText({ text, isOfficialProfile }: { text: string; isOfficialProfile:
              href = `https://${href}`;
            }
            
-           const isWhatnotApp = part.toLowerCase().includes('whatnotmarket.app');
+           const isSwaprMarketApp = part.toLowerCase().includes('swaprmarket.app');
            
            return (
              <a 
@@ -266,7 +266,7 @@ function BioText({ text, isOfficialProfile }: { text: string; isOfficialProfile:
                rel="noopener noreferrer" 
                className={cn(
                  "hover:underline",
-                 isWhatnotApp ? "font-bold text-white" : "text-white"
+                 isSwaprMarketApp ? "font-bold text-white" : "text-white"
                )}
                onClick={(e) => e.stopPropagation()}
              >

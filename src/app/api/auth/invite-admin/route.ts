@@ -46,13 +46,13 @@ export async function POST(request: NextRequest) {
   }
 
   const normalizedCode = inviteResolution.normalizedCode;
-  const syntheticEmail = `founder+${normalizedCode.toLowerCase()}@whatnotmarket.app`;
+  const syntheticEmail = `founder+${normalizedCode.toLowerCase()}@swaprmarket.app`;
 
   const bridgeIdentity = await ensureBridgeUser({
     subject: `invite:founder:${normalizedCode}`,
     provider: "walletconnect",
     email: syntheticEmail,
-    fullName: "WhatnotMarket Founder",
+    fullName: "SwaprMarket Founder",
     avatarUrl: null,
   });
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   const { error: profileError } = await admin
     .from("profiles")
     .update({
-      full_name: "WhatnotMarket Founder",
+      full_name: "SwaprMarket Founder",
       role_preference: "seller",
       onboarding_status: "completed",
       seller_status: "verified",

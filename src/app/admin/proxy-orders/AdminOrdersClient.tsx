@@ -18,7 +18,7 @@ export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
   const [metadata, setMetadata] = useState<any>({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [followerHandle, setFollowerHandle] = useState("");
-  const [targetHandle, setTargetHandle] = useState("whatnotmarket");
+  const [targetHandle, setTargetHandle] = useState("swaprmarket");
   const [isTestingFollow, setIsTestingFollow] = useState(false);
 
   const handleFollowTest = async () => {
@@ -104,7 +104,7 @@ export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
           <input
             value={targetHandle}
             onChange={(e) => setTargetHandle(e.target.value)}
-            placeholder="Target handle (es. whatnotmarket)"
+            placeholder="Target handle (es. swaprmarket)"
             className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-white"
           />
           <Button

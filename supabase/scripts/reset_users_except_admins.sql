@@ -1,4 +1,4 @@
--- Script per eliminare tutti gli utenti tranne 'whatnotmarket' e 'testbuyer'
+-- Script per eliminare tutti gli utenti tranne 'swaprmarket' e 'testbuyer'
 -- Questo eliminerà anche i dati correlati (profili, chat, ordini) grazie al CASCADE
 -- Assicurati di eseguire questo script con i permessi di amministratore o nel SQL Editor di Supabase.
 
@@ -6,7 +6,7 @@
 WITH protected_users AS (
     SELECT id 
     FROM public.profiles 
-    WHERE username IN ('whatnotmarket', 'testbuyer')
+    WHERE username IN ('swaprmarket', 'testbuyer')
 )
 -- 2. Elimina tutti gli utenti da auth.users che NON sono nella lista protetta
 DELETE FROM auth.users

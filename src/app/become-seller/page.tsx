@@ -99,7 +99,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
 
   const handleOpenTelegram = () => {
     // In a real app, this would be your bot username
-    window.open("https://t.me/whatnotmarketbot?start=become-seller", "_blank");
+    window.open("https://t.me/swaprmarketbot?start=become-seller", "_blank");
   };
 
   return (

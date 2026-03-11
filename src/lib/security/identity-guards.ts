@@ -9,7 +9,7 @@ const RESERVED_PROFILE_HANDLES = new Set([
   "security",
   "official",
   "team",
-  "whatnotmarket",
+  "swaprmarket",
 ]);
 
 export function normalizeProfileHandle(raw: string) {

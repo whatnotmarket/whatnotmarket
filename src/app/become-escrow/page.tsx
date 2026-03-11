@@ -99,7 +99,7 @@ I request verification to become an Escrow Partner.`;
   };
 
   const handleOpenTelegram = () => {
-    window.open("https://t.me/whatnotmarketbot?start=become-escrow", "_blank");
+    window.open("https://t.me/swaprmarketbot?start=become-escrow", "_blank");
   };
 
   return (
@@ -187,7 +187,7 @@ I request verification to become an Escrow Partner.`;
                         <Scale className="text-white" /> Escrow Partnership
                       </h2>
                       <p className="text-zinc-400 leading-relaxed">
-                        Whatnot Market allows experienced and trusted individuals to become Escrow Partners on the platform.
+                        SwaprMarket allows experienced and trusted individuals to become Escrow Partners on the platform.
                         As an escrow partner, you help secure transactions between buyers and sellers by holding funds in escrow until the deal is completed.
                         In return, you earn a share of the escrow fee for every transaction you manage.
                       </p>

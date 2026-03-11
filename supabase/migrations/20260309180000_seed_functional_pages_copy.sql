@@ -51,7 +51,7 @@ VALUES
   ('/secure-transaction', 'header', 'subtitle', 'Page Subtitle', 'I tuoi fondi sono protetti fino al completamento della transazione.', 'textarea', 'it'),
   ('/secure-transaction', 'header', 'back_button', 'Back Button', 'Indietro', 'button', 'it'),
   ('/secure-transaction', 'intro', 'title', 'Intro Title', 'Protezione Totale', 'title', 'it'),
-  ('/secure-transaction', 'intro', 'text', 'Intro Text', 'Su Whatnot Market ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori. Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione.', 'textarea', 'it'),
+  ('/secure-transaction', 'intro', 'text', 'Intro Text', 'Su SwaprMarket ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori. Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione.', 'textarea', 'it'),
   ('/secure-transaction', 'how_it_works', 'title', 'How It Works Title', 'Come funziona l’Escrow', 'title', 'it'),
   ('/secure-transaction', 'how_it_works', 'step1_title', 'Step 1 Title', 'Deposito', 'title', 'it'),
   ('/secure-transaction', 'how_it_works', 'step1_desc', 'Step 1 Desc', 'L''acquirente invia i fondi al contratto smart di escrow. I fondi sono al sicuro.', 'textarea', 'it'),

@@ -167,7 +167,7 @@ export default function RefundPage() {
                     <div className="space-y-4 border-t border-white/5 pt-8">
                         <h2 className="text-2xl font-bold text-white">4. Chargebacks</h2>
                         <p>
-                            Initiating a chargeback with your payment provider without first contacting us may result in the permanent suspension of your Whatnot Market account. We encourage you to use our dispute resolution process first.
+                            Initiating a chargeback with your payment provider without first contacting us may result in the permanent suspension of your SwaprMarket account. We encourage you to use our dispute resolution process first.
                         </p>
                     </div>
                 </Card>

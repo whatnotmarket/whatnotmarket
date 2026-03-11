@@ -1,4 +1,4 @@
-# Whatnot Market
+# SwaprMarket
 
 A buyer/seller marketplace web app built with Next.js, Tailwind CSS, and Supabase.
 

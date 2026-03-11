@@ -43,7 +43,7 @@ export default function TermsPage() {
                             Terms of Service
                         </h1>
                         <p className="text-zinc-400 text-base leading-relaxed">
-                            Please read these terms carefully before using our platform. They govern your relationship with Whatnot Market.
+                            Please read these terms carefully before using our platform. They govern your relationship with SwaprMarket.
                         </p>
                         <p className="text-xs text-zinc-500 pt-2">
                             Last updated: March 6, 2026
@@ -69,7 +69,7 @@ export default function TermsPage() {
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">1. Introduction</h2>
                         <p>
-                            Welcome to Whatnot Market ("we," "our," or "us"). By accessing or using our website, services, or applications (collectively, the "Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Services.
+                            Welcome to SwaprMarket ("we," "our," or "us"). By accessing or using our website, services, or applications (collectively, the "Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Services.
                         </p>
                     </div>
 
@@ -88,7 +88,7 @@ export default function TermsPage() {
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">3. Marketplace & Transactions</h2>
                         <p>
-                            Whatnot Market acts as a venue to allow users who comply with our policies to offer, sell, and buy certain goods and services. We are not a party to the actual transaction between buyers and sellers.
+                            SwaprMarket acts as a venue to allow users who comply with our policies to offer, sell, and buy certain goods and services. We are not a party to the actual transaction between buyers and sellers.
                         </p>
                         <div className="p-4 rounded-2xl bg-white/5 border border-white/5 mt-4">
                             <p className="text-white text-sm">
@@ -124,7 +124,7 @@ export default function TermsPage() {
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">6. Limitation of Liability</h2>
                         <p>
-                            To the fullest extent permitted by law, Whatnot Market shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly.
+                            To the fullest extent permitted by law, SwaprMarket shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly.
                         </p>
                     </div>
 
@@ -138,7 +138,7 @@ export default function TermsPage() {
                     <div className="space-y-4 border-t border-white/5 pt-8">
                         <h2 className="text-2xl font-bold text-white">8. Contact Us</h2>
                         <p>
-                            If you have any questions about these Terms, please contact us at <span className="text-white hover:underline cursor-pointer">support@whatnotmarket.com</span>.
+                            If you have any questions about these Terms, please contact us at <span className="text-white hover:underline cursor-pointer">support@swaprmarket.com</span>.
                         </p>
                     </div>
                 </Card>

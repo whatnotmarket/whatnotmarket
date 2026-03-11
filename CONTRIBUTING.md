@@ -1,14 +1,14 @@
-# Contributing to Whatnot Market
+# Contributing to SwaprMarket
 
-Thank you for your interest in contributing to Whatnot Market! We welcome contributions from the community to help make this project better.
+Thank you for your interest in contributing to SwaprMarket! We welcome contributions from the community to help make this project better.
 
 ## Getting Started
 
 1.  **Fork the repository** on GitHub.
 2.  **Clone your fork** locally:
     ```bash
-    git clone https://github.com/your-username/whatnotmarket.git
-    cd whatnotmarket
+    git clone https://github.com/your-username/swaprmarket.git
+    cd swaprmarket
     ```
 3.  **Install dependencies**:
     ```bash

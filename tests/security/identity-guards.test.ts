@@ -12,6 +12,6 @@ test("normalize profile handle strips dangerous prefixes and symbols", () => {
 
 test("reserved handles are blocked for impersonation reduction", () => {
   assert.equal(isReservedProfileHandle("support"), true);
-  assert.equal(isReservedProfileHandle("@WHATNOTMARKET"), true);
+  assert.equal(isReservedProfileHandle("@SWAPRMARKET"), true);
   assert.equal(isReservedProfileHandle("trusted_seller_123"), false);
 });

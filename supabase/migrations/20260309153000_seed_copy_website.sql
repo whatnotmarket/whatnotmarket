@@ -55,7 +55,7 @@ VALUES
   ('/market', 'hero', 'subtitle', 'Subtitle', 'Cerca richieste, ricevi offerte verificate e chiudi il deal in escrow in modo sicuro.', 'textarea', 'it'),
 
   -- How It Works
-  ('/market', 'how_it_works', 'title', 'Section Title', 'Come funziona Whatnot Market', 'title', 'it'),
+  ('/market', 'how_it_works', 'title', 'Section Title', 'Come funziona SwaprMarket', 'title', 'it'),
   ('/market', 'how_it_works', 'subtitle', 'Section Subtitle', 'Il modo più sicuro per comprare e vendere prodotti esclusivi con criptovalute.', 'plain', 'it'),
   ('/market', 'how_it_works', 'step_1_title', 'Step 1 Title', '1. Fai una Richiesta', 'plain', 'it'),
   ('/market', 'how_it_works', 'step_1_desc', 'Step 1 Description', 'Descrivi ciò che cerchi. I venditori verificati riceveranno una notifica.', 'textarea', 'it'),

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const response = await fetch(`https://t.me/${cleanUsername}`, {
       method: "GET",
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; WhatnotBot/1.0)", // Generic UA
+        "User-Agent": "Mozilla/5.0 (compatible; SwaprMarketBot/1.0)", // Generic UA
         "Referrer-Policy": "no-referrer"
       },
     });

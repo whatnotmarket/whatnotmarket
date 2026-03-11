@@ -125,7 +125,7 @@ export default function SmartSearchPage() {
                       <Search className="w-8 h-8 text-white mb-4" />
                       <h4 className="text-white font-bold text-lg mb-2">Incolla in Smart Search</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Incolla il link nella barra di ricerca di Whatnot Market. Il nostro sistema analizzerà il prodotto e calcolerà il prezzo in crypto.
+                        Incolla il link nella barra di ricerca di SwaprMarket. Il nostro sistema analizzerà il prodotto e calcolerà il prezzo in crypto.
                       </p>
                     </div>
 

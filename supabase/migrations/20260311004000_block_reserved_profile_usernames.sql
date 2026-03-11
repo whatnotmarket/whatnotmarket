@@ -29,7 +29,7 @@ begin
     'security',
     'official',
     'team',
-    'whatnotmarket'
+    'swaprmarket'
   ]);
 
   if not is_reserved then

@@ -219,7 +219,7 @@ export default function ProductListingPage() {
             <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white capitalize">{productName} For Sale</h2>
                 <p className="text-zinc-400 text-sm leading-relaxed max-w-4xl">
-                    Buy {productName} {categorySlug} securely on Whatnot Market. 
+                    Buy {productName} {categorySlug} securely on SwaprMarket. 
                     All transactions are protected by our Escrow system. 
                     Sellers are verified and funds are only released when you confirm delivery.
                 </p>

@@ -107,7 +107,7 @@ export function StepPayout({
                         className="hidden"
                     />
                     <span className={feeAcknowledged ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"}>
-                        I understand whatnotmarket holds funds during the deal and charges a fee on successful completion.
+                        I understand swaprmarket holds funds during the deal and charges a fee on successful completion.
                     </span>
                 </label>
             </div>

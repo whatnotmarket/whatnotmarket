@@ -17,7 +17,7 @@ export function StepComplete() {
         
         <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">You're Verified</h1>
-            <p className="text-zinc-400">You can now sell on whatnotmarket.</p>
+            <p className="text-zinc-400">You can now sell on swaprmarket.</p>
         </div>
 
         <p className="text-sm text-zinc-500">Redirecting to marketplace...</p>

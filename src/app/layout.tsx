@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Whatnot Market",
+  title: "SwaprMarket",
   description: "Secure buyer/seller marketplace.",
   manifest: "/manifest.json",
   icons: {
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Whatnot Market",
+    title: "SwaprMarket",
   },
   other: {
     google: "notranslate",

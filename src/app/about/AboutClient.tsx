@@ -88,7 +88,7 @@ export function AboutClient({ copy }: { copy: CopyMap }) {
                     <Gem className="text-white w-6 h-6" /> {whoWeAre.title || "Chi Siamo"}
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    {whoWeAre.p1 || "Whatnot Market è una piattaforma globale dedicata allo scambio di beni e servizi digitali. Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la privacy è al primo posto e la fiducia è garantita dalla tecnologia, non dalla burocrazia."}
+                    {whoWeAre.p1 || "SwaprMarket è una piattaforma globale dedicata allo scambio di beni e servizi digitali. Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la privacy è al primo posto e la fiducia è garantita dalla tecnologia, non dalla burocrazia."}
                   </p>
                   <p className="text-zinc-400 leading-relaxed">
                     {whoWeAre.p2 || "A differenza dei marketplace tradizionali, non richiediamo procedure KYC invasive. Ci basiamo sulla reputazione, sui depositi di sicurezza (Vendor Bond) e su un rigoroso sistema di Escrow per proteggere ogni singola transazione."}

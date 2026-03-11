@@ -81,7 +81,7 @@ export default function PrivacyPage() {
                     <Lock className="text-white w-6 h-6" /> Filosofia Privacy-First
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    Whatnot Market è costruito sul principio della minimizzazione dei dati. Non raccogliamo informazioni che non sono strettamente necessarie per il funzionamento del servizio.
+                    SwaprMarket è costruito sul principio della minimizzazione dei dati. Non raccogliamo informazioni che non sono strettamente necessarie per il funzionamento del servizio.
                     Crediamo che l'anonimato sia un diritto fondamentale, specialmente nel mondo delle transazioni digitali.
                   </p>
                 </section>

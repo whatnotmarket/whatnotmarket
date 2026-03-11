@@ -32,7 +32,7 @@ export function HowItWorks({ copy }: HowItWorksProps) {
     },
   ];
 
-  const title = copy?.title || "Come funziona Whatnot Market";
+  const title = copy?.title || "Come funziona SwaprMarket";
   const subtitle =
     copy?.subtitle ||
     "Il modo piu sicuro per comprare e vendere prodotti esclusivi con criptovalute.";

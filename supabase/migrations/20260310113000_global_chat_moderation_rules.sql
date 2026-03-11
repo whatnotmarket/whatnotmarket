@@ -52,8 +52,8 @@ alter table public.global_chat_messages
   add constraint global_chat_messages_message_check
   check (
     char_length(trim(message)) between 1 and 180
-    and message !~* 'https?://(?!(?:[^/]*\\.)?whatnot\\.market|(?:www\\.)?whatnotmarket\\.com|localhost(?::\\d{1,5})?|127\\.0\\.0\\.1(?::\\d{1,5})?)[^\\s]+'
-    and message !~* '\\b(?!(?:[^\\s]*\\.)?whatnot\\.market|(?:www\\.)?whatnotmarket\\.com|localhost|127\\.0\\.0\\.1)[a-z0-9.-]+\\.(?:com|net|org|io|ru|xyz|gg|me|app|co|dev|market)\\b'
+    and message !~* 'https?://(?!(?:[^/]*\\.)?swaprmarket\\.market|(?:www\\.)?swaprmarket\\.com|localhost(?::\\d{1,5})?|127\\.0\\.0\\.1(?::\\d{1,5})?)[^\\s]+'
+    and message !~* '\\b(?!(?:[^\\s]*\\.)?swaprmarket\\.market|(?:www\\.)?swaprmarket\\.com|localhost|127\\.0\\.0\\.1)[a-z0-9.-]+\\.(?:com|net|org|io|ru|xyz|gg|me|app|co|dev|market)\\b'
   );
 
 alter table public.global_chat_messages

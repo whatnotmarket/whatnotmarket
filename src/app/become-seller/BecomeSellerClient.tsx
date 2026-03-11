@@ -106,7 +106,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
 
   const handleOpenTelegram = () => {
     const message = encodeURIComponent(generateTelegramMessage());
-    window.open(`https://t.me/whatnotmarket_support?start=${message}`, "_blank");
+    window.open(`https://t.me/swaprmarket_support?start=${message}`, "_blank");
   };
 
   return (
@@ -296,7 +296,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                                             <textarea 
                                                 {...register("notes")}
                                                 className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-4 min-h-[120px] text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 resize-none"
-                                                placeholder="Descrivi brevemente la tua esperienza e perché vuoi vendere su Whatnot Market..."
+                                                placeholder="Descrivi brevemente la tua esperienza e perché vuoi vendere su SwaprMarket..."
                                             />
                                             {errors.notes && <p className="text-red-400 text-xs">{errors.notes.message}</p>}
                                         </div>

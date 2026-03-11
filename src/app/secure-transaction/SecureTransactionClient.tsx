@@ -89,7 +89,7 @@ export function SecureTransactionClient({ copy }: { copy: CopyMap }) {
                     <Lock className="text-white w-6 h-6" /> {intro.title || "Protezione Totale"}
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    {intro.text || "Su Whatnot Market ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori. Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione."}
+                    {intro.text || "Su SwaprMarket ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori. Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione."}
                   </p>
                 </section>
 

@@ -14,8 +14,8 @@ VALUES
   ('/layout', 'announcement', 'button', 'Announcement Button', 'Explore VoIP Deals', 'button', 'it'),
 
   -- FOOTER
-  ('/layout', 'footer', 'about_title', 'About Title', 'About Whatnot', 'title', 'it'),
-  ('/layout', 'footer', 'about_link1', 'About Link 1', 'What is Whatnot?', 'plain', 'it'),
+  ('/layout', 'footer', 'about_title', 'About Title', 'About SwaprMarket', 'title', 'it'),
+  ('/layout', 'footer', 'about_link1', 'About Link 1', 'What is SwaprMarket?', 'plain', 'it'),
   ('/layout', 'footer', 'about_link2', 'About Link 2', 'Download App', 'plain', 'it'),
   ('/layout', 'footer', 'about_link3', 'About Link 3', 'Loyalty Program', 'plain', 'it'),
   ('/layout', 'footer', 'about_link4', 'About Link 4', 'Newsroom', 'plain', 'it'),
@@ -35,7 +35,7 @@ VALUES
   ('/onboarding', 'steps', 'verification', 'Step Verification', 'Verification', 'plain', 'it'),
   ('/onboarding', 'steps', 'complete', 'Step Complete', 'Complete', 'plain', 'it'),
   ('/onboarding', 'role', 'title', 'Role Title', 'Choose your role', 'title', 'it'),
-  ('/onboarding', 'role', 'subtitle', 'Role Subtitle', 'How do you plan to use Whatnot Market?', 'plain', 'it'),
+  ('/onboarding', 'role', 'subtitle', 'Role Subtitle', 'How do you plan to use SwaprMarket?', 'plain', 'it'),
   ('/onboarding', 'role', 'buyer_title', 'Buyer Title', 'I want to buy', 'plain', 'it'),
   ('/onboarding', 'role', 'buyer_desc', 'Buyer Desc', 'Browse listings and make requests.', 'plain', 'it'),
   ('/onboarding', 'role', 'seller_title', 'Seller Title', 'I want to sell', 'plain', 'it'),

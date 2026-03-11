@@ -843,13 +843,13 @@ function TestLoginContent() {
       <div className="grid h-full grid-cols-1 items-stretch gap-3 md:gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-0 xl:min-w-[980px] xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <section className="relative mx-auto flex h-full w-full max-w-[520px] flex-col rounded-[30px] px-2 pb-1 pt-[5.75rem] sm:px-3 sm:pt-[6.25rem] md:max-w-[760px] md:px-6 lg:mr-auto lg:max-w-[520px] lg:px-0 lg:pr-7 lg:pt-[6.25rem]">
           <div className="absolute left-0 right-0 top-4 flex justify-center lg:right-7">
-            <Image src="/logowhite.svg" alt="Whatnot Market" width={96} height={42} priority />
+            <Image src="/logowhite.svg" alt="SwaprMarket" width={96} height={42} priority />
           </div>
 
           <div className="w-full space-y-1.5">
             <h1 className="w-full max-w-full text-center font-[Inter] text-[34px] leading-[1.05] font-[800] text-white whitespace-normal sm:text-[42px] xl:whitespace-nowrap">
               <BlurText
-                text="Join WhatnotMarket"
+                text="Join SwaprMarket"
                 delay={100}
                 animateBy="words"
                 direction="bottom"

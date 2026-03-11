@@ -108,7 +108,7 @@ export default function ContactPage() {
                     </div>
 
                     <Button 
-                        onClick={() => window.open("https://t.me/whatnotmarketbot", "_blank")}
+                        onClick={() => window.open("https://t.me/swaprmarketbot", "_blank")}
                         className="h-12 px-8 font-bold bg-[#0088cc] text-white hover:bg-[#0077b5] rounded-xl w-full sm:w-auto"
                     >
                         <TelegramIcon className="w-5 h-5 mr-2" /> Apri Chat Supporto
@@ -125,8 +125,8 @@ export default function ContactPage() {
                         <div>
                             <h3 className="text-lg font-bold text-white">Email</h3>
                             <p className="text-sm text-zinc-400 mb-4">Per richieste formali, partnership o problemi legali.</p>
-                            <a href="mailto:support@whatnotmarket.com" className="text-white font-medium hover:underline decoration-white/30 underline-offset-4">
-                                support@whatnotmarket.com
+                            <a href="mailto:support@swaprmarket.com" className="text-white font-medium hover:underline decoration-white/30 underline-offset-4">
+                                support@swaprmarket.com
                             </a>
                         </div>
                     </div>

@@ -86,7 +86,7 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
 
   const copyTrackingLink = () => {
     const accessQuery = trackingAccessToken ? `?access=${encodeURIComponent(trackingAccessToken)}` : "";
-    navigator.clipboard.writeText(`https://whatnotmarket.app/track/${trackingId}${accessQuery}`);
+    navigator.clipboard.writeText(`https://swaprmarket.app/track/${trackingId}${accessQuery}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

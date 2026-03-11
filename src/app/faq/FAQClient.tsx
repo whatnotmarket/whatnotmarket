@@ -66,8 +66,8 @@ export function FAQClient({ copy }: { copy: CopyMap }) {
   // Construct FAQs from flat copy map
   const buyerFAQs: FAQItem[] = [
     {
-        question: copy['buyer_q1']?.question || "Come funziona Whatnot Market?",
-        answer: copy['buyer_q1']?.answer || "Whatnot Market è un marketplace 'Request-First'. Invece di sfogliare infinite liste di prodotti, pubblichi una richiesta specifica ('Cerco un account Netflix', 'Cerco uno script Python') e i venditori qualificati ti inviano offerte su misura."
+        question: copy['buyer_q1']?.question || "Come funziona SwaprMarket?",
+        answer: copy['buyer_q1']?.answer || "SwaprMarket è un marketplace 'Request-First'. Invece di sfogliare infinite liste di prodotti, pubblichi una richiesta specifica ('Cerco un account Netflix', 'Cerco uno script Python') e i venditori qualificati ti inviano offerte su misura."
     },
     {
         question: copy['buyer_q2']?.question || "I miei fondi sono al sicuro?",
@@ -148,7 +148,7 @@ export function FAQClient({ copy }: { copy: CopyMap }) {
                 {header.title || "Domande Frequenti"}
               </h1>
               <p className="text-zinc-400 text-base leading-relaxed">
-                {header.subtitle || "Tutto quello che devi sapere per usare Whatnot Market al meglio."}
+                {header.subtitle || "Tutto quello che devi sapere per usare SwaprMarket al meglio."}
               </p>
             </motion.div>
 
