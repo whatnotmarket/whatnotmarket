@@ -244,7 +244,7 @@ export function ProfileMenu() {
 
       await supabase.auth.signOut();
 
-      const redirectTo = payload?.redirectTo || "/login";
+      const redirectTo = payload?.redirectTo || "/market";
       logout();
       setIsOpen(false);
       router.replace(redirectTo);
@@ -259,10 +259,10 @@ export function ProfileMenu() {
 
     logout();
     setIsOpen(false);
-      router.replace("/login");
+      router.replace("/market");
     router.refresh();
     setTimeout(() => {
-      window.location.href = "/login";
+      window.location.href = "/market";
     }, 0);
   };
 

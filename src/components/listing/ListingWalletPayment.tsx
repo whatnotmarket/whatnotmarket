@@ -299,7 +299,7 @@ export function ListingWalletPayment({
         asChild
         className="w-full bg-zinc-200 text-black hover:bg-white"
       >
-        <Link href={`/login?next=${encodeURIComponent("/market")}`}>Login to pay with wallet</Link>
+        <Link href={`/auth?next=${encodeURIComponent("/market")}`}>Sign in to pay with wallet</Link>
       </Button>
     );
   }
@@ -396,4 +396,3 @@ export function ListingWalletPayment({
     </>
   );
 }
-

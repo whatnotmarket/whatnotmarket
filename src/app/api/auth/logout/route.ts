@@ -3,8 +3,8 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function POST(request: NextRequest) {
-  const loginUrl = new URL("/login", request.url);
-  const response = NextResponse.json({ ok: true, redirectTo: loginUrl.toString() });
+  const marketUrl = new URL("/market", request.url);
+  const response = NextResponse.json({ ok: true, redirectTo: marketUrl.toString() });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -8,13 +8,6 @@ import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
-  if (pathname === "/testlogin" || pathname.startsWith("/testlogin/")) {
-    const url = new URL("/login", request.url);
-    request.nextUrl.searchParams.forEach((value, key) => {
-      url.searchParams.set(key, value);
-    });
-    return NextResponse.redirect(url);
-  }
 
   const supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -150,20 +143,8 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Public routes for authentication and open access pages.
-  const isAuthRoute =
-    pathname === "/auth" ||
-    pathname.startsWith("/auth/") ||
-    pathname === "/login" ||
-    pathname.startsWith("/login/");
-  const isOpenAccessRoute = pathname === "/global-chat" || pathname.startsWith("/global-chat/");
-  const isPublicRoute = isAuthRoute || isOpenAccessRoute;
-
-  if (!user && !isPublicRoute) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return withSupabaseCookies(NextResponse.redirect(loginUrl));
-  }
+  // Keep `/auth` as optional entrypoint.
+  const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
 
   if (user && isAuthRoute) {
     const next = getRedirectPath(request.nextUrl.searchParams);
@@ -184,9 +165,9 @@ export async function proxy(request: NextRequest) {
     const forcedAt = forceLogoutAt ? new Date(forceLogoutAt).getTime() : 0;
 
     if (["banned", "suspended"].includes(accountStatus) || (forcedAt && lastSignInAt && lastSignInAt < forcedAt)) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("reason", "session_reset");
-      const response = NextResponse.redirect(loginUrl);
+      const marketUrl = new URL("/market", request.url);
+      marketUrl.searchParams.set("reason", "session_reset");
+      const response = NextResponse.redirect(marketUrl);
       clearAuthCookies(response);
       return withSupabaseCookies(response);
     }

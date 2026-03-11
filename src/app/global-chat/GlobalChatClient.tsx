@@ -1922,11 +1922,11 @@ export function GlobalChatClient() {
                 <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
               ) : !user ? (
                 <Link
-                  href="/login?next=/global-chat"
+                  href="/auth?next=/global-chat"
                   className="inline-flex items-center gap-1 text-zinc-300 hover:text-white"
                 >
                   <LogIn className="h-3.5 w-3.5" />
-                  Login to write
+                  Sign in to write
                 </Link>
               ) : !canWrite ? (
                 <span className="text-zinc-400">{isBanned ? "You are banned from global chat." : `You are not ${requiredRoleText || "allowed"} to write here.`}</span>

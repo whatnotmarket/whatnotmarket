@@ -25,8 +25,8 @@ export function getRedirectPath(
     return defaultPath;
   }
 
-  // 3. Prevent redirect loops to login/auth pages
-  const forbiddenPrefixes = ["/login", "/auth", "/api/auth"];
+  // 3. Prevent redirect loops to auth routes
+  const forbiddenPrefixes = ["/auth", "/api/auth"];
   if (forbiddenPrefixes.some((prefix) => next === prefix || next.startsWith(`${prefix}/`))) {
     return defaultPath;
   }

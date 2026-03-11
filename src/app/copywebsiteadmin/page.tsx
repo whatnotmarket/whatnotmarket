@@ -10,7 +10,7 @@ export default async function CopyAdminPage({ searchParams }: { searchParams: Pr
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login?next=/copywebsiteadmin');
+    redirect('/auth?next=/copywebsiteadmin');
   }
 
   // Check if admin

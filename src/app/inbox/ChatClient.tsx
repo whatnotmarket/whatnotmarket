@@ -250,7 +250,7 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
   }
 
   if (!user) {
-    router.push("/login");
+    router.push("/auth?next=/inbox");
     return null;
   }
 
