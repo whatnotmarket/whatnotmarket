@@ -37,7 +37,15 @@ export type RateLimitAction =
   | "deal_transition"
   | "listing_payment_create"
   | "listing_payment_fund"
-  | "listing_payment_cancel";
+  | "listing_payment_cancel"
+  | "trust_report_create"
+  | "trust_admin_review_queue"
+  | "trust_admin_case_action"
+  | "request_update"
+  | "profile_public_update"
+  | "review_submit"
+  | "comment_submit"
+  | "public_form_submit";
 
 export type RateLimitOptions = {
   action?: RateLimitAction;
@@ -85,6 +93,14 @@ const RATE_LIMIT_CONFIGS: Record<RateLimitAction, RateLimitConfig> = {
   listing_payment_create: { limit: 10, windowMs: 60_000 },
   listing_payment_fund: { limit: 12, windowMs: 60_000 },
   listing_payment_cancel: { limit: 12, windowMs: 60_000 },
+  trust_report_create: { limit: 8, windowMs: 60_000 },
+  trust_admin_review_queue: { limit: 30, windowMs: 60_000 },
+  trust_admin_case_action: { limit: 20, windowMs: 60_000 },
+  request_update: { limit: 12, windowMs: 60_000 },
+  profile_public_update: { limit: 12, windowMs: 60_000 },
+  review_submit: { limit: 10, windowMs: 60_000 },
+  comment_submit: { limit: 20, windowMs: 60_000 },
+  public_form_submit: { limit: 10, windowMs: 60_000 },
 };
 
 const rateLimiter = new LRUCache<string, RateLimitEntry>({

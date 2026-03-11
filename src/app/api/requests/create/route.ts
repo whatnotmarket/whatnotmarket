@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
+import { enforceActionGuard } from "@/lib/trust/services/onboarding-security";
+import { evaluateAndPersistUserRisk } from "@/lib/trust/services/user-risk-service";
+import {
+  persistListingSafetyDecision,
+  validateListingBeforePublish,
+} from "@/lib/trust/services/listing-safety";
+import { appendTrustAuditLog } from "@/lib/trust/services/trust-store";
+import { getClientIp, getRequestDeviceHint, hashSignal } from "@/lib/trust/utils";
+import { moderateContent } from "@/lib/moderation/moderation.service";
 
 type CreateRequestPayload = {
   title?: string;
@@ -86,29 +95,189 @@ export async function POST(req: Request) {
       return AbuseGuardResponse(userAbuse);
     }
 
-    const { data, error } = await supabase
-      .from("requests")
-      .insert({
-        title,
+    const actionGuard = await enforceActionGuard(user.id, "create_listing");
+    if (!actionGuard.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: actionGuard.code,
+          error: actionGuard.message || "Action blocked by trust policy",
+        },
+        { status: 403 }
+      );
+    }
+
+    const [titleModeration, descriptionModeration] = await Promise.all([
+      moderateContent({
+        targetType: "listing_title",
+        text: title,
+        actorId: user.id,
+        context: {
+          pathname: "/api/requests/create",
+          source: "route_handler",
+          endpointTag: "requests_create",
+        },
+      }),
+      moderateContent({
+        targetType: "listing_description",
+        text: description,
+        actorId: user.id,
+        context: {
+          pathname: "/api/requests/create",
+          source: "route_handler",
+          endpointTag: "requests_create",
+        },
+      }),
+    ]);
+
+    const blockingModeration = [titleModeration, descriptionModeration].find((result) => result.shouldBlock);
+    if (blockingModeration) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "PUBLIC_CONTENT_POLICY_VIOLATION",
+          error: blockingModeration.userMessage,
+          reasonCodes: blockingModeration.reasonCodes,
+        },
+        { status: 400 }
+      );
+    }
+
+    const sanitizedTitle = titleModeration.sanitizedText;
+    const sanitizedDescription = descriptionModeration.sanitizedText;
+    const moderationRequiresReview = [titleModeration, descriptionModeration].some((result) => result.shouldReview);
+    const moderationReasonCodes = Array.from(
+      new Set([...titleModeration.reasonCodes, ...descriptionModeration.reasonCodes])
+    );
+
+    const userRisk = await evaluateAndPersistUserRisk(user.id);
+    if (userRisk.policy.blocked) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "ACCOUNT_RISK_BLOCKED",
+          error: userRisk.policy.userMessage || "Account temporarily blocked",
+          reasonCodes: userRisk.score.reasonCodes,
+        },
+        { status: 403 }
+      );
+    }
+
+    const listingRisk = await validateListingBeforePublish({
+      userId: user.id,
+      listing: {
+        title: sanitizedTitle,
         category,
-        condition,
-        budget_min: budgetMin,
-        budget_max: budgetMax,
-        payment_method: paymentMethod || null,
-        delivery_time: deliveryTime || null,
-        description,
-        created_by: user.id,
-        status: "open",
-      })
-      .select("id")
-      .single();
+        budgetMin,
+        budgetMax,
+        description: sanitizedDescription,
+      },
+      accountAgeHours: userRisk.signals.accountAgeHours,
+      listingVelocityLast24h: userRisk.signals.listingsCreatedLast24h + 1,
+    });
+
+    if (listingRisk.decision.blocked) {
+      await appendTrustAuditLog({
+        actorUserId: user.id,
+        eventType: "listing_create_blocked",
+        targetType: "listing",
+        reasonCodes: listingRisk.score.reasonCodes,
+        ipHash: hashSignal(getClientIp(req)),
+        deviceHash: hashSignal(getRequestDeviceHint(req)),
+        metadata: {
+          score: listingRisk.score.score,
+          level: listingRisk.score.level,
+          action: listingRisk.decision.action,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "LISTING_BLOCKED",
+          error: listingRisk.decision.userMessage || "Listing blocked for security reasons",
+          reasonCodes: listingRisk.score.reasonCodes,
+        },
+        { status: 403 }
+      );
+    }
+
+    const finalListingSafetyStatus = moderationRequiresReview
+      ? "pending_review"
+      : listingRisk.decision.listingSafetyStatus;
+    const finalVisibilityState = moderationRequiresReview ? "limited" : listingRisk.decision.visibilityState;
+    const combinedReasonCodes = Array.from(
+      new Set([...listingRisk.score.reasonCodes, ...moderationReasonCodes])
+    );
+
+    const insertPayload: Record<string, unknown> = {
+      title: sanitizedTitle,
+      category,
+      condition,
+      budget_min: budgetMin,
+      budget_max: budgetMax,
+      payment_method: paymentMethod || null,
+      delivery_time: deliveryTime || null,
+      description: sanitizedDescription,
+      created_by: user.id,
+      status: "open",
+      safety_status: finalListingSafetyStatus,
+      visibility_state: finalVisibilityState,
+      trust_reason_codes: combinedReasonCodes,
+      last_risk_score: listingRisk.score.score,
+      moderation_notes: listingRisk.decision.warningMessage || null,
+    };
+
+    let { data, error } = await supabase.from("requests").insert(insertPayload).select("id").single();
+
+    if (error && /Could not find the '([^']+)' column/.test(String(error.message || ""))) {
+      delete insertPayload.safety_status;
+      delete insertPayload.visibility_state;
+      delete insertPayload.trust_reason_codes;
+      delete insertPayload.last_risk_score;
+      delete insertPayload.moderation_notes;
+
+      const fallback = await supabase.from("requests").insert(insertPayload).select("id").single();
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error || !data) {
       console.error("Create request error:", error);
       return NextResponse.json({ ok: false, error: "Failed to create request" }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, requestId: data.id });
+    await persistListingSafetyDecision({
+      listingId: data.id,
+      userId: user.id,
+      score: listingRisk.score,
+      decision: {
+        ...listingRisk.decision,
+        action: moderationRequiresReview ? "PENDING_REVIEW" : listingRisk.decision.action,
+        listingSafetyStatus: finalListingSafetyStatus,
+        visibilityState: finalVisibilityState,
+      },
+      signals: listingRisk.signals,
+    }).catch((persistError) => {
+      console.error("Failed to persist listing trust decision", persistError);
+    });
+
+    return NextResponse.json({
+      ok: true,
+      requestId: data.id,
+      listingSafetyStatus: listingRisk.decision.listingSafetyStatus,
+      trust: {
+        riskScore: listingRisk.score.score,
+        riskLevel: listingRisk.score.level,
+        reasonCodes: combinedReasonCodes,
+      },
+      message:
+        finalListingSafetyStatus === "pending_review"
+          ? "Annuncio inviato in review manuale."
+          : finalListingSafetyStatus === "restricted"
+            ? "Annuncio pubblicato con visibilita ridotta."
+            : "Annuncio pubblicato.",
+    });
   } catch (error) {
     console.error("Create request unexpected error:", error);
     return NextResponse.json({ ok: false, error: "Unexpected server error" }, { status: 500 });

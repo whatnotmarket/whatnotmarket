@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
+import { enforceActionGuard } from "@/lib/trust/services/onboarding-security";
+import { evaluateAndPersistUserRisk } from "@/lib/trust/services/user-risk-service";
+import { moderateContent } from "@/lib/moderation/moderation.service";
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -54,9 +57,34 @@ export async function POST(req: Request) {
       return AbuseGuardResponse(userAbuse);
     }
 
+    const actionGuard = await enforceActionGuard(user.id, "create_offer");
+    if (!actionGuard.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: actionGuard.code,
+          error: actionGuard.message || "Offer blocked by trust policy",
+        },
+        { status: 403 }
+      );
+    }
+
+    const userRisk = await evaluateAndPersistUserRisk(user.id);
+    if (userRisk.policy.blocked) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "ACCOUNT_RISK_BLOCKED",
+          error: userRisk.policy.userMessage || "Account temporarily blocked",
+          reasonCodes: userRisk.score.reasonCodes,
+        },
+        { status: 403 }
+      );
+    }
+
     const { data: request, error: requestError } = await supabase
       .from("requests")
-      .select("id, created_by, status")
+      .select("id, created_by, status, safety_status")
       .eq("id", requestId)
       .single();
 
@@ -68,10 +96,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Request is not open" }, { status: 409 });
     }
 
+    if (request.safety_status && request.safety_status !== "published") {
+      return NextResponse.json(
+        { ok: false, error: "This listing is under safety review and cannot receive offers yet" },
+        { status: 409 }
+      );
+    }
+
     if (request.created_by === user.id) {
       return NextResponse.json(
         { ok: false, error: "You cannot send an offer to your own request" },
         { status: 403 }
+      );
+    }
+
+    const rawMessage = typeof message === "string" ? message.trim() : "";
+    const offerMessageModeration = await moderateContent({
+      targetType: "marketplace_content",
+      text: rawMessage,
+      actorId: user.id,
+      entityId: requestId,
+      context: {
+        pathname: "/api/offers/create",
+        source: "route_handler",
+        endpointTag: "offers_create",
+      },
+    });
+
+    if (offerMessageModeration.shouldBlock) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "PUBLIC_CONTENT_POLICY_VIOLATION",
+          error: offerMessageModeration.userMessage,
+          reasonCodes: offerMessageModeration.reasonCodes,
+        },
+        { status: 400 }
       );
     }
 
@@ -80,7 +140,7 @@ export async function POST(req: Request) {
       .insert({
         request_id: requestId,
         price: numericPrice,
-        message: typeof message === "string" ? message.trim() : "",
+        message: offerMessageModeration.sanitizedText,
         created_by: user.id,
         status: "pending",
       })
@@ -91,7 +151,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Failed to create offer" }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, offerId: offer.id });
+    return NextResponse.json({
+      ok: true,
+      offerId: offer.id,
+      moderation: {
+        decision: offerMessageModeration.decision,
+        reasonCodes: offerMessageModeration.reasonCodes,
+        message: offerMessageModeration.userMessage,
+      },
+    });
   } catch (error) {
     console.error("Offer create error:", error);
     return NextResponse.json({ ok: false, error: "Unexpected server error" }, { status: 500 });

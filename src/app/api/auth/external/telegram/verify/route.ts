@@ -15,6 +15,9 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { shouldAllowBridgeUserCreation } from "@/lib/security/auth-guards";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
+import { detectBanEvasionRisk, recordAuthSecurityEvent } from "@/lib/trust/services/auth-security";
+import { getTrustAccountState, upsertTrustAccountState } from "@/lib/trust/services/trust-store";
+import { enforceAuthAbuseMiddleware } from "@/lib/trust/middleware/auth-abuse";
 
 type Payload = {
   telegramAuth?: TelegramAuthPayload;
@@ -61,6 +64,36 @@ export async function POST(request: NextRequest) {
 
   if (!telegramAuth?.id || !telegramAuth.hash || !telegramAuth.auth_date) {
     return NextResponse.json({ error: "Invalid Telegram payload" }, { status: 400 });
+  }
+
+  const authAbuse = await enforceAuthAbuseMiddleware({
+    request,
+    action: mode === "signup" ? "signup" : "signin",
+  });
+  if (!authAbuse.allowed) {
+    return NextResponse.json(
+      {
+        error: "Troppi tentativi sospetti. Riprova tra poco.",
+        code: "AUTH_ABUSE_BLOCKED",
+        reasonCodes: authAbuse.reasonCodes,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(authAbuse.retryAfterSeconds || 120),
+        },
+      }
+    );
+  }
+
+  if (authAbuse.requiresChallenge && mode === "signup") {
+    return NextResponse.json(
+      {
+        error: "Verifica anti-abuso richiesta prima di completare la registrazione.",
+        code: "AUTH_CHALLENGE_REQUIRED",
+      },
+      { status: 403 }
+    );
   }
 
   const scopedLimit = checkRateLimitDetailed(request, {
@@ -137,10 +170,50 @@ export async function POST(request: NextRequest) {
     })
     .eq("id", bridgeIdentity.userId);
 
+  await recordAuthSecurityEvent({
+    request,
+    userId: bridgeIdentity.userId,
+    eventType: mode === "signup" ? "auth_signup" : "auth_login",
+  }).catch((error) => {
+    console.error("Failed to record telegram auth security event", error);
+  });
+
+  const banEvasion = await detectBanEvasionRisk({
+    request,
+    userId: bridgeIdentity.userId,
+  }).catch((error) => {
+    console.error("Failed to evaluate telegram ban-evasion risk", error);
+    return { suspicious: false, reasonCodes: [], requiresStepUp: false };
+  });
+
+  const trustState = await getTrustAccountState(bridgeIdentity.userId);
+  await upsertTrustAccountState({
+    ...trustState,
+    userId: bridgeIdentity.userId,
+    accountFlag: banEvasion.requiresStepUp
+      ? "under_review"
+      : mode === "signup"
+        ? "limited"
+        : trustState.accountFlag,
+    emailVerified: true,
+    riskScore: banEvasion.requiresStepUp ? Math.max(trustState.riskScore, 70) : trustState.riskScore,
+    riskLevel: banEvasion.requiresStepUp ? "high" : trustState.riskLevel,
+    restrictions: {
+      ...(trustState.restrictions || {}),
+      stepUpVerificationRequired: banEvasion.requiresStepUp || trustState.restrictions?.stepUpVerificationRequired === true,
+    },
+    lastReasonCodes: banEvasion.reasonCodes.length > 0 ? banEvasion.reasonCodes : trustState.lastReasonCodes,
+  }).catch((error) => {
+    console.error("Failed to sync trust state after telegram auth", error);
+  });
+
   const response = NextResponse.json({
     ok: true,
     redirectTo: nextPath,
     roleMessage,
+    securityNotice: banEvasion.requiresStepUp
+      ? "Accesso consentito con restrizioni: verifica aggiuntiva richiesta."
+      : null,
   });
 
   await signInBridgeUserOnRoute({

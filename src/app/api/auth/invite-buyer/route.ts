@@ -7,6 +7,9 @@ import { registerInviteUsage, resolveRequiredInviteCode } from "@/lib/invite-cod
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 import { isInviteCodeDirectLoginEnabled } from "@/lib/security/auth-guards";
+import { detectBanEvasionRisk, recordAuthSecurityEvent } from "@/lib/trust/services/auth-security";
+import { getTrustAccountState, upsertTrustAccountState } from "@/lib/trust/services/trust-store";
+import { enforceAuthAbuseMiddleware } from "@/lib/trust/middleware/auth-abuse";
 
 type Payload = {
   code?: string;
@@ -37,6 +40,26 @@ export async function POST(request: NextRequest) {
     const code = String(body.code || "")
       .trim()
       .toUpperCase();
+
+    const authAbuse = await enforceAuthAbuseMiddleware({
+      request,
+      action: "signin",
+    });
+    if (!authAbuse.allowed) {
+      return NextResponse.json(
+        {
+          error: "Troppi tentativi sospetti. Riprova tra poco.",
+          code: "AUTH_ABUSE_BLOCKED",
+          reasonCodes: authAbuse.reasonCodes,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(authAbuse.retryAfterSeconds || 120),
+          },
+        }
+      );
+    }
 
     const inviteResolution = await resolveRequiredInviteCode(code, {
       allowedTypes: ["buyer"],
@@ -86,6 +109,39 @@ export async function POST(request: NextRequest) {
       response,
       email: bridgeIdentity.email,
       password: bridgeIdentity.password,
+    });
+
+    await recordAuthSecurityEvent({
+      request,
+      userId: bridgeIdentity.userId,
+      eventType: "auth_login",
+    }).catch((error) => {
+      console.error("Failed to record invite buyer auth security event", error);
+    });
+
+    const banEvasion = await detectBanEvasionRisk({
+      request,
+      userId: bridgeIdentity.userId,
+    }).catch((error) => {
+      console.error("Failed to evaluate invite buyer ban-evasion risk", error);
+      return { suspicious: false, reasonCodes: [], requiresStepUp: false };
+    });
+
+    const trustState = await getTrustAccountState(bridgeIdentity.userId);
+    await upsertTrustAccountState({
+      ...trustState,
+      userId: bridgeIdentity.userId,
+      accountFlag: banEvasion.requiresStepUp ? "under_review" : trustState.accountFlag,
+      emailVerified: true,
+      riskScore: banEvasion.requiresStepUp ? Math.max(trustState.riskScore, 70) : trustState.riskScore,
+      riskLevel: banEvasion.requiresStepUp ? "high" : trustState.riskLevel,
+      restrictions: {
+        ...(trustState.restrictions || {}),
+        stepUpVerificationRequired: banEvasion.requiresStepUp || trustState.restrictions?.stepUpVerificationRequired === true,
+      },
+      lastReasonCodes: banEvasion.reasonCodes.length > 0 ? banEvasion.reasonCodes : trustState.lastReasonCodes,
+    }).catch((error) => {
+      console.error("Failed to sync trust state after invite buyer auth", error);
     });
 
     await registerInviteUsage({

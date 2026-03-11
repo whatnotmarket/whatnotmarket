@@ -9,6 +9,12 @@ import {
   normalizeChatContent,
 } from "@/lib/security/chat-guards";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
+import { enforceActionGuard } from "@/lib/trust/services/onboarding-security";
+import {
+  collectConversationVelocitySignals,
+  evaluateConversationMessageSafety,
+  persistConversationSafetyDecision,
+} from "@/lib/trust/services/chat-safety";
 
 const sendMessageSchema = z.object({
   roomName: z.string().min(1).max(120),
@@ -41,6 +47,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const actionGuard = await enforceActionGuard(user.id, "send_message");
+  if (!actionGuard.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: actionGuard.code,
+        error: actionGuard.message || "Message blocked by trust policy",
+      },
+      { status: 403 }
+    );
+  }
+
   const rateLimit = checkRateLimitDetailed(request, {
     action: "chat_message_post",
     identifier: user.id,
@@ -58,7 +76,48 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid room membership" }, { status: 403 });
   }
 
-  if ((parsed.data.type === "text" || parsed.data.type === "system") && containsDisallowedLink(normalizedContent)) {
+  const velocitySignals = await collectConversationVelocitySignals({
+    senderId: user.id,
+    normalizedMessage: normalizedContent,
+    roomType: "direct_chat",
+  });
+
+  const conversationSafety = await evaluateConversationMessageSafety({
+    senderId: user.id,
+    conversationId: parsed.data.roomName,
+    roomType: "direct_chat",
+    message: normalizedContent,
+    repeatedTemplateCountLast6h: velocitySignals.repeatedTemplateCountLast6h,
+    massOutreachRecipientsLast6h: velocitySignals.massOutreachRecipientsLast6h,
+  });
+
+  if (conversationSafety.decision.blocked) {
+    await persistConversationSafetyDecision({
+      conversationId: parsed.data.roomName,
+      senderId: user.id,
+      roomType: "direct_chat",
+      score: conversationSafety.score,
+      decision: conversationSafety.decision,
+      signals: conversationSafety.signals,
+    }).catch((error) => {
+      console.error("Failed to persist blocked conversation safety decision", error);
+    });
+
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "CONVERSATION_MESSAGE_BLOCKED",
+        error: conversationSafety.decision.userMessage || "Message blocked for security reasons",
+        reasonCodes: conversationSafety.score.reasonCodes,
+      },
+      { status: 403 }
+    );
+  }
+
+  if (
+    (parsed.data.type === "text" || parsed.data.type === "system") &&
+    containsDisallowedLink(conversationSafety.redactedMessage)
+  ) {
     return NextResponse.json(
       { error: "Links are blocked in direct chat to reduce phishing risk" },
       { status: 400 }
@@ -89,11 +148,17 @@ export async function POST(request: Request) {
       id: messageId,
       room_id: parsed.data.roomName,
       sender_id: user.id,
-      content: normalizedContent,
+      content: conversationSafety.redactedMessage,
       type: parsed.data.type,
       metadata: {
         audioUrl: parsed.data.audioUrl ?? null,
         reactions: {},
+        trust: {
+          riskScore: conversationSafety.score.score,
+          riskLevel: conversationSafety.score.level,
+          reasonCodes: conversationSafety.score.reasonCodes,
+          warning: conversationSafety.decision.warningMessage || null,
+        },
         user_snapshot: {
           id: user.id,
           name: displayName,
@@ -111,6 +176,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to persist message" }, { status: 500 });
   }
 
+  await persistConversationSafetyDecision({
+    conversationId: parsed.data.roomName,
+    senderId: user.id,
+    roomType: "direct_chat",
+    score: conversationSafety.score,
+    decision: conversationSafety.decision,
+    signals: conversationSafety.signals,
+  }).catch((error) => {
+    console.error("Failed to persist conversation safety decision", error);
+  });
+
   return NextResponse.json({
     message: {
       id: inserted.id,
@@ -126,6 +202,10 @@ export async function POST(request: Request) {
         name: displayName,
         role: canonicalRole,
         isVerified: canonicalVerified,
+      },
+      trust: {
+        warning: conversationSafety.decision.warningMessage || null,
+        riskLevel: conversationSafety.score.level,
       },
     },
   });
