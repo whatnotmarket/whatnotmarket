@@ -82,10 +82,10 @@ export class ProductParserService {
     const res = await fetch(url, {
       headers: {
         // Generic Bot UA to avoid tracking specific user devices
-        "User-Agent": "Mozilla/5.0 (compatible; SwaprMarketBot/1.0; +https://swaprmarket.market)", 
+        "User-Agent": "Mozilla/5.0 (compatible; OpenlyMarketBot/1.0; +https://openlymarket.market)", 
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
         "Accept-Language": "en-US,en;q=0.5",
-        "Referer": "https://swaprmarket.market", // Explicitly set referer to our site or empty
+        "Referer": "https://openlymarket.market", // Explicitly set referer to our site or empty
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-Site": "cross-site",
@@ -107,3 +107,4 @@ export class ProductParserService {
     return !!(data.title || data.price);
   }
 }
+

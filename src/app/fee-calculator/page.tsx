@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { FeeCalculatorClient } from "./FeeCalculatorClient";
 
 export const metadata: Metadata = {
-  title: "Escrow Fee Calculator | SwaprMarket",
+  title: "Escrow Fee Calculator | OpenlyMarket",
   description:
     "Calculate escrow fees instantly with transparent pricing for standard and concierge transactions, including payment method costs and competitor comparisons.",
   openGraph: {
-    title: "Escrow Fee Calculator | SwaprMarket",
+    title: "Escrow Fee Calculator | OpenlyMarket",
     description:
       "Estimate escrow pricing in seconds with transparent fee tiers, payment method breakdowns, and high-value transaction support.",
     type: "website",
@@ -17,3 +17,4 @@ export const metadata: Metadata = {
 export default function FeeCalculatorPage() {
   return <FeeCalculatorClient />;
 }
+

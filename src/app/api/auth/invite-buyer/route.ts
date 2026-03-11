@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedCode = inviteResolution.normalizedCode;
-    const email = `invite-buyer+${normalizedCode.toLowerCase()}@swaprmarket.app`;
+    const email = `invite-buyer+${normalizedCode.toLowerCase()}@openlymarket.app`;
 
     const bridgeIdentity = await ensureBridgeUser({
       subject: `invite:buyer:${normalizedCode}`,
@@ -164,3 +164,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

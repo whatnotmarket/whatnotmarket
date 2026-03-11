@@ -8,7 +8,7 @@ export function createWalletChallengeMessage(params: {
   nonce: string;
 }) {
   return [
-    "SwaprMarket Wallet Authentication",
+    "OpenlyMarket Wallet Authentication",
     "",
     `Address: ${params.address.toLowerCase()}`,
     `Chain: ${params.chain}`,
@@ -37,4 +37,5 @@ export async function verifyWalletChallengeSignature(params: {
 
   return recovered.toLowerCase() === expected;
 }
+
 

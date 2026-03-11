@@ -88,7 +88,7 @@ export function AboutClient({ copy }: { copy: CopyMap }) {
                     <Gem className="text-white w-6 h-6" /> {whoWeAre.title || "Chi Siamo"}
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    {whoWeAre.p1 || "SwaprMarket è una piattaforma globale dedicata allo scambio di beni e servizi digitali. Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la privacy è al primo posto e la fiducia è garantita dalla tecnologia, non dalla burocrazia."}
+                    {whoWeAre.p1 || "OpenlyMarket Ã¨ una piattaforma globale dedicata allo scambio di beni e servizi digitali. Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la privacy Ã¨ al primo posto e la fiducia Ã¨ garantita dalla tecnologia, non dalla burocrazia."}
                   </p>
                   <p className="text-zinc-400 leading-relaxed">
                     {whoWeAre.p2 || "A differenza dei marketplace tradizionali, non richiediamo procedure KYC invasive. Ci basiamo sulla reputazione, sui depositi di sicurezza (Vendor Bond) e su un rigoroso sistema di Escrow per proteggere ogni singola transazione."}
@@ -121,7 +121,7 @@ export function AboutClient({ copy }: { copy: CopyMap }) {
                       <Shield className="w-8 h-8 text-white" />
                       <h4 className="text-white font-bold text-lg">{whatWeDo.card3_title || "Vendor Bond"}</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        {whatWeDo.card3_desc || "I venditori depositano una garanzia per dimostrare la loro serietà e solvibilità."}
+                        {whatWeDo.card3_desc || "I venditori depositano una garanzia per dimostrare la loro serietÃ  e solvibilitÃ ."}
                       </p>
                     </div>
 
@@ -194,7 +194,7 @@ export function AboutClient({ copy }: { copy: CopyMap }) {
                     <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5 text-center">
                       <Shield className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
                       <div className="font-bold text-white">Verified Sellers</div>
-                      <p className="text-xs text-zinc-500 mt-1">Offrono qualità garantita</p>
+                      <p className="text-xs text-zinc-500 mt-1">Offrono qualitÃ  garantita</p>
                     </div>
                     <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5 text-center">
                       <Scale className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
@@ -212,3 +212,4 @@ export function AboutClient({ copy }: { copy: CopyMap }) {
     </div>
   );
 }
+

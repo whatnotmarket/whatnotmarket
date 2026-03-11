@@ -17,8 +17,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Whatnot Market",
+  title: "OpenlyMarket",
   description: "Secure buyer/seller marketplace.",
+  creator: "openly.market",
+  publisher: "openly.market",
+  metadataBase: new URL("https://openly.market"),
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -53,10 +56,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Whatnot Market",
+    title: "OpenlyMarket",
   },
   other: {
     google: "notranslate",
+    "profile:x": "https://x.com/openlymarket",
   },
 };
 
@@ -121,3 +125,4 @@ export default function RootLayout({
     </html>
   );
 }
+

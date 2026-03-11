@@ -59,8 +59,8 @@ async function createWalletConnectProvider() {
     chains: [1],
     optionalChains: [1, 137, 10, 8453, 56],
     metadata: {
-      name: "SwaprMarket",
-      description: "SwaprMarket wallet auth and escrow payments",
+      name: "OpenlyMarket",
+      description: "OpenlyMarket wallet auth and escrow payments",
       url: appUrl,
       icons: [`${appUrl}/logowhite.svg`],
     },
@@ -297,3 +297,4 @@ export function useWallet() {
   }
   return context;
 }
+

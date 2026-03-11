@@ -25,35 +25,35 @@ type FAQItem = {
 
 const buyerFAQs: FAQItem[] = [
   {
-    question: "Come funziona SwaprMarket?",
-    answer: "SwaprMarket è un marketplace 'Request-First'. Invece di sfogliare infinite liste di prodotti, pubblichi una richiesta specifica ('Cerco un account Netflix', 'Cerco uno script Python') e i venditori qualificati ti inviano offerte su misura."
+    question: "Come funziona OpenlyMarket?",
+    answer: "OpenlyMarket Ã¨ un marketplace 'Request-First'. Invece di sfogliare infinite liste di prodotti, pubblichi una richiesta specifica ('Cerco un account Netflix', 'Cerco uno script Python') e i venditori qualificati ti inviano offerte su misura."
   },
   {
     question: "I miei fondi sono al sicuro?",
-    answer: "Assolutamente sì. Utilizziamo un sistema di Escrow rigoroso. Quando paghi, i fondi vengono bloccati in un conto sicuro e vengono rilasciati al venditore solo dopo che hai confermato la ricezione del prodotto o servizio."
+    answer: "Assolutamente sÃ¬. Utilizziamo un sistema di Escrow rigoroso. Quando paghi, i fondi vengono bloccati in un conto sicuro e vengono rilasciati al venditore solo dopo che hai confermato la ricezione del prodotto o servizio."
   },
   {
     question: "Posso acquistare prodotti da altri siti (es. Amazon)?",
-    answer: "Sì, grazie alla nostra funzione 'Smart Search'. Incolla il link del prodotto che desideri da qualsiasi e-commerce, paga in crypto, e noi lo acquisteremo e spediremo per te, proteggendo la tua privacy."
+    answer: "SÃ¬, grazie alla nostra funzione 'Smart Search'. Incolla il link del prodotto che desideri da qualsiasi e-commerce, paga in crypto, e noi lo acquisteremo e spediremo per te, proteggendo la tua privacy."
   },
   {
     question: "Quali criptovalute accettate?",
-    answer: "Supportiamo le principali criptovalute per garantire flessibilità e privacy: Bitcoin (BTC), Ethereum (ETH), Litecoin (LTC), Monero (XMR) e Tether (USDT)."
+    answer: "Supportiamo le principali criptovalute per garantire flessibilitÃ  e privacy: Bitcoin (BTC), Ethereum (ETH), Litecoin (LTC), Monero (XMR) e Tether (USDT)."
   },
   {
     question: "Cosa succede se il venditore non consegna?",
-    answer: "Se il venditore non consegna entro i termini stabiliti o il prodotto non è conforme, puoi aprire una disputa. I fondi in Escrow verranno congelati e, se verifichiamo l'inadempienza, ti verranno rimborsati al 100%."
+    answer: "Se il venditore non consegna entro i termini stabiliti o il prodotto non Ã¨ conforme, puoi aprire una disputa. I fondi in Escrow verranno congelati e, se verifichiamo l'inadempienza, ti verranno rimborsati al 100%."
   }
 ];
 
 const sellerFAQs: FAQItem[] = [
   {
     question: "Come divento un venditore?",
-    answer: "Per diventare venditore devi superare una procedura di verifica. È richiesta una fee d'ingresso una tantum di $20 e, per i livelli superiori, un deposito di sicurezza (Vendor Bond) per garantire la tua affidabilità."
+    answer: "Per diventare venditore devi superare una procedura di verifica. Ãˆ richiesta una fee d'ingresso una tantum di $20 e, per i livelli superiori, un deposito di sicurezza (Vendor Bond) per garantire la tua affidabilitÃ ."
   },
   {
-    question: "Cos'è il Vendor Bond?",
-    answer: "Il Vendor Bond è un deposito in criptovalute che rimane bloccato come garanzia. Serve a proteggere gli acquirenti da truffe o comportamenti scorretti. Se operi onestamente, i fondi rimangono tuoi."
+    question: "Cos'Ã¨ il Vendor Bond?",
+    answer: "Il Vendor Bond Ã¨ un deposito in criptovalute che rimane bloccato come garanzia. Serve a proteggere gli acquirenti da truffe o comportamenti scorretti. Se operi onestamente, i fondi rimangono tuoi."
   },
   {
     question: "Quanto costa vendere sulla piattaforma?",
@@ -61,7 +61,7 @@ const sellerFAQs: FAQItem[] = [
   },
   {
     question: "Come funzionano le Sponsored Listings?",
-    answer: "Puoi aumentare la tua visibilità acquistando pacchetti di sponsorizzazione (es. $25/mese). Le tue offerte appariranno in cima alle ricerche e nelle sezioni in evidenza, aumentando le probabilità di vendita."
+    answer: "Puoi aumentare la tua visibilitÃ  acquistando pacchetti di sponsorizzazione (es. $25/mese). Le tue offerte appariranno in cima alle ricerche e nelle sezioni in evidenza, aumentando le probabilitÃ  di vendita."
   },
   {
     question: "Quando ricevo i miei pagamenti?",
@@ -141,7 +141,7 @@ export default function FAQPage() {
                 FAQ
               </h1>
               <p className="text-zinc-400 text-base leading-relaxed">
-                Hai domande? Abbiamo le risposte. Trova tutto ciò che devi sapere per usare la piattaforma al meglio.
+                Hai domande? Abbiamo le risposte. Trova tutto ciÃ² che devi sapere per usare la piattaforma al meglio.
               </p>
             </motion.div>
 
@@ -233,3 +233,4 @@ export default function FAQPage() {
     </div>
   );
 }
+

@@ -32,7 +32,7 @@ export function HowItWorks({ copy }: HowItWorksProps) {
     },
   ];
 
-  const title = copy?.title || "Come funziona SwaprMarket";
+  const title = copy?.title || "Come funziona OpenlyMarket";
   const subtitle =
     copy?.subtitle ||
     "Il modo piu sicuro per comprare e vendere prodotti esclusivi con criptovalute.";
@@ -67,3 +67,4 @@ export function HowItWorks({ copy }: HowItWorksProps) {
     </Squircle>
   );
 }
+

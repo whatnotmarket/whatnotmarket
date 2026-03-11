@@ -379,7 +379,7 @@ async function selectInviteUsages(
 const riskKeywordGroups: Array<{ label: string; tokens: string[] }> = [
   {
     label: "external_payment",
-    tokens: ["outside platform", "outside swaprmarket", "wire transfer", "send usdt", "send btc"],
+    tokens: ["outside platform", "outside openlymarket", "wire transfer", "send usdt", "send btc"],
   },
   {
     label: "off_platform_contact",
@@ -1077,3 +1077,4 @@ export async function GET(request: NextRequest) {
     },
   });
 }
+

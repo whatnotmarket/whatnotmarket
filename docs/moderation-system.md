@@ -1,4 +1,4 @@
-﻿# Moderation System Overview
+# Moderation System Overview
 
 ## Scopo
 Questo documento descrive l'architettura del sistema di moderazione contenuti pubblici/semi-pubblici implementato nel progetto, con focus su pipeline, decisioni, persistenza audit e integrazione con le API.

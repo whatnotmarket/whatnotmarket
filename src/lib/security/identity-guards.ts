@@ -9,7 +9,7 @@ const RESERVED_PROFILE_HANDLES = new Set([
   "security",
   "official",
   "team",
-  "swaprmarket",
+  "openlymarket",
 ]);
 
 export function normalizeProfileHandle(raw: string) {
@@ -25,3 +25,4 @@ export function isReservedProfileHandle(raw: string) {
   if (!normalized) return false;
   return RESERVED_PROFILE_HANDLES.has(normalized);
 }
+

@@ -93,9 +93,9 @@ export default function SmartSearchPage() {
                     <span className="text-zinc-400">Incolla il link e noi lo acquistiamo per te.</span>
                   </h2>
                   <p className="text-zinc-400 leading-relaxed max-w-2xl">
-                    Smart Search è il nostro servizio di <strong>Proxy Buying</strong> avanzato. 
+                    Smart Search Ã¨ il nostro servizio di <strong>Proxy Buying</strong> avanzato. 
                     Ti permette di acquistare prodotti da Amazon, eBay, o qualsiasi altro e-commerce globale pagando in criptovalute.
-                    Noi gestiamo l'acquisto e la logistica, proteggendo la tua identità dal venditore originale.
+                    Noi gestiamo l'acquisto e la logistica, proteggendo la tua identitÃ  dal venditore originale.
                   </p>
                 </section>
 
@@ -125,7 +125,7 @@ export default function SmartSearchPage() {
                       <Search className="w-8 h-8 text-white mb-4" />
                       <h4 className="text-white font-bold text-lg mb-2">Incolla in Smart Search</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Incolla il link nella barra di ricerca di SwaprMarket. Il nostro sistema analizzerà il prodotto e calcolerà il prezzo in crypto.
+                        Incolla il link nella barra di ricerca di OpenlyMarket. Il nostro sistema analizzerÃ  il prodotto e calcolerÃ  il prezzo in crypto.
                       </p>
                     </div>
 
@@ -154,7 +154,7 @@ export default function SmartSearchPage() {
                 {/* Vantaggi Chiave */}
                 <section className="space-y-6">
                   <h3 className="text-xl font-bold text-white font-inter flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-white" /> Perché usare Smart Search
+                    <ShieldCheck className="w-5 h-5 text-white" /> PerchÃ© usare Smart Search
                   </h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -262,3 +262,4 @@ export default function SmartSearchPage() {
     </div>
   );
 }
+

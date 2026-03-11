@@ -366,10 +366,10 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
           const url = new URL(href);
           const host = url.hostname.toLowerCase();
           const allowed = new Set<string>([
-            "swaprmarket.market",
-            "www.swaprmarket.market",
-            "swaprmarket.com",
-            "www.swaprmarket.com",
+            "openlymarket.market",
+            "www.openlymarket.market",
+            "openlymarket.com",
+            "www.openlymarket.com",
             "localhost",
             "127.0.0.1",
           ]);
@@ -2875,3 +2875,4 @@ export function GlobalChatClient() {
     </TooltipProvider>
   );
 }
+

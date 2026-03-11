@@ -108,7 +108,7 @@ export function ContactClient({ copy }: { copy: CopyMap }) {
                     <div className="space-y-2">
                         <h3 className="text-2xl font-bold text-white">{telegram.button || "Supporto Telegram"}</h3>
                         <p className="text-zinc-400 max-w-sm mx-auto">
-                            {telegram.desc || "Il canale più veloce. Risposta media in 5 minuti."}
+                            {telegram.desc || "Il canale piÃ¹ veloce. Risposta media in 5 minuti."}
                         </p>
                     </div>
 
@@ -132,7 +132,7 @@ export function ContactClient({ copy }: { copy: CopyMap }) {
                             <p className="text-sm text-zinc-400">{email.desc || "Per questioni amministrative o partnership."}</p>
                         </div>
                         <Button variant="outline" className="border-white/10 hover:bg-white/5 text-white shrink-0">
-                            support@swaprmarket.market
+                            support@openlymarket.market
                         </Button>
                     </div>
                 </section>
@@ -157,3 +157,4 @@ export function ContactClient({ copy }: { copy: CopyMap }) {
     </div>
   );
 }
+

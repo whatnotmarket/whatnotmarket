@@ -103,12 +103,12 @@ export default function ContactPage() {
                     <div className="space-y-2">
                         <h2 className="text-2xl font-bold text-white font-inter">Supporto Telegram</h2>
                         <p className="text-zinc-400 max-w-md mx-auto">
-                            Il modo più veloce per ricevere assistenza. Il nostro team di supporto è attivo 24/7 per risolvere problemi relativi a ordini, account o escrow.
+                            Il modo piÃ¹ veloce per ricevere assistenza. Il nostro team di supporto Ã¨ attivo 24/7 per risolvere problemi relativi a ordini, account o escrow.
                         </p>
                     </div>
 
                     <Button 
-                        onClick={() => window.open("https://t.me/swaprmarketbot", "_blank")}
+                        onClick={() => window.open("https://t.me/openlymarketbot", "_blank")}
                         className="h-12 px-8 font-bold bg-[#0088cc] text-white hover:bg-[#0077b5] rounded-xl w-full sm:w-auto"
                     >
                         <TelegramIcon className="w-5 h-5 mr-2" /> Apri Chat Supporto
@@ -125,8 +125,8 @@ export default function ContactPage() {
                         <div>
                             <h3 className="text-lg font-bold text-white">Email</h3>
                             <p className="text-sm text-zinc-400 mb-4">Per richieste formali, partnership o problemi legali.</p>
-                            <a href="mailto:support@swaprmarket.com" className="text-white font-medium hover:underline decoration-white/30 underline-offset-4">
-                                support@swaprmarket.com
+                            <a href="mailto:support@openlymarket.com" className="text-white font-medium hover:underline decoration-white/30 underline-offset-4">
+                                support@openlymarket.com
                             </a>
                         </div>
                     </div>
@@ -135,7 +135,7 @@ export default function ContactPage() {
                         <HelpCircle className="w-8 h-8 text-white" />
                         <div>
                             <h3 className="text-lg font-bold text-white">FAQ</h3>
-                            <p className="text-sm text-zinc-400 mb-4">Trova risposte immediate alle domande più frequenti.</p>
+                            <p className="text-sm text-zinc-400 mb-4">Trova risposte immediate alle domande piÃ¹ frequenti.</p>
                             <Button 
                                 variant="outline" 
                                 className="h-10 border-white/10 hover:bg-white/5 text-white"
@@ -178,3 +178,4 @@ export default function ContactPage() {
     </div>
   );
 }
+

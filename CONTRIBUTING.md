@@ -1,14 +1,14 @@
-# Contributing to SwaprMarket
+# Contributing to OpenlyMarket
 
-Thank you for your interest in contributing to SwaprMarket! We welcome contributions from the community to help make this project better.
+Thank you for your interest in contributing to OpenlyMarket! We welcome contributions from the community to help make this project better.
 
 ## Getting Started
 
 1.  **Fork the repository** on GitHub.
 2.  **Clone your fork** locally:
     ```bash
-    git clone https://github.com/your-username/swaprmarket.git
-    cd swaprmarket
+    git clone https://github.com/your-username/openlymarket.git
+    cd openlymarket
     ```
 3.  **Install dependencies**:
     ```bash
@@ -46,3 +46,4 @@ If you find a bug or have a feature request, please open an issue on the GitHub 
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+

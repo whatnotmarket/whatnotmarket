@@ -40,7 +40,7 @@ export function Navbar() {
             <Link href="/market" className="flex items-center gap-2 group cursor-pointer">
               <Image
                 src="/logowhite.svg"
-                alt="SwaprMarket"
+                alt="OpenlyMarket"
                 width={80}
                 height={40}
                 className="h-7 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
@@ -127,3 +127,4 @@ export function Navbar() {
     </div>
   );
 }
+

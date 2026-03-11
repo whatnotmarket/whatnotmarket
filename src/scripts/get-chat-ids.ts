@@ -19,7 +19,7 @@ async function getUserIds() {
   const { data: users, error } = await supabase
     .from('profiles')
     .select('id, username, full_name')
-    .or('username.ilike.swaprmarket,username.ilike.testbuyer,full_name.ilike.%Test Buyer%')
+    .or('username.ilike.openlymarket,username.ilike.testbuyer,full_name.ilike.%Test Buyer%')
 
   if (error) {
     console.error('Error fetching users:', error)
@@ -30,3 +30,4 @@ async function getUserIds() {
 }
 
 getUserIds()
+

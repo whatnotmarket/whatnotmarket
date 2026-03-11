@@ -89,7 +89,7 @@ export function SecureTransactionClient({ copy }: { copy: CopyMap }) {
                     <Lock className="text-white w-6 h-6" /> {intro.title || "Protezione Totale"}
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    {intro.text || "Su SwaprMarket ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori. Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione."}
+                    {intro.text || "Su OpenlyMarket ogni transazione Ã¨ protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori. Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione."}
                   </p>
                 </section>
 
@@ -97,7 +97,7 @@ export function SecureTransactionClient({ copy }: { copy: CopyMap }) {
 
                 {/* How it Works */}
                 <section className="space-y-6">
-                  <h3 className="text-xl font-bold text-white font-inter">{howItWorks.title || "Come funziona l’Escrow"}</h3>
+                  <h3 className="text-xl font-bold text-white font-inter">{howItWorks.title || "Come funziona lâ€™Escrow"}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 space-y-4 relative overflow-hidden group hover:border-white/20 transition-colors">
                       <div className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center border border-white/10 text-white font-bold">1</div>
@@ -141,3 +141,4 @@ export function SecureTransactionClient({ copy }: { copy: CopyMap }) {
     </div>
   );
 }
+

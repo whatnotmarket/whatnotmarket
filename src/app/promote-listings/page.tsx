@@ -101,7 +101,7 @@ I request to activate Sponsored Listings for my account.`;
   };
 
   const handleOpenTelegram = () => {
-    window.open("https://t.me/swaprmarketbot?start=promote-listings", "_blank");
+    window.open("https://t.me/openlymarketbot?start=promote-listings", "_blank");
   };
 
   return (
@@ -485,4 +485,5 @@ I request to activate Sponsored Listings for my account.`;
     </div>
   );
 }
+
 

@@ -31,7 +31,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Load cart from local storage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("swaprmarket_cart");
+    const savedCart = localStorage.getItem("openlymarket_cart");
     if (savedCart) {
       try {
         setItems(JSON.parse(savedCart));
@@ -43,7 +43,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Save cart to local storage whenever it changes
   useEffect(() => {
-    localStorage.setItem("swaprmarket_cart", JSON.stringify(items));
+    localStorage.setItem("openlymarket_cart", JSON.stringify(items));
   }, [items]);
 
   const addItem = (newItem: CartItem) => {
@@ -113,3 +113,4 @@ export function useCart() {
   }
   return context;
 }
+

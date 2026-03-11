@@ -41,10 +41,10 @@ export default function NotFound() {
             <Mail className="h-4 w-4" />
             <span>Hai bisogno di supporto?</span>
             <a 
-              href="mailto:support@swapr.market" 
+              href="mailto:support@openly.market"
               className="text-zinc-300 hover:text-white underline underline-offset-4 transition-colors"
             >
-              support@swapr.market
+              support@openly.market
             </a>
           </div>
         </div>

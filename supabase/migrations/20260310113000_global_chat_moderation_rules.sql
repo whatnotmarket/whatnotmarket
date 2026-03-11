@@ -52,8 +52,8 @@ alter table public.global_chat_messages
   add constraint global_chat_messages_message_check
   check (
     char_length(trim(message)) between 1 and 180
-    and message !~* 'https?://(?!(?:[^/]*\\.)?swaprmarket\\.market|(?:www\\.)?swaprmarket\\.com|localhost(?::\\d{1,5})?|127\\.0\\.0\\.1(?::\\d{1,5})?)[^\\s]+'
-    and message !~* '\\b(?!(?:[^\\s]*\\.)?swaprmarket\\.market|(?:www\\.)?swaprmarket\\.com|localhost|127\\.0\\.0\\.1)[a-z0-9.-]+\\.(?:com|net|org|io|ru|xyz|gg|me|app|co|dev|market)\\b'
+    and message !~* 'https?://(?!(?:[^/]*\\.)?openlymarket\\.market|(?:www\\.)?openlymarket\\.com|localhost(?::\\d{1,5})?|127\\.0\\.0\\.1(?::\\d{1,5})?)[^\\s]+'
+    and message !~* '\\b(?!(?:[^\\s]*\\.)?openlymarket\\.market|(?:www\\.)?openlymarket\\.com|localhost|127\\.0\\.0\\.1)[a-z0-9.-]+\\.(?:com|net|org|io|ru|xyz|gg|me|app|co|dev|market)\\b'
   );
 
 alter table public.global_chat_messages
@@ -92,7 +92,7 @@ values
   ('guaranteed profit', 'Scam pattern', true),
   ('send first', 'Unsafe trading pattern', true),
   ('no escrow', 'Unsafe trading pattern', true),
-  ('instant稳赚', 'Spam pattern', true)
+  ('instantç¨³èµš', 'Spam pattern', true)
 on conflict (phrase) do update
 set reason = excluded.reason,
     is_active = excluded.is_active;
@@ -136,3 +136,4 @@ create policy "Global chat rooms are publicly readable"
   on public.global_chat_rooms
   for select
   using (true);
+

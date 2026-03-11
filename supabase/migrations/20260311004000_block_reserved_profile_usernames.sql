@@ -29,7 +29,7 @@ begin
     'security',
     'official',
     'team',
-    'swaprmarket'
+    'openlymarket'
   ]);
 
   if not is_reserved then
@@ -59,3 +59,4 @@ create trigger trg_block_reserved_profile_usernames
 before insert or update of username, is_admin on public.profiles
 for each row
 execute function public.block_reserved_profile_usernames();
+

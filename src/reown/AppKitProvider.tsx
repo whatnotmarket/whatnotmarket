@@ -13,8 +13,8 @@ if (!projectId) {
 }
 
 const metadata = {
-  name: "swaprmarket-appkit-test",
-  description: "SwaprMarket AppKit test",
+  name: "openlymarket-appkit-test",
+  description: "OpenlyMarket AppKit test",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   icons: ["/logowhite.svg"],
 };
@@ -47,3 +47,4 @@ export function AppKitProvider({
     </WagmiProvider>
   );
 }
+

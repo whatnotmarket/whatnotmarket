@@ -3,18 +3,18 @@
 INSERT INTO copy_website (page, section, key, label, content, content_type, locale)
 VALUES
   -- DISCLAIMER PAGE
-  ('/disclaimer', 'content', 'title', 'Page Title', 'Disclaimer e Limitazione di Responsabilità', 'title', 'it'),
-  ('/disclaimer', 'content', 'intro', 'Intro Text', 'Benvenuto su SwaprMarket. Prima di utilizzare i nostri servizi, ti preghiamo di leggere attentamente il seguente disclaimer.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'title', 'Page Title', 'Disclaimer e Limitazione di ResponsabilitÃ ', 'title', 'it'),
+  ('/disclaimer', 'content', 'intro', 'Intro Text', 'Benvenuto su OpenlyMarket. Prima di utilizzare i nostri servizi, ti preghiamo di leggere attentamente il seguente disclaimer.', 'textarea', 'it'),
   ('/disclaimer', 'content', 'role_title', 'Role Title', 'Ruolo della Piattaforma', 'title', 'it'),
-  ('/disclaimer', 'content', 'role_text', 'Role Text', 'SwaprMarket opera esclusivamente come un intermediario tecnologico. La nostra piattaforma è un mezzo che permette agli utenti di pubblicare inserzioni per la vendita di beni o servizi. Non siamo proprietari, venditori, né gestori dei prodotti o servizi offerti nelle inserzioni.', 'textarea', 'it'),
-  ('/disclaimer', 'content', 'liability_title', 'Liability Title', 'Nessuna Responsabilità sui Contenuti e sulle Transazioni', 'title', 'it'),
+  ('/disclaimer', 'content', 'role_text', 'Role Text', 'OpenlyMarket opera esclusivamente come un intermediario tecnologico. La nostra piattaforma Ã¨ un mezzo che permette agli utenti di pubblicare inserzioni per la vendita di beni o servizi. Non siamo proprietari, venditori, nÃ© gestori dei prodotti o servizi offerti nelle inserzioni.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'liability_title', 'Liability Title', 'Nessuna ResponsabilitÃ  sui Contenuti e sulle Transazioni', 'title', 'it'),
   ('/disclaimer', 'content', 'liability_text', 'Liability Text', 'Di conseguenza, dichiariamo esplicitamente che:', 'plain', 'it'),
-  ('/disclaimer', 'content', 'point1', 'Point 1', 'Non siamo responsabili per le attività svolte dagli utenti sul sito. Ogni utente è direttamente e unicamente responsabile delle proprie azioni, delle informazioni fornite e delle obbligazioni contratte.', 'textarea', 'it'),
-  ('/disclaimer', 'content', 'point2', 'Point 2', 'Non siamo responsabili per ciò che gli utenti vendono. La qualità, la sicurezza, la legalità e la veridicità degli articoli o servizi offerti sono di esclusiva responsabilità dell''utente che pubblica l''inserzione. Non effettuiamo alcuna verifica preventiva sui contenuti pubblicati.', 'textarea', 'it'),
-  ('/disclaimer', 'content', 'point3', 'Point 3', 'Non siamo parte della transazione. Qualsiasi accordo, transazione o contratto stipulato tra gli utenti avviene direttamente tra di loro. SwaprMarket non è parte di tale rapporto e non assume alcuna responsabilità derivante da esso.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'point1', 'Point 1', 'Non siamo responsabili per le attivitÃ  svolte dagli utenti sul sito. Ogni utente Ã¨ direttamente e unicamente responsabile delle proprie azioni, delle informazioni fornite e delle obbligazioni contratte.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'point2', 'Point 2', 'Non siamo responsabili per ciÃ² che gli utenti vendono. La qualitÃ , la sicurezza, la legalitÃ  e la veridicitÃ  degli articoli o servizi offerti sono di esclusiva responsabilitÃ  dell''utente che pubblica l''inserzione. Non effettuiamo alcuna verifica preventiva sui contenuti pubblicati.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'point3', 'Point 3', 'Non siamo parte della transazione. Qualsiasi accordo, transazione o contratto stipulato tra gli utenti avviene direttamente tra di loro. OpenlyMarket non Ã¨ parte di tale rapporto e non assume alcuna responsabilitÃ  derivante da esso.', 'textarea', 'it'),
   ('/disclaimer', 'content', 'risk_title', 'Risk Title', 'Utilizzo a Proprio Rischio', 'title', 'it'),
-  ('/disclaimer', 'content', 'risk_text', 'Risk Text', 'L''utilizzo della nostra piattaforma implica l''accettazione che ogni interazione e transazione è condotta a proprio rischio. Raccomandiamo agli utenti di adottare le dovute precauzioni e di agire con buonsenso durante la compravendita.', 'textarea', 'it'),
-  ('/disclaimer', 'content', 'footer', 'Footer Text', 'Utilizzando SwaprMarket, accetti i termini di questo disclaimer e sollevi la piattaforma da qualsiasi responsabilità legata alle attività degli utenti e ai contenuti delle inserzioni.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'risk_text', 'Risk Text', 'L''utilizzo della nostra piattaforma implica l''accettazione che ogni interazione e transazione Ã¨ condotta a proprio rischio. Raccomandiamo agli utenti di adottare le dovute precauzioni e di agire con buonsenso durante la compravendita.', 'textarea', 'it'),
+  ('/disclaimer', 'content', 'footer', 'Footer Text', 'Utilizzando OpenlyMarket, accetti i termini di questo disclaimer e sollevi la piattaforma da qualsiasi responsabilitÃ  legata alle attivitÃ  degli utenti e ai contenuti delle inserzioni.', 'textarea', 'it'),
 
   -- REFUND PAGE
   ('/refund', 'header', 'title', 'Page Title', 'Refund Policy', 'title', 'en'),
@@ -30,9 +30,9 @@ VALUES
   ('/open-source', 'header', 'title', 'Page Title', 'Open Source', 'title', 'it'),
   ('/open-source', 'header', 'subtitle', 'Page Subtitle', 'Trasparenza totale. Codice verificabile. Costruito dalla community, per la community.', 'textarea', 'it'),
   ('/open-source', 'header', 'back_button', 'Back Button', 'Indietro', 'button', 'it'),
-  ('/open-source', 'philosophy', 'title', 'Philosophy Title', 'Perché Open Source?', 'title', 'it'),
-  ('/open-source', 'philosophy', 'text1', 'Philosophy Text 1', 'Crediamo che un marketplace che gestisce valore e dati sensibili debba essere completamente trasparente. Rendendo il nostro codice pubblico, permettiamo a chiunque di verificare come vengono gestiti i dati, come funzionano gli smart contract (ove presenti) e come è costruita la sicurezza della piattaforma.', 'textarea', 'it'),
-  ('/open-source', 'philosophy', 'text2', 'Philosophy Text 2', 'La sicurezza attraverso l''oscurità è un mito. La vera sicurezza nasce dalla verifica costante di migliaia di occhi esperti.', 'textarea', 'it'),
+  ('/open-source', 'philosophy', 'title', 'Philosophy Title', 'PerchÃ© Open Source?', 'title', 'it'),
+  ('/open-source', 'philosophy', 'text1', 'Philosophy Text 1', 'Crediamo che un marketplace che gestisce valore e dati sensibili debba essere completamente trasparente. Rendendo il nostro codice pubblico, permettiamo a chiunque di verificare come vengono gestiti i dati, come funzionano gli smart contract (ove presenti) e come Ã¨ costruita la sicurezza della piattaforma.', 'textarea', 'it'),
+  ('/open-source', 'philosophy', 'text2', 'Philosophy Text 2', 'La sicurezza attraverso l''oscuritÃ  Ã¨ un mito. La vera sicurezza nasce dalla verifica costante di migliaia di occhi esperti.', 'textarea', 'it'),
   ('/open-source', 'tech_stack', 'title', 'Tech Stack Title', 'Tech Stack Moderno', 'title', 'it'),
   ('/open-source', 'tech_stack', 'frontend_title', 'Frontend Title', 'Frontend', 'plain', 'it'),
 
@@ -96,7 +96,7 @@ VALUES
   ('/sell', 'form', 'submit_button', 'Submit Button', 'Publish Listing', 'button', 'en'),
 
   -- LOGIN PAGE
-  ('/login', 'content', 'title', 'Page Title', 'Welcome to SwaprMarket', 'title', 'en'),
+  ('/login', 'content', 'title', 'Page Title', 'Welcome to OpenlyMarket', 'title', 'en'),
   ('/login', 'content', 'subtitle', 'Page Subtitle', 'Connect your wallet or social account to continue.', 'textarea', 'en'),
   ('/login', 'content', 'connect_wallet', 'Connect Wallet', 'Connect Wallet', 'button', 'en'),
   ('/login', 'content', 'continue_google', 'Continue with Google', 'Continue with Google', 'button', 'en'),
@@ -107,3 +107,4 @@ DO UPDATE SET
   content = EXCLUDED.content,
   label = EXCLUDED.label,
   content_type = EXCLUDED.content_type;
+

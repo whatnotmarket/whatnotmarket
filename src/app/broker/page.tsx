@@ -25,11 +25,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Escrow for Brokers | SwaprMarket",
+  title: "Escrow for Brokers | OpenlyMarket",
   description:
     "Manage secure broker transactions between buyers and sellers with protected commissions, transparent escrow flow, and trusted infrastructure.",
   openGraph: {
-    title: "Escrow for Brokers | SwaprMarket",
+    title: "Escrow for Brokers | OpenlyMarket",
     description:
       "A premium escrow solution for brokers managing buyer-seller deals with secure commission distribution.",
     type: "website",
@@ -186,7 +186,7 @@ export default function BrokerPage() {
               securely.
             </p>
             <p>
-              La nostra piattaforma è progettata per semplificare la gestione
+              La nostra piattaforma Ã¨ progettata per semplificare la gestione
               delle transazioni complesse e ad alto valore.
             </p>
           </div>
@@ -299,3 +299,4 @@ export default function BrokerPage() {
     </div>
   );
 }
+

@@ -85,7 +85,7 @@ export default function SecureTransactionPage() {
                     <Lock className="text-white w-6 h-6" /> Protezione Totale
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    Su SwaprMarket ogni transazione è protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori.
+                    Su OpenlyMarket ogni transazione Ã¨ protetta tramite un sistema di escrow sicuro progettato per proteggere sia gli acquirenti che i venditori.
                     Quando viene avviato un accordo, i fondi vengono temporaneamente bloccati in escrow e rilasciati solo quando entrambe le parti hanno completato i termini della transazione.
                     Questo garantisce che nessuna delle due parti possa perdere i propri fondi durante il processo.
                   </p>
@@ -95,14 +95,14 @@ export default function SecureTransactionPage() {
 
                 {/* How it Works */}
                 <section className="space-y-6">
-                  <h3 className="text-xl font-bold text-white font-inter">Come funziona l’Escrow</h3>
+                  <h3 className="text-xl font-bold text-white font-inter">Come funziona lâ€™Escrow</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 space-y-4 relative overflow-hidden group hover:border-white/20 transition-colors">
                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <UserCheck className="w-24 h-24 text-white" />
                       </div>
                       <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10 text-white font-bold">1</div>
-                      <h4 className="text-white font-bold text-lg">Creazione dell’accordo</h4>
+                      <h4 className="text-white font-bold text-lg">Creazione dellâ€™accordo</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
                         Un buyer e un seller avviano una transazione sulla piattaforma e concordano i termini del deal.
                       </p>
@@ -115,7 +115,7 @@ export default function SecureTransactionPage() {
                       <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10 text-white font-bold">2</div>
                       <h4 className="text-white font-bold text-lg">Deposito dei fondi</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Il buyer invia il pagamento che viene bloccato in escrow. A questo punto il venditore può procedere con la consegna.
+                        Il buyer invia il pagamento che viene bloccato in escrow. A questo punto il venditore puÃ² procedere con la consegna.
                       </p>
                     </div>
 
@@ -126,7 +126,7 @@ export default function SecureTransactionPage() {
                       <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10 text-white font-bold">3</div>
                       <h4 className="text-white font-bold text-lg">Verifica della consegna</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Una volta completata la consegna, l’escrow verifica che i termini dell’accordo siano stati rispettati.
+                        Una volta completata la consegna, lâ€™escrow verifica che i termini dellâ€™accordo siano stati rispettati.
                       </p>
                     </div>
 
@@ -137,7 +137,7 @@ export default function SecureTransactionPage() {
                       <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10 text-white font-bold">4</div>
                       <h4 className="text-white font-bold text-lg">Rilascio dei fondi</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Se tutto è corretto, i fondi vengono rilasciati al venditore e la transazione viene completata.
+                        Se tutto Ã¨ corretto, i fondi vengono rilasciati al venditore e la transazione viene completata.
                       </p>
                     </div>
                   </div>
@@ -149,13 +149,13 @@ export default function SecureTransactionPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                    <section className="space-y-4 h-full flex flex-col">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2 font-inter">
-                      <Scale className="text-white w-5 h-5" /> Chi gestisce l’Escrow
+                      <Scale className="text-white w-5 h-5" /> Chi gestisce lâ€™Escrow
                     </h3>
                     <div className="space-y-4 flex-1">
                       <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
                         <h4 className="text-white font-bold text-sm mb-2">Escrow della piattaforma</h4>
                         <p className="text-xs text-zinc-400 leading-relaxed">
-                          In molti casi l’escrow viene gestito direttamente da SwaprMarket. Questo garantisce un ambiente controllato e sicuro per le transazioni tra utenti.
+                          In molti casi lâ€™escrow viene gestito direttamente da OpenlyMarket. Questo garantisce un ambiente controllato e sicuro per le transazioni tra utenti.
                         </p>
                       </div>
                       <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
@@ -182,9 +182,9 @@ export default function SecureTransactionPage() {
                           <span className="w-2 h-2 bg-white rounded-full"/> Per i Buyer
                         </h4>
                         <ul className="space-y-2 text-xs text-zinc-400">
-                          <li>• Fondi bloccati fino alla consegna</li>
-                          <li>• Riduzione rischio truffe</li>
-                          <li>• Transazione sicura garantita</li>
+                          <li>â€¢ Fondi bloccati fino alla consegna</li>
+                          <li>â€¢ Riduzione rischio truffe</li>
+                          <li>â€¢ Transazione sicura garantita</li>
                         </ul>
                       </div>
                       <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
@@ -192,9 +192,9 @@ export default function SecureTransactionPage() {
                           <span className="w-2 h-2 bg-white rounded-full"/> Per i Seller
                         </h4>
                         <ul className="space-y-2 text-xs text-zinc-400">
-                          <li>• Fondi sicuri prima della consegna</li>
-                          <li>• Evita mancati pagamenti</li>
-                          <li>• Certezza della solvibilità del buyer</li>
+                          <li>â€¢ Fondi sicuri prima della consegna</li>
+                          <li>â€¢ Evita mancati pagamenti</li>
+                          <li>â€¢ Certezza della solvibilitÃ  del buyer</li>
                         </ul>
                       </div>
                     </div>
@@ -230,7 +230,7 @@ export default function SecureTransactionPage() {
                         <h4 className="text-white font-bold text-sm">Transazioni sempre tramite Escrow</h4>
                         <p className="text-xs text-zinc-400 leading-relaxed">
                           Per garantire la sicurezza del marketplace, tutte le transazioni devono essere effettuate tramite escrow.
-                          Qualsiasi tentativo di bypassare l’escrow viola le regole della piattaforma.
+                          Qualsiasi tentativo di bypassare lâ€™escrow viola le regole della piattaforma.
                         </p>
                       </div>
                     </div>
@@ -244,7 +244,7 @@ export default function SecureTransactionPage() {
                   <div className="max-w-2xl mx-auto space-y-4">
                     <h2 className="text-2xl font-bold text-white">Inizia una transazione sicura</h2>
                     <p className="text-zinc-400">
-                      Utilizza il sistema escrow per acquistare o vendere in modo sicuro su SwaprMarket.
+                      Utilizza il sistema escrow per acquistare o vendere in modo sicuro su OpenlyMarket.
                     </p>
                   </div>
 
@@ -273,3 +273,4 @@ export default function SecureTransactionPage() {
     </div>
   );
 }
+

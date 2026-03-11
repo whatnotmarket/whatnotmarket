@@ -1,4 +1,4 @@
-﻿# Admin Moderation Guide
+# Admin Moderation Guide
 
 ## A chi e destinata
 Guida operativa per admin della piattaforma (anche non tecnici) per gestire contenuti segnalati, review e blocchi.

@@ -1,4 +1,4 @@
-﻿# AI Moderation
+# AI Moderation
 
 ## Ambito
 Il layer AI di moderazione e implementato in `src/lib/moderation/moderation.ai.service.ts` e viene usato per classificare rischi semantici su contenuti pubblici/semi-pubblici.

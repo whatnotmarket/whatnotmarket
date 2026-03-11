@@ -59,7 +59,7 @@ export function PrivacyClient({ copy }: { copy: CopyMap }) {
                 {header.title || "Privacy Policy"}
               </h1>
               <p className="text-zinc-400 text-base leading-relaxed">
-                {header.subtitle || "La tua privacy non è un'opzione, è la nostra priorità. Scopri come proteggiamo i tuoi dati."}
+                {header.subtitle || "La tua privacy non Ã¨ un'opzione, Ã¨ la nostra prioritÃ . Scopri come proteggiamo i tuoi dati."}
               </p>
             </motion.div>
           </div>
@@ -85,7 +85,7 @@ export function PrivacyClient({ copy }: { copy: CopyMap }) {
                     <Lock className="text-white w-6 h-6" /> {philosophy.title || "Filosofia Privacy-First"}
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    {philosophy.text || "SwaprMarket è costruito sul principio della minimizzazione dei dati. Non raccogliamo informazioni che non sono strettamente necessarie per il funzionamento del servizio. Crediamo che l'anonimato sia un diritto fondamentale, specialmente nel mondo delle transazioni digitali."}
+                    {philosophy.text || "OpenlyMarket Ã¨ costruito sul principio della minimizzazione dei dati. Non raccogliamo informazioni che non sono strettamente necessarie per il funzionamento del servizio. Crediamo che l'anonimato sia un diritto fondamentale, specialmente nel mondo delle transazioni digitali."}
                   </p>
                 </section>
 
@@ -99,7 +99,7 @@ export function PrivacyClient({ copy }: { copy: CopyMap }) {
                       <EyeOff className="w-8 h-8 text-white" />
                       <h4 className="text-white font-bold text-lg">{data.card1_title || "Nessun KYC"}</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        {data.card1_desc || "Non richiediamo documenti d'identità, passaporti o selfie. La tua identità reale rimane tua."}
+                        {data.card1_desc || "Non richiediamo documenti d'identitÃ , passaporti o selfie. La tua identitÃ  reale rimane tua."}
                       </p>
                     </div>
                     
@@ -138,3 +138,4 @@ export function PrivacyClient({ copy }: { copy: CopyMap }) {
     </div>
   );
 }
+

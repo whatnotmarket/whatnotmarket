@@ -84,8 +84,8 @@ export default function AboutPage() {
                     <Gem className="text-white w-6 h-6" /> Chi Siamo
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    SwaprMarket è una piattaforma globale dedicata allo scambio di beni e servizi digitali. 
-                    Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la <strong>privacy</strong> è al primo posto e la <strong>fiducia</strong> è garantita dalla tecnologia, non dalla burocrazia.
+                    OpenlyMarket Ã¨ una piattaforma globale dedicata allo scambio di beni e servizi digitali. 
+                    Siamo nati con una missione chiara: creare un ambiente di trading sicuro dove la <strong>privacy</strong> Ã¨ al primo posto e la <strong>fiducia</strong> Ã¨ garantita dalla tecnologia, non dalla burocrazia.
                   </p>
                   <p className="text-zinc-400 leading-relaxed">
                     A differenza dei marketplace tradizionali, non richiediamo procedure KYC invasive. Ci basiamo sulla reputazione, sui depositi di sicurezza (Vendor Bond) e su un rigoroso sistema di Escrow per proteggere ogni singola transazione.
@@ -110,7 +110,7 @@ export default function AboutPage() {
                       <Lock className="w-8 h-8 text-white" />
                       <h4 className="text-white font-bold text-lg">Transazioni Escrow</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Ogni scambio è protetto. I fondi restano bloccati in un conto sicuro fino alla consegna confermata del servizio. Nessuna truffa, zero rischi.
+                        Ogni scambio Ã¨ protetto. I fondi restano bloccati in un conto sicuro fino alla consegna confermata del servizio. Nessuna truffa, zero rischi.
                       </p>
                     </div>
 
@@ -126,7 +126,7 @@ export default function AboutPage() {
                       <Zap className="w-8 h-8 text-white" />
                       <h4 className="text-white font-bold text-lg">Pagamenti Crypto</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Supportiamo pagamenti veloci e anonimi tramite le principali criptovalute, garantendo libertà finanziaria agli utenti di tutto il mondo.
+                        Supportiamo pagamenti veloci e anonimi tramite le principali criptovalute, garantendo libertÃ  finanziaria agli utenti di tutto il mondo.
                       </p>
                     </div>
                   </div>
@@ -191,7 +191,7 @@ export default function AboutPage() {
                     <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5 text-center">
                       <Shield className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
                       <div className="font-bold text-white">Verified Sellers</div>
-                      <p className="text-xs text-zinc-500 mt-1">Offrono qualità garantita</p>
+                      <p className="text-xs text-zinc-500 mt-1">Offrono qualitÃ  garantita</p>
                     </div>
                     <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/5 text-center">
                       <Scale className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
@@ -208,7 +208,7 @@ export default function AboutPage() {
                   <div className="max-w-2xl mx-auto space-y-4">
                     <h2 className="text-2xl font-bold text-white">Unisciti alla Community</h2>
                     <p className="text-zinc-400">
-                      Che tu voglia vendere i tuoi servizi o trovare le migliori offerte digitali, SwaprMarket è il posto giusto.
+                      Che tu voglia vendere i tuoi servizi o trovare le migliori offerte digitali, OpenlyMarket Ã¨ il posto giusto.
                     </p>
                   </div>
 
@@ -237,3 +237,4 @@ export default function AboutPage() {
     </div>
   );
 }
+

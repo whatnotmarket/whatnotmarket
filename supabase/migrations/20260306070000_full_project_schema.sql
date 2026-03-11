@@ -1,4 +1,4 @@
--- Full Supabase schema bootstrap for SwaprMarket.
+-- Full Supabase schema bootstrap for OpenlyMarket.
 -- Safe to run on fresh projects and idempotent for repeat runs.
 
 create extension if not exists "uuid-ossp";
@@ -985,3 +985,4 @@ begin
     end if;
   end if;
 end $$;
+

@@ -69,13 +69,13 @@ export async function POST(request: NextRequest) {
   }
 
   const normalizedCode = inviteResolution.normalizedCode;
-  const syntheticEmail = `founder+${normalizedCode.toLowerCase()}@swaprmarket.app`;
+  const syntheticEmail = `founder+${normalizedCode.toLowerCase()}@openlymarket.app`;
 
   const bridgeIdentity = await ensureBridgeUser({
     subject: `invite:founder:${normalizedCode}`,
     provider: "walletconnect",
     email: syntheticEmail,
-    fullName: "SwaprMarket Founder",
+    fullName: "OpenlyMarket Founder",
     avatarUrl: null,
   });
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
   const { error: profileError } = await admin
     .from("profiles")
     .update({
-      full_name: "SwaprMarket Founder",
+      full_name: "OpenlyMarket Founder",
       role_preference: "seller",
       onboarding_status: "completed",
       seller_status: "verified",
@@ -157,3 +157,4 @@ export async function POST(request: NextRequest) {
 
   return response;
 }
+

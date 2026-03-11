@@ -35,7 +35,7 @@ const applicationSchema = z.object({
   category: z.string().min(5, "Specifica cosa intendi vendere"),
   reviewsChannel: z.string().optional(),
   escrow: z.string().optional(),
-  notes: z.string().min(1, "Questo campo è obbligatorio"),
+  notes: z.string().min(1, "Questo campo Ã¨ obbligatorio"),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
@@ -99,7 +99,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
 
   const handleOpenTelegram = () => {
     // In a real app, this would be your bot username
-    window.open("https://t.me/swaprmarketbot?start=become-seller", "_blank");
+    window.open("https://t.me/openlymarketbot?start=become-seller", "_blank");
   };
 
   return (
@@ -188,7 +188,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                       </h2>
                       <p className="text-zinc-400 leading-relaxed">
                         Per mantenere un marketplace sicuro e affidabile, tutti i venditori devono completare un processo di verifica prima di poter pubblicare offerte.
-                        Il nostro sistema è progettato per essere <strong>privacy-first</strong>: non richiediamo KYC obbligatorio. Invece, utilizziamo un modello basato su reputazione, storico delle vendite e responsabilità economica.
+                        Il nostro sistema Ã¨ progettato per essere <strong>privacy-first</strong>: non richiediamo KYC obbligatorio. Invece, utilizziamo un modello basato su reputazione, storico delle vendite e responsabilitÃ  economica.
                       </p>
                     </section>
 
@@ -201,7 +201,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                           <Wallet className="text-white w-5 h-5" /> Fee di ingresso
                         </h3>
                         <p className="text-sm text-zinc-400">
-                          È richiesta una quota di ingresso <strong>non rimborsabile</strong> di <span className="text-white font-bold">$20</span>. Questa quota serve a:
+                          Ãˆ richiesta una quota di ingresso <strong>non rimborsabile</strong> di <span className="text-white font-bold">$20</span>. Questa quota serve a:
                         </p>
                         <ul className="space-y-2 text-sm text-zinc-400">
                           <li className="flex items-start gap-2">
@@ -255,7 +255,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                           <Lock className="w-6 h-6" /> Vendor Bond (Deposito di Sicurezza)
                         </h3>
                         <p className="text-zinc-300 mb-6 font-medium">
-                          Per alcune categorie o venditori ad alto volume, è richiesto un deposito di sicurezza (Vendor Bond).
+                          Per alcune categorie o venditori ad alto volume, Ã¨ richiesto un deposito di sicurezza (Vendor Bond).
                           Questo serve a proteggere il marketplace da comportamenti fraudolenti.
                         </p>
 
@@ -266,7 +266,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                               <div className="bg-[#1C1C1E] p-4 rounded-lg border border-white/5 flex-1">
                                 <div className="text-sm font-bold text-white mb-2">1. Deposito Iniziale</div>
                                 <p className="text-xs text-zinc-400 leading-relaxed">
-                                  Per attivare l'account venditore, è necessario bloccare un importo minimo in criptovalute (USDT, BTC, XMR). Questo fondo rimane tuo ma viene bloccato come garanzia.
+                                  Per attivare l'account venditore, Ã¨ necessario bloccare un importo minimo in criptovalute (USDT, BTC, XMR). Questo fondo rimane tuo ma viene bloccato come garanzia.
                                   <br />
                                   <span className="text-white font-semibold mt-2 block bg-white/5 p-2 rounded border border-white/5">Esempio: Starter Vendor = $200</span>
                                 </p>
@@ -286,15 +286,15 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                               <div className="bg-[#1C1C1E] p-4 rounded-lg border border-white/5 flex-1">
                                 <div className="text-sm font-bold text-white mb-2">3. Limite Ordini</div>
                                 <p className="text-xs text-zinc-400 leading-relaxed">
-                                  Il valore totale dei tuoi ordini attivi non può superare un multiplo del tuo bond. Se raggiungi il limite, devi aumentare il bond o completare gli ordini esistenti.
+                                  Il valore totale dei tuoi ordini attivi non puÃ² superare un multiplo del tuo bond. Se raggiungi il limite, devi aumentare il bond o completare gli ordini esistenti.
                                   <br />
-                                  <span className="text-zinc-500 font-medium mt-2 block">Formula: Max Ordini = Bond × 3</span>
+                                  <span className="text-zinc-500 font-medium mt-2 block">Formula: Max Ordini = Bond Ã— 3</span>
                                 </p>
                               </div>
                               <div className="bg-[#1C1C1E] p-4 rounded-lg border border-white/5 flex-1">
                                 <div className="text-sm font-bold text-white mb-2">4. Confisca</div>
                                 <p className="text-xs text-zinc-400 leading-relaxed">
-                                  In caso di comportamenti scorretti, il bond può essere confiscato per rimborsare gli acquirenti danneggiati.
+                                  In caso di comportamenti scorretti, il bond puÃ² essere confiscato per rimborsare gli acquirenti danneggiati.
                                   <span className="block mt-2 space-y-1">
                                     <span className="block text-white font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded border border-red-500/20 w-fit">Scam = -100% Bond</span>
                                     <span className="block text-zinc-400">Ritardo grave o negligenza = -10% Bond</span>
@@ -307,7 +307,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                         
                         <div className="mt-6 pt-4 border-t border-white/5 text-xs text-zinc-500 font-medium">
                           *Venditori con ottima reputazione (100+ vendite, 98% feedback) possono ottenere riduzioni del bond richiesto.
-                          Il ritiro del bond è possibile solo senza ordini attivi e dopo un periodo di sicurezza.
+                          Il ritiro del bond Ã¨ possibile solo senza ordini attivi e dopo un periodo di sicurezza.
                         </div>
                       </div>
                     </section>
@@ -324,14 +324,14 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                           Ogni venditore riceve un punteggio dinamico basato su:
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            {["Vendite completate", "Feedback positivi", "Volume transazioni", "Velocità risposta", "Dispute vinte"].map((item) => (
+                            {["Vendite completate", "Feedback positivi", "Volume transazioni", "VelocitÃ  risposta", "Dispute vinte"].map((item) => (
                                 <span key={item} className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-xs font-semibold text-zinc-300">
                                     {item}
                                 </span>
                             ))}
                         </div>
                         <p className="text-xs text-zinc-500 mt-auto pt-2 font-medium">
-                            Più alto è il punteggio, maggiore sarà la visibilità.
+                            PiÃ¹ alto Ã¨ il punteggio, maggiore sarÃ  la visibilitÃ .
                         </p>
                       </section>
 
@@ -354,7 +354,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                             </div>
                         </div>
                         <p className="text-xs text-zinc-500 mt-auto pt-2 font-medium">
-                            Livelli alti = Commissioni più basse e priorità.
+                            Livelli alti = Commissioni piÃ¹ basse e prioritÃ .
                         </p>
                       </section>
                     </div>
@@ -400,7 +400,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                       <div className="max-w-2xl mx-auto space-y-4">
                         <h2 className="text-2xl font-bold text-white">Marketplace Privacy-Focused</h2>
                         <p className="text-zinc-400">
-                            Il nostro obiettivo è creare un ambiente sicuro senza compromettere la privacy.
+                            Il nostro obiettivo Ã¨ creare un ambiente sicuro senza compromettere la privacy.
                             Non richiediamo KYC obbligatorio e utilizziamo escrow per garantire le transazioni.
                         </p>
                       </div>
@@ -570,4 +570,5 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
     </div>
   );
 }
+
 

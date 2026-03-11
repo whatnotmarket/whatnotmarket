@@ -78,14 +78,14 @@ export default function OpenSourcePage() {
                 {/* Philosophy */}
                 <section className="space-y-4">
                   <h2 className="text-2xl font-bold text-white flex items-center gap-3 font-inter">
-                    <Github className="text-white w-6 h-6" /> Perché Open Source?
+                    <Github className="text-white w-6 h-6" /> PerchÃ© Open Source?
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
                     Crediamo che un marketplace che gestisce valore e dati sensibili debba essere completamente trasparente. 
-                    Rendendo il nostro codice pubblico, permettiamo a chiunque di verificare come vengono gestiti i dati, come funzionano gli smart contract (ove presenti) e come è costruita la sicurezza della piattaforma.
+                    Rendendo il nostro codice pubblico, permettiamo a chiunque di verificare come vengono gestiti i dati, come funzionano gli smart contract (ove presenti) e come Ã¨ costruita la sicurezza della piattaforma.
                   </p>
                   <p className="text-zinc-400 leading-relaxed">
-                    La sicurezza attraverso l'oscurità è un mito. La vera sicurezza nasce dalla verifica costante di migliaia di occhi esperti.
+                    La sicurezza attraverso l'oscuritÃ  Ã¨ un mito. La vera sicurezza nasce dalla verifica costante di migliaia di occhi esperti.
                   </p>
                 </section>
 
@@ -107,7 +107,7 @@ export default function OpenSourcePage() {
                       <Terminal className="w-8 h-8 text-white" />
                       <h4 className="text-white font-bold text-lg">Type Safety</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Interamente scritto in <strong>TypeScript</strong>. La tipizzazione statica riduce i bug e migliora la qualità del codice, rendendo i refactoring più sicuri.
+                        Interamente scritto in <strong>TypeScript</strong>. La tipizzazione statica riduce i bug e migliora la qualitÃ  del codice, rendendo i refactoring piÃ¹ sicuri.
                       </p>
                     </div>
 
@@ -141,7 +141,7 @@ export default function OpenSourcePage() {
                     
                     <div className="relative z-10 space-y-4">
                         <p className="text-zinc-400 max-w-2xl">
-                            Accogliamo contributi da sviluppatori di tutto il mondo. Che si tratti di fixare un bug, migliorare la documentazione o proporre nuove feature, ogni aiuto è prezioso.
+                            Accogliamo contributi da sviluppatori di tutto il mondo. Che si tratti di fixare un bug, migliorare la documentazione o proporre nuove feature, ogni aiuto Ã¨ prezioso.
                         </p>
                         
                         <ul className="space-y-2 text-sm text-zinc-400">
@@ -152,7 +152,7 @@ export default function OpenSourcePage() {
 
                         <div className="pt-4">
                             <Button 
-                                onClick={() => window.open("https://github.com/swaprmarket", "_blank")}
+                                onClick={() => window.open("https://github.com/openlymarket", "_blank")}
                                 className="h-12 px-8 font-bold bg-white text-black hover:bg-zinc-200 rounded-xl"
                             >
                                 <Github className="w-5 h-5 mr-2" /> Vai al Repository
@@ -170,3 +170,4 @@ export default function OpenSourcePage() {
     </div>
   );
 }
+

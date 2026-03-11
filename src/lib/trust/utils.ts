@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import type { ReasonCode } from "@/lib/trust/reason-codes";
 import type { ReasonWeight } from "@/lib/trust/types";
 
-const HASH_SALT = process.env.ABUSE_SIGNAL_SALT || "swaprmarket-trust-v1";
+const HASH_SALT = process.env.ABUSE_SIGNAL_SALT || "openlymarket-trust-v1";
 
 export function clampScore(score: number) {
   return Math.max(0, Math.min(100, Math.round(score)));
@@ -88,3 +88,4 @@ export function jaccardSimilarity(leftText: string, rightText: string) {
   const union = left.size + right.size - intersection;
   return union === 0 ? 0 : intersection / union;
 }
+

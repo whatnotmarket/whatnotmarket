@@ -1,4 +1,4 @@
-# SwaprMarket
+# OpenlyMarket
 
 A buyer/seller marketplace web app built with Next.js, Tailwind CSS, and Supabase.
 
@@ -101,3 +101,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   - Check auth in server routes and edge functions
 - Rate limiting and spam protection
   - Flood and slow-mode checks are implemented for chat; add rate-limits where needed
+

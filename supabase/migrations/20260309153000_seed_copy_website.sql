@@ -55,10 +55,10 @@ VALUES
   ('/market', 'hero', 'subtitle', 'Subtitle', 'Cerca richieste, ricevi offerte verificate e chiudi il deal in escrow in modo sicuro.', 'textarea', 'it'),
 
   -- How It Works
-  ('/market', 'how_it_works', 'title', 'Section Title', 'Come funziona SwaprMarket', 'title', 'it'),
-  ('/market', 'how_it_works', 'subtitle', 'Section Subtitle', 'Il modo più sicuro per comprare e vendere prodotti esclusivi con criptovalute.', 'plain', 'it'),
+  ('/market', 'how_it_works', 'title', 'Section Title', 'Come funziona OpenlyMarket', 'title', 'it'),
+  ('/market', 'how_it_works', 'subtitle', 'Section Subtitle', 'Il modo piÃ¹ sicuro per comprare e vendere prodotti esclusivi con criptovalute.', 'plain', 'it'),
   ('/market', 'how_it_works', 'step_1_title', 'Step 1 Title', '1. Fai una Richiesta', 'plain', 'it'),
-  ('/market', 'how_it_works', 'step_1_desc', 'Step 1 Description', 'Descrivi ciò che cerchi. I venditori verificati riceveranno una notifica.', 'textarea', 'it'),
+  ('/market', 'how_it_works', 'step_1_desc', 'Step 1 Description', 'Descrivi ciÃ² che cerchi. I venditori verificati riceveranno una notifica.', 'textarea', 'it'),
   ('/market', 'how_it_works', 'step_2_title', 'Step 2 Title', '2. Ricevi Offerte', 'plain', 'it'),
   ('/market', 'how_it_works', 'step_2_desc', 'Step 2 Description', 'Confronta prezzi e condizioni. Chatta con i venditori in tempo reale.', 'textarea', 'it'),
   ('/market', 'how_it_works', 'step_3_title', 'Step 3 Title', '3. Chiudi il Deal', 'plain', 'it'),
@@ -70,7 +70,7 @@ VALUES
   ('/market', 'trust_cta', 'verified_btn', 'Verified Button', 'Diventa Venditore', 'button', 'it'),
   ('/market', 'trust_cta', 'escrow_title', 'Escrow Title', 'Escrow Sicuro', 'title', 'it'),
   ('/market', 'trust_cta', 'escrow_desc', 'Escrow Description', 'I tuoi fondi sono al sicuro nel nostro smart contract fino alla consegna del prodotto.', 'textarea', 'it'),
-  ('/market', 'trust_cta', 'escrow_btn', 'Escrow Button', 'Scopri di più', 'button', 'it'),
+  ('/market', 'trust_cta', 'escrow_btn', 'Escrow Button', 'Scopri di piÃ¹', 'button', 'it'),
   ('/market', 'trust_cta', 'affiliate_title', 'Affiliate Title', 'Become Affiliate', 'title', 'it'),
   ('/market', 'trust_cta', 'affiliate_desc', 'Affiliate Description', 'Guadagna commissioni invitando nuovi utenti. Ricevi fino al 20% sulle fee di ogni transazione generata dai tuoi referral.', 'textarea', 'it'),
   ('/market', 'trust_cta', 'affiliate_btn', 'Affiliate Button', 'Join Program', 'button', 'it'),
@@ -78,7 +78,7 @@ VALUES
   -- Buy Anywhere (Market Page)
   ('/market', 'buy_anywhere', 'badge', 'Badge', 'NEW FEATURE', 'plain', 'it'),
   ('/market', 'buy_anywhere', 'title', 'Title', 'Buy Anywhere with Crypto', 'title', 'it'),
-  ('/market', 'buy_anywhere', 'desc', 'Description', 'Find something outside the marketplace? Paste any product link and we''ll purchase it for you using crypto — privately and securely.', 'textarea', 'it'),
+  ('/market', 'buy_anywhere', 'desc', 'Description', 'Find something outside the marketplace? Paste any product link and we''ll purchase it for you using crypto â€” privately and securely.', 'textarea', 'it'),
   ('/market', 'buy_anywhere', 'btn', 'Button Label', 'Start Proxy Order', 'button', 'it'),
   ('/market', 'buy_anywhere', 'expanded_title', 'Expanded Title', 'Buy Anywhere', 'title', 'it'),
   ('/market', 'buy_anywhere', 'close_btn', 'Close Button', 'Close', 'button', 'it')
@@ -87,3 +87,4 @@ DO UPDATE SET
   content = EXCLUDED.content,
   label = EXCLUDED.label,
   content_type = EXCLUDED.content_type;
+

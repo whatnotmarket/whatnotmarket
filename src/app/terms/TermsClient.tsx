@@ -46,7 +46,7 @@ export function TermsClient({ copy }: { copy: CopyMap }) {
                             {header.title || "Terms of Service"}
                         </h1>
                         <p className="text-zinc-400 text-base leading-relaxed">
-                            {header.subtitle || "Please read these terms carefully before using our platform. They govern your relationship with SwaprMarket."}
+                            {header.subtitle || "Please read these terms carefully before using our platform. They govern your relationship with OpenlyMarket."}
                         </p>
                         <p className="text-xs text-zinc-500 pt-2">
                             {header.last_updated || "Last updated: March 6, 2026"}
@@ -72,7 +72,7 @@ export function TermsClient({ copy }: { copy: CopyMap }) {
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">{content.section1_title || "1. Introduction"}</h2>
                         <p>
-                            {content.section1_text || 'Welcome to SwaprMarket ("we," "our," or "us"). By accessing or using our website, services, or applications (collectively, the "Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Services.'}
+                            {content.section1_text || 'Welcome to OpenlyMarket ("we," "our," or "us"). By accessing or using our website, services, or applications (collectively, the "Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Services.'}
                         </p>
                     </div>
 
@@ -91,7 +91,7 @@ export function TermsClient({ copy }: { copy: CopyMap }) {
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">{content.section3_title || "3. Marketplace & Transactions"}</h2>
                         <p>
-                            {content.section3_text || "SwaprMarket acts as a venue to allow users who comply with our policies to offer, sell, and buy certain goods and services. We are not a party to the actual transaction between buyers and sellers."}
+                            {content.section3_text || "OpenlyMarket acts as a venue to allow users who comply with our policies to offer, sell, and buy certain goods and services. We are not a party to the actual transaction between buyers and sellers."}
                         </p>
                         <div className="p-4 rounded-2xl bg-white/5 border border-white/5 mt-4">
                             <p className="text-white text-sm">
@@ -107,3 +107,4 @@ export function TermsClient({ copy }: { copy: CopyMap }) {
     </div>
   );
 }
+

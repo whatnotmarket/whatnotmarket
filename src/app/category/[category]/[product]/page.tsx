@@ -189,7 +189,7 @@ export default function ProductListingPage() {
                                     <div className="flex flex-col">
                                         <span className="text-xs font-bold text-white flex items-center gap-1">
                                             {offer.seller.name}
-                                            <span className="text-[10px] text-yellow-500">★ {offer.seller.rating}</span>
+                                            <span className="text-[10px] text-yellow-500">â˜… {offer.seller.rating}</span>
                                         </span>
                                         <span className="text-[10px] text-zinc-500">Level {offer.seller.level}</span>
                                     </div>
@@ -219,7 +219,7 @@ export default function ProductListingPage() {
             <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white capitalize">{productName} For Sale</h2>
                 <p className="text-zinc-400 text-sm leading-relaxed max-w-4xl">
-                    Buy {productName} {categorySlug} securely on SwaprMarket. 
+                    Buy {productName} {categorySlug} securely on OpenlyMarket. 
                     All transactions are protected by our Escrow system. 
                     Sellers are verified and funds are only released when you confirm delivery.
                 </p>
@@ -270,4 +270,5 @@ export default function ProductListingPage() {
     </div>
   );
 }
+
 

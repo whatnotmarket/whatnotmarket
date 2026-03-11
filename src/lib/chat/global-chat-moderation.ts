@@ -43,10 +43,10 @@ type BaseContext = {
 
 function getAllowedHosts(): Set<string> {
   const hosts = new Set<string>([
-    "whatnot.market",
-    "www.whatnot.market",
-    "whatnotmarket.com",
-    "www.whatnotmarket.com",
+    "openly.market",
+    "www.openly.market",
+    "openlymarket.com",
+    "www.openlymarket.com",
     "localhost",
     "127.0.0.1",
   ]);
@@ -220,3 +220,4 @@ export function buildAuthError(): ModerationError {
     message: "You must be logged in to send messages.",
   };
 }
+

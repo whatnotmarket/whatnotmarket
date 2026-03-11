@@ -1,4 +1,4 @@
-# PRD — Moderazione Global Chat
+# PRD â€” Moderazione Global Chat
 
 ## Scopo
 - Rendere la moderazione della global chat semplice, veloce e sicura, con un pannello esterno (dashboard admin) e regole lato server chiare.
@@ -19,8 +19,8 @@
 
 ## Attori e Ruoli
 - Utente normale: scrive in chat se ammesso (ruolo stanza, non bannato/mutato, non in slow-mode bloccante).
-- Moderatore: imposta slow-mode e chiusura stanza; può moderare thread help; può mute/ban (se abilitato).
-- Admin: pieno controllo; può impostare slow-mode/chiusura; mute/ban; delete message; unmute/unban; comandi bulk.
+- Moderatore: imposta slow-mode e chiusura stanza; puÃ² moderare thread help; puÃ² mute/ban (se abilitato).
+- Admin: pieno controllo; puÃ² impostare slow-mode/chiusura; mute/ban; delete message; unmute/unban; comandi bulk.
 
 ## Schema Dati (Supabase/Postgres)
 - global_chat_messages
@@ -47,54 +47,54 @@
   - Query: room?, q?, limit?, userId?
   - Ritorna: messages (flagged), activeUsers, roomState, userHistory.
   - Autorizzazione: admin token.
-  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/admin/dashboard/public-chat/route.ts).
+  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/api/admin/dashboard/public-chat/route.ts).
 - POST /api/admin/dashboard/public-chat
   - Payload: { action, messageId?, userId?, reason?, muteMinutes? }
   - Azioni: delete_message, ban_message, mute_user, ban_user, unmute_user, unban_user.
   - Effetti: update su tabelle + inserimento global_chat_moderation_logs; realtime per riflesso lato client.
-  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/admin/dashboard/public-chat/route.ts#L160-L211).
+  - Implementazione: [route.ts](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/api/admin/dashboard/public-chat/route.ts#L160-L211).
 - POST /api/moderation/public-chat/room-state
   - Payload: { action: "slow_mode"|"close"|"open", room, seconds?, minutes? }
   - Effetti: aggiorna slow_mode_seconds o closed_until; chiusura permanente se minutes<=0.
   - Autorizzazione: admin oppure moderatore.
-  - Implementazione: [room-state route](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/moderation/public-chat/room-state/route.ts).
+  - Implementazione: [room-state route](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/api/moderation/public-chat/room-state/route.ts).
 - POST /api/global-chat/messages
   - Enforcement: ban/mute/slow-mode/role; logging in global_chat_moderation_logs; errori senza toast lato client.
-  - Implementazione: [messages route](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/api/global-chat/messages/route.ts).
+  - Implementazione: [messages route](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/api/global-chat/messages/route.ts).
 
 ## Logica Side Client (Global Chat)
 - Realtime INSERT/UPDATE su global_chat_messages
   - INSERT: fetch del messaggio; merge; soft cap 300.
   - UPDATE: se is_deleted=true, rimuove immediatamente dalla UI; altrimenti aggiorna.
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L600-L620).
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/global-chat/GlobalChatClient.tsx#L600-L620).
 - Realtime UPDATE/INSERT su global_chat_user_controls (utente corrente)
-  - Aggiorna stato banned/muted in tempo reale; blocca l’input; mostra banner inline (“You are banned…”, “You are muted…”); niente toast.
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L852-L876).
+  - Aggiorna stato banned/muted in tempo reale; blocca lâ€™input; mostra banner inline (â€œYou are bannedâ€¦â€, â€œYou are mutedâ€¦â€); niente toast.
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/global-chat/GlobalChatClient.tsx#L852-L876).
 - Stato stanza realtime (global_chat_room_state)
-  - slow_mode_seconds + closed_until; banner “Slow mode attivo (Xs)” o “This chat is closed”; blocco input; countdown per slow-mode e chiusura temporanea.
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L880-L904).
+  - slow_mode_seconds + closed_until; banner â€œSlow mode attivo (Xs)â€ o â€œThis chat is closedâ€; blocco input; countdown per slow-mode e chiusura temporanea.
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/global-chat/GlobalChatClient.tsx#L880-L904).
 - Placeholder input coerente:
-  - Banned: “You are banned from global chat.”
-  - Muted: “You are muted for X seconds.”
-  - Closed: “This chat is closed”
-  - Slow-mode: “Slow mode active”
-  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/global-chat/GlobalChatClient.tsx#L1869-L1875).
+  - Banned: â€œYou are banned from global chat.â€
+  - Muted: â€œYou are muted for X seconds.â€
+  - Closed: â€œThis chat is closedâ€
+  - Slow-mode: â€œSlow mode activeâ€
+  - Implementazione: [GlobalChatClient.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/global-chat/GlobalChatClient.tsx#L1869-L1875).
 
 ## Dashboard Moderatore (Admin/Public Chat)
 - Top controls:
   - Language selector; search; indicatori Room (OPEN/CLOSED) e Slow (OFF/10s/30s/60s); Close room; Open room; Reload.
-  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/admin/public-chat/page.tsx#L104-L136).
+  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/admin/public-chat/page.tsx#L104-L136).
 - Stream messaggi (colonna sinistra):
-  - Card con Username, Lingua, Timestamp, Testo; ‘Message removed’ per deleted; flagged con ring arancione.
+  - Card con Username, Lingua, Timestamp, Testo; â€˜Message removedâ€™ per deleted; flagged con ring arancione.
   - Action visibili: Delete (neutro), Ban (rosso).
-  - Menu “User ▾”: Mute 5m/30m/1h, Ban, Unmute, Unban, View history.
-  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/admin/public-chat/page.tsx#L145-L214).
+  - Menu â€œUser â–¾â€: Mute 5m/30m/1h, Ban, Unmute, Unban, View history.
+  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/admin/public-chat/page.tsx#L145-L214).
 - Active Users (colonna destra):
   - Lista con badge status: online, muted, banned; bottone Details; scheda dettaglio con azioni e storico recente.
-  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/app/admin/public-chat/page.tsx#L215-L281).
+  - Implementazione: [page.tsx](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/app/admin/public-chat/page.tsx#L215-L281).
 
 ## Sicurezza & RLS
-- Mai usare service role key nel frontend; solo in [supabase-admin.ts](file:///c:/Users/2VibesApp/Desktop/swaprmarket/src/lib/supabase-admin.ts).
+- Mai usare service role key nel frontend; solo in [supabase-admin.ts](file:///c:/Users/2VibesApp/Desktop/openlymarket/src/lib/supabase-admin.ts).
 - .gitignore esclude .env* e script privati; usare .env.example per documentare variabili richieste.
 - RLS:
   - global_chat_messages: SELECT pubblico con is_deleted=false; API controllano inserimenti.
@@ -186,10 +186,10 @@ grant execute on function public.admin_unban_all() to service_role;
 
 ## Flussi UI (Global Chat)
 - Banner minimal:
-  - Banned: testo rosso “You are banned to write here”.
-  - Muted: “You are muted to write here”.
-  - Slow-mode: “Slow mode attivo (Xs)”.
-  - Closed: “This chat is closed” (permanente) oppure “This chat is closed for Xs”.
+  - Banned: testo rosso â€œYou are banned to write hereâ€.
+  - Muted: â€œYou are muted to write hereâ€.
+  - Slow-mode: â€œSlow mode attivo (Xs)â€.
+  - Closed: â€œThis chat is closedâ€ (permanente) oppure â€œThis chat is closed for Xsâ€.
 - Input:
   - Disabilitato se banned/muted/slowed/closed; placeholder coerente; nessun toast globale di errore.
 - Realtime:
@@ -199,12 +199,12 @@ grant execute on function public.admin_unban_all() to service_role;
 - Top section:
   - Selettore lingua; search; indicatori; slow mode quick; Close/Open; Reload.
 - Messaggi:
-  - 2 pulsanti: Delete e Ban; menu utente “User ▾” con azioni e “View history”.
+  - 2 pulsanti: Delete e Ban; menu utente â€œUser â–¾â€ con azioni e â€œView historyâ€.
 - Active users:
-  - Lista con badge status e “Details” per aprire scheda con azioni e storico.
+  - Lista con badge status e â€œDetailsâ€ per aprire scheda con azioni e storico.
 
 ## Edge Cases
-- Slow-mode vs mute: mute prevale; slow-mode calcola il tempo residuo sull’ultimo messaggio nella stessa stanza.
+- Slow-mode vs mute: mute prevale; slow-mode calcola il tempo residuo sullâ€™ultimo messaggio nella stessa stanza.
 - Closed permanente: chiusura con closed_until molto nel futuro; banner senza icona.
 - Ban massivo: quando si banna un utente, tutti i suoi messaggi diventano deleted; UI riflette via realtime UPDATE.
 
@@ -213,7 +213,7 @@ grant execute on function public.admin_unban_all() to service_role;
 
 ## Telemetria
 - Logging azioni admin/mod in global_chat_moderation_logs con metadata (message_id, deleted_all_messages, muted_until).
-- Possibile integrazione privacy-friendly con Ackee (già integrato) o GA (opzionale).
+- Possibile integrazione privacy-friendly con Ackee (giÃ  integrato) o GA (opzionale).
 
 ## Test Plan
 - Unit
@@ -227,7 +227,8 @@ grant execute on function public.admin_unban_all() to service_role;
 - Deploy API; abilita admin panel; test funzionale su ambiente staging.
 - Migrazione finale su produzione; monitoraggio global_chat_moderation_logs.
 
-## Operatività
+## OperativitÃ 
 - Comandi rapidi (SQL) nel README o tool privati; script operativi in `supabase/scripts/private/` (ignorati da Git).
 - Checklist sicurezza nel README; .env.example aggiornato; nessun secrets in frontend.
+
 

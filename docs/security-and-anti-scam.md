@@ -1,4 +1,4 @@
-﻿# Security And Anti-Scam System
+# Security And Anti-Scam System
 
 ## Obiettivo
 Il sistema combina moderation contenuti, trust scoring comportamentale e abuse protection infrastrutturale per ridurre scam, spam e abuso piattaforma.

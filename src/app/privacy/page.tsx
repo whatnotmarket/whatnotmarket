@@ -55,7 +55,7 @@ export default function PrivacyPage() {
                 Privacy Policy
               </h1>
               <p className="text-zinc-400 text-base leading-relaxed">
-                La tua privacy non è un'opzione, è la nostra priorità. Scopri come proteggiamo i tuoi dati.
+                La tua privacy non Ã¨ un'opzione, Ã¨ la nostra prioritÃ . Scopri come proteggiamo i tuoi dati.
               </p>
             </motion.div>
           </div>
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
                     <Lock className="text-white w-6 h-6" /> Filosofia Privacy-First
                   </h2>
                   <p className="text-zinc-400 leading-relaxed">
-                    SwaprMarket è costruito sul principio della minimizzazione dei dati. Non raccogliamo informazioni che non sono strettamente necessarie per il funzionamento del servizio.
+                    OpenlyMarket Ã¨ costruito sul principio della minimizzazione dei dati. Non raccogliamo informazioni che non sono strettamente necessarie per il funzionamento del servizio.
                     Crediamo che l'anonimato sia un diritto fondamentale, specialmente nel mondo delle transazioni digitali.
                   </p>
                 </section>
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
                       <EyeOff className="w-8 h-8 text-white" />
                       <h4 className="text-white font-bold text-lg">Nessun KYC</h4>
                       <p className="text-sm text-zinc-400 leading-relaxed">
-                        Non richiediamo documenti d'identità, passaporti o selfie. La tua identità reale rimane tua.
+                        Non richiediamo documenti d'identitÃ , passaporti o selfie. La tua identitÃ  reale rimane tua.
                       </p>
                     </div>
                     
@@ -161,7 +161,7 @@ export default function PrivacyPage() {
 
                 <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 mt-8">
                     <p className="text-xs text-zinc-500 text-center">
-                        Ultimo aggiornamento: Marzo 2026. Questa policy può essere soggetta a modifiche.
+                        Ultimo aggiornamento: Marzo 2026. Questa policy puÃ² essere soggetta a modifiche.
                     </p>
                 </div>
 
@@ -173,3 +173,4 @@ export default function PrivacyPage() {
     </div>
   );
 }
+

@@ -36,7 +36,7 @@ const applicationSchema = z.object({
   category: z.string().min(5, "Specifica cosa intendi vendere"),
   reviewsChannel: z.string().optional(),
   escrow: z.string().optional(),
-  notes: z.string().min(1, "Questo campo è obbligatorio"),
+  notes: z.string().min(1, "Questo campo Ã¨ obbligatorio"),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
@@ -106,7 +106,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
 
   const handleOpenTelegram = () => {
     const message = encodeURIComponent(generateTelegramMessage());
-    window.open(`https://t.me/swaprmarket_support?start=${message}`, "_blank");
+    window.open(`https://t.me/openlymarket_support?start=${message}`, "_blank");
   };
 
   return (
@@ -153,7 +153,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
             <div className="space-y-6 pt-6 border-t border-white/5">
                 {[
                     { id: 1, title: steps.step1_title || "Requisiti Base", desc: steps.step1_subtitle || "Cosa serve per iniziare" },
-                    { id: 2, title: steps.step2_title || "Dettagli Applicazione", desc: steps.step2_subtitle || "Parlaci della tua attività" },
+                    { id: 2, title: steps.step2_title || "Dettagli Applicazione", desc: steps.step2_subtitle || "Parlaci della tua attivitÃ " },
                     { id: 3, title: steps.step3_title || "Verifica", desc: steps.step3_subtitle || "Invia la richiesta" }
                 ].map((s) => (
                     <div key={s.id} className={cn("flex gap-4 transition-opacity duration-300", step === s.id ? "opacity-100" : "opacity-40")}>
@@ -205,7 +205,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                                             </div>
                                             <div>
                                                 <h3 className="font-bold text-white text-lg">{requirements.fee_title || "Entry Fee: $20"}</h3>
-                                                <p className="text-sm text-zinc-400 mt-1">{requirements.fee_desc || "Una tantum per filtrare lo spam e garantire serietà."}</p>
+                                                <p className="text-sm text-zinc-400 mt-1">{requirements.fee_desc || "Una tantum per filtrare lo spam e garantire serietÃ ."}</p>
                                             </div>
                                         </div>
 
@@ -282,7 +282,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-sm font-medium text-zinc-300">{form.escrow_label || "Hai già usato Escrow?"}</label>
+                                                <label className="text-sm font-medium text-zinc-300">{form.escrow_label || "Hai giÃ  usato Escrow?"}</label>
                                                 <Input 
                                                     {...register("escrow")}
                                                     placeholder="Si/No/Quale piattaforma" 
@@ -296,7 +296,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                                             <textarea 
                                                 {...register("notes")}
                                                 className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl p-4 min-h-[120px] text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 resize-none"
-                                                placeholder="Descrivi brevemente la tua esperienza e perché vuoi vendere su SwaprMarket..."
+                                                placeholder="Descrivi brevemente la tua esperienza e perchÃ© vuoi vendere su OpenlyMarket..."
                                             />
                                             {errors.notes && <p className="text-red-400 text-xs">{errors.notes.message}</p>}
                                         </div>
@@ -337,7 +337,7 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
                                     
                                     <h2 className="text-2xl font-bold text-white">{steps.step3_title || "Invia Richiesta"}</h2>
                                     <p className="text-zinc-400 max-w-md mx-auto">
-                                        Per completare la verifica, invia il messaggio pre-compilato al nostro supporto Telegram ufficiale. Un admin ti risponderà con le istruzioni per il pagamento della fee.
+                                        Per completare la verifica, invia il messaggio pre-compilato al nostro supporto Telegram ufficiale. Un admin ti risponderÃ  con le istruzioni per il pagamento della fee.
                                     </p>
 
                                     <div className="bg-[#0A0A0A] p-4 rounded-xl border border-white/10 text-left relative group">
@@ -383,3 +383,4 @@ Richiedo verifica e istruzioni per il pagamento della fee.`;
     </div>
   );
 }
+

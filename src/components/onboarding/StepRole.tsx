@@ -21,7 +21,7 @@ export function StepRole({ role, setRole, onSubmit, loading }: StepRoleProps) {
         className="space-y-6"
     >
         <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">How do you want to use swaprmarket?</h1>
+            <h1 className="text-3xl font-bold tracking-tight">How do you want to use openlymarket?</h1>
             <p className="text-zinc-400">Choose your primary intent. You can change this later.</p>
         </div>
 
@@ -87,3 +87,4 @@ export function StepRole({ role, setRole, onSubmit, loading }: StepRoleProps) {
     </motion.div>
   );
 }
+

@@ -86,7 +86,7 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
 
   const copyTrackingLink = () => {
     const accessQuery = trackingAccessToken ? `?access=${encodeURIComponent(trackingAccessToken)}` : "";
-    navigator.clipboard.writeText(`https://swaprmarket.app/track/${trackingId}${accessQuery}`);
+    navigator.clipboard.writeText(`https://openlymarket.app/track/${trackingId}${accessQuery}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -193,7 +193,7 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
                 
                 <h2 className="text-2xl font-bold text-white mb-2">{confirmed.title || "Ordine Creato!"}</h2>
                 <p className="text-zinc-400 mb-8">
-                  {confirmed.subtitle || "Il tuo ordine proxy è stato avviato. Segui lo stato con il tracking ID."}
+                  {confirmed.subtitle || "Il tuo ordine proxy Ã¨ stato avviato. Segui lo stato con il tracking ID."}
                 </p>
 
                 <div className="bg-black/30 rounded-xl p-4 mb-8 flex items-center justify-between border border-white/5">
@@ -226,3 +226,4 @@ export function BuyWithCryptoClient({ copy }: { copy: CopyMap }) {
     </div>
   );
 }
+

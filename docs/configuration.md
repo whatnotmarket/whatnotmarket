@@ -1,4 +1,4 @@
-﻿# Configuration Guide
+# Configuration Guide
 
 ## Panoramica
 Le configurazioni del sistema moderation/security/anti-scam sono distribuite in moduli distinti.

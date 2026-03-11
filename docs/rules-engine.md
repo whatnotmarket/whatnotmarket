@@ -1,4 +1,4 @@
-﻿# Rules Engine
+# Rules Engine
 
 ## Obiettivo
 Questo documento copre le regole deterministiche del sistema di moderazione e dove modificarle.

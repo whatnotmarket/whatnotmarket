@@ -1,6 +1,6 @@
 {
-  "name": "SwaprMarket",
-  "short_name": "SwaprMarket",
+  "name": "OpenlyMarket",
+  "short_name": "OpenlyMarket",
   "description": "Secure buyer and seller marketplace.",
   "start_url": "/",
   "display": "standalone",
@@ -21,3 +21,4 @@
     }
   ]
 }
+
