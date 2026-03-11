@@ -25,6 +25,7 @@ import Image from "next/image";
 import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import EnglishFlag from "@/flag/english.png";
 import { Squircle } from "@/components/ui/Squircle";
+import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
@@ -109,6 +110,9 @@ type PresencePayload = {
   isBuyer?: boolean;
 };
 
+const LEFT_SIDEBAR_CLOSED_STORAGE_KEY = "global_chat_left_sidebar_closed";
+const CHAT_EXPANDED_STORAGE_KEY = "global_chat_expanded";
+
 function firstProfile(profile: ProfileRef | ProfileRef[] | null): ProfileRef | null {
   if (!profile) return null;
   if (Array.isArray(profile)) return profile[0] || null;
@@ -186,6 +190,25 @@ function getAvatarFallback(name: string) {
     .toUpperCase();
 
   return initials || "U";
+}
+
+function SidebarToggleIcon({ rotated = false }: { rotated?: boolean }) {
+  return (
+    <svg
+      className={cn("h-4 w-4 transition-transform", rotated ? "rotate-180" : "")}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9.67272 0.522827C10.8339 0.522827 11.76 0.522701 12.4963 0.60248C13.2453 0.683644 13.8789 0.854235 14.4264 1.25196C14.7504 1.48738 15.0355 1.77246 15.2709 2.09648C15.6686 2.64392 15.8392 3.27756 15.9204 4.02653C16.0002 4.76289 16 5.68894 16 6.85013V9.14985C16 10.311 16.0002 11.2371 15.9204 11.9734C15.8392 12.7224 15.6686 13.3561 15.2709 13.9035C15.0355 14.2275 14.7504 14.5126 14.4264 14.748C13.8789 15.1457 13.2453 15.3163 12.4963 15.3975C11.76 15.4773 10.8339 15.4772 9.67272 15.4772H6.3273C5.16611 15.4772 4.24006 15.4773 3.50371 15.3975C2.75474 15.3163 2.1211 15.1457 1.57366 14.748C1.24963 14.5126 0.964549 14.2275 0.729131 13.9035C0.331407 13.3561 0.160817 12.7224 0.0796529 11.9734C-0.000126137 11.2371 1.25338e-09 10.311 1.25338e-09 9.14985V6.85013C1.25329e-09 5.68894 -0.000126137 4.76289 0.0796529 4.02653C0.160817 3.27756 0.331407 2.64392 0.729131 2.09648C0.964549 1.77246 1.24963 1.48738 1.57366 1.25196C2.1211 0.854235 2.75474 0.683644 3.50371 0.60248C4.24006 0.522701 5.16611 0.522827 6.3273 0.522827H9.67272ZM5.54303 1.88714V14.1118C5.78636 14.1128 6.04709 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14985V6.85013C14.6398 5.65895 14.6393 4.81965 14.5693 4.17359C14.5007 3.54047 14.3723 3.17317 14.1711 2.89608C14.0195 2.68746 13.8354 2.50335 13.6268 2.35178C13.3497 2.15059 12.9824 2.02211 12.3493 1.95352C11.7032 1.88356 10.8639 1.88305 9.67272 1.88305H6.3273C6.04709 1.88305 5.78636 1.88618 5.54303 1.88714ZM4.1828 1.91165C3.99125 1.92158 3.8148 1.93575 3.65076 1.95352C3.01764 2.02211 2.65034 2.15059 2.37325 2.35178C2.16463 2.50335 1.98052 2.68746 1.82895 2.89608C1.62776 3.17317 1.49928 3.54047 1.43069 4.17359C1.36074 4.81965 1.36023 5.65895 1.36023 6.85013V9.14985C1.36023 10.341 1.36074 11.1803 1.43069 11.8264C1.49928 12.4595 1.62776 12.8268 1.82895 13.1039C1.98052 13.3125 2.16463 13.4966 2.37325 13.6482C2.65034 13.8494 3.01764 13.9779 3.65076 14.0465C3.81478 14.0642 3.99127 14.0774 4.1828 14.0873V1.91165Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
 }
 
 function truncateMessage(text: string, maxLength = 90) {
@@ -304,8 +327,23 @@ export function GlobalChatClient() {
   const [isFetching, setIsFetching] = useState(true);
   const [activeRoom, setActiveRoom] = useState<GlobalChatRoom>("english");
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
-  const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isChatExpanded, setIsChatExpanded] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const [isLeftSidebarClosed, setIsLeftSidebarClosed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [isChatClosed, setIsChatClosed] = useState(false);
   const [slowModeMinutes, setSlowModeMinutes] = useState<number>(0);
   const [isModerator, setIsModerator] = useState<boolean>(false);
@@ -353,6 +391,18 @@ export function GlobalChatClient() {
       setHasAcceptedRules(Boolean(flag));
     } catch {}
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY, isLeftSidebarClosed ? "1" : "0");
+    } catch {}
+  }, [isLeftSidebarClosed]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_EXPANDED_STORAGE_KEY, isChatExpanded ? "1" : "0");
+    } catch {}
+  }, [isChatExpanded]);
 
   const requiredRoleText = useMemo(() => {
     const isThreadReply = Boolean(replyTarget);
@@ -1381,16 +1431,69 @@ export function GlobalChatClient() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto flex min-h-screen w-full">
-        <div className="relative hidden flex-1 md:block" />
-
-        {!isChatClosed && (
-        <aside
+      <div
+        className={cn(
+          "relative mx-auto flex min-h-screen w-full items-stretch gap-4 py-4 md:py-6"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setIsLeftSidebarClosed(false)}
+          aria-label="Reopen left sidebar"
           className={cn(
-            "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl bg-[#101010] transition-[width] duration-200 m-6 md:ml-auto",
-            isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
+            "absolute left-3 top-8 z-20 hidden h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/30 md:top-10 md:left-6 md:inline-flex",
+            isLeftSidebarClosed
+              ? "opacity-100 translate-x-0 pointer-events-auto"
+              : "opacity-0 -translate-x-2 pointer-events-none"
           )}
         >
+          <SidebarToggleIcon />
+        </button>
+
+        <div
+          className={cn(
+            "relative hidden shrink-0 overflow-hidden md:block transition-[width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            isLeftSidebarClosed
+              ? "md:ml-0 md:w-0 md:opacity-0"
+              : "md:ml-6 md:w-[220px] md:opacity-100 lg:w-[300px]"
+          )}
+        >
+          <Squircle
+            radius={24}
+            smoothing={1}
+            className="h-[calc(100vh-3rem)]"
+            innerClassName="bg-[#141415]"
+          />
+          <button
+            type="button"
+            onClick={() => setIsLeftSidebarClosed(true)}
+            aria-label="Close left sidebar"
+            className="absolute right-2 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+          >
+            <SidebarToggleIcon rotated />
+          </button>
+        </div>
+
+        <div className="relative hidden flex-1 md:block">
+          <Squircle
+            radius={30}
+            smoothing={1}
+            corners="all"
+            className="h-[calc(100vh-3rem)]"
+            innerClassName="bg-[rgba(255,255,255,0.04)]"
+          />
+          <div className="absolute left-1/2 top-6 z-20 w-[min(760px,calc(100%-4rem))] -translate-x-1/2">
+            <GlobalCommandSearch className="w-full max-w-none" />
+          </div>
+        </div>
+
+        {!isChatClosed && (
+          <aside
+            className={cn(
+              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl bg-[#101010] transition-[width] duration-200",
+              isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
+            )}
+          >
           <div className="flex items-center justify-between px-4 py-4">
             <div className="relative" ref={roomMenuRef}>
               <button
@@ -1937,6 +2040,7 @@ export function GlobalChatClient() {
           </div>
         </aside>
         )}
+
       </div>
     </div>
   );

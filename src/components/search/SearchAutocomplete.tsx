@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Globe, Map, Flag, Loader2 } from "lucide-react";
+import { ChevronRight, Globe, Map, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Squircle } from "@/components/ui/Squircle";
 import { cn } from "@/lib/utils";
@@ -49,38 +49,31 @@ interface SearchAutocompleteProps {
 }
 
 export function SearchAutocomplete({ query, isOpen, onClose }: SearchAutocompleteProps) {
-  const [results, setResults] = useState<GroupedResults | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Debounced Search
+  // Debounced query value.
   useEffect(() => {
-    if (!query || query.length < 1) {
-      setResults(null);
-      return;
-    }
-
-    setLoading(true);
+    const normalizedQuery = query.trim().toLowerCase();
     const timer = setTimeout(() => {
-      // Filter logic (mock)
-      const q = query.toLowerCase();
-      const filtered = {
-        countries: MOCK_DATA.countries.filter(i => i.name.toLowerCase().includes(q)),
-        regions: MOCK_DATA.regions.filter(i => i.name.toLowerCase().includes(q)),
-        global: MOCK_DATA.global.filter(i => i.name.toLowerCase().includes(q)),
-      };
-      
-      // If no matches, fallback to showing everything for demo purposes if query is just 'i'
-      // But for real search, we should show actual matches. 
-      // Let's just return filtered.
-      // Wait, if filtered is empty, maybe we show "No results".
-      setResults(filtered);
-      setLoading(false);
+      setDebouncedQuery(normalizedQuery);
     }, 200);
 
     return () => clearTimeout(timer);
   }, [query]);
+
+  const loading = query.trim().length > 0 && debouncedQuery !== query.trim().toLowerCase();
+
+  const results = useMemo<GroupedResults | null>(() => {
+    if (!debouncedQuery) return null;
+
+    return {
+      countries: MOCK_DATA.countries.filter((item) => item.name.toLowerCase().includes(debouncedQuery)),
+      regions: MOCK_DATA.regions.filter((item) => item.name.toLowerCase().includes(debouncedQuery)),
+      global: MOCK_DATA.global.filter((item) => item.name.toLowerCase().includes(debouncedQuery)),
+    };
+  }, [debouncedQuery]);
 
   // Keyboard Navigation
   useEffect(() => {
@@ -92,6 +85,7 @@ export function SearchAutocomplete({ query, isOpen, onClose }: SearchAutocomplet
         ...results.regions,
         ...results.global
       ];
+      if (allItems.length === 0) return;
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -152,7 +146,7 @@ export function SearchAutocomplete({ query, isOpen, onClose }: SearchAutocomplet
                   <div className="px-5 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider">
                     Countries
                   </div>
-                  {results!.countries.map((item, i) => (
+                  {results!.countries.map((item) => (
                     <ResultRow 
                       key={item.id} 
                       item={item} 
@@ -168,7 +162,7 @@ export function SearchAutocomplete({ query, isOpen, onClose }: SearchAutocomplet
                   <div className="px-5 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider">
                     Regions
                   </div>
-                  {results!.regions.map((item, i) => (
+                  {results!.regions.map((item) => (
                     <ResultRow key={item.id} item={item} isSelected={false} />
                   ))}
                 </div>
@@ -180,7 +174,7 @@ export function SearchAutocomplete({ query, isOpen, onClose }: SearchAutocomplet
                   <div className="px-5 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider">
                     Global
                   </div>
-                  {results!.global.map((item, i) => (
+                  {results!.global.map((item) => (
                     <ResultRow key={item.id} item={item} isSelected={false} />
                   ))}
                 </div>
