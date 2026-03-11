@@ -12,12 +12,6 @@ import {
 } from "@/lib/chat/global-chat-moderation";
 import { z } from "zod";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
-import { enforceActionGuard } from "@/lib/trust/services/onboarding-security";
-import {
-  collectConversationVelocitySignals,
-  evaluateConversationMessageSafety,
-  persistConversationSafetyDecision,
-} from "@/lib/trust/services/chat-safety";
 
 const postSchema = z.object({
   room: z.string().trim().min(1),
@@ -112,18 +106,6 @@ export async function POST(req: Request) {
   if (!user) {
     const error = buildAuthError();
     return NextResponse.json(error, { status: statusCodeForError(error) });
-  }
-
-  const actionGuard = await enforceActionGuard(user.id, "send_message");
-  if (!actionGuard.allowed) {
-    return NextResponse.json(
-      {
-        ok: false,
-        code: actionGuard.code || "UNDER_REVIEW_RESTRICTION",
-        message: actionGuard.message || "Message blocked by trust policy",
-      },
-      { status: 403 }
-    );
   }
 
   const rateLimit = checkRateLimitDetailed(req, {
@@ -368,44 +350,6 @@ export async function POST(req: Request) {
     return NextResponse.json(moderation, { status: statusCodeForError(moderation) });
   }
 
-  const velocitySignals = await collectConversationVelocitySignals({
-    senderId: user.id,
-    normalizedMessage: moderation.normalizedMessage,
-    roomType: "global_chat",
-  });
-
-  const conversationSafety = await evaluateConversationMessageSafety({
-    senderId: user.id,
-    conversationId: room,
-    roomType: "global_chat",
-    message,
-    repeatedTemplateCountLast6h: velocitySignals.repeatedTemplateCountLast6h,
-    massOutreachRecipientsLast6h: velocitySignals.massOutreachRecipientsLast6h,
-  });
-
-  if (conversationSafety.decision.blocked) {
-    await persistConversationSafetyDecision({
-      conversationId: room,
-      senderId: user.id,
-      roomType: "global_chat",
-      score: conversationSafety.score,
-      decision: conversationSafety.decision,
-      signals: conversationSafety.signals,
-    }).catch((error) => {
-      console.error("Failed to persist blocked global chat safety decision", error);
-    });
-
-    return NextResponse.json(
-      {
-        ok: false,
-        code: "CONVERSATION_MESSAGE_BLOCKED",
-        message: conversationSafety.decision.userMessage || "Message blocked for security reasons.",
-        reasonCodes: conversationSafety.score.reasonCodes,
-      },
-      { status: 403 }
-    );
-  }
-
   if (!isThreadReply) {
     const sixtySecondsAgoIso = new Date(now - 60_000).toISOString();
     const { data: duplicate } = await admin
@@ -413,7 +357,7 @@ export async function POST(req: Request) {
       .select("id")
       .eq("user_id", user.id)
       .eq("room", moderation.room)
-      .eq("message_normalized", conversationSafety.redactedMessage.toLowerCase())
+      .eq("message_normalized", moderation.normalizedMessage)
       .gte("created_at", sixtySecondsAgoIso)
       .limit(1)
       .maybeSingle<{ id: string }>();
@@ -457,8 +401,8 @@ export async function POST(req: Request) {
     .insert({
       user_id: user.id,
       room: moderation.room,
-      message: conversationSafety.redactedMessage,
-      message_normalized: conversationSafety.redactedMessage.toLowerCase(),
+      message: message.trim().replace(/\s+/g, " "),
+      message_normalized: moderation.normalizedMessage,
       reply_to_id: replyToId,
       mentioned_handles: mentionedHandles,
     })
@@ -472,25 +416,8 @@ export async function POST(req: Request) {
     );
   }
 
-  await persistConversationSafetyDecision({
-    conversationId: room,
-    senderId: user.id,
-    roomType: "global_chat",
-    score: conversationSafety.score,
-    decision: conversationSafety.decision,
-    signals: conversationSafety.signals,
-  }).catch((error) => {
-    console.error("Failed to persist global chat safety decision", error);
-  });
-
   return NextResponse.json({
     ok: true,
-    data: {
-      ...inserted,
-      trust: {
-        warning: conversationSafety.decision.warningMessage || null,
-        riskLevel: conversationSafety.score.level,
-      },
-    },
+    data: inserted,
   });
 }

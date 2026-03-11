@@ -1,210 +1,242 @@
-# Security and Anti-Scam System
+﻿# Security And Anti-Scam System
 
-## Objectives
-Il sistema Trust & Safety e progettato per ridurre:
-- account fake
-- spam/scam
-- annunci fraudolenti
-- off-platform payment/contact
-- abuse operativo (burst, mass messaging)
-- ban evasion / account takeover
+## Obiettivo
+Il sistema combina moderation contenuti, trust scoring comportamentale e abuse protection infrastrutturale per ridurre scam, spam e abuso piattaforma.
 
-Filosofia operativa: frizione progressiva.
-Utenti buoni hanno UX fluida; utenti rischiosi ricevono limiti crescenti.
+## Componenti principali
 
-## Architecture layers
-### Layer 1: Prevenzione
-- rate limiting (`src/lib/rate-limit.ts`)
-- abuse guard IP/device (`src/lib/security/abuse-guards.ts`)
-- onboarding guard per account nuovi (`src/lib/trust/services/onboarding-security.ts`)
+### 1) Content moderation (public content)
+- Core: `src/lib/moderation/moderation.service.ts`
+- Rule engine: `src/lib/moderation/moderation.rules.ts`
+- AI layer: `src/lib/moderation/moderation.ai.service.ts`
+- Audit: `src/lib/moderation/moderation.audit.ts`
 
-### Layer 2: Rilevazione
-- rule-based moderation pubblica (`src/lib/moderation/*`)
-- chat/listing pattern detection (`src/lib/trust/detection.ts`)
-- user/listing/conversation risk scoring (`src/lib/trust/scoring/*`)
+### 2) Trust scoring (user/listing/conversation)
+- Config: `src/lib/trust/config.ts`
+- Detection patterns: `src/lib/trust/detection.ts`
+- Scoring:
+  - `src/lib/trust/scoring/user-risk.ts`
+  - `src/lib/trust/scoring/listing-risk.ts`
+  - `src/lib/trust/scoring/conversation-risk.ts`
+- Policy engine: `src/lib/trust/policy/engine.ts`
+- Persistence events/cases: `src/lib/trust/services/trust-store.ts`
 
-### Layer 3: Policy enforcement
-- user policy (`evaluateUserRiskPolicy`)
-- listing policy (`evaluateListingRiskPolicy`)
-- conversation policy (`evaluateConversationRiskPolicy`)
+### 3) Abuse protection (rate/farm/fanout)
+- Guard: `src/lib/security/abuse-guards.ts`
+- Scoring: `src/lib/security/abuse-scoring.ts`
+- Event store: `security_abuse_events`
 
-### Layer 4: Audit + moderation queue
-- trust events/snapshots/cases/audit logs (`src/lib/trust/services/trust-store.ts`)
-- moderation events + reviews queue (`src/lib/moderation/moderation.audit.ts`)
+## Copertura anti-scam richiesta
 
-## Trust scoring
-### User risk (`calculateUserRiskScore`)
-Signals principali:
-- account age
-- email/phone verification
-- device count
-- anomalous login
-- listing/message velocity
-- reports and blocked conversations
-- profile mutation velocity
-- geo/device mismatch
-- VPN/proxy/TOR hints
-- dispute/refund rates
-- signup attempts spikes
-- multi-account device matches
-- repeat offender pattern
+### Scam detection
+Implementata in due livelli:
+- deterministic moderation (`SCAM_KEYWORDS`, `OFF_PLATFORM_PAYMENT`)
+- trust pattern detection (`suspiciousKeywordRegex`, phishing/external payment signals)
 
-### Listing risk (`calculateListingRiskScore`)
-Signals principali:
-- price deviation vs category median
-- external contact in listing
-- off-platform payment request
-- duplicate image/text similarity
-- listing velocity
-- cross-category duplication
-- suspicious keyword hits
-- vague description
+File chiave:
+- `moderation.config.ts`
+- `moderation.rules.ts`
+- `trust/detection.ts`
 
-### Conversation risk (`calculateConversationRiskScore`)
-Signals principali:
-- external links/contact attempts
-- redirect to Telegram/WhatsApp
-- deposit/advance payment request
-- urgency manipulation
-- phishing language
-- repeated template count
-- mass outreach recipients
+### Spam detection
+Segnali principali:
+- `SPAM_LINK_PATTERN`, `TOO_MANY_LINKS`
+- `DUPLICATE_TEXT_PATTERN`
+- `MASS_OUTREACH_PATTERN` (conversation risk)
+- duplicate message guard in global chat
 
-## Progressive limitations
-### User-level actions
-Da `evaluateUserRiskPolicy`:
+File:
+- `moderation.rules.ts`
+- `trust/scoring/conversation-risk.ts`
+- `src/app/api/global-chat/messages/route.ts`
+
+### Suspicious listing detection
+Segnali listing:
+- deviazione prezzo (`SUSPICIOUS_PRICE_DEVIATION`)
+- duplicazione testo/immagini
+- keyword sospette
+- descrizione vaga
+- velocita pubblicazione
+
+File:
+- `trust/services/listing-safety.ts`
+- `trust/scoring/listing-risk.ts`
+
+### Off-platform payment detection
+Segnali:
+- regole moderation (`OFF_PLATFORM_PAYMENT`)
+- AI (`AI_OFF_PLATFORM_PAYMENT_SIGNAL`)
+- trust chat/listing (`OFF_PLATFORM_PAYMENT_REQUEST`, `DEPOSIT_REQUEST_SIGNAL`)
+
+### Contact sharing detection
+Segnali:
+- phone/email/telegram/whatsapp/discord/instagram
+- reason codes `EXTERNAL_CONTACT`, `EXTERNAL_CONTACT_IN_LISTING`, `EXTERNAL_CONTACT_IN_CHAT`
+- redazione automatica in chat quando richiesto
+
+### Mass messaging detection
+Segnali:
+- `massOutreachRecipientsLast6h`
+- `repeatedTemplateCountLast6h`
+
+Calcolo in:
+- `collectConversationVelocitySignals()` (`chat-safety.ts`)
+- score in `calculateConversationRiskScore()`
+
+### Trust score logic
+User trust:
+- `riskScore` da `0..100` (piu alto = piu rischio)
+- `trustScore` derivato = `100 - riskScore`
+- stato account: `trusted | limited | under_review | suspended`
+
+Persistenza:
+- `trust_account_states`
+- aggiornamento in `evaluateAndPersistUserRisk()`
+
+## Decisioni e enforcement
+
+### Conversation policy
+`evaluateConversationRiskPolicy()`:
+- `ALLOW`
+- `ALLOW_WITH_WARNING`
+- `LIMIT_ACTION` (`soft_block`, con redaction)
+- `BLOCK` (`hard_block`)
+
+### Listing policy
+`evaluateListingRiskPolicy()`:
+- `ALLOW`
+- `ALLOW_WITH_WARNING`
+- `PENDING_REVIEW`
+- `SHADOW_LIMIT`
+- `BLOCK`
+
+### User policy
+`evaluateUserRiskPolicy()`:
 - `ALLOW`
 - `ALLOW_WITH_WARNING`
 - `LIMIT_ACTION`
 - `PENDING_REVIEW`
 - `SUSPEND`
 
-### Listing-level actions
-Da `evaluateListingRiskPolicy`:
-- `published`
-- `pending_review`
-- `restricted`
-- `removed`
+## Shadow limitations
+Implementazione effettiva sui listing:
+- `visibility_state = "limited"` o `"shadowed"`
+- `safety_status = "restricted"` / `"pending_review"` / `"removed"`
 
-Visibility:
-- `normal`
-- `limited`
-- `shadowed`
+Punti di set:
+- `src/app/api/requests/create/route.ts`
+- `src/lib/trust/policy/engine.ts`
+- action admin su listing (`restrict_listing`, `remove_listing`) in `.../cases/[caseId]/action/route.ts`
 
-### Conversation-level actions
-Da `evaluateConversationRiskPolicy`:
-- warning only
-- soft block + redaction
-- hard block
+## Review queue
+Due queue distinte:
 
-## Shadow limitations and escalation
-Shadow limitation avviene quando il rischio e alto ma non si vuole ban immediato.
-Esempi:
-- listing `restricted` con visibilita ridotta
-- account `under_review` con funzioni limitate
+1. Queue moderation contenuti (`moderation_reviews_queue`)
+- creata da `writeModerationAudit()` quando decision = `review`
 
-Escalation automatica:
-- creazione case in `trust_moderation_cases`
-- inserimento eventi in `trust_risk_events`
-- aggiornamento snapshot in `trust_risk_snapshots`
+2. Queue trust cases (`trust_moderation_cases`)
+- creata da:
+  - listing/chat safety persistence (`createModerationCase`)
+  - trust reports (`createTrustReport`)
+- lettura admin: `src/app/api/admin/trust/review-queue/route.ts`
 
-## Chat protections
-### Direct chat and global chat safety
-Servizio: `src/lib/trust/services/chat-safety.ts`
-Usato in:
-- `src/app/api/chat/messages/route.ts`
-- `src/app/api/global-chat/messages/route.ts`
+## Automatic blocking
+Blocchi automatici avvengono quando:
+- moderation decision finale = `block`
+- trust conversation/listing/user policy restituisce `blocked=true`
+- abuse guard (`evaluateAbuseSnapshot`) produce score >= 100
 
-Controlli:
-- message normalization
-- velocity detection (template repetition, outreach fanout)
-- risk scoring + policy
-- redaction di contatti esterni quando richiesto
-- blocco messaggi ad alto rischio
+## Escalation rules
+Escalation automatica a caso moderazione (`trust_moderation_cases`) quando:
+- conversation decision richiede review/manual check o hard block
+- listing decision richiede manual review
+- report utente viene creato
 
-Nota importante:
-- il layer AI di moderation contenuti pubblici non viene eseguito su `/inbox`
-- la chat safety usa policy trust dedicate (separate dal layer AI pubblico)
+Escalation manuale admin:
+- endpoint `POST /api/admin/trust/cases/[caseId]/action`
+- azioni: `suspend_user`, `request_kyc`, `restrict_listing`, `remove_listing`, ecc.
 
-## Listing protections
-Servizio: `src/lib/trust/services/listing-safety.ts`
+## Reason codes Trust/Security (principali)
+- `EXTERNAL_CONTACT_IN_LISTING` -> contatti esterni dentro annuncio.
+- `OFF_PLATFORM_PAYMENT_REQUEST` -> richiesta pagamento fuori piattaforma.
+- `EXTERNAL_LINK_IN_CHAT` -> link esterno in chat.
+- `EXTERNAL_CONTACT_IN_CHAT` -> contatto esterno in chat.
+- `TELEGRAM_WHATSAPP_REDIRECT` -> spostamento chat su canali esterni.
+- `DEPOSIT_REQUEST_SIGNAL` -> richiesta caparra/deposito sospetta.
+- `MASS_OUTREACH_PATTERN` -> outreach massivo.
+- `REPEATED_SCAM_TEMPLATE` -> template scam ripetuto.
+- `CHAT_PHISHING_PATTERN` -> phishing in chat.
+- `SUSPICIOUS_PRICE_DEVIATION` -> prezzo anomalo.
+- `DUPLICATE_LISTING_TEMPLATE` / `COPY_PASTE_DESCRIPTION_PATTERN` / `DUPLICATE_IMAGE_SIGNAL`.
+- `ABUSE_GUARD_TRIGGERED` -> evento anti-abuso.
 
-Flusso:
-1. pattern detection testo
-2. stima prezzo mediano categoria
-3. segnali duplicazione testo
-4. scoring listing
-5. policy decision (publish/review/restrict/remove)
-6. persistenza eventi + case
+Elenco completo: `src/lib/trust/reason-codes.ts`.
 
-## Reporting and moderation operations
-- user report API: `src/app/api/trust/report/route.ts`
-- review queue admin: `src/app/api/admin/trust/review-queue/route.ts`
-- case action admin: `src/app/api/admin/trust/cases/[caseId]/action/route.ts`
-- account timeline admin: `src/app/api/admin/trust/account/[userId]/timeline/route.ts`
+## Integrazioni route importanti
+- Direct chat safety: `src/app/api/chat/messages/route.ts`
+- Listing create/update: `src/app/api/requests/create/route.ts`, `src/app/api/requests/[id]/update/route.ts`
+- Trust report ingestion: `src/app/api/trust/report/route.ts`
+- Admin queue/action/timeline:
+  - `src/app/api/admin/trust/review-queue/route.ts`
+  - `src/app/api/admin/trust/cases/[caseId]/action/route.ts`
+  - `src/app/api/admin/trust/account/[userId]/timeline/route.ts`
 
-## Account takeover and ban evasion defense
-Servizio: `src/lib/trust/services/auth-security.ts`
-
-Funzioni:
-- `recordAuthSecurityEvent`
-- `detectBanEvasionRisk`
-
-Controlli:
-- match device/ip con account sospesi
-- trust state downgrade a `under_review`/`suspended`
-- audit log con reason code `BAN_EVASION_LINKED_ACCOUNT`
-
-## Review integrity
-Servizio: `src/lib/trust/services/review-integrity.ts`
-
-Controlli:
-- review senza interazione valida
-- burst di recensioni
-- peso ridotto per reviewer low trust
-
-Output:
-- risk score review
-- queue/block decisions
-- eventi su `trust_review_integrity_events`
-
-## Data model and audit tables
-Migration principali:
-- `supabase/migrations/20260311170000_trust_safety_core.sql`
-- `supabase/migrations/20260311183000_content_moderation_system.sql`
-
-Tabelle chiave:
-- `trust_account_states`
-- `trust_device_signals`
-- `trust_account_links`
+## Debugging operativo
+1. Se messaggi bloccati:
+- controllare response code (`CONVERSATION_MESSAGE_BLOCKED`, `PUBLIC_CONTENT_POLICY_VIOLATION`, `ACCOUNT_RISK_BLOCKED`)
+- controllare reason codes e score.
+2. Verificare tabelle:
+- `moderation_events`
 - `trust_risk_events`
 - `trust_risk_snapshots`
-- `trust_reports`
 - `trust_moderation_cases`
-- `trust_moderation_actions`
-- `trust_security_events`
-- `trust_review_integrity_events`
-- `trust_audit_logs` (immutability trigger)
-- `moderation_events`
-- `moderation_reviews_queue`
+- `security_abuse_events`
+3. Verificare policy output (`action`, `blocked`, `requiresManualReview`) nei servizi trust.
+4. Verificare redazione testo (`redactedMessage`) in chat safety.
 
-## Sync vs async controls
-### Sync (request-time)
-- moderation rules + AI (public content)
-- onboarding/action guards
-- chat safety decision
-- listing validation pre-publish
-- rate limit / abuse guard
+## Reason codes matrix completa (Trust/Security)
 
-### Async
-- risk recalculation worker (`src/lib/trust/workers/recalculate-risk.ts`)
-- admin review workflows
-- moderation case lifecycle
+| Reason code | Significato | Quando viene generato | Sistema |
+|---|---|---|---|
+| `NEW_ACCOUNT_HIGH_ACTIVITY` | Attivita elevata su account nuovo | Account in finestra onboarding con attivita rilevante | User/Listing/Conversation risk scoring |
+| `UNVERIFIED_EMAIL` | Email non verificata | `emailVerified=false` | User risk scoring |
+| `UNVERIFIED_PHONE` | Telefono non verificato | `phoneVerified=false` | User risk scoring |
+| `EXCESSIVE_DEVICE_COUNT` | Troppi device associati | `uniqueDeviceCountLast30d` sopra soglia | User risk scoring |
+| `LOGIN_ANOMALY` | Login anomali | `anomalousLoginCountLast7d` sopra soglia | User risk scoring |
+| `HIGH_LISTING_VELOCITY` | Troppi listing in poco tempo | `listingsCreatedLast24h`/`listingVelocityLast24h` sopra soglia | User/Listing risk scoring |
+| `HIGH_MESSAGE_VELOCITY` | Troppi messaggi in poco tempo | `messagesSentLast24h` sopra soglia | User risk scoring |
+| `HIGH_REPORT_RATE` | Alte segnalazioni ricevute | `reportsReceivedLast30d` sopra soglia | User risk scoring |
+| `HIGH_BLOCK_RATE` | Molti blocchi conversazione | `suspiciousConversationBlocksLast30d` sopra soglia | User risk scoring |
+| `RAPID_PROFILE_MUTATION` | Profilo modificato troppo spesso | `profileMutationsLast24h` sopra soglia | User risk scoring |
+| `GEO_DEVICE_MISMATCH` | Incoerenza geo/device | `geoDeviceMismatchCountLast30d` sopra soglia | User risk scoring |
+| `VPN_PROXY_TOR_SIGNAL` | Uso VPN/proxy/TOR sospetto | `vpnProxyTorEventsLast30d` sopra soglia | User risk scoring |
+| `DISPUTE_HISTORY_SPIKE` | Spike dispute/refund | `disputeRate` o `refundRate` sopra soglia | User risk scoring |
+| `KYC_REQUIRED_FOR_VOLUME` | Volume alto senza KYC | Account non verificato con listing elevati | User risk scoring |
+| `MULTI_ACCOUNT_DEVICE_MATCH` | Device condiviso multipli account | `multiAccountDeviceMatchesLast30d` sopra soglia | User risk scoring |
+| `REPEAT_OFFENDER_PATTERN` | Recidiva comportamentale | sender/account risk elevato o repeatOffender true | User/Conversation risk scoring |
+| `SUSPICIOUS_PRICE_DEVIATION` | Prezzo listing anomalo | `priceDeviationPct` negativo oltre soglie | Listing risk scoring |
+| `DUPLICATE_LISTING_TEMPLATE` | Template listing duplicato | Similarita testo alta / cross-city duplication | Listing risk scoring |
+| `DUPLICATE_IMAGE_SIGNAL` | Immagini duplicate | `duplicateImageConfidence` sopra soglia | Listing risk scoring |
+| `COPY_PASTE_DESCRIPTION_PATTERN` | Descrizione copia/incolla sospetta | Similarita testo media/alta o testo troppo corto/vago | Listing risk scoring |
+| `EXTERNAL_CONTACT_IN_LISTING` | Contatto esterno nel listing | Link/email/phone/handle nel listing | Listing detection/scoring |
+| `OFF_PLATFORM_PAYMENT_REQUEST` | Pagamento fuori piattaforma | Signal off-platform/deposito o keyword | Listing/Conversation scoring |
+| `EXTERNAL_LINK_IN_CHAT` | Link esterno in chat | `containsExternalLink=true` | Conversation risk scoring |
+| `EXTERNAL_CONTACT_IN_CHAT` | Contatto esterno in chat | email/phone/handle in messaggio | Conversation risk scoring |
+| `TELEGRAM_WHATSAPP_REDIRECT` | Redirect verso app esterne | `offPlatformRedirectSignal=true` | Conversation risk scoring |
+| `DEPOSIT_REQUEST_SIGNAL` | Richiesta caparra/anticipo | `depositOrAdvancePaymentSignal=true` | Conversation risk scoring |
+| `URGENCY_MANIPULATION_SIGNAL` | Pressione/urgenza manipolativa | `urgencyManipulationSignal=true` | Conversation risk scoring |
+| `MASS_OUTREACH_PATTERN` | Outreach massivo | `massOutreachRecipientsLast6h` sopra soglia | Conversation velocity/scoring |
+| `REPEATED_SCAM_TEMPLATE` | Template scam ripetuto | `repeatedTemplateCountLast6h` sopra soglia | Conversation velocity/scoring |
+| `CHAT_PHISHING_PATTERN` | Pattern phishing chat | `phishingSignal=true` | Conversation risk scoring |
+| `BAN_EVASION_LINKED_ACCOUNT` | Possibile ban evasion | previsto in catalogo reason codes (non ancora emesso dai servizi attuali) | Trust reason code catalog |
+| `ACCOUNT_TAKEOVER_SIGNAL` | Possibile account takeover | previsto in catalogo (non ancora emesso dai servizi attuali) | Trust reason code catalog |
+| `REVIEW_BURST_PATTERN` | Burst recensioni anomalo | previsto in catalogo (pipeline review integrity) | Trust reason code catalog |
+| `REVIEW_LOW_TRUST_WEIGHT` | Recensione da profilo low-trust | previsto in catalogo (pipeline review integrity) | Trust reason code catalog |
+| `REVIEW_WITHOUT_VALID_INTERACTION` | Review senza interazione valida | previsto in catalogo (pipeline review integrity) | Trust reason code catalog |
+| `EXCESSIVE_SIGNUP_ATTEMPTS` | Troppi signup da stesso IP | `signupAttemptsFromIpLast24h` sopra soglia | User risk scoring |
+| `EXCESSIVE_PASSWORD_RESET_ATTEMPTS` | Troppi reset password | reason code catalog, associabile a security events dedicati | Trust reason code catalog |
+| `ABUSE_GUARD_TRIGGERED` | Blocco anti-abuso attivato | evento anti-abuso ad alto punteggio | Abuse guard / security events |
 
-## Operational recommendations
-- monitorare:
-  - spike in `trust_risk_events`
-  - pending size in `trust_moderation_cases`
-  - pending size in `moderation_reviews_queue`
-- ricalcolare rischio periodicamente (admin recalculate endpoint)
-- mantenere reason codes stabili per analytics longitudinali
+Nota: i reason code "catalog only" sono definiti in `src/lib/trust/reason-codes.ts` e pronti per estensioni future anche se non sempre emessi nel flusso corrente.
+
+

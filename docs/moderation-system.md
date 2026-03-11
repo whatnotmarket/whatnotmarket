@@ -1,52 +1,21 @@
-# Moderation System Overview
+﻿# Moderation System Overview
 
-## Scope and goals
-Questo documento descrive il layer di moderazione centralizzato per contenuti pubblici e semi-pubblici.
+## Scopo
+Questo documento descrive l'architettura del sistema di moderazione contenuti pubblici/semi-pubblici implementato nel progetto, con focus su pipeline, decisioni, persistenza audit e integrazione con le API.
 
-Obiettivi principali:
-- ridurre spam, scam, abuso e contenuti non conformi
-- applicare decisioni consistenti (`allow`, `flag`, `review`, `block`)
-- mantenere audit trail completo
-- consentire estensione rapida (nuove regole, provider AI, nuove policy)
+## Architettura ad alto livello
+Entry point principale:
+- `src/lib/moderation/moderation.service.ts` (`moderateContent`)
 
-Ambito coperto dal layer `moderateContent()`:
-- listing (titolo, descrizione)
-- profilo pubblico (bio, username, full name)
-- commenti pubblici
-- recensioni
-- form pubblici
-- testo delle segnalazioni
-- contenuti marketplace pubblici
+Componenti principali:
+- Rule engine deterministico: `src/lib/moderation/moderation.rules.ts`
+- Layer AI: `src/lib/moderation/moderation.ai.service.ts` + adapter provider
+- Decision engine finale: logica in `moderation.service.ts`
+- Skip policy: `src/lib/moderation/moderation.skip.ts`
+- Config e soglie: `src/lib/moderation/moderation.config.ts`, `src/lib/moderation/moderation.ai.config.ts`
+- Audit/eventi: `src/lib/moderation/moderation.audit.ts`
 
-Esclusione tassativa:
-- route `/inbox`
-- direct messages / private messaging
-- endpoint privati chat/DM
-
-La skip logic e centralizzata in:
-- `src/lib/moderation/moderation.skip.ts`
-- `src/lib/moderation/moderation.ai.service.ts` (anche per layer AI)
-
-## High-level architecture
-Percorso principale:
-
-```text
-User content
-  -> moderateContent(input)
-       -> shouldSkipModeration()
-            -> (skip if inbox/private)
-       -> evaluateRuleBasedModeration()
-       -> moderateWithAI() [conditional]
-       -> decision engine (merge rules + AI)
-       -> writeModerationAudit()
-       -> return ModerationResult
-  -> API route decides DB behavior:
-       allow/flag: publish or save
-       review: queue/manual review state
-       block: reject request
-```
-
-Flow richiesto (vista sintetica):
+## Pipeline di moderazione
 
 ```text
 User content
@@ -60,28 +29,60 @@ Decision engine
 Allow / Flag / Review / Block
 ```
 
-## Core components (code map)
-- Service orchestrator:
-  - `src/lib/moderation/moderation.service.ts`
-- Deterministic rules:
-  - `src/lib/moderation/moderation.rules.ts`
-- AI layer:
-  - `src/lib/moderation/moderation.ai.service.ts`
-  - `src/lib/moderation/moderation.ai.adapters/*`
-  - `src/lib/moderation/moderation.ai.prompts.ts`
-  - `src/lib/moderation/moderation.ai.config.ts`
-- Skip logic:
-  - `src/lib/moderation/moderation.skip.ts`
-- Shared config/types/reason codes:
-  - `src/lib/moderation/moderation.config.ts`
-  - `src/lib/moderation/moderation.types.ts`
-  - `src/lib/moderation/moderation.reason-codes.ts`
-- Audit logging:
-  - `src/lib/moderation/moderation.audit.ts`
+Versione operativa reale (semplificata):
 
-## Pipeline details
-### 1) Input validation and target gate
-`moderateContent()` accetta solo target esplicitamente consentiti:
+```text
+API Route / Server Action
+  -> moderateContent(input)
+    -> target validation (ALLOWED_TARGETS)
+    -> shouldSkipModeration(input)?
+      -> yes: allow + reason code skip + audit
+      -> no:
+        -> evaluateRuleBasedModeration(input)
+        -> hard-rule-block?
+          -> yes: AI saltata
+          -> no: moderateWithAI(...)
+        -> merge result (score, reason codes, severity, decision)
+        -> writeModerationAudit(...)
+          -> moderation_events
+          -> moderation_reviews_queue (solo decision=review)
+```
+
+## Flusso completo: submission -> decision
+1. Una route API (es. `src/app/api/requests/create/route.ts`) invia `targetType`, `text`, `actorId`, `entityId`, `context` a `moderateContent`.
+2. `moderateContent` valida che `targetType` sia ammesso.
+3. `shouldSkipModeration()` verifica esclusioni policy (inbox/private).
+4. Se non skippata:
+- viene eseguito il rules engine con score/reason codes deterministici;
+- viene valutato hard block da regole severe;
+- il layer AI viene eseguito solo se consentito.
+5. Decision engine combina:
+- suggested decision delle regole,
+- reason-code based decision,
+- decision AI (se invocata),
+- confidenza AI (con downgrade block->review se sotto soglia).
+6. Risultato finale contiene:
+- `decision`, `severity`, `score`, `reasonCodes`, `sanitizedText`,
+- metadati AI (`invoked`, provider, categorie, confidence, skip reason),
+- `userMessage` pronto per UI/API.
+7. Audit persistito in Supabase.
+
+## Decision engine: regole di priorita
+Implementato in `moderation.service.ts`.
+
+Priorita principali:
+- Reason code hard-block o score >= `blockScore` -> `block`
+- Reason code review o score >= `reviewScore` -> `review`
+- Score >= `flagScore` o almeno un reason code -> `flag`
+- Nessun segnale -> `allow`
+
+Ulteriori regole:
+- Se esiste hard rule block (`hardRuleBlockReasonCodes` o rule score >= 90), AI non viene invocata.
+- Se AI propone `block` ma confidence < `aiConfidenceThreshold`, la decisione viene ridotta a `review`.
+- Il messaggio utente viene scelto da `decisionMessages` con variante `blockPartial` per contatti esterni.
+
+## Target moderati
+Validati da `ALLOWED_TARGETS` in `moderation.service.ts`:
 - `listing_title`
 - `listing_description`
 - `profile_bio`
@@ -93,130 +94,75 @@ Allow / Flag / Review / Block
 - `marketplace_content`
 - `generic_public_text`
 
-Target non valido -> `block` con `PUBLIC_CONTENT_POLICY_VIOLATION`.
+Target non consentito:
+- decision immediata `block`
+- reason code `PUBLIC_CONTENT_POLICY_VIOLATION`
+- AI non invocata
+- evento audit scritto
 
-### 2) Skip policy (inbox/private)
-`shouldSkipModeration(input)` verifica:
-- pathname (`/inbox`, `/api/inbox`, `/api/chat/messages`, `/api/dm`, `/api/messages/private`)
-- endpointTag contenente `inbox` o `private`
+## Skip logic (overview)
+`shouldSkipModeration()` in `src/lib/moderation/moderation.skip.ts` salta moderazione quando:
+- route inbox/private (`/inbox`, `/api/inbox`, `/api/chat/messages`, `/api/dm`, `/api/messages/private`)
+- `endpointTag` contiene `inbox` o `private`
 - `routeGroup === "inbox"`
 - `context.isPrivateMessage === true`
 
-Se skip:
-- decision = `allow`
-- reason code = `INBOX_ROUTE_EXCLUDED`
-- AI reason code aggiuntivo = `AI_SKIPPED_INBOX_ROUTE`
-- evento sempre loggato in `moderation_events`
+Output in skip:
+- decision `allow`
+- reason codes includono `INBOX_ROUTE_EXCLUDED` + `AI_SKIPPED_INBOX_ROUTE`
+- AI marcata `skippedByPolicy=true`
+- audit comunque registrato (`moderation_events`)
 
-### 3) Rule-based moderation
-`evaluateRuleBasedModeration()`:
-- normalizza testo
-- applica regex/keywords
-- produce score, severity, reason codes
-- redige `sanitizedText` (redaction contatti/link)
-
-### 4) AI moderation (conditional)
-`moderateWithAI()` viene chiamata solo se policy lo consente.
-Esempi di skip AI:
-- route esclusa/inbox/private
-- provider disabilitato
-- target non abilitato
-- testo troppo corto e non sospetto
-- hard block deterministic gia rilevato
-
-### 5) Decision engine
-`moderation.service.ts` combina output rules + AI:
-- precedence alta alle hard rules
-- merge reason codes (dedupe)
-- merge score (massimo tra rules e AI)
-- scelta decisione piu restrittiva con downgrade da `block` a `review` se confidence AI bassa
-
-### 6) Audit + review queue
-`writeModerationAudit()` salva in:
-- `moderation_events` (sempre)
-- `moderation_reviews_queue` (solo se decision = `review`)
-
-## Decision semantics
-- `allow`: contenuto consentito
-- `flag`: contenuto consentito ma tracciato per analytics/risk
-- `review`: contenuto in verifica manuale o pubblicazione differita
-- `block`: contenuto rifiutato
-
-Messaggi utente (da `moderation.config.ts`):
-- allow/flag: `Operazione completata.`
-- review: `Il contenuto e stato inviato e sara verificato prima della pubblicazione.`
-- block: `Il contenuto inviato non rispetta le linee guida della piattaforma.`
-- blockPartial: `Alcuni elementi del testo non sono consentiti.`
-
-## Integration points in API routes
-Moderazione centralizzata gia integrata in:
+## Integrazione col sito (punti principali)
+Moderazione contenuti pubblici:
 - `src/app/api/requests/create/route.ts`
 - `src/app/api/requests/[id]/update/route.ts`
-- `src/app/api/offers/create/route.ts`
-- `src/app/api/profile/public/update/route.ts`
-- `src/app/api/reviews/submit/route.ts`
 - `src/app/api/comments/submit/route.ts`
+- `src/app/api/reviews/submit/route.ts`
+- `src/app/api/profile/public/update/route.ts`
 - `src/app/api/public/forms/submit/route.ts`
 - `src/app/api/trust/report/route.ts`
+- `src/app/api/offers/create/route.ts`
 - `src/app/actions/content-moderation.server.ts`
 
-## Reason codes (moderation layer)
-Catalogo reason codes del layer moderation (`src/lib/moderation/moderation.reason-codes.ts`):
+Messaggistica privata:
+- `src/app/api/chat/messages/route.ts` usa trust chat safety (`src/lib/trust/services/chat-safety.ts`) e non passa da `moderateContent`.
 
-| Code | Meaning | Source |
-|---|---|---|
-| SPAM_LINK_PATTERN | Link esterni rilevati | Rules |
-| TOO_MANY_LINKS | Troppi link nel testo | Rules |
-| EXTERNAL_CONTACT | Contatto esterno rilevato | Rules |
-| PHONE_NUMBER_DETECTED | Numero telefono rilevato | Rules |
-| EMAIL_DETECTED | Email rilevata | Rules |
-| TELEGRAM_HANDLE_DETECTED | Handle/riferimento Telegram | Rules |
-| WHATSAPP_REFERENCE | Riferimento WhatsApp | Rules |
-| OFF_PLATFORM_PAYMENT | Richiesta pagamento esterno | Rules |
-| SCAM_KEYWORDS | Keyword scam rilevate | Rules |
-| HATE_SPEECH_SIGNAL | Segnale hate speech | Rules |
-| HARASSMENT_SIGNAL | Segnale harassment | Rules |
-| THREAT_SIGNAL | Segnale minaccia | Rules |
-| SEXUAL_CONTENT_SIGNAL | Contenuto sessuale testuale | Rules |
-| DUPLICATE_TEXT_PATTERN | Pattern testo duplicato | Rules |
-| BANNED_KEYWORD | Keyword vietata | Rules |
-| SUSPICIOUS_MARKETING_PATTERN | Marketing abusivo sospetto | Rules |
-| AI_MODERATION_FLAGGED | AI ha segnalato rischio | AI |
-| AI_MODERATION_BLOCKED | AI ha classificato block | AI |
-| AI_SCAM_SIGNAL | Segnale scam AI | AI |
-| AI_SPAM_SIGNAL | Segnale spam AI | AI |
-| AI_HARASSMENT_SIGNAL | Segnale harassment AI | AI |
-| AI_HATE_SIGNAL | Segnale hate speech AI | AI |
-| AI_THREAT_SIGNAL | Segnale threat AI | AI |
-| AI_SEXUAL_TEXT_SIGNAL | Segnale sexual text AI | AI |
-| AI_OFF_PLATFORM_CONTACT_SIGNAL | Tentativo contatto esterno AI | AI |
-| AI_OFF_PLATFORM_PAYMENT_SIGNAL | Off-platform payment AI | AI |
-| AI_PHISHING_SIGNAL | Segnale phishing AI | AI |
-| AI_SUSPICIOUS_LISTING_LANGUAGE | Linguaggio listing sospetto AI | AI |
-| AI_BORDERLINE_REVIEW | Caso borderline da review | AI |
-| AI_CONFIDENCE_LOW | Confidence AI sotto soglia | AI |
-| AI_PROVIDER_ERROR | Errore provider AI | AI |
-| AI_SKIPPED_INBOX_ROUTE | AI saltata per route esclusa/inbox | AI skip policy |
-| PUBLIC_CONTENT_POLICY_VIOLATION | Violazione policy pubblica | Service |
-| INBOX_ROUTE_EXCLUDED | Route inbox/private esclusa | Skip logic |
+Global chat:
+- `src/app/api/global-chat/messages/route.ts` usa policy dedicata `src/lib/chat/global-chat-moderation.ts`.
 
-## Skip logic documentation
-### Where
-- `src/lib/moderation/moderation.skip.ts`
-  - `isInboxRoute(pathname: string): boolean`
-  - `shouldSkipModeration(input): { skip, skippedBecauseInbox, reasonCode }`
-- `src/lib/moderation/moderation.ai.service.ts`
-  - `shouldSkipAI(...)`
+## Audit, review queue ed eventi
+Persistenza moderation service:
+- `moderation_events` (sempre)
+- `moderation_reviews_queue` (solo quando `decision === "review"`)
 
-### How to modify
-Per aggiungere nuove route private escluse:
-1. Aggiorna `isInboxRoute()` in `moderation.skip.ts`
-2. Aggiorna `MODERATION_AI_CONFIG.excludedRoutes` in `moderation.ai.config.ts`
-3. Aggiorna eventuali `endpointTag` in route handlers
-4. Aggiungi test in `tests/security/moderation-skip.test.ts`
+Campi principali audit (`moderation.audit.ts`):
+- target/entity/actor
+- decision/severity/score
+- reason codes/matched rules
+- route
+- `original_excerpt` e `sanitized_excerpt`
+- metadata AI (`providerName`, categories, confidence, skippedReason)
 
-## File structure documentation
-Struttura reale attuale:
+## Reason codes: panoramica
+Reason codes moderation (set completo):
+- `SPAM_LINK_PATTERN`, `TOO_MANY_LINKS`, `EXTERNAL_CONTACT`
+- `PHONE_NUMBER_DETECTED`, `EMAIL_DETECTED`, `TELEGRAM_HANDLE_DETECTED`, `WHATSAPP_REFERENCE`
+- `OFF_PLATFORM_PAYMENT`, `SCAM_KEYWORDS`
+- `HATE_SPEECH_SIGNAL`, `HARASSMENT_SIGNAL`, `THREAT_SIGNAL`, `SEXUAL_CONTENT_SIGNAL`
+- `DUPLICATE_TEXT_PATTERN`, `BANNED_KEYWORD`, `SUSPICIOUS_MARKETING_PATTERN`
+- `AI_MODERATION_FLAGGED`, `AI_MODERATION_BLOCKED`
+- `AI_SCAM_SIGNAL`, `AI_SPAM_SIGNAL`, `AI_HARASSMENT_SIGNAL`, `AI_HATE_SIGNAL`, `AI_THREAT_SIGNAL`
+- `AI_SEXUAL_TEXT_SIGNAL`, `AI_OFF_PLATFORM_CONTACT_SIGNAL`, `AI_OFF_PLATFORM_PAYMENT_SIGNAL`
+- `AI_PHISHING_SIGNAL`, `AI_SUSPICIOUS_LISTING_LANGUAGE`, `AI_BORDERLINE_REVIEW`
+- `AI_CONFIDENCE_LOW`, `AI_PROVIDER_ERROR`, `AI_SKIPPED_INBOX_ROUTE`
+- `PUBLIC_CONTENT_POLICY_VIOLATION`, `INBOX_ROUTE_EXCLUDED`
+
+Definizioni centrali:
+- `src/lib/moderation/moderation.types.ts`
+- `src/lib/moderation/moderation.reason-codes.ts`
+
+## File structure (moderation)
 
 ```text
 src/
@@ -224,72 +170,37 @@ src/
     moderation/
       moderation.service.ts
       moderation.rules.ts
-      moderation.skip.ts
       moderation.config.ts
+      moderation.skip.ts
+      moderation.audit.ts
       moderation.reason-codes.ts
       moderation.types.ts
-      moderation.audit.ts
       moderation.ai.config.ts
-      moderation.ai.types.ts
       moderation.ai.prompts.ts
       moderation.ai.service.ts
+      moderation.ai.types.ts
       moderation.ai.adapters/
         openai.ts
         perspective.ts
         custom.ts
 ```
 
-Tabelle dati correlate:
-- `moderation_events`
-- `moderation_reviews_queue`
-- `user_reviews`
-- `public_comments`
-- `public_form_submissions`
+## Estensione rapida
+- Nuova regola deterministica: aggiungere pattern/config in `moderation.config.ts`, applicazione in `moderation.rules.ts`, reason code in `moderation.types.ts` e `moderation.reason-codes.ts`.
+- Nuovo provider AI: nuovo adapter in `moderation.ai.adapters/`, registrazione in `resolveAIProvider()` (`moderation.ai.service.ts`).
+- Nuove soglie: `moderation.config.ts` e/o `moderation.ai.config.ts`.
+- Nuovo target moderabile: aggiungere tipo in `ModerationTargetType`, poi whitelist in `ALLOWED_TARGETS` e `enabledTargets` AI.
 
-Migration:
-- `supabase/migrations/20260311183000_content_moderation_system.sql`
+## Debug rapido
+1. Verificare output route/API (`decision`, `reasonCodes`, `message`).
+2. Verificare `moderation_events`:
+- score, matched rules, reason codes, metadata.ai.
+3. Se review attesa ma assente, controllare insert su `moderation_reviews_queue`.
+4. Se AI non invocata, controllare `ai.skippedReason`:
+- `inbox_route`, `excluded_route`, `text_too_short`, `disabled`, `hard_rule_block`, `target_not_enabled`.
+5. Se mismatch decisionale, ricostruire:
+- rule score,
+- reason code block/review sets,
+- confidence AI vs `aiConfidenceThreshold`.
 
-## How to extend the system
-### Add a new target type
-1. Aggiungi il tipo in `ModerationTargetType` (`moderation.types.ts`)
-2. Aggiungi il target nel set `ALLOWED_TARGETS` (`moderation.service.ts`)
-3. Se serve AI su target, aggiungi in `MODERATION_AI_CONFIG.enabledTargets`
-4. Integra il target in una route/server action
 
-### Add a new deterministic rule
-1. Definisci regex o check in `moderation.config.ts` o direttamente in `moderation.rules.ts`
-2. Crea match con `id`, `severity`, `scoreImpact`, `reasonCode`
-3. Aggiorna reason code list se necessario
-4. Verifica threshold e outcome
-
-### Add a new AI provider
-1. Implementa adapter in `moderation.ai.adapters/`
-2. Implementa `moderate(input)` che ritorna `ModerationProviderResult`
-3. Aggiorna `resolveAIProvider()` in `moderation.ai.service.ts`
-4. Aggiungi env/config in `moderation.ai.config.ts`
-
-## Debugging guide (moderation)
-### Caso: contenuto bloccato erroneamente
-1. Cerca evento in `moderation_events` per `actor_id` + timeframe
-2. Verifica `reason_codes` e `matched_rules`
-3. Verifica `metadata.ai` (provider, categories, confidence)
-4. Se AI e troppo aggressiva: alza `MODERATION_AI_CONFIDENCE_THRESHOLD` o `MODERATION_AI_BLOCK_THRESHOLD`
-5. Se regola deterministic e troppo aggressiva: riduci `scoreImpact` o regex in `moderation.rules.ts`
-
-### Caso: contenuto sospetto non rilevato
-1. Verifica se la route e stata esclusa dalla skip logic
-2. Verifica `targetType` usato nella route
-3. Verifica se AI e stata invocata (`ai.invoked`)
-4. Aggiungi regex/keyword nel rules engine o nuove categorie AI mapping
-
-### Caso: provider AI non risponde
-1. Controlla `AI_PROVIDER_ERROR` nei reason codes
-2. Verifica env key/endpoint/timeout/retries
-3. Il fallback e sempre rules-only (sistema non si ferma)
-
-## Operational checklist
-- aggiornare reason codes quando si aggiungono nuove regole
-- mantenere centralizzata la skip policy inbox/private
-- non integrare `moderateContent()` dentro route `/inbox` o DM
-- monitorare daily volume in `moderation_reviews_queue`
-- eseguire test sicurezza dopo ogni change (`npm run test:security`)

@@ -43,10 +43,10 @@ type BaseContext = {
 
 function getAllowedHosts(): Set<string> {
   const hosts = new Set<string>([
-    "swaprmarket.market",
-    "www.swaprmarket.market",
-    "swaprmarket.com",
-    "www.swaprmarket.com",
+    "whatnot.market",
+    "www.whatnot.market",
+    "whatnotmarket.com",
+    "www.whatnotmarket.com",
     "localhost",
     "127.0.0.1",
   ]);

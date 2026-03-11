@@ -1,180 +1,177 @@
-# Configuration Guide
+﻿# Configuration Guide
 
-## Overview
-Questa guida raccoglie tutte le configurazioni modificabili per:
-- moderation rules + AI
-- trust/anti-scam policies
-- abuse guard e rate limits
+## Panoramica
+Le configurazioni del sistema moderation/security/anti-scam sono distribuite in moduli distinti.
 
-## File map
-Configurazioni principali:
-- `src/lib/moderation/moderation.config.ts`
-- `src/lib/moderation/moderation.ai.config.ts`
-- `src/lib/trust/config.ts`
-- `src/lib/rate-limit.ts`
+File principali:
+- Moderation core: `src/lib/moderation/moderation.config.ts`
+- AI moderation: `src/lib/moderation/moderation.ai.config.ts`
+- Trust/Safety config: `src/lib/trust/config.ts`
+- Mapping reason code: `src/lib/moderation/moderation.reason-codes.ts`, `src/lib/trust/reason-codes.ts`
 
-Reason codes:
-- `src/lib/moderation/moderation.reason-codes.ts`
-- `src/lib/trust/reason-codes.ts`
+## 1) Moderation thresholds e severity
+File: `moderation.config.ts`
 
-## Moderation config
-File: `src/lib/moderation/moderation.config.ts`
+Configurazioni:
+- `thresholds.flagScore`
+- `thresholds.reviewScore`
+- `thresholds.blockScore`
+- `severityRank` (`none`, `low`, `medium`, `high`, `critical`)
 
-### Thresholds
+Esempio:
+
 ```ts
-thresholds: {
-  flagScore: 10,
-  reviewScore: 25,
-  blockScore: 50,
+export const MODERATION_CONFIG = {
+  thresholds: {
+    flagScore: 10,
+    reviewScore: 25,
+    blockScore: 50,
+  },
+  ...
 }
 ```
 
-### Limits
-```ts
-limits: {
-  maxTextLength: 8000,
-  maxAllowedLinks: 2,
-}
-```
+Quando modificare:
+- Alzare `blockScore` se troppi falsi positivi bloccano contenuti validi.
+- Abbassare `reviewScore` se vuoi aumentare campionamento manuale.
 
-### Pattern set
-Regex principali:
-- URL
-- email
-- phone
-- Telegram/WhatsApp/Discord/Instagram
-- scam/phishing
-- threat/harassment/hate/sexual
-- duplicate token
+## 2) Rule limits e pattern
+File: `moderation.config.ts`
 
-### Decision mapping
-- `blockReasonCodes` -> forza block
-- `reviewReasonCodes` -> forza review
-- `decisionMessages` -> microcopy UI
+Blocchi configurabili:
+- `limits.maxTextLength`
+- `limits.maxAllowedLinks`
+- `patterns.*Regex`
+- `keywords.banned`
+- `blockReasonCodes`
+- `reviewReasonCodes`
 
-## AI moderation config
-File: `src/lib/moderation/moderation.ai.config.ts`
+Impatto:
+- Cambiare regex cambia il perimetro dei segnali deterministici.
+- Cambiare set block/review reason codes impatta direttamente la decisione finale.
 
-### Runtime toggles
-- `enabled`
-- `provider`
-- `enabledTargets`
-- `excludedRoutes`
+## 3) AI configuration
+File: `moderation.ai.config.ts`
 
-### AI thresholds
-- `minTextLengthForAI`
-- `aiConfidenceThreshold`
-- `reviewThreshold`
-- `blockThreshold`
+Flag principali:
+- `MODERATION_AI_ENABLED`
+- `MODERATION_PROVIDER=openai|perspective|custom|none`
+- `MODERATION_OPENAI_MODEL`
+- `MODERATION_AI_TIMEOUT_MS`
+- `MODERATION_AI_RETRIES`
+- `MODERATION_AI_MIN_TEXT_LENGTH`
+- `MODERATION_AI_CONFIDENCE_THRESHOLD`
+- `MODERATION_AI_REVIEW_THRESHOLD`
+- `MODERATION_AI_BLOCK_THRESHOLD`
+- `MODERATION_AI_ENABLED_TARGETS` (lista CSV)
+- `MODERATION_AI_EXCLUDED_ROUTES` (lista CSV)
 
-### Performance
-- `aiTimeoutMs`
-- `retries`
+Provider settings:
+- OpenAI:
+  - `OPENAI_API_KEY`
+  - `MODERATION_OPENAI_ENDPOINT`
+- Perspective:
+  - `PERSPECTIVE_API_KEY`
+  - `PERSPECTIVE_ENDPOINT`
+- Custom:
+  - `MODERATION_CUSTOM_PROVIDER_URL`
+  - `MODERATION_CUSTOM_PROVIDER_API_KEY`
 
-### Provider settings
-- `openai.apiKey`, `openai.endpoint`, `model`
-- `perspective.apiKey`, `perspective.endpoint`
-- `custom.endpoint`, `custom.apiKey`
-
-## Trust & anti-scam config
+## 4) Trust/Security thresholds
 File: `src/lib/trust/config.ts`
 
-### Risk level boundaries
-Per user/listing/conversation:
-```ts
-riskLevels: {
-  lowMax: 24,
-  mediumMax: 49,
-  highMax: 74,
-}
-```
+Configurazioni chiave:
+- `scoring.user|listing|conversation.riskLevels`
+- `policies.user` (`warnAt`, `limitAt`, `reviewAt`, `suspendAt`)
+- `policies.listing` (`warningAt`, `pendingReviewAt`, `restrictedAt`, `removedAt`)
+- `policies.conversation` (`warningAt`, `softBlockAt`, `hardBlockAt`)
+- onboarding limits:
+  - `dailyMessageLimitForNewAccount`
+  - `dailyListingLimitForNewAccount`
+  - `dailyOfferLimitForNewAccount`
+  - `blockExternalContactsForNewAccounts`
 
-### Policy thresholds
-User:
-- warnAt: 25
-- limitAt: 40
-- reviewAt: 60
-- suspendAt: 85
+## 5) Abuse guard configuration
+File: `src/lib/security/abuse-guards.ts`
 
-Listing:
-- warningAt: 25
-- pendingReviewAt: 45
-- restrictedAt: 70
-- removedAt: 90
+Elementi configurabili via env:
+- `ABUSE_SIGNAL_SALT`
 
-Conversation:
-- warningAt: 20
-- softBlockAt: 45
-- hardBlockAt: 70
+Scoring/decision thresholds:
+- in `src/lib/security/abuse-scoring.ts` (logica hardcoded a pesi)
 
-### Onboarding security
-- `newAccountWindowHours`
-- `strictWindowHours`
-- `dailyMessageLimitForNewAccount`
-- `dailyListingLimitForNewAccount`
-- `dailyOfferLimitForNewAccount`
-- `blockExternalContactsForNewAccounts`
-- `requirePhoneForHighRiskActions`
+## 6) Moderation toggles nel codice applicativo
+Pattern usato nelle route:
+- call `moderateContent(...)`
+- branch su `shouldBlock` / `shouldReview`
+- se review: impostazione status `pending_review` e visibilita ridotta se disponibile
 
-## Rate limiting config
-File: `src/lib/rate-limit.ts`
+Esempio reale: `src/app/api/requests/create/route.ts`.
 
-`RATE_LIMIT_CONFIGS` contiene limiti per action (`request_create`, `offer_create`, `comment_submit`, ecc.).
+## Come modificare: blocchi automatici
+1. Aggiorna `blockReasonCodes` in `moderation.config.ts`.
+2. Se necessario, aggiorna i `scoreImpact` in `moderation.rules.ts`.
+3. Verifica se `hardRuleBlockReasonCodes` (AI config) deve includere il nuovo reason code.
 
-Per cambiare un limite:
-1. cerca action in `RateLimitAction`
-2. aggiorna `RATE_LIMIT_CONFIGS[action]`
-3. verifica route che usano `checkRateLimitDetailed`
+## Come modificare: review thresholds
+1. Rule-level: `MODERATION_CONFIG.thresholds.reviewScore`.
+2. AI-level: `MODERATION_AI_REVIEW_THRESHOLD`.
+3. Trust listing/conversation policy:
+- `TRUST_SAFETY_CONFIG.policies.listing.pendingReviewAt`
+- `TRUST_SAFETY_CONFIG.policies.conversation.softBlockAt`
 
-## Environment variables
-Variabili principali usate dal layer moderation/AI:
+## Come modificare: categorie abilitate
+AI categories:
+- enum in `moderation.ai.types.ts` (`MODERATION_AI_CATEGORIES`)
+- mapping category->reason code dentro adapter (`openai.ts`, `custom.ts`, `perspective.ts`)
 
-```bash
+Trust categories (report):
+- payload `category` in `src/app/api/trust/report/route.ts`
+- priorita/livello in `computePriorityFromCategory`, `computeRiskLevelFromCategory`
+
+## Come cambiare provider AI attivo
+Config rapida:
+
+```env
 MODERATION_AI_ENABLED=true
 MODERATION_PROVIDER=openai
 MODERATION_OPENAI_MODEL=gpt-4.1-mini
 OPENAI_API_KEY=...
-MODERATION_OPENAI_ENDPOINT=https://api.openai.com/v1/chat/completions
-
-PERSPECTIVE_API_KEY=...
-PERSPECTIVE_ENDPOINT=https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze
-
-MODERATION_CUSTOM_PROVIDER_URL=
-MODERATION_CUSTOM_PROVIDER_API_KEY=
-
-MODERATION_AI_TIMEOUT_MS=6000
-MODERATION_AI_RETRIES=1
-MODERATION_AI_MIN_TEXT_LENGTH=24
-MODERATION_AI_CONFIDENCE_THRESHOLD=0.62
-MODERATION_AI_REVIEW_THRESHOLD=45
-MODERATION_AI_BLOCK_THRESHOLD=78
-MODERATION_AI_ENABLED_TARGETS=listing_title,listing_description,comment,review
-MODERATION_AI_EXCLUDED_ROUTES=/inbox,/api/inbox,/api/chat/messages,/api/dm,/api/messages/private
 ```
 
-## Common change scenarios
-### A) Rendere il sistema piu severo
-- abbassa `blockScore` e `reviewScore` in `moderation.config.ts`
-- aggiungi reason codes in `blockReasonCodes`
-- abbassa `MODERATION_AI_BLOCK_THRESHOLD`
+Per passare a custom:
 
-### B) Ridurre falsi positivi
-- alza `reviewScore`/`blockScore`
-- riduci `scoreImpact` delle regole rumorose
-- alza `MODERATION_AI_CONFIDENCE_THRESHOLD`
+```env
+MODERATION_PROVIDER=custom
+MODERATION_CUSTOM_PROVIDER_URL=https://your-provider/moderate
+MODERATION_CUSTOM_PROVIDER_API_KEY=...
+```
 
-### C) Disabilitare AI temporaneamente
-- `MODERATION_PROVIDER=none` oppure `MODERATION_AI_ENABLED=false`
-- il sistema continua in mode rules-only
+## Esempio completo `moderation.config.ts`
 
-### D) Abilitare AI solo su target critici
-- set `MODERATION_AI_ENABLED_TARGETS` con subset (es. listing + review)
+```ts
+export const MODERATION_CONFIG = {
+  thresholds: { flagScore: 10, reviewScore: 25, blockScore: 50 },
+  limits: { maxTextLength: 8000, maxAllowedLinks: 2 },
+  patterns: {
+    urlRegex: /\b(?:https?:\/\/|www\.)[^\s]+/gi,
+    emailRegex: /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/gi,
+    phoneRegex: /(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?)?\d{3,4}[-.\s]?\d{3,4}/g,
+  },
+  ...
+}
+```
 
-## Governance recommendations
-- fare change piccoli e misurabili
-- tracciare impatto su `moderation_events` e `moderation_reviews_queue`
-- aggiornare docs + reason codes in ogni modifica rilevante
-- testare sempre:
-  - `npx tsc --noEmit`
-  - `npx eslint src/lib/moderation src/lib/trust`
-  - `npm run test:security`
+## Checklist post-config change
+1. Eseguire lint e typecheck.
+2. Testare almeno:
+- caso allow
+- caso review
+- caso block
+- caso skip inbox/private
+3. Verificare persistenza eventi:
+- `moderation_events`
+- `moderation_reviews_queue`
+- `trust_risk_events` / `trust_moderation_cases` (se coinvolto trust).
+
+
