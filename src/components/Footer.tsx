@@ -5,14 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/primitives/container";
 import { Squircle } from "@/components/ui/Squircle";
-import { 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
-  Youtube, 
-  Send 
-} from "lucide-react";
+import { Send } from "lucide-react";
 
 import { CurrencyIcon } from "@/components/market/CurrencyIcon";
 
@@ -27,6 +20,8 @@ export function Footer() {
     pathname.startsWith("/admin/")
     || pathname === "/global-chat"
     || pathname.startsWith("/global-chat/")
+    || pathname === "/install"
+    || pathname.startsWith("/install/")
   ) {
     return null;
   }

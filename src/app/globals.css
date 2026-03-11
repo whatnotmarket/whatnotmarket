@@ -68,6 +68,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --global-chat-app-bg: #16163a;
+  --global-chat-sidebar-surface: #211f4a;
+  --global-chat-sidebar-card: #2a2555;
+  --global-chat-text-primary: #f8f7ff;
+  --global-chat-text-muted: #b8b3d9;
+  --global-chat-divider: rgba(185, 177, 232, 0.18);
 }
 
 .dark {
@@ -103,6 +109,12 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --global-chat-app-bg: #16163a;
+  --global-chat-sidebar-surface: #211f4a;
+  --global-chat-sidebar-card: #2a2555;
+  --global-chat-text-primary: #f8f7ff;
+  --global-chat-text-muted: #b8b3d9;
+  --global-chat-divider: rgba(185, 177, 232, 0.18);
 }
 
 @layer base {

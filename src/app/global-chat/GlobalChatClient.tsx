@@ -2,16 +2,32 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
   ArrowLeft,
-  ArrowRight,
+  BarChart3,
+  Briefcase,
   ChevronDown,
+  ClipboardList,
+  Cpu,
+  Gem,
+  Globe2,
+  House,
+  LayoutDashboard,
+  LifeBuoy,
   LogIn,
+  Menu,
+  Package,
+  PanelLeftClose,
+  PanelLeftOpen,
   Reply,
-  Send,
-  Hourglass,
+  Shirt,
+  Store,
+  TrendingUp,
+  Wallet,
+  Wrench,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -26,6 +42,7 @@ import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import EnglishFlag from "@/flag/english.png";
 import { Squircle } from "@/components/ui/Squircle";
 import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
@@ -110,8 +127,82 @@ type PresencePayload = {
   isBuyer?: boolean;
 };
 
+type SidebarMode = "buy" | "sell";
+
 const LEFT_SIDEBAR_CLOSED_STORAGE_KEY = "global_chat_left_sidebar_closed";
 const CHAT_EXPANDED_STORAGE_KEY = "global_chat_expanded";
+const PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "sell-services", "crypto-talk"];
+const COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", "english"];
+const MARKETPLACE_CATEGORIES = [
+  { label: "Electronics", href: "/category/electronics" },
+  { label: "Fashion", href: "/category/fashion" },
+  { label: "Home & Garden", href: "/category/home-garden" },
+  { label: "Collectibles", href: "/category/collectibles" },
+  { label: "Services", href: "/category/services" },
+] as const;
+const SELL_SIDEBAR_SECTIONS = [
+  {
+    key: "seller-hub",
+    label: "Seller Hub",
+    tabs: ["Dashboard", "Create Listing", "Drafts", "Templates"],
+  },
+  {
+    key: "inventory",
+    label: "Inventory",
+    tabs: ["Active Listings", "Scheduled", "Sold", "Archived"],
+  },
+  {
+    key: "orders",
+    label: "Orders",
+    tabs: ["New Orders", "In Escrow", "In Delivery", "Completed", "Disputes"],
+  },
+  {
+    key: "payouts",
+    label: "Payouts",
+    tabs: ["Wallets", "Payout Methods", "Fees", "Invoices", "Tax Reports"],
+  },
+  {
+    key: "growth",
+    label: "Growth",
+    tabs: ["Promotions", "Boost Listing", "Featured", "Affiliates"],
+  },
+  {
+    key: "reputation-compliance",
+    label: "Reputation",
+    tabs: ["Verification", "Reviews", "Policy Center", "Claims"],
+  },
+  {
+    key: "analytics",
+    label: "Analytics",
+    tabs: ["Revenue", "Conversion", "Top Listings", "Buyer Insights"],
+  },
+] as const;
+type SellSidebarSection = (typeof SELL_SIDEBAR_SECTIONS)[number];
+type SellSidebarSectionKey = SellSidebarSection["key"];
+
+function toSidebarSlug(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function getSellTabId(sectionKey: SellSidebarSectionKey, tabLabel: string) {
+  return `${sectionKey}:${toSidebarSlug(tabLabel)}`;
+}
+
+const SELL_DEFAULT_ACTIVE_TAB = getSellTabId(
+  SELL_SIDEBAR_SECTIONS[0].key,
+  SELL_SIDEBAR_SECTIONS[0].tabs[0]
+);
+const SELL_DEFAULT_OPEN_STATE = SELL_SIDEBAR_SECTIONS.reduce(
+  (acc, section, index) => {
+    acc[section.key] = index === 0;
+    return acc;
+  },
+  {} as Record<SellSidebarSectionKey, boolean>
+);
+const SIDEBAR_ROW_GRID_CLASS = "grid-cols-[1.75rem_minmax(0,1fr)_auto]";
+const SIDEBAR_ICON_BOX_CLASS = "grid h-7 w-7 shrink-0 place-items-center rounded-xl";
+const GUEST_PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "crypto-talk"];
+const GUEST_COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", "english"];
 
 function firstProfile(profile: ProfileRef | ProfileRef[] | null): ProfileRef | null {
   if (!profile) return null;
@@ -192,20 +283,20 @@ function getAvatarFallback(name: string) {
   return initials || "U";
 }
 
-function SidebarToggleIcon({ rotated = false }: { rotated?: boolean }) {
+function SectionChevron({ open }: { open: boolean }) {
   return (
     <svg
-      className={cn("h-4 w-4 transition-transform", rotated ? "rotate-180" : "")}
-      viewBox="0 0 16 16"
-      fill="none"
+      viewBox="0 -4.5 24 24"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
+      className={cn(
+        "h-3 w-3 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)] transition-transform",
+        open ? "" : "rotate-180"
+      )}
     >
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M9.67272 0.522827C10.8339 0.522827 11.76 0.522701 12.4963 0.60248C13.2453 0.683644 13.8789 0.854235 14.4264 1.25196C14.7504 1.48738 15.0355 1.77246 15.2709 2.09648C15.6686 2.64392 15.8392 3.27756 15.9204 4.02653C16.0002 4.76289 16 5.68894 16 6.85013V9.14985C16 10.311 16.0002 11.2371 15.9204 11.9734C15.8392 12.7224 15.6686 13.3561 15.2709 13.9035C15.0355 14.2275 14.7504 14.5126 14.4264 14.748C13.8789 15.1457 13.2453 15.3163 12.4963 15.3975C11.76 15.4773 10.8339 15.4772 9.67272 15.4772H6.3273C5.16611 15.4772 4.24006 15.4773 3.50371 15.3975C2.75474 15.3163 2.1211 15.1457 1.57366 14.748C1.24963 14.5126 0.964549 14.2275 0.729131 13.9035C0.331407 13.3561 0.160817 12.7224 0.0796529 11.9734C-0.000126137 11.2371 1.25338e-09 10.311 1.25338e-09 9.14985V6.85013C1.25329e-09 5.68894 -0.000126137 4.76289 0.0796529 4.02653C0.160817 3.27756 0.331407 2.64392 0.729131 2.09648C0.964549 1.77246 1.24963 1.48738 1.57366 1.25196C2.1211 0.854235 2.75474 0.683644 3.50371 0.60248C4.24006 0.522701 5.16611 0.522827 6.3273 0.522827H9.67272ZM5.54303 1.88714V14.1118C5.78636 14.1128 6.04709 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14985V6.85013C14.6398 5.65895 14.6393 4.81965 14.5693 4.17359C14.5007 3.54047 14.3723 3.17317 14.1711 2.89608C14.0195 2.68746 13.8354 2.50335 13.6268 2.35178C13.3497 2.15059 12.9824 2.02211 12.3493 1.95352C11.7032 1.88356 10.8639 1.88305 9.67272 1.88305H6.3273C6.04709 1.88305 5.78636 1.88618 5.54303 1.88714ZM4.1828 1.91165C3.99125 1.92158 3.8148 1.93575 3.65076 1.95352C3.01764 2.02211 2.65034 2.15059 2.37325 2.35178C2.16463 2.50335 1.98052 2.68746 1.82895 2.89608C1.62776 3.17317 1.49928 3.54047 1.43069 4.17359C1.36074 4.81965 1.36023 5.65895 1.36023 6.85013V9.14985C1.36023 10.341 1.36074 11.1803 1.43069 11.8264C1.49928 12.4595 1.62776 12.8268 1.82895 13.1039C1.98052 13.3125 2.16463 13.4966 2.37325 13.6482C2.65034 13.8494 3.01764 13.9779 3.65076 14.0465C3.81478 14.0642 3.99127 14.0774 4.1828 14.0873V1.91165Z"
         fill="currentColor"
+        d="M23.345 10.39L13.615-.4c-.448-.45-1.045-.65-1.631-.61-.586-.04-1.182.16-1.63.61L.624 10.39c-.827.83-.827 2.18 0 3.01.828.83 2.169.83 2.997 0l8.363-9.27 8.365 9.27c.827.83 2.169.83 2.996 0 .827-.83.827-2.18 0-3.01z"
       />
     </svg>
   );
@@ -313,6 +404,8 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
 export function GlobalChatClient() {
   const supabase = useMemo(() => createClient(), []);
   const { user, isLoading } = useUser();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const [messages, setMessages] = useState<GlobalChatMessage[]>([]);
   const [currentProfile, setCurrentProfile] = useState<ProfileRef | null>(null);
@@ -327,23 +420,18 @@ export function GlobalChatClient() {
   const [isFetching, setIsFetching] = useState(true);
   const [activeRoom, setActiveRoom] = useState<GlobalChatRoom>("english");
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
-  const [isChatExpanded, setIsChatExpanded] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
-  const [isLeftSidebarClosed, setIsLeftSidebarClosed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [isLeftSidebarClosed, setIsLeftSidebarClosed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("buy");
+  const [isMarketplaceSectionOpen, setIsMarketplaceSectionOpen] = useState(true);
+  const [isRoomsSectionOpen, setIsRoomsSectionOpen] = useState(true);
+  const [isCommunitySectionOpen, setIsCommunitySectionOpen] = useState(false);
+  const [openSellSections, setOpenSellSections] = useState<Record<SellSidebarSectionKey, boolean>>(
+    () => ({ ...SELL_DEFAULT_OPEN_STATE })
+  );
+  const [activeSellTabId, setActiveSellTabId] = useState(SELL_DEFAULT_ACTIVE_TAB);
   const [isChatClosed, setIsChatClosed] = useState(false);
   const [slowModeMinutes, setSlowModeMinutes] = useState<number>(0);
   const [isModerator, setIsModerator] = useState<boolean>(false);
@@ -359,6 +447,7 @@ export function GlobalChatClient() {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const roomMenuRef = useRef<HTMLDivElement>(null);
+  const isLoggedIn = Boolean(user);
   const canWrite = useMemo(() => {
     if (!user) return false;
     if (isBanned) return false;
@@ -380,7 +469,7 @@ export function GlobalChatClient() {
       return slowModeMinutes <= 0;
     }
     return true;
-  }, [activeRoom, currentProfile, replyTarget, slowModeMinutes, user, isModerator, isBanned, mutedUntilTs, slowRemainingSeconds, closedRemainingSeconds]);
+  }, [activeRoom, currentProfile, replyTarget, slowModeMinutes, user, isModerator, isBanned, mutedUntilTs, slowRemainingSeconds, closedUntilTs]);
 
   const activeRoomLabel =
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
@@ -390,6 +479,16 @@ export function GlobalChatClient() {
       const flag = localStorage.getItem("global_chat_rules_accepted") === "1";
       setHasAcceptedRules(Boolean(flag));
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      setIsLeftSidebarClosed(localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1");
+      setIsChatExpanded(localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY) === "1");
+    } catch {
+      setIsLeftSidebarClosed(false);
+      setIsChatExpanded(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -404,6 +503,15 @@ export function GlobalChatClient() {
     } catch {}
   }, [isChatExpanded]);
 
+  useEffect(() => {
+    if (!isMobileSidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileSidebarOpen]);
+
   const requiredRoleText = useMemo(() => {
     const isThreadReply = Boolean(replyTarget);
     if (activeRoom === "sell-services" && !isThreadReply) return "a seller";
@@ -412,7 +520,8 @@ export function GlobalChatClient() {
     return null;
   }, [activeRoom, replyTarget]);
 
-  const { selectedCrypto } = useCrypto?.() || ({ selectedCrypto: "BTC" } as any);
+  const cryptoContext = useCrypto?.();
+  const selectedCrypto = cryptoContext?.selectedCrypto ?? "BTC";
   const selectedCryptoData = useMemo(
     () => CRYPTO_CURRENCIES.find((c) => c.code === selectedCrypto) || CRYPTO_CURRENCIES[0],
     [selectedCrypto]
@@ -428,6 +537,434 @@ export function GlobalChatClient() {
     setIsRoomMenuOpen(false);
     setRoomSlowSeconds(0);
   }, []);
+
+  const primaryRooms = useMemo(() => {
+    const allowed = isLoggedIn ? PRIMARY_ROOMS : GUEST_PRIMARY_ROOMS;
+    return GLOBAL_CHAT_ROOMS.filter((room) => allowed.includes(room.slug));
+  }, [isLoggedIn]);
+  const communityRooms = useMemo(() => {
+    const allowed = isLoggedIn ? COMMUNITY_ROOMS : GUEST_COMMUNITY_ROOMS;
+    return GLOBAL_CHAT_ROOMS.filter((room) => allowed.includes(room.slug));
+  }, [isLoggedIn]);
+  const visibleBuyRoomsWhenCollapsed = useMemo(
+    () => [...primaryRooms, ...communityRooms],
+    [communityRooms, primaryRooms]
+  );
+  const visibleBuyRoomSlugs = useMemo(
+    () => new Set(visibleBuyRoomsWhenCollapsed.map((room) => room.slug)),
+    [visibleBuyRoomsWhenCollapsed]
+  );
+
+  useEffect(() => {
+    if (sidebarMode !== "buy") return;
+    if (visibleBuyRoomSlugs.has(activeRoom)) return;
+    setActiveRoom("global");
+  }, [activeRoom, sidebarMode, visibleBuyRoomSlugs]);
+
+  const handleSidebarRoomSelect = useCallback(
+    (room: GlobalChatRoom) => {
+      handleRoomChange(room);
+      setIsMobileSidebarOpen(false);
+    },
+    [handleRoomChange]
+  );
+
+  const renderRoomIcon = useCallback(
+    (room: GlobalChatRoom, iconClassName = "h-4 w-4") => {
+      switch (room) {
+        case "global":
+          return (
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className={iconClassName} aria-hidden="true">
+              <path fill="currentColor" d="M32,0C14.328,0,0,14.328,0,32s14.328,32,32,32s32-14.328,32-32S49.672,0,32,0z M52.812,20.078 c-2.293,1.973-4.105,3.762-7.457,3.887c-2.562,0.094-4.445,0.105-6.359-1.598c-2.727-2.477-0.859-5.777-0.758-9.504 C38.273,11.43,38.512,10.18,38.824,9C44.789,10.766,49.773,14.789,52.812,20.078z M9.867,41.289c2.09-2.031,5.508-3.109,7.949-5.816 c2.492-2.785,2.41-7.836,6.129-7.375c3.039,0.422,2.5,4.23,4.906,6.125c2.836,2.266,6.328,0.824,8.59,3.676 c2.969,3.77,2.277,8.066,0,12.293c-1.676,3.055-3.836,4.137-6.723,5.742C21.316,55.438,13.34,49.555,9.867,41.289z"/>
+            </svg>
+          );
+        case "buy-services":
+          return (
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClassName} aria-hidden="true">
+              <path d="M4.46785 10.2658C4.47574 10.3372 4.48376 10.4094 4.49187 10.4823L4.61751 11.6131C4.7057 12.4072 4.78218 13.0959 4.91562 13.6455C5.05917 14.2367 5.29582 14.7937 5.78931 15.2354C6.28281 15.6771 6.86251 15.8508 7.46598 15.9281C8.02694 16.0001 8.71985 16 9.51887 16H14.8723C15.4201 16 15.9036 16 16.3073 15.959C16.7448 15.9146 17.1698 15.8162 17.5785 15.5701C17.9872 15.324 18.2731 14.9944 18.5171 14.6286C18.7422 14.291 18.9684 13.8637 19.2246 13.3797L21.7141 8.67734C22.5974 7.00887 21.3879 4.99998 19.5 4.99998L9.39884 4.99998C8.41604 4.99993 7.57525 4.99988 6.90973 5.09287C6.5729 5.13994 6.24284 5.21529 5.93326 5.34375L5.78941 4.04912C5.65979 2.88255 4.67375 2 3.5 2H3C2.44772 2 2 2.44771 2 3C2 3.55228 2.44772 4 3 4H3.5C3.65465 4 3.78456 4.11628 3.80164 4.26998L4.46785 10.2658Z" fill="currentColor"></path>
+              <path fillRule="evenodd" clipRule="evenodd" d="M14 19.5C14 18.1193 15.1193 17 16.5 17C17.8807 17 19 18.1193 19 19.5C19 20.8807 17.8807 22 16.5 22C15.1193 22 14 20.8807 14 19.5Z" fill="currentColor"></path>
+              <path fillRule="evenodd" clipRule="evenodd" d="M5 19.5C5 18.1193 6.11929 17 7.5 17C8.88071 17 10 18.1193 10 19.5C10 20.8807 8.88071 22 7.5 22C6.11929 22 5 20.8807 5 19.5Z" fill="currentColor"></path>
+            </svg>
+          );
+        case "sell-services":
+          return (
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClassName} aria-hidden="true">
+              <path fillRule="evenodd" clipRule="evenodd" d="M12.052 1.25H11.948C11.0495 1.24997 10.3003 1.24995 9.70552 1.32991C9.07773 1.41432 8.51093 1.59999 8.05546 2.05546C7.59999 2.51093 7.41432 3.07773 7.32991 3.70552C7.27259 4.13189 7.25637 5.15147 7.25179 6.02566C5.22954 6.09171 4.01536 6.32778 3.17157 7.17157C2 8.34315 2 10.2288 2 14C2 17.7712 2 19.6569 3.17157 20.8284C4.34314 22 6.22876 22 9.99998 22H14C17.7712 22 19.6569 22 20.8284 20.8284C22 19.6569 22 17.7712 22 14C22 10.2288 22 8.34315 20.8284 7.17157C19.9846 6.32778 18.7705 6.09171 16.7482 6.02566C16.7436 5.15147 16.7274 4.13189 16.6701 3.70552C16.5857 3.07773 16.4 2.51093 15.9445 2.05546C15.4891 1.59999 14.9223 1.41432 14.2945 1.32991C13.6997 1.24995 12.9505 1.24997 12.052 1.25ZM15.2479 6.00188C15.2434 5.15523 15.229 4.24407 15.1835 3.9054C15.1214 3.44393 15.0142 3.24644 14.8839 3.11612C14.7536 2.9858 14.5561 2.87858 14.0946 2.81654C13.6116 2.7516 12.964 2.75 12 2.75C11.036 2.75 10.3884 2.7516 9.90539 2.81654C9.44393 2.87858 9.24644 2.9858 9.11612 3.11612C8.9858 3.24644 8.87858 3.44393 8.81654 3.9054C8.771 4.24407 8.75661 5.15523 8.75208 6.00188C9.1435 6 9.55885 6 10 6H14C14.4412 6 14.8565 6 15.2479 6.00188ZM12 9.25C12.4142 9.25 12.75 9.58579 12.75 10V10.0102C13.8388 10.2845 14.75 11.143 14.75 12.3333C14.75 12.7475 14.4142 13.0833 14 13.0833C13.5858 13.0833 13.25 12.7475 13.25 12.3333C13.25 11.9493 12.8242 11.4167 12 11.4167C11.1758 11.4167 10.75 11.9493 10.75 12.3333C10.75 12.7174 11.1758 13.25 12 13.25C13.3849 13.25 14.75 14.2098 14.75 15.6667C14.75 16.857 13.8388 17.7155 12.75 17.9898V18C12.75 18.4142 12.4142 18.75 12 18.75C11.5858 18.75 11.25 18.4142 11.25 18V17.9898C10.1612 17.7155 9.25 16.857 9.25 15.6667C9.25 15.2525 9.58579 14.9167 10 14.9167C10.4142 14.9167 10.75 15.2525 10.75 15.6667C10.75 16.0507 11.1758 16.5833 12 16.5833C12.8242 16.5833 13.25 16.0507 13.25 15.6667C13.25 15.2826 12.8242 14.75 12 14.75C10.6151 14.75 9.25 13.7903 9.25 12.3333C9.25 11.143 10.1612 10.2845 11.25 10.0102V10C11.25 9.58579 11.5858 9.25 12 9.25Z" fill="currentColor"></path>
+            </svg>
+          );
+        case "crypto-talk":
+          return (
+            <Image
+              src={selectedCryptoData.Icon}
+              alt={selectedCryptoData.code}
+              width={20}
+              height={20}
+              className={cn(iconClassName, "rounded-full")}
+            />
+          );
+        case "help":
+          return (
+            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className={iconClassName} aria-hidden="true">
+              <path fill="currentColor" d="M12 1C6.49 1 2 5.34 2 10.67v4.61a1 1 0 0 0 .69.95l3.89 1.26c1.25.27 2.42-.68 2.42-1.96v-4.05c0-1.27-1.17-2.22-2.42-1.96l-2.55.55C4.35 6.12 7.8 3.01 12 3.01s7.65 3.12 7.97 7.06l-2.55-.55c-1.25-.27-2.42.68-2.42 1.96v4.05c0 1.27 1.17 2.22 2.42 1.96l2.58-.55v1.07c0 1.1-.9 2-2 2h-4v-.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v1.5c0 .55.45 1 1 1h6c2.21 0 4-1.79 4-4v-7.33c0-5.33-4.49-9.67-10-9.67z"></path>
+            </svg>
+          );
+        case "english":
+          return (
+            <Image
+              src={EnglishFlag}
+              alt="English"
+              width={20}
+              height={20}
+              className={cn(iconClassName, "rounded-md")}
+            />
+          );
+        default:
+          return <Globe2 className={iconClassName} aria-hidden="true" />;
+      }
+    },
+    [selectedCryptoData.Icon, selectedCryptoData.code]
+  );
+
+  const roomBadgeBySlug = useMemo(() => {
+    return {
+      "crypto-talk": selectedCryptoData.code,
+      help: roomSlowSeconds > 0 ? "SLOW" : null,
+      english: "LANG",
+    } as const;
+  }, [roomSlowSeconds, selectedCryptoData.code]);
+
+  const renderMarketplaceIcon = useCallback(
+    (href: (typeof MARKETPLACE_CATEGORIES)[number]["href"]) => {
+      switch (href) {
+        case "/category/electronics":
+          return <Cpu className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "/category/fashion":
+          return <Shirt className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "/category/home-garden":
+          return <House className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "/category/collectibles":
+          return <Gem className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "/category/services":
+          return <Wrench className="h-3.5 w-3.5" aria-hidden="true" />;
+        default:
+          return <Store className="h-3.5 w-3.5" aria-hidden="true" />;
+      }
+    },
+    []
+  );
+
+  const renderRoomNavItem = useCallback(
+    (room: (typeof GLOBAL_CHAT_ROOMS)[number], iconOnly = false) => {
+      const isActive = room.slug === activeRoom;
+      const badge = roomBadgeBySlug[room.slug as keyof typeof roomBadgeBySlug];
+      const button = (
+        <button
+          type="button"
+          onClick={() => handleSidebarRoomSelect(room.slug)}
+          aria-current={isActive ? "page" : undefined}
+          aria-label={iconOnly ? room.label : undefined}
+          className={cn(
+            "group rounded-2xl border text-left transition-all duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            iconOnly
+              ? "mx-auto flex h-10 w-10 items-center justify-center rounded-xl border p-0"
+              : cn("grid h-10 items-center gap-2.5 border-transparent px-3", SIDEBAR_ROW_GRID_CLASS),
+            iconOnly
+              ? isActive
+                ? "border-[#7d72cb]/80 bg-[#4f4798]/58 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]"
+                : "border-[#474182]/65 bg-[#29245b]/68 text-[#ddd7ff] hover:border-[#6c62b4]/75 hover:bg-[#3a336f] hover:text-white"
+              : isActive
+                ? "w-full border-[#8a7fd5]/70 bg-[#766bbf]/62 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+                : "w-full text-[#e2dcff] hover:border-[#8a7fd5]/65 hover:bg-[#766bbf]/50 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+          )}
+        >
+          <span
+            className={cn(
+              "text-[#dbd5ff]",
+              iconOnly ? "grid h-4 w-4 shrink-0 place-items-center" : cn(SIDEBAR_ICON_BOX_CLASS, "bg-[#262050]"),
+              iconOnly
+                ? isActive
+                  ? "text-white"
+                  : "text-[#cec8f3] group-hover:text-white"
+                : isActive
+                  ? "bg-[#8f84dc]/75 text-white"
+                  : "group-hover:bg-[#8f84dc]/60 group-hover:text-white"
+            )}
+          >
+            {renderRoomIcon(room.slug)}
+          </span>
+
+          {!iconOnly ? (
+            <>
+              <span className="truncate text-sm font-semibold">{room.label}</span>
+              {badge ? (
+                <span className="ml-auto rounded-full border border-[#5f58a8] bg-[#211c47] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#d8d2ff]">
+                  {badge}
+                </span>
+              ) : (
+                <span className="h-4 w-4" aria-hidden="true" />
+              )}
+            </>
+          ) : null}
+        </button>
+      );
+
+      if (!iconOnly) {
+        return <div key={room.slug}>{button}</div>;
+      }
+
+      return (
+        <Tooltip key={room.slug}>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent
+            side="right"
+            sideOffset={8}
+            className="border-[#101010] bg-[#000000] px-2 py-1 text-[10px] font-semibold text-white"
+          >
+            {room.label}
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+    [activeRoom, handleSidebarRoomSelect, renderRoomIcon, roomBadgeBySlug]
+  );
+
+  const renderMarketplaceNavItem = useCallback(
+    (category: (typeof MARKETPLACE_CATEGORIES)[number], closeMobileOnClick = false) => {
+      const isActive = pathname === category.href;
+
+      return (
+        <Link
+          key={category.href}
+          href={category.href}
+          onClick={closeMobileOnClick ? () => setIsMobileSidebarOpen(false) : undefined}
+          aria-current={isActive ? "page" : undefined}
+          className={cn(
+            "group grid h-10 w-full items-center gap-2.5 rounded-2xl border px-3 text-left transition-all duration-200",
+            SIDEBAR_ROW_GRID_CLASS,
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            isActive
+              ? "border-[#8a7fd5]/70 bg-[#766bbf]/62 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+              : "border-transparent text-[#e2dcff] hover:border-[#8a7fd5]/65 hover:bg-[#766bbf]/50 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+          )}
+        >
+          <span
+            className={cn(
+              SIDEBAR_ICON_BOX_CLASS,
+              "text-[#dbd5ff]",
+              isActive
+                ? "bg-[#8f84dc]/75 text-white"
+                : "bg-[#262050] group-hover:bg-[#8f84dc]/60 group-hover:text-white"
+            )}
+          >
+            {renderMarketplaceIcon(category.href)}
+          </span>
+          <span className="truncate text-sm font-semibold">{category.label}</span>
+          <span className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      );
+    },
+    [pathname, renderMarketplaceIcon]
+  );
+
+  const renderSellSectionIcon = useCallback(
+    (key: SellSidebarSectionKey) => {
+      switch (key) {
+        case "seller-hub":
+          return <LayoutDashboard className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "inventory":
+          return <Package className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "orders":
+          return <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "payouts":
+          return <Wallet className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "growth":
+          return <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "reputation-compliance":
+          return <Briefcase className="h-3.5 w-3.5" aria-hidden="true" />;
+        case "analytics":
+          return <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />;
+        default:
+          return <Store className="h-3.5 w-3.5" aria-hidden="true" />;
+      }
+    },
+    []
+  );
+
+  const toggleSellSection = useCallback((key: SellSidebarSectionKey) => {
+    setOpenSellSections((prev) => {
+      const shouldOpen = !prev[key];
+      const next = SELL_SIDEBAR_SECTIONS.reduce(
+        (acc, section) => {
+          acc[section.key] = false;
+          return acc;
+        },
+        {} as Record<SellSidebarSectionKey, boolean>
+      );
+
+      if (shouldOpen) {
+        next[key] = true;
+      }
+
+      return next;
+    });
+  }, []);
+
+  const renderSellTabItem = useCallback(
+    (section: SellSidebarSection, tabLabel: string, closeMobileOnClick = false) => {
+      const tabId = getSellTabId(section.key, tabLabel);
+      const isActive = activeSellTabId === tabId;
+      const isLocked = !isLoggedIn && !(section.key === "seller-hub" && tabLabel === "Dashboard");
+      const lockTooltip =
+        tabLabel === "Dashboard"
+          ? "Sign in to access Seller Hub"
+          : `Sign in to access ${tabLabel}`;
+
+      return (
+        <button
+          key={tabId}
+          type="button"
+          onClick={() => {
+            if (isLocked) {
+              router.push("/auth");
+              return;
+            }
+            setActiveSellTabId(tabId);
+            if (closeMobileOnClick) {
+              setIsMobileSidebarOpen(false);
+            }
+          }}
+          aria-current={isActive ? "page" : undefined}
+          className={cn(
+            "group relative grid h-10 w-full items-center gap-2.5 rounded-2xl border px-3 text-left transition-all duration-200",
+            SIDEBAR_ROW_GRID_CLASS,
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            isActive
+              ? "border-[#8a7fd5]/70 bg-[#766bbf]/62 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+              : "border-transparent text-[#e2dcff] hover:border-[#8a7fd5]/65 hover:bg-[#766bbf]/50 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+          )}
+        >
+          <span
+            className={cn(
+              SIDEBAR_ICON_BOX_CLASS,
+              "text-[#dbd5ff]",
+              isActive
+                ? "bg-[#8f84dc]/75 text-white"
+                : "bg-[#262050] group-hover:bg-[#8f84dc]/60 group-hover:text-white"
+            )}
+          >
+            {renderSellSectionIcon(section.key)}
+          </span>
+          <span className="truncate text-sm font-semibold">{tabLabel}</span>
+          <span className="h-4 w-4" aria-hidden="true" />
+          {isLocked ? (
+            <span
+              role="tooltip"
+              className="pointer-events-none invisible absolute right-2 top-[-1.9rem] z-20 rounded-lg border border-[#101010] bg-[#000000] px-2 py-1 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.55)] group-hover:visible group-focus-visible:visible"
+            >
+              {lockTooltip}
+            </span>
+          ) : null}
+        </button>
+      );
+    },
+    [activeSellTabId, isLoggedIn, renderSellSectionIcon, router]
+  );
+
+  const renderSellCollapsedNavItem = useCallback(
+    (section: SellSidebarSection) => {
+      const isSectionActive = activeSellTabId.startsWith(`${section.key}:`);
+      const button = (
+        <button
+          type="button"
+          aria-label={section.label}
+          onClick={() => {
+            setIsLeftSidebarClosed(false);
+            setOpenSellSections(
+              SELL_SIDEBAR_SECTIONS.reduce(
+                (acc, currentSection) => {
+                  acc[currentSection.key] = currentSection.key === section.key;
+                  return acc;
+                },
+                {} as Record<SellSidebarSectionKey, boolean>
+              )
+            );
+            setActiveSellTabId(getSellTabId(section.key, section.tabs[0]));
+          }}
+          className={cn(
+            "group mx-auto flex h-10 w-10 items-center justify-center rounded-xl border p-0 transition-all duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            isSectionActive
+              ? "border-[#7d72cb]/80 bg-[#4f4798]/58 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]"
+              : "border-[#474182]/65 bg-[#29245b]/68 text-[#ddd7ff] hover:border-[#6c62b4]/75 hover:bg-[#3a336f] hover:text-white"
+          )}
+        >
+          <span
+            className={cn(
+              "grid h-4 w-4 shrink-0 place-items-center",
+              isSectionActive ? "text-white" : "text-[#cec8f3] group-hover:text-white"
+            )}
+          >
+            {renderSellSectionIcon(section.key)}
+          </span>
+        </button>
+      );
+
+      return (
+        <Tooltip key={section.key}>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent
+            side="right"
+            sideOffset={8}
+            className="border-[#101010] bg-[#000000] px-2 py-1 text-[10px] font-semibold text-white"
+          >
+            {section.label}
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+    [activeSellTabId, renderSellSectionIcon]
+  );
+
+  const renderSellSections = useCallback(
+    (closeMobileOnClick = false) => {
+      return (
+        <div className="space-y-2.5">
+          {SELL_SIDEBAR_SECTIONS.map((section) => {
+            const isOpen = openSellSections[section.key];
+            return (
+              <div key={section.key} className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/50 p-2.5">
+                <button
+                  type="button"
+                  className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                  onClick={() => toggleSellSection(section.key)}
+                  aria-expanded={isOpen}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                      {renderSellSectionIcon(section.key)}
+                    </span>
+                    <span>{section.label}</span>
+                  </span>
+                  <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                    <SectionChevron open={isOpen} />
+                  </span>
+                </button>
+                {isOpen ? (
+                  <div className="mt-1 space-y-1 pb-1">
+                    {section.tabs.map((tabLabel) =>
+                      renderSellTabItem(section, tabLabel, closeMobileOnClick)
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+    [openSellSections, renderSellSectionIcon, renderSellTabItem, toggleSellSection]
+  );
 
   const currentHandle = useMemo(() => {
     if (!user) return null;
@@ -992,7 +1529,6 @@ export function GlobalChatClient() {
       return;
     }
     let active = true;
-    let intervalId: number | undefined;
     const compute = async () => {
       if (!roomSlowSeconds || roomSlowSeconds <= 0) {
         setSlowRemainingSeconds(0);
@@ -1012,17 +1548,16 @@ export function GlobalChatClient() {
       if (active) setSlowRemainingSeconds(remain);
     };
     compute();
-    intervalId = window.setInterval(() => {
+    const intervalId = window.setInterval(() => {
       setSlowRemainingSeconds((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => {
       active = false;
-      if (intervalId) window.clearInterval(intervalId);
+      window.clearInterval(intervalId);
     };
   }, [activeRoom, roomSlowSeconds, supabase, user, messages.length]);
 
   useEffect(() => {
-    let intervalId: number | undefined;
     const tick = () => {
       if (!closedUntilTs) {
         setClosedRemainingSeconds(0);
@@ -1032,9 +1567,9 @@ export function GlobalChatClient() {
       setClosedRemainingSeconds(remain);
     };
     tick();
-    intervalId = window.setInterval(tick, 1000);
+    const intervalId = window.setInterval(tick, 1000);
     return () => {
-      if (intervalId) window.clearInterval(intervalId);
+      window.clearInterval(intervalId);
     };
   }, [closedUntilTs]);
 
@@ -1080,6 +1615,14 @@ export function GlobalChatClient() {
 
   const onlineCount = onlineUsers.length > 0 ? onlineUsers.length : participantsCount;
   const [displayOnlineCount, setDisplayOnlineCount] = useState<number>(478);
+  const compactOnlineCount = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }).format(displayOnlineCount),
+    [displayOnlineCount]
+  );
 
   useEffect(() => {
     const minFloor = 283;
@@ -1133,7 +1676,7 @@ export function GlobalChatClient() {
     return () => {
       if (timer) window.clearInterval(timer);
     };
-  }, [activeRoom, supabase, user?.id]);
+  }, [activeRoom, supabase, user]);
 
   useEffect(() => {
     let active = true;
@@ -1161,7 +1704,7 @@ export function GlobalChatClient() {
     return () => {
       active = false;
     };
-  }, [supabase, user?.id]);
+  }, [supabase, user]);
   const loadThreadMessages = useCallback(
     async (rootId: string) => {
       setIsThreadLoading(true);
@@ -1430,49 +1973,388 @@ export function GlobalChatClient() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div
-        className={cn(
-          "relative mx-auto flex min-h-screen w-full items-stretch gap-4 py-4 md:py-6"
-        )}
-      >
-        <button
-          type="button"
-          onClick={() => setIsLeftSidebarClosed(false)}
-          aria-label="Reopen left sidebar"
-          className={cn(
-            "absolute left-3 top-8 z-20 hidden h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/30 md:top-10 md:left-6 md:inline-flex",
-            isLeftSidebarClosed
-              ? "opacity-100 translate-x-0 pointer-events-auto"
-              : "opacity-0 -translate-x-2 pointer-events-none"
-          )}
-        >
-          <SidebarToggleIcon />
-        </button>
+    <TooltipProvider delayDuration={120}>
+      <div className="min-h-screen bg-[var(--global-chat-app-bg)] text-[var(--global-chat-text-primary)]">
+      <AnimatePresence>
+        {isMobileSidebarOpen ? (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close chat sidebar"
+              className="fixed inset-0 z-40 bg-[#09071f]/70 backdrop-blur-[2px] md:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileSidebarOpen(false)}
+            />
+            <motion.aside
+              className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#5d56a3]/45 bg-[var(--global-chat-sidebar-surface)] p-3 shadow-[0_22px_60px_rgba(7,5,28,0.65)] md:hidden"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b3addf]">
+                    Global Chat
+                  </p>
+                  <p className="text-sm font-extrabold text-white">{activeRoomLabel}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                  aria-label="Close mobile sidebar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-        <div
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSidebarMode("buy")}
+                  aria-pressed={sidebarMode === "buy"}
+                  className={cn(
+                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                    sidebarMode === "buy"
+                      ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                      : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                  )}
+                >
+                  Buy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidebarMode("sell")}
+                  aria-pressed={sidebarMode === "sell"}
+                  className={cn(
+                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                    sidebarMode === "sell"
+                      ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                      : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                  )}
+                >
+                  Sell
+                </button>
+              </div>
+
+              {sidebarMode === "buy" ? (
+                <div className="space-y-2.5">
+                  <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                    <button
+                      type="button"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                      onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
+                      aria-expanded={isMarketplaceSectionOpen}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                          <Store className="h-3.5 w-3.5" />
+                        </span>
+                        <span>Marketplace</span>
+                      </span>
+                      <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                        <SectionChevron open={isMarketplaceSectionOpen} />
+                      </span>
+                    </button>
+                    {isMarketplaceSectionOpen ? (
+                      <div className="mt-1 space-y-1 pb-1">
+                        {MARKETPLACE_CATEGORIES.map((category) =>
+                          renderMarketplaceNavItem(category, true)
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                    <button
+                      type="button"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                      onClick={() =>
+                        setIsRoomsSectionOpen((prev) => {
+                          const next = !prev;
+                          if (next) setIsCommunitySectionOpen(false);
+                          return next;
+                        })
+                      }
+                      aria-expanded={isRoomsSectionOpen}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                          <Globe2 className="h-3.5 w-3.5" />
+                        </span>
+                        <span>Trading Rooms</span>
+                      </span>
+                      <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                        <SectionChevron open={isRoomsSectionOpen} />
+                      </span>
+                    </button>
+                    {isRoomsSectionOpen ? (
+                      <div className="mt-1 space-y-1">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                    <button
+                      type="button"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                      onClick={() =>
+                        setIsCommunitySectionOpen((prev) => {
+                          const next = !prev;
+                          if (next) setIsRoomsSectionOpen(false);
+                          return next;
+                        })
+                      }
+                      aria-expanded={isCommunitySectionOpen}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                          <LifeBuoy className="h-3.5 w-3.5" />
+                        </span>
+                        <span>Community</span>
+                      </span>
+                      <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                        <SectionChevron open={isCommunitySectionOpen} />
+                      </span>
+                    </button>
+                    {isCommunitySectionOpen ? (
+                      <div className="mt-1 space-y-1">
+                        {communityRooms.map((room) => renderRoomNavItem(room))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                renderSellSections(true)
+              )}
+
+              <div className="mt-3 rounded-[22px] border border-[#4f4a8f]/55 bg-[#1f1b46] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-[#bab4df]">
+                  Live Activity
+                </p>
+                <p className="mt-1 text-sm font-bold text-white">
+                  Online: {displayOnlineCount.toLocaleString("en-US")}
+                </p>
+                <p className="mt-1 text-xs text-[#bbb6dc]">
+                  Threads: {topLevelMessages.length.toLocaleString("en-US")}
+                </p>
+              </div>
+            </motion.aside>
+          </>
+        ) : null}
+      </AnimatePresence>
+
+      <div
+        className={cn("relative mx-auto flex min-h-screen w-full items-stretch gap-3 px-3 py-4 md:gap-5 md:px-4 md:py-6")}
+      >
+        <aside
           className={cn(
-            "relative hidden shrink-0 overflow-hidden md:block transition-[width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            isLeftSidebarClosed
-              ? "md:ml-0 md:w-0 md:opacity-0"
-              : "md:ml-6 md:w-[220px] md:opacity-100 lg:w-[300px]"
+            "relative hidden shrink-0 md:sticky md:top-6 md:block md:h-[calc(100vh-3rem)] md:transition-[width] md:duration-300 md:ease-[cubic-bezier(0.22,1,0.36,1)]",
+            isLeftSidebarClosed ? "md:w-[74px]" : "md:w-[264px]"
           )}
         >
-          <Squircle
-            radius={24}
-            smoothing={1}
-            className="h-[calc(100vh-3rem)]"
-            innerClassName="bg-[#141415]"
-          />
-          <button
-            type="button"
-            onClick={() => setIsLeftSidebarClosed(true)}
-            aria-label="Close left sidebar"
-            className="absolute right-2 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+          <div
+            className={cn(
+              "flex h-full flex-col rounded-[30px] border border-[#4f4a8f]/55 bg-[var(--global-chat-sidebar-surface)] shadow-[0_22px_60px_rgba(7,5,28,0.55)]",
+              isLeftSidebarClosed ? "p-2" : "p-3"
+            )}
           >
-            <SidebarToggleIcon rotated />
-          </button>
-        </div>
+            <div
+              className={cn("mb-3 flex items-center", isLeftSidebarClosed ? "justify-center" : "justify-between")}
+            >
+              <button
+                type="button"
+                onClick={() => setIsLeftSidebarClosed((prev) => !prev)}
+                className={cn(
+                  "inline-flex items-center justify-center rounded-xl border text-[#e3ddff] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                  isLeftSidebarClosed
+                    ? "h-10 w-10 border-[#474182]/65 bg-[#29245b]/68 hover:border-[#6c62b4]/75 hover:bg-[#3a336f]"
+                    : "h-9 w-9 border-[#5f58a8]/55 bg-[#2a2555] hover:bg-[#37306d]"
+                )}
+                aria-label={isLeftSidebarClosed ? "Expand left sidebar" : "Collapse left sidebar"}
+              >
+                {isLeftSidebarClosed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+              </button>
+            </div>
+
+            <div className={cn("no-scrollbar min-h-0 flex-1 overflow-y-auto", isLeftSidebarClosed ? "" : "pr-1")}>
+              {!isLeftSidebarClosed ? (
+                <div className="mb-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarMode("buy")}
+                    aria-pressed={sidebarMode === "buy"}
+                    className={cn(
+                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                      sidebarMode === "buy"
+                        ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                        : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                    )}
+                  >
+                    Buy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarMode("sell")}
+                    aria-pressed={sidebarMode === "sell"}
+                    className={cn(
+                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                      sidebarMode === "sell"
+                        ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                        : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                    )}
+                  >
+                    Sell
+                  </button>
+                </div>
+              ) : null}
+
+            {isLeftSidebarClosed ? (
+              sidebarMode === "buy" ? (
+                <div className="space-y-2">
+                  <div className="mx-auto w-10 space-y-1.5">
+                    <div className="space-y-1.5">
+                      {primaryRooms.map((room) => renderRoomNavItem(room, true))}
+                    </div>
+                    {communityRooms.length > 0 ? (
+                      <>
+                        <div className="mx-auto my-2 h-px w-6 bg-[#4a4488]/45" />
+                        <div className="space-y-1.5">
+                          {communityRooms.map((room) => renderRoomNavItem(room, true))}
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="mx-auto w-10 space-y-1.5">
+                    <div className="space-y-1.5">
+                      {SELL_SIDEBAR_SECTIONS.map((section) => renderSellCollapsedNavItem(section))}
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+                sidebarMode === "buy" ? (
+                  <div className="space-y-2.5">
+                <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                  <button
+                    type="button"
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                    onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
+                    aria-expanded={isMarketplaceSectionOpen}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                        <Store className="h-3.5 w-3.5" />
+                      </span>
+                      <span>Marketplace</span>
+                    </span>
+                    <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                      <SectionChevron open={isMarketplaceSectionOpen} />
+                    </span>
+                  </button>
+                  {isMarketplaceSectionOpen ? (
+                    <div className="mt-1 space-y-1 pb-1">
+                      {MARKETPLACE_CATEGORIES.map((category) => renderMarketplaceNavItem(category))}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                  <button
+                    type="button"
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                    onClick={() =>
+                      setIsRoomsSectionOpen((prev) => {
+                        const next = !prev;
+                        if (next) setIsCommunitySectionOpen(false);
+                        return next;
+                      })
+                    }
+                    aria-expanded={isRoomsSectionOpen}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                        <Globe2 className="h-3.5 w-3.5" />
+                      </span>
+                      <span>Trading Rooms</span>
+                    </span>
+                    <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                      <SectionChevron open={isRoomsSectionOpen} />
+                    </span>
+                  </button>
+                  {isRoomsSectionOpen ? (
+                    <div className="mt-1 space-y-1">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
+                  ) : null}
+                </div>
+
+                <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                  <button
+                    type="button"
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                    onClick={() =>
+                      setIsCommunitySectionOpen((prev) => {
+                        const next = !prev;
+                        if (next) setIsRoomsSectionOpen(false);
+                        return next;
+                      })
+                    }
+                    aria-expanded={isCommunitySectionOpen}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
+                        <LifeBuoy className="h-3.5 w-3.5" />
+                      </span>
+                      <span>Community</span>
+                    </span>
+                    <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                      <SectionChevron open={isCommunitySectionOpen} />
+                    </span>
+                  </button>
+                  {isCommunitySectionOpen ? (
+                    <div className="mt-1 space-y-1">
+                      {communityRooms.map((room) => renderRoomNavItem(room))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+                ) : (
+                  renderSellSections()
+                )
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "mt-auto",
+                isLeftSidebarClosed
+                  ? "mx-auto w-12 rounded-[18px] border border-[#4a4488]/60 bg-[#211d4a]/88 p-1.5"
+                  : "rounded-[22px] border border-[#4f4a8f]/55 bg-[#1f1b46] p-3"
+              )}
+            >
+              {isLeftSidebarClosed ? (
+                <div className="flex flex-col items-center gap-1">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl border border-[#474182]/65 bg-[#29245b]/68 text-[#d5cff8]">
+                    <Globe2 className="h-4 w-4" />
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-[#f4f2ff]">
+                    {compactOnlineCount}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-[#bab4df]">Live Activity</p>
+                  <p className="mt-1 text-sm font-bold text-white">Online: {displayOnlineCount.toLocaleString("en-US")}</p>
+                  <p className="mt-1 text-xs text-[#bbb6dc]">Threads: {topLevelMessages.length.toLocaleString("en-US")}</p>
+                </>
+              )}
+            </div>
+          </div>
+        </aside>
 
         <div className="relative hidden flex-1 md:block">
           <Squircle
@@ -1480,7 +2362,7 @@ export function GlobalChatClient() {
             smoothing={1}
             corners="all"
             className="h-[calc(100vh-3rem)]"
-            innerClassName="bg-[rgba(255,255,255,0.04)]"
+            innerClassName="bg-[rgba(42,37,85,0.36)]"
           />
           <div className="absolute left-1/2 top-6 z-20 w-[min(760px,calc(100%-4rem))] -translate-x-1/2">
             <GlobalCommandSearch className="w-full max-w-none" />
@@ -1490,140 +2372,87 @@ export function GlobalChatClient() {
         {!isChatClosed && (
           <aside
             className={cn(
-              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl bg-[#101010] transition-[width] duration-200",
+              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl border border-[#4f4a8f]/45 bg-[#1b1842]/95 shadow-[0_20px_45px_rgba(7,5,28,0.45)] transition-[width] duration-200",
               isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
             )}
           >
-          <div className="flex items-center justify-between px-4 py-4">
-            <div className="relative" ref={roomMenuRef}>
+          <div className="flex items-center justify-between gap-3 px-4 py-4">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setIsRoomMenuOpen((prev) => !prev)}
-                className="inline-flex h-9 min-w-[136px] items-center justify-between rounded-2xl border-2 border-white/20 bg-[#101010] px-3 text-left text-sm font-semibold text-white transition hover:bg-[#151515]"
-                aria-haspopup="listbox"
-                aria-expanded={isRoomMenuOpen}
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open room sidebar"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] md:hidden"
               >
-                <span className="flex items-center gap-2">
-                  {activeRoom === "global" && (
-                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                      <path fill="#ffffff" d="M32,0C14.328,0,0,14.328,0,32s14.328,32,32,32s32-14.328,32-32S49.672,0,32,0z M52.812,20.078 c-2.293,1.973-4.105,3.762-7.457,3.887c-2.562,0.094-4.445,0.105-6.359-1.598c-2.727-2.477-0.859-5.777-0.758-9.504 C38.273,11.43,38.512,10.18,38.824,9C44.789,10.766,49.773,14.789,52.812,20.078z M9.867,41.289c2.09-2.031,5.508-3.109,7.949-5.816 c2.492-2.785,2.41-7.836,6.129-7.375c3.039,0.422,2.5,4.23,4.906,6.125c2.836,2.266,6.328,0.824,8.59,3.676 c2.969,3.77,2.277,8.066,0,12.293c-1.676,3.055-3.836,4.137-6.723,5.742C21.316,55.438,13.34,49.555,9.867,41.289z"/>
-                    </svg>
-                  )}
-                  {activeRoom === "buy-services" && (
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                      <path d="M4.46785 10.2658C4.47574 10.3372 4.48376 10.4094 4.49187 10.4823L4.61751 11.6131C4.7057 12.4072 4.78218 13.0959 4.91562 13.6455C5.05917 14.2367 5.29582 14.7937 5.78931 15.2354C6.28281 15.6771 6.86251 15.8508 7.46598 15.9281C8.02694 16.0001 8.71985 16 9.51887 16H14.8723C15.4201 16 15.9036 16 16.3073 15.959C16.7448 15.9146 17.1698 15.8162 17.5785 15.5701C17.9872 15.324 18.2731 14.9944 18.5171 14.6286C18.7422 14.291 18.9684 13.8637 19.2246 13.3797L21.7141 8.67734C22.5974 7.00887 21.3879 4.99998 19.5 4.99998L9.39884 4.99998C8.41604 4.99993 7.57525 4.99988 6.90973 5.09287C6.5729 5.13994 6.24284 5.21529 5.93326 5.34375L5.78941 4.04912C5.65979 2.88255 4.67375 2 3.5 2H3C2.44772 2 2 2.44771 2 3C2 3.55228 2.44772 4 3 4H3.5C3.65465 4 3.78456 4.11628 3.80164 4.26998L4.46785 10.2658Z" fill="#ffffff"></path>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M14 19.5C14 18.1193 15.1193 17 16.5 17C17.8807 17 19 18.1193 19 19.5C19 20.8807 17.8807 22 16.5 22C15.1193 22 14 20.8807 14 19.5Z" fill="#ffffff"></path>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M5 19.5C5 18.1193 6.11929 17 7.5 17C8.88071 17 10 18.1193 10 19.5C10 20.8807 8.88071 22 7.5 22C6.11929 22 5 20.8807 5 19.5Z" fill="#ffffff"></path>
-                    </svg>
-                  )}
-                  {activeRoom === "sell-services" && (
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12.052 1.25H11.948C11.0495 1.24997 10.3003 1.24995 9.70552 1.32991C9.07773 1.41432 8.51093 1.59999 8.05546 2.05546C7.59999 2.51093 7.41432 3.07773 7.32991 3.70552C7.27259 4.13189 7.25637 5.15147 7.25179 6.02566C5.22954 6.09171 4.01536 6.32778 3.17157 7.17157C2 8.34315 2 10.2288 2 14C2 17.7712 2 19.6569 3.17157 20.8284C4.34314 22 6.22876 22 9.99998 22H14C17.7712 22 19.6569 22 20.8284 20.8284C22 19.6569 22 17.7712 22 14C22 10.2288 22 8.34315 20.8284 7.17157C19.9846 6.32778 18.7705 6.09171 16.7482 6.02566C16.7436 5.15147 16.7274 4.13189 16.6701 3.70552C16.5857 3.07773 16.4 2.51093 15.9445 2.05546C15.4891 1.59999 14.9223 1.41432 14.2945 1.32991C13.6997 1.24995 12.9505 1.24997 12.052 1.25ZM15.2479 6.00188C15.2434 5.15523 15.229 4.24407 15.1835 3.9054C15.1214 3.44393 15.0142 3.24644 14.8839 3.11612C14.7536 2.9858 14.5561 2.87858 14.0946 2.81654C13.6116 2.7516 12.964 2.75 12 2.75C11.036 2.75 10.3884 2.7516 9.90539 2.81654C9.44393 2.87858 9.24644 2.9858 9.11612 3.11612C8.9858 3.24644 8.87858 3.44393 8.81654 3.9054C8.771 4.24407 8.75661 5.15523 8.75208 6.00188C9.1435 6 9.55885 6 10 6H14C14.4412 6 14.8565 6 15.2479 6.00188ZM12 9.25C12.4142 9.25 12.75 9.58579 12.75 10V10.0102C13.8388 10.2845 14.75 11.143 14.75 12.3333C14.75 12.7475 14.4142 13.0833 14 13.0833C13.5858 13.0833 13.25 12.7475 13.25 12.3333C13.25 11.9493 12.8242 11.4167 12 11.4167C11.1758 11.4167 10.75 11.9493 10.75 12.3333C10.75 12.7174 11.1758 13.25 12 13.25C13.3849 13.25 14.75 14.2098 14.75 15.6667C14.75 16.857 13.8388 17.7155 12.75 17.9898V18C12.75 18.4142 12.4142 18.75 12 18.75C11.5858 18.75 11.25 18.4142 11.25 18V17.9898C10.1612 17.7155 9.25 16.857 9.25 15.6667C9.25 15.2525 9.58579 14.9167 10 14.9167C10.4142 14.9167 10.75 15.2525 10.75 15.6667C10.75 16.0507 11.1758 16.5833 12 16.5833C12.8242 16.5833 13.25 16.0507 13.25 15.6667C13.25 15.2826 12.8242 14.75 12 14.75C10.6151 14.75 9.25 13.7903 9.25 12.3333C9.25 11.143 10.1612 10.2845 11.25 10.0102V10C11.25 9.58579 11.5858 9.25 12 9.25Z" fill="#ffffff"></path>
-                    </svg>
-                  )}
-                  {activeRoom === "crypto-talk" && (
-                    <Image src={selectedCryptoData.Icon} alt={selectedCryptoData.code} width={20} height={20} className="rounded-full" />
-                  )}
-                  {activeRoom === "help" && (
-                    <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className="inline-block shrink-0">
-                      <path fill="currentColor" d="M12 1C6.49 1 2 5.34 2 10.67v4.61a1 1 0 0 0 .69.95l3.89 1.26c1.25.27 2.42-.68 2.42-1.96v-4.05c0-1.27-1.17-2.22-2.42-1.96l-2.55.55C4.35 6.12 7.8 3.01 12 3.01s7.65 3.12 7.97 7.06l-2.55-.55c-1.25-.27-2.42.68-2.42 1.96v4.05c0 1.27 1.17 2.22 2.42 1.96l2.58-.55v1.07c0 1.1-.9 2-2 2h-4v-.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v1.5c0 .55.45 1 1 1h6c2.21 0 4-1.79 4-4v-7.33c0-5.33-4.49-9.67-10-9.67z"></path>
-                    </svg>
-                  )}
-                  {activeRoom === "english" && (
-                    <Image src={EnglishFlag} alt="English" width={20} height={20} className="rounded-2xl" />
-                  )}
-                  <span>{activeRoomLabel}</span>
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "ml-2 h-4 w-4 text-zinc-300 transition-transform",
-                    isRoomMenuOpen ? "rotate-180" : ""
-                  )}
-                />
+                <Menu className="h-4 w-4" />
               </button>
 
-              {isRoomMenuOpen ? (
-                <div className="absolute top-[calc(100%+4px)] left-0 z-40 w-[190px] overflow-hidden rounded-2xl border-2 border-white/20 bg-[#101010] shadow-2xl p-2">
-                  <ul role="listbox" aria-label="Chat rooms" className="space-y-2">
-                    {GLOBAL_CHAT_ROOMS.filter((r) => r.slug !== "english").map((room) => {
-                      const isActive = room.slug === activeRoom;
-                      return (
-                        <li key={room.slug}>
-                          <button
-                            type="button"
-                            role="option"
-                            aria-selected={isActive}
-                            onClick={() => handleRoomChange(room.slug)}
-                            className={cn(
-                              "flex items-center gap-2 w-full px-3 py-2 text-left transition rounded-2xl",
-                              isActive ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-white/5"
-                            )}
-                          >
-                            {room.slug === "global" && (
-                              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                                <path fill="#ffffff" d="M32,0C14.328,0,0,14.328,0,32s14.328,32,32,32s32-14.328,32-32S49.672,0,32,0z M52.812,20.078 c-2.293,1.973-4.105,3.762-7.457,3.887c-2.562,0.094-4.445,0.105-6.359-1.598c-2.727-2.477-0.859-5.777-0.758-9.504 C38.273,11.43,38.512,10.18,38.824,9C44.789,10.766,49.773,14.789,52.812,20.078z M9.867,41.289c2.09-2.031,5.508-3.109,7.949-5.816 c2.492-2.785,2.41-7.836,6.129-7.375c3.039,0.422,2.5,4.23,4.906,6.125c2.836,2.266,6.328,0.824,8.59,3.676 c2.969,3.77,2.277,8.066,0,12.293c-1.676,3.055-3.836,4.137-6.723,5.742C21.316,55.438,13.34,49.555,9.867,41.289z"/>
-                              </svg>
-                            )}
-                            {room.slug === "buy-services" && (
-                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                                <path d="M4.46785 10.2658C4.47574 10.3372 4.48376 10.4094 4.49187 10.4823L4.61751 11.6131C4.7057 12.4072 4.78218 13.0959 4.91562 13.6455C5.05917 14.2367 5.29582 14.7937 5.78931 15.2354C6.28281 15.6771 6.86251 15.8508 7.46598 15.9281C8.02694 16.0001 8.71985 16 9.51887 16H14.8723C15.4201 16 15.9036 16 16.3073 15.959C16.7448 15.9146 17.1698 15.8162 17.5785 15.5701C17.9872 15.324 18.2731 14.9944 18.5171 14.6286C18.7422 14.291 18.9684 13.8637 19.2246 13.3797L21.7141 8.67734C22.5974 7.00887 21.3879 4.99998 19.5 4.99998L9.39884 4.99998C8.41604 4.99993 7.57525 4.99988 6.90973 5.09287C6.5729 5.13994 6.24284 5.21529 5.93326 5.34375L5.78941 4.04912C5.65979 2.88255 4.67375 2 3.5 2H3C2.44772 2 2 2.44771 2 3C2 3.55228 2.44772 4 3 4H3.5C3.65465 4 3.78456 4.11628 3.80164 4.26998L4.46785 10.2658Z" fill="#ffffff"></path>
-                                <path fillRule="evenodd" clipRule="evenodd" d="M14 19.5C14 18.1193 15.1193 17 16.5 17C17.8807 17 19 18.1193 19 19.5C19 20.8807 17.8807 22 16.5 22C15.1193 22 14 20.8807 14 19.5Z" fill="#ffffff"></path>
-                                <path fillRule="evenodd" clipRule="evenodd" d="M5 19.5C5 18.1193 6.11929 17 7.5 17C8.88071 17 10 18.1193 10 19.5C10 20.8807 8.88071 22 7.5 22C6.11929 22 5 20.8807 5 19.5Z" fill="#ffffff"></path>
-                              </svg>
-                            )}
-                            {room.slug === "sell-services" && (
-                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M12.052 1.25H11.948C11.0495 1.24997 10.3003 1.24995 9.70552 1.32991C9.07773 1.41432 8.51093 1.59999 8.05546 2.05546C7.59999 2.51093 7.41432 3.07773 7.32991 3.70552C7.27259 4.13189 7.25637 5.15147 7.25179 6.02566C5.22954 6.09171 4.01536 6.32778 3.17157 7.17157C2 8.34315 2 10.2288 2 14C2 17.7712 2 19.6569 3.17157 20.8284C4.34314 22 6.22876 22 9.99998 22H14C17.7712 22 19.6569 22 20.8284 20.8284C22 19.6569 22 17.7712 22 14C22 10.2288 22 8.34315 20.8284 7.17157C19.9846 6.32778 18.7705 6.09171 16.7482 6.02566C16.7436 5.15147 16.7274 4.13189 16.6701 3.70552C16.5857 3.07773 16.4 2.51093 15.9445 2.05546C15.4891 1.59999 14.9223 1.41432 14.2945 1.32991C13.6997 1.24995 12.9505 1.24997 12.052 1.25ZM15.2479 6.00188C15.2434 5.15523 15.229 4.24407 15.1835 3.9054C15.1214 3.44393 15.0142 3.24644 14.8839 3.11612C14.7536 2.9858 14.5561 2.87858 14.0946 2.81654C13.6116 2.7516 12.964 2.75 12 2.75C11.036 2.75 10.3884 2.7516 9.90539 2.81654C9.44393 2.87858 9.24644 2.9858 9.11612 3.11612C8.9858 3.24644 8.87858 3.44393 8.81654 3.9054C8.771 4.24407 8.75661 5.15523 8.75208 6.00188C9.1435 6 9.55885 6 10 6H14C14.4412 6 14.8565 6 15.2479 6.00188ZM12 9.25C12.4142 9.25 12.75 9.58579 12.75 10V10.0102C13.8388 10.2845 14.75 11.143 14.75 12.3333C14.75 12.7475 14.4142 13.0833 14 13.0833C13.5858 13.0833 13.25 12.7475 13.25 12.3333C13.25 11.9493 12.8242 11.4167 12 11.4167C11.1758 11.4167 10.75 11.9493 10.75 12.3333C10.75 12.7174 11.1758 13.25 12 13.25C13.3849 13.25 14.75 14.2098 14.75 15.6667C14.75 16.857 13.8388 17.7155 12.75 17.9898V18C12.75 18.4142 12.4142 18.75 12 18.75C11.5858 18.75 11.25 18.4142 11.25 18V17.9898C10.1612 17.7155 9.25 16.857 9.25 15.6667C9.25 15.2525 9.58579 14.9167 10 14.9167C10.4142 14.9167 10.75 15.2525 10.75 15.6667C10.75 16.0507 11.1758 16.5833 12 16.5833C12.8242 16.5833 13.25 16.0507 13.25 15.6667C13.25 15.2826 12.8242 14.75 12 14.75C10.6151 14.75 9.25 13.7903 9.25 12.3333C9.25 11.143 10.1612 10.2845 11.25 10.0102V10C11.25 9.58579 11.5858 9.25 12 9.25Z" fill="#ffffff"></path>
-                              </svg>
-                            )}
-                            {room.slug === "crypto-talk" && (
-                              <Image src={selectedCryptoData.Icon} alt={selectedCryptoData.code} width={20} height={20} className="rounded-full" />
-                            )}
-                            {room.slug === "help" && (
-                              <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className="inline-block shrink-0">
-                                <path fill="currentColor" d="M12 1C6.49 1 2 5.34 2 10.67v4.61a1 1 0 0 0 .69.95l3.89 1.26c1.25.27 2.42-.68 2.42-1.96v-4.05c0-1.27-1.17-2.22-2.42-1.96l-2.55.55C4.35 6.12 7.8 3.01 12 3.01s7.65 3.12 7.97 7.06l-2.55-.55c-1.25-.27-2.42.68-2.42 1.96v4.05c0 1.27 1.17 2.22 2.42 1.96l2.58-.55v1.07c0 1.1-.9 2-2 2h-4v-.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v1.5c0 .55.45 1 1 1h6c2.21 0 4-1.79 4-4v-7.33c0-5.33-4.49-9.67-10-9.67z"></path>
-                              </svg>
-                            )}
-                            <span className="text-base font-semibold">{room.label}</span>
-                          </button>
-                        </li>
-                      );
-                    })}
+              <div className="relative" ref={roomMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsRoomMenuOpen((prev) => !prev)}
+                  className="inline-flex h-9 min-w-[144px] items-center justify-between rounded-2xl border border-[#5f58a8]/55 bg-[#2a2555] px-3 text-left text-sm font-semibold text-[#f6f4ff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                  aria-haspopup="listbox"
+                  aria-expanded={isRoomMenuOpen}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="grid h-6 w-6 place-items-center rounded-lg bg-[#201b47] text-[#ddd8ff]">
+                      {renderRoomIcon(activeRoom, "h-3.5 w-3.5")}
+                    </span>
+                    <span>{activeRoomLabel}</span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "ml-2 h-4 w-4 text-[#d6d1f8] transition-transform",
+                      isRoomMenuOpen ? "rotate-180" : ""
+                    )}
+                  />
+                </button>
 
-                    <li role="presentation">
-                      <div className="h-px bg-white/10 my-1" />
-                    </li>
-
-                    {GLOBAL_CHAT_ROOMS.filter((r) => r.slug === "english").map((room) => {
-                      const isActive = room.slug === activeRoom;
-                      return (
-                        <li key={room.slug}>
-                          <button
-                            type="button"
-                            role="option"
-                            aria-selected={isActive}
-                            onClick={() => handleRoomChange(room.slug)}
-                            className={cn(
-                              "flex items-center gap-2 w-full px-3 py-2 text-left transition rounded-2xl",
-                              isActive ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-white/5"
-                            )}
-                          >
-                            <Image src={EnglishFlag} alt="English" width={20} height={20} className="rounded-2xl" />
-                            <span className="text-base font-semibold">{room.label}</span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ) : null}
+                {isRoomMenuOpen ? (
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[210px] overflow-hidden rounded-2xl border border-[#5f58a8]/55 bg-[var(--global-chat-sidebar-surface)] p-2 shadow-[0_18px_38px_rgba(9,6,35,0.65)]">
+                    <ul role="listbox" aria-label="Chat rooms" className="space-y-1">
+                      {GLOBAL_CHAT_ROOMS.map((room) => {
+                        const isActive = room.slug === activeRoom;
+                        return (
+                          <li key={room.slug}>
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={isActive}
+                              onClick={() => handleRoomChange(room.slug)}
+                              className={cn(
+                                "flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1f1a49]",
+                                isActive
+                                  ? "border-[#6d64ba] bg-[#4b458d] text-white"
+                                  : "border-transparent text-[#ddd8ff] hover:border-[#5f58a8]/45 hover:bg-[#37306d]"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[#ddd8ff]",
+                                  isActive ? "bg-[#665eb9] text-white" : "bg-[#262050]"
+                                )}
+                              >
+                                {renderRoomIcon(room.slug, "h-3.5 w-3.5")}
+                              </span>
+                              <span className="text-sm font-semibold">{room.label}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsChatExpanded((prev) => !prev)}
                 aria-label={isChatExpanded ? "Shrink chat width" : "Stretch chat width"}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
               >
                 <svg className={cn("h-6 w-6 transition-transform", !isChatExpanded ? "rotate-180" : "")} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g stroke="#fff" strokeLinecap="round" strokeWidth="2">
@@ -1637,7 +2466,7 @@ export function GlobalChatClient() {
                 type="button"
                 onClick={() => setIsRulesOpen(true)}
                 aria-label="Open chat rules"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
               >
                 <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" aria-hidden="true">
                   <g transform="translate(-414 -101)">
@@ -1649,7 +2478,7 @@ export function GlobalChatClient() {
                 type="button"
                 onClick={() => setIsChatClosed(true)}
                 aria-label="Close chat"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/20 text-white transition hover:bg-white/30"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -2042,6 +2871,7 @@ export function GlobalChatClient() {
         )}
 
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

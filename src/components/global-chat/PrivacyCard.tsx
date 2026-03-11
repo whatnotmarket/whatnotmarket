@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, Cookie, X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 
 type CookiePreferences = {
   essential: boolean;
@@ -45,7 +46,15 @@ const PrivacyIcon = ({ className }: { className?: string }) => (
 );
 
 export function PrivacyCard() {
-  const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname();
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return !localStorage.getItem("cookie-consent");
+    } catch {
+      return false;
+    }
+  });
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>(DEFAULT_PREFERENCES);
 
@@ -76,15 +85,6 @@ export function PrivacyCard() {
       forcedValue: false
     }
   ];
-
-  useEffect(() => {
-    // Check if user has already made a choice
-    const savedConsent = localStorage.getItem("cookie-consent");
-    if (!savedConsent) {
-      // Show banner if no consent saved
-      setIsVisible(true);
-    }
-  }, []);
 
   const handleAcceptAll = () => {
     const allAccepted: CookiePreferences = {
@@ -122,6 +122,10 @@ export function PrivacyCard() {
     if (key === "essential") return; // Cannot toggle essential
     setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  if (pathname === "/install" || pathname.startsWith("/install/")) {
+    return null;
+  }
 
   if (!isVisible) return null;
 
