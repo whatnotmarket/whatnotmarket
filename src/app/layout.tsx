@@ -9,6 +9,7 @@ import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
 import Providers from "@/components/providers";
 import AckeeTracker from "@/components/providers/AckeeTracker";
 import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
+import { FeaturebaseMessenger } from "@/components/providers/FeaturebaseMessenger";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "./globals.css";
 import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
@@ -144,6 +145,7 @@ export default function RootLayout({
         />
 
         <ConsentTrackingScripts />
+        <FeaturebaseMessenger />
 
         <PostHogProvider>
           <Providers>
