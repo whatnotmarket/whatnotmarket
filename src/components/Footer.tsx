@@ -113,7 +113,7 @@ export function Footer() {
               <ul className="space-y-2 text-zinc-400">
                 <li><Link href="/partners" className="hover:text-white transition-colors">Trusted Partners</Link></li>
                 <li><Link href="/media" className="hover:text-white transition-colors">Media Kit</Link></li>
-                <li><Link href="/business" className="hover:text-white transition-colors">OpenlyMarket for Business</Link></li>
+                <li><Link href="/broker" className="hover:text-white transition-colors">OpenlyMarket for Business</Link></li>
                 <li><Link href="/referral" className="hover:text-white transition-colors">Referral Program</Link></li>
                 <li><Link href="/affiliate" className="hover:text-white transition-colors">Affiliate Program</Link></li>
                 <li><Link href="/api" className="hover:text-white transition-colors">API Integration</Link></li>
@@ -157,7 +157,7 @@ export function Footer() {
                 <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
                 <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                 <Link href="/refund" className="hover:text-white transition-colors">Refund Policy</Link>
-                <span>© 2026 OpenlyMarket</span>
+                <span>Â© 2026 OpenlyMarket</span>
                 <span>openly.market</span>
             </div>
             <div className="text-center md:text-right">

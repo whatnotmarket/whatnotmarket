@@ -1,77 +1,71 @@
-
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
-import posthog from "posthog-js";
+import { useEffect } from "react";
 
 type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
-/**
- * Standardized analytics wrapper using PostHog.
- */
+type PostHogClient = {
+  capture: (eventName: string, properties?: EventProperties) => void;
+  identify: (userId: string, traits?: EventProperties) => void;
+};
+
+let clientPromise: Promise<PostHogClient | null> | null = null;
+
+async function getPosthogClient(): Promise<PostHogClient | null> {
+  if (typeof window === "undefined") return null;
+  if (!clientPromise) {
+    clientPromise = import("posthog-js")
+      .then((mod) => mod.default as unknown as PostHogClient)
+      .catch(() => null);
+  }
+  return clientPromise;
+}
+
 class Analytics {
   private static isDev = process.env.NODE_ENV === "development";
 
-  /**
-   * Track a specific user action or event.
-   */
-  static track(eventName: string, properties?: EventProperties) {
+  static async track(eventName: string, properties?: EventProperties) {
     if (this.isDev) {
       console.groupCollapsed(`[Analytics] Track: ${eventName}`);
       console.log(properties);
       console.groupEnd();
     }
 
-    if (typeof window !== "undefined") {
-      posthog.capture(eventName, properties);
-    }
+    const client = await getPosthogClient();
+    client?.capture(eventName, properties);
   }
 
-  /**
-   * Identify a user to associate events with their identity.
-   */
-  static identify(userId: string, traits?: EventProperties) {
+  static async identify(userId: string, traits?: EventProperties) {
     if (this.isDev) {
       console.groupCollapsed(`[Analytics] Identify: ${userId}`);
       console.log(traits);
       console.groupEnd();
     }
-    
-    if (typeof window !== "undefined") {
-      posthog.identify(userId, traits);
-    }
+
+    const client = await getPosthogClient();
+    client?.identify(userId, traits);
   }
 
-  /**
-   * Track a page view.
-   * Note: PostHog handles this automatically if configured, 
-   * but this can be used for virtual views or modals.
-   */
-  static page(name: string, properties?: EventProperties) {
+  static async page(name: string, properties?: EventProperties) {
     if (this.isDev) {
       console.groupCollapsed(`[Analytics] Page: ${name}`);
       console.log(properties);
       console.groupEnd();
     }
-    
-    if (typeof window !== "undefined") {
-      posthog.capture("$pageview", { ...properties, title: name });
-    }
+
+    const client = await getPosthogClient();
+    client?.capture("$pageview", { ...properties, title: name });
   }
 }
 
-/**
- * React hook to track page views automatically on route change.
- * Useful if automatic tracking is insufficient or needs custom properties.
- */
 export function usePageTracking() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const url = `${pathname}?${searchParams.toString()}`;
-    Analytics.page(pathname, { url, search: searchParams.toString() });
+    void Analytics.page(pathname, { url, search: searchParams.toString() });
   }, [pathname, searchParams]);
 }
 

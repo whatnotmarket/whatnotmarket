@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Bell, MessageCircle, AlertCircle, Tag, Loader2, UserPlus } from "lucide-react";
-import { NavPopup } from "./NavPopup";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { AlertCircle, Loader2, MessageCircle, Tag, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+import { NavPopup } from "./NavPopup";
 
 type NotificationRow = {
   id: string;
@@ -63,7 +63,7 @@ export function NotificationsMenu() {
   const [userId, setUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   useEffect(() => {
     let active = true;
@@ -91,8 +91,6 @@ export function NotificationsMenu() {
         .limit(30);
 
       if (error) {
-        // Silently fail if notifications table is missing or RLS error
-        // console.error("Failed to load notifications:", error); 
         if (active) {
           setNotifications([]);
           setIsLoading(false);
@@ -157,7 +155,7 @@ export function NotificationsMenu() {
   const markAllAsRead = async () => {
     if (!userId || unreadCount === 0) return;
 
-    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
+    const unreadIds = notifications.filter((notification) => !notification.read).map((notification) => notification.id);
 
     const { error } = await supabase
       .from("notifications")
@@ -169,7 +167,7 @@ export function NotificationsMenu() {
       return;
     }
 
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
   };
 
   const markOneAsRead = async (notificationId: string) => {
@@ -201,18 +199,22 @@ export function NotificationsMenu() {
   return (
     <div className="relative">
       <button
+        type="button"
+        aria-label="Open notifications"
         onClick={() => setIsOpen(!isOpen)}
         className="relative flex items-center justify-center rounded-lg px-4 py-2 text-zinc-300 transition-all hover:bg-white/5 hover:text-white"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-            <g id="SVGRepo_iconCarrier"> 
-                <path d="M19.3399 14.49L18.3399 12.83C18.1299 12.46 17.9399 11.76 17.9399 11.35V8.82C17.9399 6.47 16.5599 4.44 14.5699 3.49C14.0499 2.57 13.0899 2 11.9899 2C10.8999 2 9.91994 2.59 9.39994 3.52C7.44994 4.49 6.09994 6.5 6.09994 8.82V11.35C6.09994 11.76 5.90994 12.46 5.69994 12.82L4.68994 14.49C4.28994 15.16 4.19994 15.9 4.44994 16.58C4.68994 17.25 5.25994 17.77 5.99994 18.02C7.93994 18.68 9.97994 19 12.0199 19C14.0599 19 16.0999 18.68 18.0399 18.03C18.7399 17.8 19.2799 17.27 19.5399 16.58C19.7999 15.89 19.7299 15.13 19.3399 14.49Z" fill="currentColor"></path> 
-                <path d="M14.8297 20.01C14.4097 21.17 13.2997 22 11.9997 22C11.2097 22 10.4297 21.68 9.87969 21.11C9.55969 20.81 9.31969 20.41 9.17969 20C9.30969 20.02 9.43969 20.03 9.57969 20.05C9.80969 20.08 10.0497 20.11 10.2897 20.13C10.8597 20.18 11.4397 20.21 12.0197 20.21C12.5897 20.21 13.1597 20.18 13.7197 20.13C13.9297 20.11 14.1397 20.1 14.3397 20.07C14.4997 20.05 14.6597 20.03 14.8297 20.01Z" fill="currentColor"></path> 
-            </g>
+          <path
+            d="M19.3399 14.49L18.3399 12.83C18.1299 12.46 17.9399 11.76 17.9399 11.35V8.82C17.9399 6.47 16.5599 4.44 14.5699 3.49C14.0499 2.57 13.0899 2 11.9899 2C10.8999 2 9.91994 2.59 9.39994 3.52C7.44994 4.49 6.09994 6.5 6.09994 8.82V11.35C6.09994 11.76 5.90994 12.46 5.69994 12.82L4.68994 14.49C4.28994 15.16 4.19994 15.9 4.44994 16.58C4.68994 17.25 5.25994 17.77 5.99994 18.02C7.93994 18.68 9.97994 19 12.0199 19C14.0599 19 16.0999 18.68 18.0399 18.03C18.7399 17.8 19.2799 17.27 19.5399 16.58C19.7999 15.89 19.7299 15.13 19.3399 14.49Z"
+            fill="currentColor"
+          />
+          <path
+            d="M14.8297 20.01C14.4097 21.17 13.2997 22 11.9997 22C11.2097 22 10.4297 21.68 9.87969 21.11C9.55969 20.81 9.31969 20.41 9.17969 20C9.30969 20.02 9.43969 20.03 9.57969 20.05C9.80969 20.08 10.0497 20.11 10.2897 20.13C10.8597 20.18 11.4397 20.21 12.0197 20.21C12.5897 20.21 13.1597 20.18 13.7197 20.13C13.9297 20.11 14.1397 20.1 14.3397 20.07C14.4997 20.05 14.6597 20.03 14.8297 20.01Z"
+            fill="currentColor"
+          />
         </svg>
-        {unreadCount > 0 && <span className="absolute top-2 right-3 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1C1C1E]" />}
+        {unreadCount > 0 ? <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1C1C1E]" /> : null}
       </button>
 
       <NavPopup isOpen={isOpen} onClose={() => setIsOpen(false)} align="center" className="w-[380px]" title="Notifications">
@@ -220,11 +222,11 @@ export function NotificationsMenu() {
           <div className="flex max-h-[480px] flex-col overflow-hidden rounded-[16px] bg-[#222222]">
             <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
               <span className="text-xs font-medium text-zinc-400">{unreadCount} unread</span>
-              {unreadCount > 0 && (
-                <button onClick={markAllAsRead} className="text-xs font-bold text-indigo-400 transition-colors hover:text-indigo-300">
+              {unreadCount > 0 ? (
+                <button type="button" onClick={markAllAsRead} className="text-xs font-bold text-indigo-400 transition-colors hover:text-indigo-300">
                   Mark all as read
                 </button>
-              )}
+              ) : null}
             </div>
 
             <div className="custom-scrollbar space-y-2 overflow-y-auto p-2">
@@ -233,9 +235,7 @@ export function NotificationsMenu() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               ) : !userId ? (
-                <div className="p-8 text-center text-sm text-zinc-500">
-                  Sign in to receive notifications.
-                </div>
+                <div className="p-8 text-center text-sm text-zinc-500">Sign in to receive notifications.</div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center text-sm text-zinc-500">No notifications yet</div>
               ) : (
@@ -244,7 +244,7 @@ export function NotificationsMenu() {
                     key={notification.id}
                     href={notification.link}
                     onClick={() => {
-                      markOneAsRead(notification.id);
+                      void markOneAsRead(notification.id);
                       setIsOpen(false);
                     }}
                     className={cn(
@@ -252,7 +252,7 @@ export function NotificationsMenu() {
                       !notification.read && "bg-white/[0.02]"
                     )}
                   >
-                    <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-zinc-800/50")}>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-zinc-800/50">
                       {getIcon(notification.type)}
                     </div>
 
@@ -266,7 +266,7 @@ export function NotificationsMenu() {
                       <p className="line-clamp-2 text-[13px] leading-snug text-zinc-400">{notification.message}</p>
                     </div>
 
-                    {!notification.read && <div className="absolute top-5 right-4 h-2 w-2 rounded-full bg-indigo-500" />}
+                    {!notification.read ? <div className="absolute right-4 top-5 h-2 w-2 rounded-full bg-indigo-500" /> : null}
                   </Link>
                 ))
               )}

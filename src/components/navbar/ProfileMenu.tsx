@@ -269,6 +269,8 @@ export function ProfileMenu() {
   return (
     <div className="relative">
       <button
+        type="button"
+        aria-label="Open profile menu"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 text-sm font-bold text-zinc-300 hover:text-white transition-all px-4 py-2 rounded-lg hover:bg-white/5 cursor-pointer"
       >
@@ -317,6 +319,7 @@ export function ProfileMenu() {
 
                 <div className="h-px bg-zinc-700/50 my-2 mx-3" />
                 <button 
+                    type="button"
                     onClick={handleLogout}
                     disabled={isSigningOut}
                     className="w-full flex items-center gap-3 px-3 h-[50px] rounded-lg hover:bg-white/5 transition-colors group text-red-400 hover:text-red-300"
@@ -330,3 +333,5 @@ export function ProfileMenu() {
     </div>
   );
 }
+
+

@@ -1,6 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function Home() {
-  redirect("/market");
-}
-
+export { default } from "@/app/market/page";

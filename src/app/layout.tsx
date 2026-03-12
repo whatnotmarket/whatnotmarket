@@ -1,17 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist } from "next/font/google";
-import "./globals.css";
-import Providers from "@/components/providers";
-import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
-import { FaviconAttention } from "@/components/FaviconAttention";
-import { SITE_URL } from "@/lib/site-config";
+import { Geist, Inter } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { FaviconAttention } from "@/components/FaviconAttention";
+import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
+import Providers from "@/components/providers";
+import AckeeTracker from "@/components/providers/AckeeTracker";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import "./globals.css";
+import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
+import { SITE_URL } from "@/lib/site-config";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -65,62 +74,52 @@ export const metadata: Metadata = {
   },
 };
 
-// Trigger Vercel build
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react";
-// FooterWrapper component removed due to missing module
-import { cn } from "@/lib/utils";
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
-import AckeeTracker from "@/components/providers/AckeeTracker";
-import { Suspense } from "react";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
-      "name": "Openly Market",
-      "url": SITE_URL,
-      "email": "support@openlymarket.xyz",
-      "description": "Openly Market is a Web3 platform for blockchain-enabled marketplace activity and decentralized-native commerce.",
-      "sameAs": [
-        "https://x.com/openlymarket"
-      ],
-      "contactPoint": [
+      name: "Openly Market",
+      url: SITE_URL,
+      email: "support@openlymarket.xyz",
+      description:
+        "Openly Market is a Web3 platform for blockchain-enabled marketplace activity and decentralized-native commerce.",
+      sameAs: ["https://x.com/openlymarket"],
+      contactPoint: [
         {
           "@type": "ContactPoint",
-          "contactType": "customer support",
-          "email": "support@openlymarket.xyz"
-        }
-      ]
+          contactType: "customer support",
+          email: "support@openlymarket.xyz",
+        },
+      ],
     },
     {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
-      "url": SITE_URL,
-      "name": "Openly Market",
-      "publisher": {
-        "@id": `${SITE_URL}/#organization`
-      }
+      url: SITE_URL,
+      name: "Openly Market",
+      publisher: {
+        "@id": `${SITE_URL}/#organization`,
+      },
     },
     {
       "@type": "SoftwareApplication",
       "@id": `${SITE_URL}/#application`,
-      "name": "Openly Market",
-      "url": SITE_URL,
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "description": "A Web3 marketplace application for blockchain-enabled commerce, decentralized discovery, and digital asset oriented user flows.",
-      "provider": {
-        "@id": `${SITE_URL}/#organization`
-      }
-    }
-  ]
+      name: "Openly Market",
+      url: SITE_URL,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "A Web3 marketplace application for blockchain-enabled commerce, decentralized discovery, and digital asset oriented user flows.",
+      provider: {
+        "@id": `${SITE_URL}/#organization`,
+      },
+    },
+  ],
 };
+
+const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J";
 
 export default function RootLayout({
   children,
@@ -128,9 +127,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html 
-      lang={ORIGINAL_LANGUAGE.code} 
-      translate="no" 
+    <html
+      lang={ORIGINAL_LANGUAGE.code}
+      translate="no"
       className={cn("dark notranslate", "font-sans", geist.variable)}
       style={{ colorScheme: "dark" }}
       suppressHydrationWarning
@@ -144,34 +143,44 @@ export default function RootLayout({
           id="schema-jsonld"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J"}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
+
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="lazyOnload" />
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J"}');
+            window.gtag = window.gtag || gtag;
+            const initGa = () => {
+              gtag('js', new Date());
+              gtag('config', '${gaId}', { send_page_view: true });
+            };
+            if ('requestIdleCallback' in window) {
+              requestIdleCallback(initGa, { timeout: 4000 });
+            } else {
+              setTimeout(initGa, 1800);
+            }
           `}
         </Script>
-        <Script id="x-pixel" strategy="afterInteractive">
+
+        <Script id="x-pixel" strategy="lazyOnload">
           {`
-            !function(e,t,n,s,u,a){
-              e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);},
-              s.version='1.1',
-              s.queue=[],
-              u=t.createElement(n),
-              u.async=!0,
-              u.src='https://static.ads-twitter.com/uwt.js',
-              a=t.getElementsByTagName(n)[0],
-              a.parentNode.insertBefore(u,a))
-            }(window,document,'script');
-            twq('config','pl5u0');
-            twq('track','PageView');
+            if (navigator.doNotTrack !== '1') {
+              !function(e,t,n,s,u,a){
+                e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);},
+                s.version='1.1',
+                s.queue=[],
+                u=t.createElement(n),
+                u.async=!0,
+                u.src='https://static.ads-twitter.com/uwt.js',
+                a=t.getElementsByTagName(n)[0],
+                a.parentNode.insertBefore(u,a))
+              }(window,document,'script');
+              twq('config','pl5u0');
+              twq('track','PageView');
+            }
           `}
         </Script>
+
         <PostHogProvider>
           <Providers>
             <div className="flex-1 bg-black">
@@ -180,7 +189,6 @@ export default function RootLayout({
               </Suspense>
               {children}
             </div>
-            {/* FooterWrapper removed due to missing module */}
             <PrivacyCardWrapper />
           </Providers>
         </PostHogProvider>
@@ -191,4 +199,3 @@ export default function RootLayout({
     </html>
   );
 }
-
