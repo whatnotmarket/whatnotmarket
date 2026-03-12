@@ -114,8 +114,7 @@ export function PrivacyCard() {
     localStorage.setItem("cookie-consent", JSON.stringify(prefs));
     setPreferences(prefs);
     setIsVisible(false);
-    // Here you would typically initialize or disable analytics scripts based on 'prefs'
-    console.log("Cookie preferences saved:", prefs);
+    window.dispatchEvent(new Event("cookie-consent-updated"));
   };
 
   const togglePreference = (key: keyof CookiePreferences) => {
@@ -130,116 +129,119 @@ export function PrivacyCard() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[400px] overflow-hidden rounded-3xl border border-white/10 bg-[#000000]/95 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
-      <div className="p-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <PrivacyIcon className="w-6 h-6" />
-                We value your privacy
-              </h3>
-              {isCustomizing && (
-                <button 
-                  onClick={() => setIsCustomizing(false)}
-                  className="text-zinc-400 hover:text-white transition-colors"
+    <>
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md" />
+      <div className="fixed bottom-4 right-4 z-50 w-[400px] overflow-hidden rounded-3xl border border-white/10 bg-[#000000]/95 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <PrivacyIcon className="w-6 h-6" />
+                  We value your privacy
+                </h3>
+                {isCustomizing && (
+                  <button 
+                    onClick={() => setIsCustomizing(false)}
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              <p className="text-[15px] leading-relaxed text-zinc-400">
+                We use essential cookies for authentication and anonymous analytics to improve the platform. No personal data is sold to third parties.
+              </p>
+            </div>
+
+            {isCustomizing && (
+              <div className="space-y-3 py-2 animate-in fade-in zoom-in-95 duration-300">
+                {categories.map((category) => {
+                  const isExpanded = expandedCategory === category.id;
+                  const isChecked = category.forcedValue !== undefined ? category.forcedValue : preferences[category.id as keyof CookiePreferences];
+
+                  return (
+                    <div 
+                      key={category.id}
+                      className={cn(
+                        "rounded-xl bg-[#101010] border border-white/5 overflow-hidden transition-all duration-300",
+                        isExpanded ? "bg-[#151515] border-white/10" : "hover:bg-[#151515]"
+                      )}
+                    >
+                      <div className="flex items-center justify-between p-3">
+                        <button 
+                          onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+                          className="flex items-center gap-3 flex-1 text-left"
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-zinc-400" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-zinc-400" />
+                          )}
+                          <div className="space-y-0.5">
+                            <div className="text-sm font-medium text-white">{category.title}</div>
+                            {!isExpanded && (
+                              <div className="text-xs text-zinc-500 animate-in fade-in">{category.subtitle}</div>
+                            )}
+                          </div>
+                        </button>
+                        <Switch 
+                          checked={isChecked} 
+                          disabled={category.disabled}
+                          onCheckedChange={() => !category.disabled && togglePreference(category.id)} 
+                        />
+                      </div>
+                      
+                      {isExpanded && (
+                        <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2">
+                          <div className="h-px w-full bg-white/5 mb-3" />
+                          <p className="text-xs leading-relaxed text-zinc-400">
+                            {category.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 pt-2">
+              {!isCustomizing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleRejectAll}
+                    className="flex-1 border-white/5 bg-[#101010] text-zinc-400 hover:bg-[#101010] hover:text-red-500 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all duration-300"
+                  >
+                    Reject all
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCustomizing(true)}
+                    className="flex-1 border-white/10 bg-[#101010] text-zinc-300 hover:bg-[#151515] hover:text-white hover:border-white/20"
+                  >
+                    Customize
+                  </Button>
+                  <Button 
+                    onClick={handleAcceptAll}
+                    className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                  >
+                    Accept all
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  onClick={handleSavePreferences}
+                  className="w-full bg-white text-black hover:bg-zinc-200 font-bold"
                 >
-                  <X className="w-5 h-5" />
-                </button>
+                  Save Preferences
+                </Button>
               )}
             </div>
-            <p className="text-[15px] leading-relaxed text-zinc-400">
-              We use essential cookies for authentication and anonymous analytics to improve the platform. No personal data is sold to third parties.
-            </p>
-          </div>
-
-          {isCustomizing && (
-            <div className="space-y-3 py-2 animate-in fade-in zoom-in-95 duration-300">
-              {categories.map((category) => {
-                const isExpanded = expandedCategory === category.id;
-                const isChecked = category.forcedValue !== undefined ? category.forcedValue : preferences[category.id as keyof CookiePreferences];
-
-                return (
-                  <div 
-                    key={category.id}
-                    className={cn(
-                      "rounded-xl bg-[#101010] border border-white/5 overflow-hidden transition-all duration-300",
-                      isExpanded ? "bg-[#151515] border-white/10" : "hover:bg-[#151515]"
-                    )}
-                  >
-                    <div className="flex items-center justify-between p-3">
-                      <button 
-                        onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
-                        className="flex items-center gap-3 flex-1 text-left"
-                      >
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-zinc-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-zinc-400" />
-                        )}
-                        <div className="space-y-0.5">
-                          <div className="text-sm font-medium text-white">{category.title}</div>
-                          {!isExpanded && (
-                            <div className="text-xs text-zinc-500 animate-in fade-in">{category.subtitle}</div>
-                          )}
-                        </div>
-                      </button>
-                      <Switch 
-                        checked={isChecked} 
-                        disabled={category.disabled}
-                        onCheckedChange={() => !category.disabled && togglePreference(category.id)} 
-                      />
-                    </div>
-                    
-                    {isExpanded && (
-                      <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2">
-                        <div className="h-px w-full bg-white/5 mb-3" />
-                        <p className="text-xs leading-relaxed text-zinc-400">
-                          {category.description}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 pt-2">
-            {!isCustomizing ? (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={handleRejectAll}
-                  className="flex-1 border-white/5 bg-[#101010] text-zinc-400 hover:bg-[#101010] hover:text-red-500 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all duration-300"
-                >
-                  Reject all
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCustomizing(true)}
-                  className="flex-1 border-white/10 bg-[#101010] text-zinc-300 hover:bg-[#151515] hover:text-white hover:border-white/20"
-                >
-                  Customize
-                </Button>
-                <Button 
-                  onClick={handleAcceptAll}
-                  className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                >
-                  Accept all
-                </Button>
-              </>
-            ) : (
-              <Button 
-                onClick={handleSavePreferences}
-                className="w-full bg-white text-black hover:bg-zinc-200 font-bold"
-              >
-                Save Preferences
-              </Button>
-            )}
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
