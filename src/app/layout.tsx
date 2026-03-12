@@ -76,6 +76,50 @@ import { Suspense } from "react";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://openlymarket.xyz/#organization",
+      "name": "Openly Market",
+      "url": "https://openlymarket.xyz",
+      "email": "support@openlymarket.xyz",
+      "description": "Openly Market is a Web3 platform for blockchain-enabled marketplace activity and decentralized-native commerce.",
+      "sameAs": [
+        "https://x.com/openlymarket"
+      ],
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "email": "support@openlymarket.xyz"
+        }
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://openlymarket.xyz/#website",
+      "url": "https://openlymarket.xyz",
+      "name": "Openly Market",
+      "publisher": {
+        "@id": "https://openlymarket.xyz/#organization"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://openlymarket.xyz/#application",
+      "name": "Openly Market",
+      "url": "https://openlymarket.xyz",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "A Web3 marketplace application for blockchain-enabled commerce, decentralized discovery, and digital asset oriented user flows.",
+      "provider": {
+        "@id": "https://openlymarket.xyz/#organization"
+      }
+    }
+  ]
+};
 
 export default function RootLayout({
   children,
@@ -94,6 +138,11 @@ export default function RootLayout({
         className={`${inter.variable} ${inter.className} notranslate antialiased bg-black text-white min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
+        <Script
+          type="application/ld+json"
+          id="schema-jsonld"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J"}`}
           strategy="afterInteractive"

@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase-admin";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://openly.market";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://openlymarket.xyz";
 
 // Helper to clean handles
 function cleanHandle(handle: string) {
@@ -33,12 +33,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/global-chat`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.7,
     },
     {
       url: `${BASE_URL}/smart-search`,
@@ -177,6 +171,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select("username, updated_at")
       .eq("seller_status", "verified")
       .not("username", "is", null)
+      .not("username", "in", '("lucatest","whatnotmarket")') // Exclude test/internal accounts
       .limit(1000);
 
     if (sellers) {

@@ -1,33 +1,41 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://openly.market";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://openlymarket.xyz";
 
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: [
-        "/admin/",
-        "/admintest/",
-        "/api/",
-        "/auth/",
-        "/dashboard/",
-        "/inbox/",
-        "/install/",
-        "/my-deals/",
-        "/notifications/",
-        "/notifichetest/",
-        "/onboarding/",
-        "/open-dispute/",
-        "/profile/",
-        "/requests/new/",
-        "/testlogin/",
-        "/track/",
-        "/copy-demo/",
-        "/copywebsiteadmin/",
-      ],
-    },
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/auth/",
+          "/dashboard/",
+          "/install/",
+          "/onboarding/",
+          "/profile/",
+          "/track/",
+        ],
+      },
+      {
+        userAgent: [
+          "OAI-SearchBot",
+          "GPTBot",
+          "ClaudeBot",
+          "Claude-SearchBot",
+          "Claude-User",
+          "PerplexityBot",
+          "Googlebot",
+          "Google-Extended",
+          "Bingbot",
+          "Applebot",
+          "CCBot",
+        ],
+        allow: "/",
+      },
+    ],
     sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
