@@ -14,6 +14,14 @@ import { analytics } from "@/lib/analytics";
 
 type Step = "input" | "details" | "payment" | "confirmed";
 
+type Twq = (...args: unknown[]) => void;
+
+declare global {
+  interface Window {
+    twq?: Twq;
+  }
+}
+
 export function BuyWithCryptoFlow() {
   const [step, setStep] = useState<Step>("input");
   const [url, setUrl] = useState("");
@@ -91,10 +99,19 @@ export function BuyWithCryptoFlow() {
   };
 
   const handlePaymentSuccess = async () => {
+    const amount = (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5;
+    const currency = orderDetails?.currency;
+
     analytics.track("proxy_order_payment_completed", {
       orderId,
-      amount: (orderDetails?.price || 0) * (orderDetails?.quantity || 1) * 1.1 + 15 + 5,
-      currency: orderDetails?.currency,
+      amount,
+      currency,
+    });
+
+    window.twq?.("event", "tw-pl5u0-r9ale", {
+      value: amount,
+      currency,
+      conversion_id: orderId || undefined,
     });
     setStep("confirmed");
   };
