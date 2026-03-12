@@ -19,9 +19,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "OpenlyMarket",
   description: "Secure buyer/seller marketplace.",
-  creator: "openly.market",
-  publisher: "openly.market",
-  metadataBase: new URL("https://openly.market"),
+  creator: "openlymarket.xyz",
+  publisher: "openlymarket.xyz",
+  metadataBase: new URL("https://openlymarket.xyz"),
   manifest: "/manifest.json",
   icons: {
     icon: [
