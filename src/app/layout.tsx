@@ -68,10 +68,10 @@ export const metadata: Metadata = {
 // Trigger Vercel build
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import { Footer } from "@/components/Footer";
+// FooterWrapper component removed due to missing module
 import { cn } from "@/lib/utils";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import { PrivacyCard } from "@/components/global-chat/PrivacyCard";
+import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
 import AckeeTracker from "@/components/providers/AckeeTracker";
 import { Suspense } from "react";
 
@@ -180,8 +180,8 @@ export default function RootLayout({
               </Suspense>
               {children}
             </div>
-            <Footer />
-            <PrivacyCard />
+            {/* FooterWrapper removed due to missing module */}
+            <PrivacyCardWrapper />
           </Providers>
         </PostHogProvider>
         <Analytics />
