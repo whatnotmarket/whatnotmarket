@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { submitToIndexNow } from "@/lib/indexnow";
 import { createClient } from "@/lib/supabase-server";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
@@ -261,6 +262,13 @@ export async function POST(req: Request) {
     }).catch((persistError) => {
       console.error("Failed to persist listing trust decision", persistError);
     });
+
+    // Submit to IndexNow in background (non-blocking)
+    if (data?.id) {
+      submitToIndexNow(`/requests/${data.id}`).catch((err) =>
+        console.error("IndexNow background submit error:", err)
+      );
+    }
 
     return NextResponse.json({
       ok: true,

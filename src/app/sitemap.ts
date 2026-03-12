@@ -1,7 +1,10 @@
 import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { SITE_URL } from "@/lib/site-config";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://openlymarket.xyz";
+export const revalidate = 3600; // Revalidate sitemap every hour
+
+const BASE_URL = SITE_URL;
 
 // Helper to clean handles
 function cleanHandle(handle: string) {

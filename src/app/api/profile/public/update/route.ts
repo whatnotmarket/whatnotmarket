@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase-server";
+import { submitToIndexNow } from "@/lib/indexnow";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { enforceAbuseGuard, AbuseGuardResponse } from "@/lib/security/abuse-guards";
 import { isReservedProfileHandle, normalizeProfileHandle } from "@/lib/security/identity-guards";
@@ -148,6 +149,20 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("profiles").update(updatePayload).eq("id", user.id);
   if (error) {
     return NextResponse.json({ ok: false, error: "Unable to update profile" }, { status: 500 });
+  }
+
+  // Submit to IndexNow if username changed or public profile updated
+  if (user.id) {
+    submitToIndexNow(`/profile/${user.id}`).catch((err) =>
+      console.error("IndexNow background submit error:", err)
+    );
+    // Also submit handle-based URL if username exists
+    if (updatePayload.username) {
+        const handle = String(updatePayload.username).replace(/^@+/, "");
+        submitToIndexNow(`/seller/@${handle}`).catch((err) =>
+            console.error("IndexNow background submit error (handle):", err)
+        );
+    }
   }
 
   return NextResponse.json({

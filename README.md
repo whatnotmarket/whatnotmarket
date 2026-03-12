@@ -98,6 +98,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   - Use `supabase/scripts/private/` (ignored by Git)
   - No real data or secrets inside the repository
 - Avoid public endpoints without auth
+
+## SEO & IndexNow
+
+This project includes automated IndexNow submission for faster indexing of public content (requests, verified seller profiles).
+
+### Configuration
+1. Generate an IndexNow key (e.g. from Bing Webmaster Tools).
+2. Add it to `.env.local`:
+   ```bash
+   INDEXNOW_KEY=your-generated-key
+   ```
+3. The key verification file is automatically served at `https://openlymarket.xyz/<key>.txt`.
+
+### Automatic Submission
+- **New Requests**: Triggered when a user creates a public request.
+- **Profile Updates**: Triggered when a user updates their public profile (username/bio).
+- **Exclusions**: Private routes (`/admin`, `/dashboard`, `/inbox`) are never submitted.
+
+### Debugging
+To enable IndexNow logs in development/preview environments, set `INDEXNOW_DEBUG=true`. By default, it only runs in production (`NODE_ENV=production`).
   - Check auth in server routes and edge functions
 - Rate limiting and spam protection
   - Flood and slow-mode checks are implemented for chat; add rate-limits where needed
