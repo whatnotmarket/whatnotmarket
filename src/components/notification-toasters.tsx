@@ -1,8 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { Toaster } from "sileo";
 
 export default function NotificationToasters() {
+  useEffect(() => {
+    void import("sileo/styles.css");
+  }, []);
+
   return (
     <Toaster
       position="top-center"

@@ -10,6 +10,9 @@ const supabaseHostname = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    inlineCss: true,
+  },
   reactCompiler: true,
   productionBrowserSourceMaps: false,
   // Silence Turbopack error for webpack plugins (next-pwa)
