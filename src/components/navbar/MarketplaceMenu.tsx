@@ -38,10 +38,10 @@ const MENU_DATA = [
   {
     title: "Ecosystem",
     items: [
-      { label: "Verified Sellers", href: "/sellers" },
-      { label: "Trust & Safety", href: "/trust" },
-      { label: "Fees & Limits", href: "/fees" },
-      { label: "Partner API", href: "/api-docs" },
+      { label: "Verified Sellers", href: "/sell" },
+      { label: "Trust & Safety", href: "/secure-transaction" },
+      { label: "Fees & Limits", href: "/fee-calculator" },
+      { label: "Partner API", href: "/open-source" },
     ],
   },
 ];

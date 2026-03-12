@@ -100,6 +100,30 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/fees",
+        destination: "/fee-calculator",
+        permanent: true,
+      },
+      {
+        source: "/sellers",
+        destination: "/sell",
+        permanent: true,
+      },
+      {
+        source: "/api-docs",
+        destination: "/open-source",
+        permanent: true,
+      },
+      {
+        source: "/trust",
+        destination: "/secure-transaction",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const withPWAConfig = withPWA({

@@ -7,6 +7,8 @@ type ConsentState = {
   marketing?: boolean;
 };
 
+const isEnabled = (value: string | undefined) => value === "true";
+
 function readConsent(): ConsentState {
   try {
     const raw = localStorage.getItem("cookie-consent");
@@ -46,6 +48,7 @@ function loadGtag(gaId: string) {
 }
 
 function loadXPixel() {
+  if (!isEnabled(process.env.NEXT_PUBLIC_ENABLE_X_PIXEL)) return;
   if (navigator.doNotTrack === "1") return;
   if (document.querySelector('script[data-om-x-pixel="1"]')) return;
 

@@ -17,6 +17,8 @@ type RequestRow = {
   created_at: string;
 };
 
+type RequestRowCompact = Omit<RequestRow, "condition" | "payment_method">;
+
 type RequestListItem = RequestRow & {
   offers: number;
 };
@@ -66,20 +68,53 @@ export default function RequestsListPage() {
     async function loadRequests() {
       setLoading(true);
 
-      const { data: requestRows, error: requestError } = await supabase
-        .from("requests")
-        .select("id,title,category,budget_min,budget_max,condition,payment_method,created_at")
-        .eq("status", "open")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const queryOpenRequests = (selectClause: string) =>
+        supabase.from("requests").select(selectClause).eq("status", "open").order("created_at", { ascending: false }).limit(100);
 
-      if (requestError || !requestRows) {
-        console.error("Failed to load requests:", requestError);
-        if (active) {
-          setRequests([]);
-          setLoading(false);
+      const fullSelect = "id,title,category,budget_min,budget_max,condition,payment_method,created_at";
+      const compactSelect = "id,title,category,budget_min,budget_max,created_at";
+
+      let requestRows: RequestRow[] = [];
+      const initialResult = await queryOpenRequests(fullSelect);
+
+      if (initialResult.error) {
+        const fallbackResult = await queryOpenRequests(compactSelect);
+
+        if (fallbackResult.error || !fallbackResult.data) {
+          console.error("Failed to load requests", {
+            initial: {
+              message: initialResult.error.message,
+              code: initialResult.error.code,
+              details: initialResult.error.details,
+            },
+            fallback: fallbackResult.error
+              ? {
+                  message: fallbackResult.error.message,
+                  code: fallbackResult.error.code,
+                  details: fallbackResult.error.details,
+                }
+              : null,
+          });
+
+          if (active) {
+            setRequests([]);
+            setLoading(false);
+          }
+          return;
         }
-        return;
+
+        requestRows = ((fallbackResult.data as unknown) as RequestRowCompact[]).map((row) => ({
+          id: row.id,
+          title: row.title,
+          category: row.category,
+          budget_min: row.budget_min,
+          budget_max: row.budget_max,
+          created_at: row.created_at,
+          condition: null,
+          payment_method: null,
+        }));
+      } else if (initialResult.data) {
+        requestRows = (initialResult.data as unknown) as RequestRow[];
       }
 
       const requestIds = requestRows.map((row) => row.id);
@@ -96,7 +131,7 @@ export default function RequestsListPage() {
 
       if (!active) return;
 
-      const rows = (requestRows as RequestRow[]).map((row) => ({
+      const rows = requestRows.map((row) => ({
         ...row,
         offers: offerCountByRequestId[row.id] || 0,
       }));
