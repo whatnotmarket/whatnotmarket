@@ -12,6 +12,7 @@ const supabaseHostname = (() => {
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  productionBrowserSourceMaps: false,
   // Silence Turbopack error for webpack plugins (next-pwa)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   turbopack: {} as any,
