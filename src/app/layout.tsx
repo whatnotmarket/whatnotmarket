@@ -95,7 +95,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || "G-2JRJJL8JZS"}`}
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J"}`}
           strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
@@ -103,7 +103,7 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || "G-2JRJJL8JZS"}');
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J"}');
           `}
         </Script>
         <PostHogProvider>
