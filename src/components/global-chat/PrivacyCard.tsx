@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,17 +47,34 @@ const PrivacyIcon = ({ className }: { className?: string }) => (
 
 export function PrivacyCard() {
   const pathname = usePathname();
-  const [isVisible, setIsVisible] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return !localStorage.getItem("cookie-consent");
-    } catch {
-      return false;
-    }
-  });
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>(DEFAULT_PREFERENCES);
   const [expandedCategory, setExpandedCategory] = useState<keyof CookiePreferences | null>("essential");
+
+  useEffect(() => {
+    setIsMounted(true);
+
+    try {
+      const raw = localStorage.getItem("cookie-consent");
+      if (!raw) {
+        setIsVisible(true);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<CookiePreferences>;
+      setPreferences({
+        essential: true,
+        analytics: Boolean(parsed.analytics),
+        marketing: Boolean(parsed.marketing),
+        personalization: Boolean(parsed.personalization),
+      });
+      setIsVisible(false);
+    } catch {
+      setIsVisible(true);
+    }
+  }, []);
 
   const categories = [
     {
@@ -108,7 +125,7 @@ export function PrivacyCard() {
       essential: true,
       analytics: true,
       marketing: true,
-      personalization: true,
+      personalization: false,
     });
   };
 
@@ -134,6 +151,7 @@ export function PrivacyCard() {
     return null;
   }
 
+  if (!isMounted) return null;
   if (!isVisible) return null;
 
   return (

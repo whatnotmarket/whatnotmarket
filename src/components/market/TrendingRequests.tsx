@@ -25,6 +25,8 @@ type RequestRow = {
   delivery_time: string | null;
 };
 
+type RequestRowCompact = Omit<RequestRow, "payment_method" | "delivery_time">;
+
 type RequestCard = {
   id: string;
   title: string;
@@ -96,20 +98,52 @@ export function TrendingRequests() {
     async function loadTrendingRequests() {
       setLoading(true);
 
-      const { data: requestRows, error: requestError } = await supabase
-        .from("requests")
-        .select("id,title,category,budget_min,budget_max,created_at,payment_method,delivery_time")
-        .eq("status", "open")
-        .order("created_at", { ascending: false })
-        .limit(40);
+      const queryOpenRequests = (selectClause: string) =>
+        supabase.from("requests").select(selectClause).eq("status", "open").order("created_at", { ascending: false }).limit(40);
 
-      if (requestError || !requestRows) {
-        console.error("Failed to load requests:", requestError);
-        if (active) {
-          setRequests([]);
-          setLoading(false);
+      const fullSelect = "id,title,category,budget_min,budget_max,created_at,payment_method,delivery_time";
+      const compactSelect = "id,title,category,budget_min,budget_max,created_at";
+      let requestRows: RequestRow[] = [];
+
+      const initialResult = await queryOpenRequests(fullSelect);
+
+      if (initialResult.error) {
+        const fallbackResult = await queryOpenRequests(compactSelect);
+
+        if (fallbackResult.error || !fallbackResult.data) {
+          console.error("Failed to load requests", {
+            initial: {
+              message: initialResult.error.message,
+              code: initialResult.error.code,
+              details: initialResult.error.details,
+            },
+            fallback: fallbackResult.error
+              ? {
+                  message: fallbackResult.error.message,
+                  code: fallbackResult.error.code,
+                  details: fallbackResult.error.details,
+                }
+              : null,
+          });
+          if (active) {
+            setRequests([]);
+            setLoading(false);
+          }
+          return;
         }
-        return;
+
+        requestRows = ((fallbackResult.data as unknown) as RequestRowCompact[]).map((row) => ({
+          id: row.id,
+          title: row.title,
+          category: row.category,
+          budget_min: row.budget_min,
+          budget_max: row.budget_max,
+          created_at: row.created_at,
+          payment_method: null,
+          delivery_time: null,
+        }));
+      } else if (initialResult.data) {
+        requestRows = (initialResult.data as unknown) as RequestRow[];
       }
 
       const requestIds = requestRows.map((row) => row.id);
@@ -122,7 +156,11 @@ export function TrendingRequests() {
           .in("request_id", requestIds);
 
         if (offerError) {
-          console.error("Failed to load offer counters:", offerError);
+          console.error("Failed to load offer counters", {
+            message: offerError.message,
+            code: offerError.code,
+            details: offerError.details,
+          });
         } else {
           offerCountByRequestId = (offerRows || []).reduce<Record<string, number>>((acc, row) => {
             acc[row.request_id] = (acc[row.request_id] || 0) + 1;
@@ -133,7 +171,7 @@ export function TrendingRequests() {
 
       if (!active) return;
 
-      const mapped = (requestRows as RequestRow[]).map((row) => ({
+      const mapped = requestRows.map((row) => ({
         id: row.id,
         title: row.title,
         categoryRaw: row.category,

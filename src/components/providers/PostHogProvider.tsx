@@ -9,6 +9,21 @@ type WindowWithIdle = Window & {
   cancelIdleCallback?: (handle: number) => void;
 };
 
+type ConsentState = {
+  analytics?: boolean;
+};
+
+function hasAnalyticsConsent() {
+  try {
+    const raw = localStorage.getItem("cookie-consent");
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as ConsentState;
+    return Boolean(parsed.analytics);
+  } catch {
+    return false;
+  }
+}
+
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -21,12 +36,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     const win = window as WindowWithIdle;
     let cancelled = false;
     let idleTimer: number | null = null;
+    let initialized = false;
 
     const init = async () => {
-      if (cancelled) return;
+      if (cancelled || initialized || !hasAnalyticsConsent()) return;
 
       const posthogModule = await import("posthog-js");
-      if (cancelled) return;
+      if (cancelled || initialized || !hasAnalyticsConsent()) return;
 
       const posthog = posthogModule.default;
       posthog.init(key, {
@@ -40,9 +56,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         capture_dead_clicks: isEnabled(process.env.NEXT_PUBLIC_POSTHOG_ENABLE_DEAD_CLICKS),
         capture_performance: isEnabled(process.env.NEXT_PUBLIC_POSTHOG_ENABLE_WEB_VITALS),
       });
+      initialized = true;
     };
 
     const scheduleInit = () => {
+      if (initialized || !hasAnalyticsConsent()) return;
       if (typeof win.requestIdleCallback === "function") {
         idleTimer = win.requestIdleCallback(
           () => {
@@ -64,9 +82,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("scroll", kickoff);
     };
 
+    const onConsentUpdate = () => {
+      scheduleInit();
+    };
+
     window.addEventListener("pointerdown", kickoff, { once: true, passive: true });
     window.addEventListener("keydown", kickoff, { once: true, passive: true });
     window.addEventListener("scroll", kickoff, { once: true, passive: true });
+    window.addEventListener("cookie-consent-updated", onConsentUpdate);
 
     scheduleInit();
 
@@ -75,6 +98,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("pointerdown", kickoff);
       window.removeEventListener("keydown", kickoff);
       window.removeEventListener("scroll", kickoff);
+      window.removeEventListener("cookie-consent-updated", onConsentUpdate);
       if (idleTimer !== null) {
         if (typeof win.cancelIdleCallback === "function") {
           win.cancelIdleCallback(idleTimer);

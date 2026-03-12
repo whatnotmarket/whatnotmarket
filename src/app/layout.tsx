@@ -8,6 +8,7 @@ import { FaviconAttention } from "@/components/FaviconAttention";
 import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
 import Providers from "@/components/providers";
 import AckeeTracker from "@/components/providers/AckeeTracker";
+import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "./globals.css";
 import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
@@ -119,8 +120,6 @@ const structuredData = {
   ],
 };
 
-const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-6VVJS4Z32J";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -144,42 +143,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
 
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="lazyOnload" />
-        <Script id="google-analytics" strategy="lazyOnload">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            window.gtag = window.gtag || gtag;
-            const initGa = () => {
-              gtag('js', new Date());
-              gtag('config', '${gaId}', { send_page_view: true });
-            };
-            if ('requestIdleCallback' in window) {
-              requestIdleCallback(initGa, { timeout: 4000 });
-            } else {
-              setTimeout(initGa, 1800);
-            }
-          `}
-        </Script>
-
-        <Script id="x-pixel" strategy="lazyOnload">
-          {`
-            if (navigator.doNotTrack !== '1') {
-              !function(e,t,n,s,u,a){
-                e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);},
-                s.version='1.1',
-                s.queue=[],
-                u=t.createElement(n),
-                u.async=!0,
-                u.src='https://static.ads-twitter.com/uwt.js',
-                a=t.getElementsByTagName(n)[0],
-                a.parentNode.insertBefore(u,a))
-              }(window,document,'script');
-              twq('config','pl5u0');
-              twq('track','PageView');
-            }
-          `}
-        </Script>
+        <ConsentTrackingScripts />
 
         <PostHogProvider>
           <Providers>
