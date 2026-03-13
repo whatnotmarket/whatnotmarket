@@ -45,7 +45,12 @@ export type RateLimitAction =
   | "profile_public_update"
   | "review_submit"
   | "comment_submit"
-  | "public_form_submit";
+  | "public_form_submit"
+  | "internal_onboarding_register"
+  | "internal_onboarding_username_check"
+  | "internal_onboarding_progress"
+  | "internal_onboarding_avatar_upload"
+  | "onboarding_gate_access";
 
 export type RateLimitOptions = {
   action?: RateLimitAction;
@@ -101,6 +106,11 @@ const RATE_LIMIT_CONFIGS: Record<RateLimitAction, RateLimitConfig> = {
   review_submit: { limit: 10, windowMs: 60_000 },
   comment_submit: { limit: 20, windowMs: 60_000 },
   public_form_submit: { limit: 10, windowMs: 60_000 },
+  internal_onboarding_register: { limit: 6, windowMs: 60_000 },
+  internal_onboarding_username_check: { limit: 16, windowMs: 60_000 },
+  internal_onboarding_progress: { limit: 24, windowMs: 60_000 },
+  internal_onboarding_avatar_upload: { limit: 10, windowMs: 60_000 },
+  onboarding_gate_access: { limit: 10, windowMs: 60_000 },
 };
 
 const rateLimiter = new LRUCache<string, RateLimitEntry>({
