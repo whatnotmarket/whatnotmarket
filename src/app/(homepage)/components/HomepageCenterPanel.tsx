@@ -12,7 +12,10 @@ export function HomepageCenterPanel({
   renderCommandSearch: () => React.ReactNode;
 }) {
   return (
-    <div className={cn("relative hidden min-w-0 flex-1 md:block", isLeftSidebarClosed ? "md:-ml-1" : "")}>
+    <div
+      data-homepage-center-panel="true"
+      className={cn("relative hidden min-w-0 flex-1 md:block", isLeftSidebarClosed ? "md:-ml-1" : "")}
+    >
       <div className="h-[calc(100vh-3rem)] rounded-[30px] border border-[#2E3547] bg-[#161923]" />
       {isLeftSidebarClosed ? (
         <button

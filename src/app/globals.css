@@ -35,6 +35,8 @@
 }
 
 :root {
+  --featurebase-anchor-right: 12px;
+  --featurebase-anchor-bottom: 16px;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -217,5 +219,8 @@ html {
 [id^="featurebase"],
 [class*="featurebase"],
 iframe[src*="featurebase"] {
+  left: auto !important;
+  right: var(--featurebase-anchor-right) !important;
+  bottom: var(--featurebase-anchor-bottom) !important;
   z-index: 2147483647 !important;
 }

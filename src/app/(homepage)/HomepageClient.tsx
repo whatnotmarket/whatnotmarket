@@ -334,6 +334,7 @@ export function HomepageClient() {
   const { user, isLoading } = useUser();
   const pathname = usePathname();
   const router = useRouter();
+  const [stablePathname, setStablePathname] = useState("/");
 
   const [messages, setMessages] = useState<GlobalChatMessage[]>([]);
   const [currentProfile, setCurrentProfile] = useState<ProfileRef | null>(null);
@@ -403,6 +404,10 @@ export function HomepageClient() {
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
 
   useEffect(() => {
+    setStablePathname(pathname || "/");
+  }, [pathname]);
+
+  useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
     const previousRootBackground = root.style.backgroundColor;
@@ -455,6 +460,35 @@ export function HomepageClient() {
       document.body.style.overflow = previousOverflow;
     };
   }, [isMobileSidebarOpen]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const panel = document.querySelector<HTMLElement>('[data-homepage-center-panel="true"]');
+
+    const syncFeaturebaseAnchor = () => {
+      if (!panel || window.innerWidth < 768 || panel.offsetParent === null || isChatClosed) {
+        root.style.setProperty("--featurebase-anchor-right", "12px");
+        return;
+      }
+
+      const rect = panel.getBoundingClientRect();
+      const right = Math.max(12, Math.round(window.innerWidth - rect.right + 12));
+      root.style.setProperty("--featurebase-anchor-right", `${right}px`);
+    };
+
+    syncFeaturebaseAnchor();
+
+    const resizeObserver = panel ? new ResizeObserver(syncFeaturebaseAnchor) : null;
+    if (panel && resizeObserver) resizeObserver.observe(panel);
+
+    window.addEventListener("resize", syncFeaturebaseAnchor);
+
+    return () => {
+      window.removeEventListener("resize", syncFeaturebaseAnchor);
+      resizeObserver?.disconnect();
+      root.style.setProperty("--featurebase-anchor-right", "12px");
+    };
+  }, [isLeftSidebarClosed, isChatExpanded, isChatClosed]);
 
   const requiredRoleText = useMemo(() => {
     const isThreadReply = Boolean(replyTarget);
@@ -690,7 +724,7 @@ export function HomepageClient() {
 
   const renderMarketplaceNavItem = useCallback(
     (category: (typeof MARKETPLACE_CATEGORIES)[number], closeMobileOnClick = false) => {
-      const isActive = pathname === category.href;
+      const isActive = stablePathname === category.href;
 
       return (
         <Link
@@ -723,7 +757,7 @@ export function HomepageClient() {
         </Link>
       );
     },
-    [pathname, renderMarketplaceIcon]
+    [renderMarketplaceIcon, stablePathname]
   );
 
   const renderSellSectionIcon = useCallback(
@@ -1967,10 +2001,7 @@ export function HomepageClient() {
       </AnimatePresence>
 
       <div
-        className={cn(
-          "relative mx-auto flex min-h-screen w-full min-w-0 items-stretch gap-3 px-3 py-4 md:px-4 md:py-6",
-          isLeftSidebarClosed ? "md:gap-0" : "md:gap-5"
-        )}
+        className="relative mx-auto flex min-h-screen w-full min-w-0 items-stretch gap-3 px-3 py-4 md:gap-3 md:px-4 md:py-6"
       >
         <HomepageDesktopSidebar
           isLeftSidebarClosed={isLeftSidebarClosed}
@@ -2385,7 +2416,7 @@ export function HomepageClient() {
                 <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
               ) : !user ? (
                 <Link
-                  href="/auth?next=/"
+                  href={`/auth?next=${encodeURIComponent(stablePathname || "/")}`}
                   className="inline-flex items-center gap-1 text-zinc-300 hover:text-white"
                 >
                   <LogIn className="h-3.5 w-3.5" />
