@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import * as Flags from "country-flag-icons/react/3x2";
 import {
   Group,
   Panel,
@@ -39,10 +40,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { authToast as toast } from "@/lib/notifications";
-import { GLOBAL_CHAT_ROOMS, type GlobalChatRoom } from "@/lib/chat/global-chat-config";
+import {
+  DEFAULT_GLOBAL_CHAT_ROOM,
+  GLOBAL_CHAT_ROOMS,
+  LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS,
+  type GlobalChatRoom,
+} from "@/lib/chat/global-chat-config";
 import Image from "next/image";
 import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
-import EnglishFlag from "@/flag/english.png";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HomepageMobileSidebar } from "./components/HomepageMobileSidebar";
@@ -107,7 +112,7 @@ function sanitizeHomepageLayout(layout: Record<string, unknown> | null | undefin
   } as const;
 }
 const PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "sell-services", "crypto-talk"];
-const COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", "english"];
+const COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", ...LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS];
 const MARKETPLACE_CATEGORIES = [
   { label: "Electronics", href: "/category/electronics" },
   { label: "Fashion", href: "/category/fashion" },
@@ -175,7 +180,18 @@ const SELL_DEFAULT_OPEN_STATE = SELL_SIDEBAR_SECTIONS.reduce(
 const SIDEBAR_ROW_GRID_CLASS = "grid-cols-[1.75rem_minmax(0,1fr)_auto]";
 const SIDEBAR_ICON_BOX_CLASS = "grid h-7 w-7 shrink-0 place-items-center rounded-xl";
 const GUEST_PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "crypto-talk"];
-const GUEST_COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", "english"];
+const GUEST_COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", ...LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS];
+const LANGUAGE_ROOM_SET = new Set<GlobalChatRoom>(LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS);
+const LANGUAGE_ROOM_FLAG_BY_SLUG = {
+  english: Flags.GB,
+  spanish: Flags.ES,
+  polish: Flags.PL,
+  russian: Flags.RU,
+  ukrainian: Flags.UA,
+  turkish: Flags.TR,
+  romanian: Flags.RO,
+  "portuguese-br": Flags.BR,
+} as const;
 
 function firstProfile(profile: ProfileRef | ProfileRef[] | null): ProfileRef | null {
   if (!profile) return null;
@@ -393,7 +409,7 @@ export function HomepageClient() {
   const [isThreadLoading, setIsThreadLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [activeRoom, setActiveRoom] = useState<GlobalChatRoom>("english");
+  const [activeRoom, setActiveRoom] = useState<GlobalChatRoom>(DEFAULT_GLOBAL_CHAT_ROOM);
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
@@ -915,29 +931,30 @@ export function HomepageClient() {
             </svg>
           );
         case "english":
+        case "spanish":
+        case "polish":
+        case "russian":
+        case "ukrainian":
+        case "turkish":
+        case "romanian":
+        case "portuguese-br": {
+          const Flag = LANGUAGE_ROOM_FLAG_BY_SLUG[room];
           return (
-            <Image
-              src={EnglishFlag}
-              alt="English"
-              width={20}
-              height={20}
-              className={cn(iconClassName, "rounded-md")}
+            <Flag
+              aria-hidden="true"
+              className={cn(
+                "rounded-[3px] border border-[#2E3547]",
+                iconClassName.includes("h-3.5") ? "h-3.5 w-5" : "h-4 w-6"
+              )}
             />
           );
+        }
         default:
           return <Globe2 className={iconClassName} aria-hidden="true" />;
       }
     },
     [selectedCryptoData.Icon, selectedCryptoData.code]
   );
-
-  const roomBadgeBySlug = useMemo(() => {
-    return {
-      "crypto-talk": selectedCryptoData.code,
-      help: roomSlowSeconds > 0 ? "SLOW" : null,
-      english: "LANG",
-    } as const;
-  }, [roomSlowSeconds, selectedCryptoData.code]);
 
   const renderMarketplaceIcon = useCallback(
     (href: (typeof MARKETPLACE_CATEGORIES)[number]["href"]) => {
@@ -962,7 +979,16 @@ export function HomepageClient() {
   const renderRoomNavItem = useCallback(
     (room: (typeof GLOBAL_CHAT_ROOMS)[number], iconOnly = false) => {
       const isActive = room.slug === activeRoom;
-      const badge = roomBadgeBySlug[room.slug as keyof typeof roomBadgeBySlug];
+      const badge =
+        room.slug === "crypto-talk"
+          ? selectedCryptoData.code
+          : room.slug === "help"
+            ? roomSlowSeconds > 0
+              ? "SLOW"
+              : null
+            : LANGUAGE_ROOM_SET.has(room.slug)
+              ? "LANG"
+              : null;
       const isCryptoBadge = room.slug === "crypto-talk";
       const button = (
         <button
@@ -1047,7 +1073,7 @@ export function HomepageClient() {
         </Tooltip>
       );
     },
-    [activeRoom, handleSidebarRoomSelect, renderRoomIcon, roomBadgeBySlug, selectedCryptoData.color]
+    [activeRoom, handleSidebarRoomSelect, renderRoomIcon, roomSlowSeconds, selectedCryptoData.code, selectedCryptoData.color]
   );
 
   const renderMarketplaceNavItem = useCallback(
