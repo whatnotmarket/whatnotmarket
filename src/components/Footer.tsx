@@ -72,10 +72,10 @@ export function Footer() {
               <h4 className="font-bold text-white">About OpenlyMarket</h4>
               <ul className="space-y-2 text-zinc-400">
                 <li><Link href="/about" className="hover:text-white transition-colors">What is OpenlyMarket?</Link></li>
-                <li><Link href="/download" className="hover:text-white transition-colors">Download App</Link></li>
-                <li><Link href="/loyalty" className="hover:text-white transition-colors">Loyalty Program</Link></li>
-                <li><Link href="/news" className="hover:text-white transition-colors">Newsroom</Link></li>
-                <li><Link href="/reviews" className="hover:text-white transition-colors">Reviews</Link></li>
+                <li><Link href="/install" className="hover:text-white transition-colors">Download App</Link></li>
+                <li><Link href="/redeem" className="hover:text-white transition-colors">Loyalty Program</Link></li>
+                <li><Link href="/roadmap" className="hover:text-white transition-colors">Newsroom</Link></li>
+                <li><Link href="/requests" className="hover:text-white transition-colors">Reviews</Link></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
               </ul>
             </div>
@@ -97,11 +97,11 @@ export function Footer() {
             <div className="space-y-4">
               <h4 className="font-bold text-white">Help & Support</h4>
               <ul className="space-y-2 text-zinc-400">
-                <li><Link href="/help" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link href="/compatibility" className="hover:text-white transition-colors">Compatible Devices</Link></li>
-                <li><Link href="/calculator" className="hover:text-white transition-colors">Fee Calculator</Link></li>
-                <li><Link href="/support" className="hover:text-white transition-colors">Support 24/7</Link></li>
-                <li><Link href="/payments" className="hover:text-white transition-colors">Payment Methods</Link></li>
+                <li><Link href="/faq" className="hover:text-white transition-colors">Help Center</Link></li>
+                <li><Link href="/faq" className="hover:text-white transition-colors">Compatible Devices</Link></li>
+                <li><Link href="/fee-calculator" className="hover:text-white transition-colors">Fee Calculator</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Support 24/7</Link></li>
+                <li><Link href="/secure-transaction" className="hover:text-white transition-colors">Payment Methods</Link></li>
                 <li><Link href="/refund" className="hover:text-white transition-colors">Refund Policy</Link></li>
               </ul>
             </div>
@@ -110,12 +110,12 @@ export function Footer() {
             <div className="space-y-4">
               <h4 className="font-bold text-white">For Partners</h4>
               <ul className="space-y-2 text-zinc-400">
-                <li><Link href="/partners" className="hover:text-white transition-colors">Trusted Partners</Link></li>
-                <li><Link href="/media" className="hover:text-white transition-colors">Media Kit</Link></li>
+                <li><Link href="/business" className="hover:text-white transition-colors">Trusted Partners</Link></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">Media Kit</Link></li>
                 <li><Link href="/broker" className="hover:text-white transition-colors">OpenlyMarket for Business</Link></li>
-                <li><Link href="/referral" className="hover:text-white transition-colors">Referral Program</Link></li>
-                <li><Link href="/affiliate" className="hover:text-white transition-colors">Affiliate Program</Link></li>
-                <li><Link href="/api" className="hover:text-white transition-colors">API Integration</Link></li>
+                <li><Link href="/promote-listings" className="hover:text-white transition-colors">Referral Program</Link></li>
+                <li><Link href="/become-seller" className="hover:text-white transition-colors">Affiliate Program</Link></li>
+                <li><Link href="/open-source" className="hover:text-white transition-colors">API Integration</Link></li>
               </ul>
             </div>
 

@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FaviconAttention } from "@/components/FaviconAttention";
 import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
+import { SeoInternalLinks } from "@/components/SeoInternalLinks";
 import Providers from "@/components/providers";
 import AckeeTracker from "@/components/providers/AckeeTracker";
 import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
@@ -187,6 +188,7 @@ export default function RootLayout({
                 <AckeeTracker />
               </Suspense>
               {children}
+              <SeoInternalLinks />
             </div>
             <PrivacyCardWrapper />
           </Providers>

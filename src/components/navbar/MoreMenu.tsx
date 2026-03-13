@@ -41,11 +41,11 @@ export function MoreMenu() {
             onMouseLeave={() => setIsOpen(false)}
           >
             <div className="space-y-1">
-              <Link href="/blog" className="group flex w-full items-center gap-3 rounded-lg p-3 transition-colors hover:bg-white/5">
+              <Link href="/roadmap" className="group flex w-full items-center gap-3 rounded-lg p-3 transition-colors hover:bg-white/5">
                 <FileText className="h-4 w-4 text-zinc-400 group-hover:text-white" />
-                <span className="text-sm font-normal text-zinc-300 group-hover:text-white">Blog</span>
+                <span className="text-sm font-normal text-zinc-300 group-hover:text-white">Roadmap</span>
               </Link>
-              <Link href="/help" className="group flex w-full items-center gap-3 rounded-lg p-3 transition-colors hover:bg-white/5">
+              <Link href="/faq" className="group flex w-full items-center gap-3 rounded-lg p-3 transition-colors hover:bg-white/5">
                 <HelpCircle className="h-4 w-4 text-zinc-400 group-hover:text-white" />
                 <span className="text-sm font-normal text-zinc-300 group-hover:text-white">Help Center</span>
               </Link>
