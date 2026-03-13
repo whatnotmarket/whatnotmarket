@@ -1968,7 +1968,7 @@ export function HomepageClient() {
 
       <div
         className={cn(
-          "relative mx-auto flex min-h-screen w-full items-stretch gap-3 px-3 py-4 md:px-4 md:py-6",
+          "relative mx-auto flex min-h-screen w-full min-w-0 items-stretch gap-3 px-3 py-4 md:px-4 md:py-6",
           isLeftSidebarClosed ? "md:gap-0" : "md:gap-5"
         )}
       >
@@ -2000,7 +2000,7 @@ export function HomepageClient() {
         {!isChatClosed && (
           <aside
             className={cn(
-              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)] transition-[width] duration-200",
+              "flex h-[calc(100vh-3rem)] w-full flex-none flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)] transition-[width] duration-200",
               isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
             )}
           >

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import Script from "next/script";
 
 const FEATUREBASE_APP_ID = "69b30ec8f7bdc95c4df9518f";
@@ -24,12 +23,7 @@ declare global {
 }
 
 export function FeaturebaseMessenger() {
-  const pathname = usePathname();
-  const isHomepageRoute = pathname === "/";
-
   useEffect(() => {
-    if (isHomepageRoute) return;
-
     const win = window;
 
     if (typeof win.Featurebase !== "function") {
@@ -51,11 +45,28 @@ export function FeaturebaseMessenger() {
 
     win.Featurebase("boot", payload);
     win.Featurebase._booted = true;
-  }, [isHomepageRoute]);
+  }, []);
 
-  if (isHomepageRoute) {
-    return null;
-  }
+  return (
+    <Script
+      src="https://do.featurebase.app/js/sdk.js"
+      id="featurebase-sdk"
+      strategy="afterInteractive"
+      onLoad={() => {
+        const win = window;
+        if (typeof win.Featurebase !== "function") return;
+        if (win.Featurebase._booted) return;
 
-  return <Script src="https://do.featurebase.app/js/sdk.js" id="featurebase-sdk" strategy="afterInteractive" />;
+        const language = document.documentElement.lang?.split("-")[0] || "en";
+        const payload: FeaturebaseBootPayload = {
+          appId: FEATUREBASE_APP_ID,
+          theme: "dark",
+          language,
+        };
+
+        win.Featurebase("boot", payload);
+        win.Featurebase._booted = true;
+      }}
+    />
+  );
 }

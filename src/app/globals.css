@@ -213,3 +213,9 @@ html {
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+
+[id^="featurebase"],
+[class*="featurebase"],
+iframe[src*="featurebase"] {
+  z-index: 2147483647 !important;
+}
