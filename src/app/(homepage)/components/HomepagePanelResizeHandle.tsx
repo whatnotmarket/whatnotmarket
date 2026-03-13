@@ -3,15 +3,12 @@
 import { Separator as ResizableSeparator } from "react-resizable-panels";
 
 export function HomepagePanelResizeHandle({
-  id,
   onPointerDown,
 }: {
-  id: string;
   onPointerDown?: () => void;
 }) {
   return (
     <ResizableSeparator
-      id={id}
       onPointerDown={onPointerDown}
       className="group relative z-[2147483647] hidden w-3 shrink-0 cursor-col-resize touch-none overflow-visible border-0 bg-transparent outline-none ring-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0 md:flex"
       style={{ background: "transparent" }}

@@ -8,7 +8,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     return new NextResponse("IndexNow key not configured", { status: 404 });
   }
 
-  // Check if the requested file matches the key
   if (filename === `${INDEXNOW_KEY}.txt`) {
     return new NextResponse(INDEXNOW_KEY, {
       headers: {

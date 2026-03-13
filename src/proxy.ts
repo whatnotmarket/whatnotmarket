@@ -4,6 +4,14 @@ import { createServerClient } from "@supabase/ssr";
 import { verifyToken } from "@/lib/auth";
 import { getRedirectPath } from "@/lib/redirects";
 import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
+import {
+  LOCALE_COOKIE_NAME,
+  detectPreferredLocale,
+  isPathNonLocalized,
+  shouldLocalizePath,
+  stripLocaleFromPathname,
+  withLocale,
+} from "@/i18n/config";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -22,7 +30,43 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const localeInfo = stripLocaleFromPathname(pathname);
+  const pathnameWithoutLocale = localeInfo.pathname;
+
+  if (localeInfo.locale && isPathNonLocalized(pathnameWithoutLocale)) {
+    const redirectUrl = new URL(pathnameWithoutLocale, request.url);
+    const response = NextResponse.redirect(redirectUrl);
+    response.cookies.set(LOCALE_COOKIE_NAME, localeInfo.locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+    return response;
+  }
+
+  if (!localeInfo.locale && shouldLocalizePath(pathname)) {
+    const preferredLocale = detectPreferredLocale({
+      cookieLocale: request.cookies.get(LOCALE_COOKIE_NAME)?.value ?? null,
+      acceptLanguage: request.headers.get("accept-language"),
+    });
+    const redirectUrl = new URL(withLocale(pathname, preferredLocale), request.url);
+    const response = NextResponse.redirect(redirectUrl);
+    response.cookies.set(LOCALE_COOKIE_NAME, preferredLocale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+    return response;
+  }
+
   const supabaseResponse = NextResponse.next({ request });
+  if (localeInfo.locale) {
+    supabaseResponse.cookies.set(LOCALE_COOKIE_NAME, localeInfo.locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

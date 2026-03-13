@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Inter } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FaviconAttention } from "@/components/FaviconAttention";
@@ -12,10 +13,10 @@ import AckeeTracker from "@/components/providers/AckeeTracker";
 import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "./globals.css";
-import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
 import { SITE_URL } from "@/lib/site-config";
 import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 import { cn } from "@/lib/utils";
+import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/i18n/config";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -156,21 +157,24 @@ const structuredData = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const htmlLocale = normalizeLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value ?? null);
+
   return (
     <html
-      lang={ORIGINAL_LANGUAGE.code}
+      lang={htmlLocale}
       translate="no"
-      className={cn("dark notranslate", "font-sans", geist.variable)}
+      className={cn("dark notranslate overflow-x-hidden overflow-y-auto", "font-sans", geist.variable)}
       style={{ colorScheme: "dark" }}
       suppressHydrationWarning
     >
       <body
-        className={`${inter.variable} ${inter.className} notranslate antialiased bg-black text-white flex h-full min-h-0 flex-col overflow-hidden`}
+        className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased bg-black text-white`}
         suppressHydrationWarning
       >
         <Script
@@ -183,7 +187,7 @@ export default function RootLayout({
 
         <PostHogProvider>
           <Providers>
-            <div id="app-root-shell" className="flex-1 min-h-0 bg-black overflow-hidden">
+            <div id="app-root-shell" className="bg-black overflow-visible">
               <Suspense fallback={null}>
                 <AckeeTracker />
               </Suspense>

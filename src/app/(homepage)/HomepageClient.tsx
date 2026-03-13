@@ -790,6 +790,26 @@ export function HomepageClient() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.host.toLowerCase() !== "localhost:3000") return;
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const appRootShell = document.getElementById("app-root-shell");
+    const previousAppRootOverflow = appRootShell?.style.overflow ?? "";
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    if (appRootShell) appRootShell.style.overflow = "hidden";
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      if (appRootShell) appRootShell.style.overflow = previousAppRootOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isMobileSidebarOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -2280,7 +2300,9 @@ export function HomepageClient() {
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="h-screen h-dvh min-h-0 overflow-hidden bg-[#101219] text-[var(--global-chat-text-primary)]">
+      <div
+        className="h-screen h-dvh min-h-0 overflow-hidden bg-[#101219] text-[var(--global-chat-text-primary)]"
+      >
       <AnimatePresence>
         {isMobileSidebarOpen ? (
           <HomepageMobileSidebar
@@ -2318,7 +2340,6 @@ export function HomepageClient() {
         )}
       >
         <Group
-          id="homepage-panel-group"
           groupRef={panelGroupRef}
           orientation="horizontal"
           defaultLayout={HOMEPAGE_LAYOUT_DEFAULT}
@@ -2357,7 +2378,7 @@ export function HomepageClient() {
             </Panel>
           ) : null}
 
-          {!isMobile ? <HomepagePanelResizeHandle id="homepage-separator-left" /> : null}
+          {!isMobile ? <HomepagePanelResizeHandle /> : null}
 
           {!isMobile ? (
             <Panel id="homepage-center" minSize="34%" className="min-h-0 min-w-0 overflow-hidden">
@@ -2373,7 +2394,6 @@ export function HomepageClient() {
 
           {!isMobile ? (
             <HomepagePanelResizeHandle
-              id="homepage-separator-right"
               onPointerDown={handleRightSeparatorPointerDown}
             />
           ) : null}

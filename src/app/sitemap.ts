@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { SITE_URL } from "@/lib/site-config";
 import { PUBLIC_CATEGORY_PRODUCT_PATHS, PUBLIC_CATEGORY_SLUGS } from "@/lib/public-catalog";
+import { SUPPORTED_LOCALES } from "@/i18n/config";
+import { localizedPath } from "@/i18n/seo";
 
 export const revalidate = 3600; // Revalidate sitemap every hour
 
@@ -34,7 +36,18 @@ function cleanHandle(handle: string) {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = DEFAULT_LAST_MODIFIED;
+  const localizedCoreRoutes = ["/", "/market"] as const;
+  const localizedRoutes: MetadataRoute.Sitemap = localizedCoreRoutes.flatMap((route) =>
+    SUPPORTED_LOCALES.map((locale) => ({
+      url: `${BASE_URL}${localizedPath(locale, route)}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: route === "/" ? 0.95 : 0.85,
+    }))
+  );
+
   const staticRoutes: MetadataRoute.Sitemap = [
+    ...localizedRoutes,
     {
       url: `${BASE_URL}`,
       lastModified: now,
