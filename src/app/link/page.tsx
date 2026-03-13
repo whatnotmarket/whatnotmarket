@@ -6,11 +6,14 @@ import profileImage from "@/pumpfunlogo/NFT-OPNLY.png";
 import { ArrowRight } from "lucide-react";
 import * as motion from "framer-motion/client";
 import { cn } from "@/lib/utils";
+import { buildIndexableMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "OpenlyMarket Links",
-  description: "All official links for OpenlyMarket - The Decentralized Marketplace on Solana.",
-};
+export const metadata: Metadata = buildIndexableMetadata({
+  title: "Official OpenlyMarket Links, Community, and Resources",
+  description:
+    "Access all official OpenlyMarket links, community channels, marketplace resources, and support pages from a single verified destination.",
+  path: "/link",
+});
 
 type LinkItem = {
   title: string;

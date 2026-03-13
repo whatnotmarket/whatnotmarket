@@ -13,7 +13,7 @@ export function AnnouncementBar() {
       <div className="absolute inset-0 z-0 h-10 w-full bg-black">
         <Image
           src="/notifiche.svg"
-          alt=""
+          alt="Announcement background"
           fill
           className="object-cover opacity-100"
           priority

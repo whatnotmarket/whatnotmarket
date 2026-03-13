@@ -456,7 +456,7 @@ export default function ChatPage() {
     >
         <div className="relative shrink-0">
           <Avatar className="h-12 w-12 border border-white/10 shadow-sm transition-transform group-hover:scale-105">
-            <AvatarImage src={chat.avatarUrl || undefined} />
+            <AvatarImage src={chat.avatarUrl || undefined} alt={chat.name} />
             <AvatarFallback className="bg-zinc-800 text-zinc-400 font-bold">
               {chat.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>
@@ -561,7 +561,7 @@ export default function ChatPage() {
                                                     className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg transition-colors text-left"
                                                 >
                                                     <Avatar className="h-10 w-10 border border-white/10">
-                                                        <AvatarImage src={u.avatar_url || undefined} />
+                                                        <AvatarImage src={u.avatar_url || undefined} alt={u.full_name || u.username || "User avatar"} />
                                                         <AvatarFallback>{(u.full_name || u.username || '?').substring(0, 2).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1 overflow-hidden">

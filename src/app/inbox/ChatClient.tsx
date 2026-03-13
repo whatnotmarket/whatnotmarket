@@ -331,7 +331,7 @@ export function ChatClient({ copy }: { copy: CopyMap }) {
                   >
                     <div className="relative">
                         <Avatar>
-                        <AvatarImage src={chat.avatarUrl || undefined} />
+                        <AvatarImage src={chat.avatarUrl || undefined} alt={chat.name} />
                         <AvatarFallback>{chat.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         {chat.unreadCount > 0 && (

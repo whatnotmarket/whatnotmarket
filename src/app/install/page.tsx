@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { InstallClient } from "@/components/install/InstallClient";
 
 export const metadata: Metadata = {
-  title: "Installa l'app | OpenlyMarket",
+  title: "Install OpenlyMarket App on iPhone and Android",
   description:
-    "Guida rapida per installare la PWA su iPhone e Android. Apri da telefono per un'installazione ottimizzata.",
+    "Follow the official OpenlyMarket installation guide to add the app on iPhone and Android with the best PWA setup and home-screen experience.",
   robots: {
     index: false,
     follow: true,

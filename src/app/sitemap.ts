@@ -72,12 +72,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${BASE_URL}/escrow`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
       url: `${BASE_URL}/become-seller`,
       lastModified: now,
       changeFrequency: "monthly",
@@ -85,6 +79,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${BASE_URL}/become-escrow`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/broker`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/business`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
@@ -118,6 +124,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
+    },
+    {
+      url: `${BASE_URL}/requests`,
+      lastModified: now,
+      changeFrequency: "hourly",
+      priority: 0.6,
     },
     {
       url: `${BASE_URL}/privacy`,

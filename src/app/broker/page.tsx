@@ -23,19 +23,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { buildIndexableMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Escrow for Brokers | OpenlyMarket",
+export const metadata: Metadata = buildIndexableMetadata({
+  title: "Escrow Infrastructure for Brokers and Intermediaries",
   description:
-    "Manage secure broker transactions between buyers and sellers with protected commissions, transparent escrow flow, and trusted infrastructure.",
-  openGraph: {
-    title: "Escrow for Brokers | OpenlyMarket",
-    description:
-      "A premium escrow solution for brokers managing buyer-seller deals with secure commission distribution.",
-    type: "website",
-    url: "/broker",
-  },
-};
+    "Manage broker-led transactions between buyers and sellers with protected commissions, transparent escrow flows, and infrastructure designed for reliable deal execution.",
+  path: "/broker",
+});
 
 const sectionClass =
   "rounded-[28px] border border-white/10 bg-[#111214] p-5 md:p-8 shadow-[0_14px_50px_rgba(0,0,0,0.32)]";

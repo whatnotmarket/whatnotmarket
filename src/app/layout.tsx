@@ -13,6 +13,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "./globals.css";
 import { ORIGINAL_LANGUAGE } from "@/lib/language-policy";
 import { SITE_URL } from "@/lib/site-config";
+import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
@@ -28,11 +29,45 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "OpenlyMarket",
-  description: "Secure buyer/seller marketplace.",
+  title: {
+    default: "OpenlyMarket | Secure Crypto Marketplace for Buyers and Sellers",
+    template: "%s | OpenlyMarket",
+  },
+  description: DEFAULT_SEO_DESCRIPTION,
   creator: "openlymarket.xyz",
   publisher: "openlymarket.xyz",
   metadataBase: new URL(SITE_URL),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  openGraph: {
+    title: "OpenlyMarket | Secure Crypto Marketplace for Buyers and Sellers",
+    description: DEFAULT_SEO_DESCRIPTION,
+    url: SITE_URL,
+    siteName: "OpenlyMarket",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logowhite.svg",
+        alt: "OpenlyMarket",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OpenlyMarket | Secure Crypto Marketplace for Buyers and Sellers",
+    description: DEFAULT_SEO_DESCRIPTION,
+    images: ["/logowhite.svg"],
+  },
   manifest: "/manifest.json",
   icons: {
     icon: [

@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
 import { FeeCalculatorClient } from "./FeeCalculatorClient";
+import { buildIndexableMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Escrow Fee Calculator | OpenlyMarket",
+export const metadata: Metadata = buildIndexableMetadata({
+  title: "Escrow Fee Calculator for Crypto and Marketplace Deals",
   description:
-    "Calculate escrow fees instantly with transparent pricing for standard and concierge transactions, including payment method costs and competitor comparisons.",
-  openGraph: {
-    title: "Escrow Fee Calculator | OpenlyMarket",
-    description:
-      "Estimate escrow pricing in seconds with transparent fee tiers, payment method breakdowns, and high-value transaction support.",
-    type: "website",
-    url: "/fee-calculator",
-  },
-};
+    "Calculate escrow costs instantly with transparent pricing for standard and concierge transactions, payment method adjustments, and high-value deal scenarios.",
+  path: "/fee-calculator",
+});
 
 export default function FeeCalculatorPage() {
   return <FeeCalculatorClient />;
