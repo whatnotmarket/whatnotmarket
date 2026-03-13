@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   BarChart3,
   Briefcase,
-  ChevronDown,
   ClipboardList,
   Cpu,
   Gem,
@@ -18,7 +17,6 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogIn,
-  Menu,
   Package,
   Reply,
   Shirt,
@@ -40,91 +38,26 @@ import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import EnglishFlag from "@/flag/english.png";
 import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { GlobalChatMobileSidebar } from "./components/GlobalChatMobileSidebar";
+import { GlobalChatDesktopSidebar } from "./components/GlobalChatDesktopSidebar";
+import { GlobalChatCenterPanel } from "./components/GlobalChatCenterPanel";
+import { GlobalChatChatHeader } from "./components/GlobalChatChatHeader";
+import type {
+  GlobalChatMessage,
+  GlobalChatRow,
+  MentionContext,
+  MentionableUser,
+  PostChatResponse,
+  PresencePayload,
+  ProfileRef,
+  SidebarMode,
+  SellSidebarSection,
+  SellSidebarSectionKey,
+} from "./types";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
 const LEGACY_MESSAGE_SELECT = `id,user_id,room,message,created_at,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
-
-type ProfileRef = {
-  username: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
-  created_at: string | null;
-  role_preference: "buyer" | "seller" | "both" | null;
-  seller_status: string | null;
-};
-
-type GlobalChatRow = {
-  id: string;
-  user_id: string;
-  room: string;
-  message: string;
-  created_at: string;
-  reply_to_id?: string | null;
-  mentioned_handles?: string[] | null;
-  profiles: ProfileRef | ProfileRef[] | null;
-};
-
-type GlobalChatMessage = {
-  id: string;
-  userId: string;
-  room: string;
-  text: string;
-  createdAt: string;
-  displayName: string;
-  handle: string;
-  avatarUrl: string | null;
-  memberSince: string | null;
-  isSeller: boolean;
-  isBuyer: boolean;
-  replyToId: string | null;
-  mentionedHandles: string[];
-};
-
-type PostChatResponse =
-  | {
-      ok: true;
-      data: {
-        id: string;
-        user_id: string;
-        room: string;
-        message: string;
-        created_at: string;
-        reply_to_id: string | null;
-        mentioned_handles: string[] | null;
-      };
-    }
-  | { ok: false; code: string; message: string };
-
-type MentionContext = {
-  query: string;
-  start: number;
-  end: number;
-};
-
-type MentionableUser = {
-  userId: string;
-  displayName: string;
-  handle: string;
-  avatarUrl: string | null;
-  memberSince: string | null;
-  isSeller: boolean;
-  isBuyer: boolean;
-};
-
-type PresencePayload = {
-  userId?: string;
-  username?: string | null;
-  fullName?: string | null;
-  avatarUrl?: string | null;
-  memberSince?: string | null;
-  rolePreference?: "buyer" | "seller" | "both" | null;
-  sellerStatus?: string | null;
-  isSeller?: boolean;
-  isBuyer?: boolean;
-};
-
-type SidebarMode = "buy" | "sell";
 
 const LEFT_SIDEBAR_CLOSED_STORAGE_KEY = "global_chat_left_sidebar_closed";
 const CHAT_EXPANDED_STORAGE_KEY = "global_chat_expanded";
@@ -174,8 +107,6 @@ const SELL_SIDEBAR_SECTIONS = [
     tabs: ["Revenue", "Conversion", "Top Listings", "Buyer Insights"],
   },
 ] as const;
-type SellSidebarSection = (typeof SELL_SIDEBAR_SECTIONS)[number];
-type SellSidebarSectionKey = SellSidebarSection["key"];
 
 function toSidebarSlug(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -443,7 +374,7 @@ export function GlobalChatClient() {
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const roomMenuRef = useRef<HTMLDivElement>(null);
+  const roomMenuRef = useRef<HTMLDivElement | null>(null);
   const isLoggedIn = Boolean(user);
   const canWrite = useMemo(() => {
     if (!user) return false;
@@ -850,7 +781,6 @@ export function GlobalChatClient() {
 
       return (
         <button
-          key={tabId}
           type="button"
           onClick={() => {
             if (isLocked) {
@@ -976,9 +906,11 @@ export function GlobalChatClient() {
                 </button>
                 {isOpen ? (
                   <div className="mt-1 space-y-1 px-1.5 pb-1.5">
-                    {section.tabs.map((tabLabel) =>
-                      renderSellTabItem(section, tabLabel, closeMobileOnClick)
-                    )}
+                    {section.tabs.map((tabLabel) => (
+                      <Fragment key={getSellTabId(section.key, tabLabel)}>
+                        {renderSellTabItem(section, tabLabel, closeMobileOnClick)}
+                      </Fragment>
+                    ))}
                   </div>
                 ) : null}
               </div>
@@ -2006,159 +1938,31 @@ export function GlobalChatClient() {
       <div className="min-h-screen bg-[#101219] text-[var(--global-chat-text-primary)]">
       <AnimatePresence>
         {isMobileSidebarOpen ? (
-          <>
-            <motion.button
-              type="button"
-              aria-label="Close chat sidebar"
-              className="fixed inset-0 z-40 bg-[#09071f]/70 backdrop-blur-[2px] md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileSidebarOpen(false)}
-            />
-            <motion.aside
-              className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.65)] md:hidden"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-                    Global Chat
-                  </p>
-                  <p className="text-sm font-extrabold text-white">{activeRoomLabel}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-                  aria-label="Close mobile sidebar"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSidebarMode("buy")}
-                  aria-pressed={sidebarMode === "buy"}
-                  className={cn(
-                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                    sidebarMode === "buy"
-                      ? "border border-[#2E3547] bg-[#212533]"
-                      : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
-                  )}
-                >
-                  Buy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSidebarMode("sell")}
-                  aria-pressed={sidebarMode === "sell"}
-                  className={cn(
-                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                    sidebarMode === "sell"
-                      ? "border border-[#2E3547] bg-[#212533]"
-                      : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
-                  )}
-                >
-                  Sell
-                </button>
-              </div>
-
-              {sidebarMode === "buy" ? (
-                <div className="space-y-2.5">
-                  <div
-                    className={cn(
-                      isMarketplaceSectionOpen
-                        ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]"
-                        : ""
-                    )}
-                  >
-                    <button
-                      type="button"
-                      className={cn(
-                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                        SIDEBAR_ROW_GRID_CLASS,
-                        "bg-[#212533]",
-                        !isMarketplaceSectionOpen ? "border border-[#2E3547]" : ""
-                      )}
-                      onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
-                      aria-expanded={isMarketplaceSectionOpen}
-                    >
-                      <span className="grid h-7 w-7 place-items-center text-white">
-                        <Store className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="min-w-0 truncate">Marketplace</span>
-                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
-                        <SectionChevron open={isMarketplaceSectionOpen} />
-                      </span>
-                    </button>
-                    {isMarketplaceSectionOpen ? (
-                      <div className="mt-1 space-y-1 px-1.5 pb-1.5">
-                        {MARKETPLACE_CATEGORIES.map((category) =>
-                          renderMarketplaceNavItem(category, true)
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div
-                    className={cn(
-                      isRoomsSectionOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : ""
-                    )}
-                  >
-                    <button
-                      type="button"
-                      className={cn(
-                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                        SIDEBAR_ROW_GRID_CLASS,
-                        "bg-[#212533]",
-                        !isRoomsSectionOpen ? "border border-[#2E3547]" : ""
-                      )}
-                      onClick={() =>
-                        setIsRoomsSectionOpen((prev) => {
-                          const next = !prev;
-                          if (next) setIsCommunitySectionOpen(false);
-                          return next;
-                        })
-                      }
-                      aria-expanded={isRoomsSectionOpen}
-                    >
-                      <span className="grid h-7 w-7 place-items-center text-white">
-                        <Globe2 className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="min-w-0 truncate">Trading Rooms</span>
-                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
-                        <SectionChevron open={isRoomsSectionOpen} />
-                      </span>
-                    </button>
-                    {isRoomsSectionOpen ? (
-                      <div className="mt-1 space-y-1 px-1.5 pb-1.5">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
-                    ) : null}
-                  </div>
-
-                </div>
-              ) : (
-                renderSellSections(true)
-              )}
-
-              <div className="mt-3 rounded-[22px] border border-[#2E3547] bg-[#161923] p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-zinc-400">
-                  Live Activity
-                </p>
-                <p className="mt-1 text-sm font-bold text-white">
-                  Online: {displayOnlineCount.toLocaleString("en-US")}
-                </p>
-                <p className="mt-1 text-xs text-zinc-400">
-                  Threads: {topLevelMessages.length.toLocaleString("en-US")}
-                </p>
-              </div>
-            </motion.aside>
-          </>
+          <GlobalChatMobileSidebar
+            isOpen={isMobileSidebarOpen}
+            onClose={() => setIsMobileSidebarOpen(false)}
+            activeRoomLabel={activeRoomLabel}
+            sidebarMode={sidebarMode}
+            onSidebarModeChange={setSidebarMode}
+            isMarketplaceSectionOpen={isMarketplaceSectionOpen}
+            onToggleMarketplaceSection={() => setIsMarketplaceSectionOpen((prev) => !prev)}
+            isRoomsSectionOpen={isRoomsSectionOpen}
+            onToggleRoomsSection={() =>
+              setIsRoomsSectionOpen((prev) => {
+                const next = !prev;
+                if (next) setIsCommunitySectionOpen(false);
+                return next;
+              })
+            }
+            primaryRooms={primaryRooms}
+            marketplaceCategories={MARKETPLACE_CATEGORIES}
+            renderMarketplaceNavItem={renderMarketplaceNavItem}
+            renderRoomNavItem={renderRoomNavItem}
+            renderSellSections={renderSellSections}
+            displayOnlineCount={displayOnlineCount}
+            threadCount={topLevelMessages.length}
+            sidebarRowGridClass={SIDEBAR_ROW_GRID_CLASS}
+          />
         ) : null}
       </AnimatePresence>
 
@@ -2168,178 +1972,30 @@ export function GlobalChatClient() {
           isLeftSidebarClosed ? "md:gap-0" : "md:gap-5"
         )}
       >
-        <motion.aside
-          initial={false}
-          animate={{
-            width: isLeftSidebarClosed ? 0 : 264,
-            opacity: isLeftSidebarClosed ? 0 : 1,
-          }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="relative hidden shrink-0 overflow-hidden md:sticky md:top-6 md:block md:h-[calc(100vh-3rem)]"
-          aria-hidden={isLeftSidebarClosed}
-        >
-          <motion.div
-            initial={false}
-            animate={{
-              x: isLeftSidebarClosed ? -36 : 0,
-              opacity: isLeftSidebarClosed ? 0 : 1,
-            }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={cn(
-              "flex h-full w-[264px] flex-col rounded-[30px] border border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.55)]",
-              isLeftSidebarClosed ? "pointer-events-none" : ""
-            )}
-          >
-              <div className="mb-3 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsLeftSidebarClosed(true)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-                  aria-label="Collapse left sidebar"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4 rotate-180 text-white"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path d="M10 22.5H18.5C20.7091 22.5 22.5 20.7091 22.5 18.5V5.5C22.5 3.29086 20.7091 1.5 18.5 1.5H10V22.5Z" fill="currentColor" />
-                    <path d="M8 1.5H5.5C3.29086 1.5 1.5 3.29086 1.5 5.5V18.5C1.5 20.7091 3.29086 22.5 5.5 22.5H8V1.5Z" fill="currentColor" />
-                  </svg>
-                </button>
-              </div>
+        <GlobalChatDesktopSidebar
+          isLeftSidebarClosed={isLeftSidebarClosed}
+          onCollapse={() => setIsLeftSidebarClosed(true)}
+          sidebarMode={sidebarMode}
+          onSidebarModeChange={setSidebarMode}
+          isMarketplaceSectionOpen={isMarketplaceSectionOpen}
+          onToggleMarketplaceSection={() => setIsMarketplaceSectionOpen((prev) => !prev)}
+          isRoomsSectionOpen={isRoomsSectionOpen}
+          onToggleRoomsSection={() => setIsRoomsSectionOpen((prev) => !prev)}
+          primaryRooms={primaryRooms}
+          marketplaceCategories={MARKETPLACE_CATEGORIES}
+          renderMarketplaceNavItem={renderMarketplaceNavItem}
+          renderRoomNavItem={renderRoomNavItem}
+          renderSellSections={renderSellSections}
+          displayOnlineCount={displayOnlineCount}
+          threadCount={topLevelMessages.length}
+          sidebarRowGridClass={SIDEBAR_ROW_GRID_CLASS}
+        />
 
-              <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
-                <div className="mb-3 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSidebarMode("buy")}
-                    aria-pressed={sidebarMode === "buy"}
-                    className={cn(
-                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                      sidebarMode === "buy"
-                        ? "border border-[#2E3547] bg-[#212533]"
-                        : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
-                    )}
-                  >
-                    Buy
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSidebarMode("sell")}
-                    aria-pressed={sidebarMode === "sell"}
-                    className={cn(
-                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                      sidebarMode === "sell"
-                        ? "border border-[#2E3547] bg-[#212533]"
-                        : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
-                    )}
-                  >
-                    Sell
-                  </button>
-                </div>
-
-                {sidebarMode === "buy" ? (
-                  <div className="space-y-2.5">
-                    <div
-                      className={cn(
-                        isMarketplaceSectionOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : ""
-                      )}
-                    >
-                      <button
-                        type="button"
-                        className={cn(
-                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                          SIDEBAR_ROW_GRID_CLASS,
-                          "bg-[#212533]",
-                          !isMarketplaceSectionOpen ? "border border-[#2E3547]" : ""
-                        )}
-                        onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
-                        aria-expanded={isMarketplaceSectionOpen}
-                      >
-                        <span className="grid h-7 w-7 place-items-center text-white">
-                          <Store className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 truncate">Marketplace</span>
-                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
-                          <SectionChevron open={isMarketplaceSectionOpen} />
-                        </span>
-                      </button>
-                      {isMarketplaceSectionOpen ? (
-                        <div className="mt-1 space-y-1 px-1.5 pb-1.5">
-                          {MARKETPLACE_CATEGORIES.map((category) => renderMarketplaceNavItem(category))}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div
-                      className={cn(
-                        isRoomsSectionOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : ""
-                      )}
-                    >
-                      <button
-                        type="button"
-                        className={cn(
-                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
-                          SIDEBAR_ROW_GRID_CLASS,
-                          "bg-[#212533]",
-                          !isRoomsSectionOpen ? "border border-[#2E3547]" : ""
-                        )}
-                        onClick={() => setIsRoomsSectionOpen((prev) => !prev)}
-                        aria-expanded={isRoomsSectionOpen}
-                      >
-                        <span className="grid h-7 w-7 place-items-center text-white">
-                          <Globe2 className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 truncate">Trading Rooms</span>
-                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
-                          <SectionChevron open={isRoomsSectionOpen} />
-                        </span>
-                      </button>
-                      {isRoomsSectionOpen ? (
-                        <div className="mt-1 space-y-1 px-1.5 pb-1.5">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : (
-                  renderSellSections()
-                )}
-              </div>
-
-              <div className="mt-auto rounded-[22px] border border-[#2E3547] bg-[#161923] p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-zinc-400">Live Activity</p>
-                <p className="mt-1 text-sm font-bold text-white">Online: {displayOnlineCount.toLocaleString("en-US")}</p>
-                <p className="mt-1 text-xs text-zinc-400">Threads: {topLevelMessages.length.toLocaleString("en-US")}</p>
-              </div>
-            </motion.div>
-        </motion.aside>
-
-        <div className={cn("relative hidden flex-1 md:block", isLeftSidebarClosed ? "md:-ml-1" : "")}>
-          <div className="h-[calc(100vh-3rem)] rounded-[30px] border border-[#2E3547] bg-[#161923]" />
-          {isLeftSidebarClosed ? (
-            <button
-              type="button"
-              onClick={() => setIsLeftSidebarClosed(false)}
-              aria-label="Expand left sidebar"
-              className="absolute left-6 top-6 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4 text-white"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path d="M10 22.5H18.5C20.7091 22.5 22.5 20.7091 22.5 18.5V5.5C22.5 3.29086 20.7091 1.5 18.5 1.5H10V22.5Z" fill="currentColor" />
-                <path d="M8 1.5H5.5C3.29086 1.5 1.5 3.29086 1.5 5.5V18.5C1.5 20.7091 3.29086 22.5 5.5 22.5H8V1.5Z" fill="currentColor" />
-              </svg>
-            </button>
-          ) : null}
-          <div className="absolute left-1/2 top-6 z-20 w-[min(760px,calc(100%-4rem))] -translate-x-1/2">
-            <GlobalCommandSearch className="w-full max-w-none" />
-          </div>
-        </div>
+        <GlobalChatCenterPanel
+          isLeftSidebarClosed={isLeftSidebarClosed}
+          onExpandSidebar={() => setIsLeftSidebarClosed(false)}
+          renderCommandSearch={() => <GlobalCommandSearch className="w-full max-w-none" />}
+        />
 
         {!isChatClosed && (
           <aside
@@ -2348,112 +2004,21 @@ export function GlobalChatClient() {
               isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
             )}
           >
-          <div className="flex items-center justify-between gap-3 px-4 py-4">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                aria-label="Open room sidebar"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] md:hidden"
-              >
-                <Menu className="h-4 w-4" />
-              </button>
-
-              <div className="relative" ref={roomMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsRoomMenuOpen((prev) => !prev)}
-                  className="inline-flex h-9 min-w-[144px] items-center justify-between rounded-2xl border border-[#2E3547] bg-[#212533] px-3 text-left text-sm font-semibold text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-                  aria-haspopup="listbox"
-                  aria-expanded={isRoomMenuOpen}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="grid h-6 w-6 place-items-center text-white">
-                      {renderRoomIcon(activeRoom, "h-3.5 w-3.5")}
-                    </span>
-                    <span>{activeRoomLabel}</span>
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "ml-2 h-4 w-4 text-white transition-transform",
-                      isRoomMenuOpen ? "rotate-180" : ""
-                    )}
-                  />
-                </button>
-
-                {isRoomMenuOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[210px] overflow-hidden rounded-2xl border border-[#2E3547] bg-[#212533] p-2 shadow-none">
-                    <ul role="listbox" aria-label="Chat rooms" className="space-y-1">
-                      {GLOBAL_CHAT_ROOMS.map((room) => {
-                        const isActive = room.slug === activeRoom;
-                        return (
-                          <li key={room.slug}>
-                            <button
-                              type="button"
-                              role="option"
-                              aria-selected={isActive}
-                              onClick={() => handleRoomChange(room.slug)}
-                              className={cn(
-                                "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-1 focus-visible:ring-offset-[#212533]",
-                                isActive
-                                  ? "bg-[#161923] text-white"
-                                  : "text-white hover:bg-[#2E3547]"
-                              )}
-                            >
-                              <span
-                                className="grid h-6 w-6 shrink-0 place-items-center text-white"
-                              >
-                                {renderRoomIcon(room.slug, "h-3.5 w-3.5")}
-                              </span>
-                              <span className="text-sm font-semibold">{room.label}</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsChatExpanded((prev) => !prev)}
-                aria-label={isChatExpanded ? "Shrink chat width" : "Stretch chat width"}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-              >
-                <svg className={cn("h-6 w-6 transition-transform", !isChatExpanded ? "rotate-180" : "")} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g stroke="#fff" strokeLinecap="round" strokeWidth="2">
-                    <path d="M18 16V8" />
-                    <path d="M5 12h8" />
-                    <path d="M10.1538 7.84619 13.8461 11.8462 10.1538 15.8462" />
-                  </g>
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsRulesOpen(true)}
-                aria-label="Open chat rules"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-              >
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-                  <g transform="translate(-414 -101)">
-                    <path d="M418,101 C415.791,101 414,102.791 414,105 L414,126 C414,128.209 415.885,129.313 418,130 L429,133 L429,104 C423.988,102.656 418,101 418,101 L418,101 Z M442,101 C442,101 436.212,102.594 430.951,104 L431,104 L431,133 C436.617,131.501 442,130 442,130 C444.053,129.469 446,128.209 446,126 L446,105 C446,102.791 444.209,101 442,101 L442,101 Z"></path>
-                  </g>
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsChatClosed(true)}
-                aria-label="Close chat"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-          </div>
+          <GlobalChatChatHeader
+            onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+            roomMenuRef={roomMenuRef}
+            isRoomMenuOpen={isRoomMenuOpen}
+            onToggleRoomMenu={() => setIsRoomMenuOpen((prev) => !prev)}
+            activeRoom={activeRoom}
+            activeRoomLabel={activeRoomLabel}
+            rooms={GLOBAL_CHAT_ROOMS}
+            onRoomChange={handleRoomChange}
+            renderRoomIcon={renderRoomIcon}
+            isChatExpanded={isChatExpanded}
+            onToggleChatExpanded={() => setIsChatExpanded((prev) => !prev)}
+            onOpenRules={() => setIsRulesOpen(true)}
+            onCloseChat={() => setIsChatClosed(true)}
+          />
 
           <div ref={listRef} className="relative flex-1 space-y-2 overflow-y-auto no-scrollbar px-3 py-3">
             {showScrollToLatest ? (
