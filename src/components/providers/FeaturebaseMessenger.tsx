@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Script from "next/script";
 
 const FEATUREBASE_APP_ID = "69b30ec8f7bdc95c4df9518f";
@@ -23,7 +24,12 @@ declare global {
 }
 
 export function FeaturebaseMessenger() {
+  const pathname = usePathname();
+  const isGlobalChatRoute = pathname === "/global-chat";
+
   useEffect(() => {
+    if (isGlobalChatRoute) return;
+
     const win = window;
 
     if (typeof win.Featurebase !== "function") {
@@ -45,8 +51,11 @@ export function FeaturebaseMessenger() {
 
     win.Featurebase("boot", payload);
     win.Featurebase._booted = true;
-  }, []);
+  }, [isGlobalChatRoute]);
+
+  if (isGlobalChatRoute) {
+    return null;
+  }
 
   return <Script src="https://do.featurebase.app/js/sdk.js" id="featurebase-sdk" strategy="afterInteractive" />;
 }
-

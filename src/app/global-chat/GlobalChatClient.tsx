@@ -20,8 +20,6 @@ import {
   LogIn,
   Menu,
   Package,
-  PanelLeftClose,
-  PanelLeftOpen,
   Reply,
   Shirt,
   Store,
@@ -40,7 +38,6 @@ import { GLOBAL_CHAT_ROOMS, type GlobalChatRoom } from "@/lib/chat/global-chat-c
 import Image from "next/image";
 import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import EnglishFlag from "@/flag/english.png";
-import { Squircle } from "@/components/ui/Squircle";
 import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -484,7 +481,8 @@ export function GlobalChatClient() {
   useEffect(() => {
     try {
       setIsLeftSidebarClosed(localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1");
-      setIsChatExpanded(localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY) === "1");
+      const storedChatExpanded = localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY);
+      setIsChatExpanded(storedChatExpanded === "1");
     } catch {
       setIsLeftSidebarClosed(false);
       setIsChatExpanded(false);
@@ -665,30 +663,30 @@ export function GlobalChatClient() {
           aria-label={iconOnly ? room.label : undefined}
           className={cn(
             "group rounded-2xl border text-left transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
             iconOnly
               ? "mx-auto flex h-10 w-10 items-center justify-center rounded-xl border p-0"
               : cn("grid h-10 items-center gap-2.5 border-transparent px-3", SIDEBAR_ROW_GRID_CLASS),
             iconOnly
               ? isActive
-                ? "border-[#7d72cb]/80 bg-[#4f4798]/58 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]"
-                : "border-[#474182]/65 bg-[#29245b]/68 text-[#ddd7ff] hover:border-[#6c62b4]/75 hover:bg-[#3a336f] hover:text-white"
+                ? "border-[#2E3547] bg-[#212533] text-white"
+                : "border-[#2E3547] bg-[#161923] text-white hover:bg-[#2E3547] hover:text-white"
               : isActive
-                ? "w-full border-[#8a7fd5]/70 bg-[#766bbf]/62 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
-                : "w-full text-[#e2dcff] hover:border-[#8a7fd5]/65 hover:bg-[#766bbf]/50 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                ? "w-full border-[#2E3547] bg-[#212533] text-white"
+                : "w-full text-white hover:border-[#2E3547] hover:bg-[#2E3547] hover:text-white"
           )}
         >
           <span
             className={cn(
-              "text-[#dbd5ff]",
-              iconOnly ? "grid h-4 w-4 shrink-0 place-items-center" : cn(SIDEBAR_ICON_BOX_CLASS, "bg-[#262050]"),
+              "text-white",
+              iconOnly ? "grid h-4 w-4 shrink-0 place-items-center" : "grid h-7 w-7 shrink-0 place-items-center",
               iconOnly
                 ? isActive
                   ? "text-white"
-                  : "text-[#cec8f3] group-hover:text-white"
+                  : "text-white group-hover:text-white"
                 : isActive
-                  ? "bg-[#8f84dc]/75 text-white"
-                  : "group-hover:bg-[#8f84dc]/60 group-hover:text-white"
+                  ? "text-white"
+                  : "group-hover:text-white"
             )}
           >
             {renderRoomIcon(room.slug)}
@@ -698,7 +696,7 @@ export function GlobalChatClient() {
             <>
               <span className="truncate text-sm font-semibold">{room.label}</span>
               {badge ? (
-                <span className="ml-auto rounded-full border border-[#5f58a8] bg-[#211c47] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#d8d2ff]">
+                <span className="ml-auto rounded-full border border-[#2E3547] bg-[#161923] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white">
                   {badge}
                 </span>
               ) : (
@@ -742,19 +740,19 @@ export function GlobalChatClient() {
           className={cn(
             "group grid h-10 w-full items-center gap-2.5 rounded-2xl border px-3 text-left transition-all duration-200",
             SIDEBAR_ROW_GRID_CLASS,
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
             isActive
-              ? "border-[#8a7fd5]/70 bg-[#766bbf]/62 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
-              : "border-transparent text-[#e2dcff] hover:border-[#8a7fd5]/65 hover:bg-[#766bbf]/50 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+              ? "border-[#2E3547] bg-[#161923] text-white"
+              : "border-transparent bg-[#161923] text-white hover:border-[#2E3547] hover:bg-[#2E3547] hover:text-white"
           )}
         >
           <span
             className={cn(
               SIDEBAR_ICON_BOX_CLASS,
-              "text-[#dbd5ff]",
+              "text-white",
               isActive
-                ? "bg-[#8f84dc]/75 text-white"
-                : "bg-[#262050] group-hover:bg-[#8f84dc]/60 group-hover:text-white"
+                ? "bg-[#161923] text-white"
+                : "bg-[#161923] group-hover:bg-[#2E3547] group-hover:text-white"
             )}
           >
             {renderMarketplaceIcon(category.href)}
@@ -838,23 +836,13 @@ export function GlobalChatClient() {
           className={cn(
             "group relative grid h-10 w-full items-center gap-2.5 rounded-2xl border px-3 text-left transition-all duration-200",
             SIDEBAR_ROW_GRID_CLASS,
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
             isActive
-              ? "border-[#8a7fd5]/70 bg-[#766bbf]/62 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
-              : "border-transparent text-[#e2dcff] hover:border-[#8a7fd5]/65 hover:bg-[#766bbf]/50 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+              ? "border-[#2E3547] bg-[#212533] text-white"
+              : "border-transparent text-white hover:border-[#2E3547] hover:bg-[#2E3547] hover:text-white"
           )}
         >
-          <span
-            className={cn(
-              SIDEBAR_ICON_BOX_CLASS,
-              "text-[#dbd5ff]",
-              isActive
-                ? "bg-[#8f84dc]/75 text-white"
-                : "bg-[#262050] group-hover:bg-[#8f84dc]/60 group-hover:text-white"
-            )}
-          >
-            {renderSellSectionIcon(section.key)}
-          </span>
+          <span className="h-7 w-7" aria-hidden="true" />
           <span className="truncate text-sm font-semibold">{tabLabel}</span>
           <span className="h-4 w-4" aria-hidden="true" />
           {isLocked ? (
@@ -893,16 +881,16 @@ export function GlobalChatClient() {
           }}
           className={cn(
             "group mx-auto flex h-10 w-10 items-center justify-center rounded-xl border p-0 transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a49]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
             isSectionActive
-              ? "border-[#7d72cb]/80 bg-[#4f4798]/58 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]"
-              : "border-[#474182]/65 bg-[#29245b]/68 text-[#ddd7ff] hover:border-[#6c62b4]/75 hover:bg-[#3a336f] hover:text-white"
+              ? "border-[#2E3547] bg-[#212533] text-white"
+              : "border-[#2E3547] bg-[#161923] text-white hover:bg-[#2E3547] hover:text-white"
           )}
         >
           <span
             className={cn(
               "grid h-4 w-4 shrink-0 place-items-center",
-              isSectionActive ? "text-white" : "text-[#cec8f3] group-hover:text-white"
+              isSectionActive ? "text-white" : "text-white group-hover:text-white"
             )}
           >
             {renderSellSectionIcon(section.key)}
@@ -933,25 +921,31 @@ export function GlobalChatClient() {
           {SELL_SIDEBAR_SECTIONS.map((section) => {
             const isOpen = openSellSections[section.key];
             return (
-              <div key={section.key} className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/50 p-2.5">
+              <div
+                key={section.key}
+                className={cn(isOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : "")}
+              >
                 <button
                   type="button"
-                  className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                  className={cn(
+                    "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                    SIDEBAR_ROW_GRID_CLASS,
+                    "bg-[#161923]",
+                    !isOpen ? "border border-[#2E3547]" : ""
+                  )}
                   onClick={() => toggleSellSection(section.key)}
                   aria-expanded={isOpen}
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                      {renderSellSectionIcon(section.key)}
-                    </span>
-                    <span>{section.label}</span>
+                  <span className="grid h-7 w-7 place-items-center text-white">
+                    {renderSellSectionIcon(section.key)}
                   </span>
-                  <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                  <span className="min-w-0 truncate">{section.label}</span>
+                  <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
                     <SectionChevron open={isOpen} />
                   </span>
                 </button>
                 {isOpen ? (
-                  <div className="mt-1 space-y-1 pb-1">
+                  <div className="mt-1 space-y-1 px-1.5 pb-1.5">
                     {section.tabs.map((tabLabel) =>
                       renderSellTabItem(section, tabLabel, closeMobileOnClick)
                     )}
@@ -1882,45 +1876,49 @@ export function GlobalChatClient() {
       <div
         key={message.id}
         className={cn(
-          "px-3 py-2 text-sm leading-relaxed shadow-sm",
-          user?.id === message.userId
-            ? "rounded-2xl border-2 border-white/20 bg-[#101010]"
-            : "rounded-2xl border border-white/5 bg-[#101010]"
+          "rounded-2xl border border-[#2E3547] px-3 py-2 text-sm leading-relaxed shadow-sm",
+          user?.id === message.userId ? "bg-[#2A3042]" : "bg-[#212533]"
         )}
       >
         <div className="flex items-start gap-2">
-          <Avatar size="sm" className="mt-0.5 shrink-0 border border-white/10">
+          <Avatar size="default" className="shrink-0 border border-[#2E3547]">
             <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
             <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
               {getAvatarFallback(message.displayName)}
             </AvatarFallback>
           </Avatar>
 
-            <div className="min-w-0 flex-1">
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                <span className="text-sm font-bold text-white">{message.displayName}</span>
-                <span className="min-w-0 break-words">{renderMessageWithMentions(message.text, currentHandle)}</span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
+                  <span className="text-sm font-bold text-white">{message.displayName}</span>
+                </div>
+                <div className="min-w-0 break-words text-[15px] leading-relaxed text-zinc-200">
+                  {renderMessageWithMentions(message.text, currentHandle)}
+                </div>
               </div>
-
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">
-              <button
-                type="button"
-                onClick={() => setReplyTarget(message)}
-                className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
-              >
-                <Reply className="h-3.5 w-3.5" />
-                Reply to message
-              </button>
-              {repliesCount > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => openThreadForMessage(message)}
-                  className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
-                >
-                  <Reply className="h-3.5 w-3.5" />
-                  {`Show thread (${repliesCount})`}
-                </button>
-              ) : null}
+              <div className="flex shrink-0 items-center gap-1 text-xs">
+                {repliesCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => openThreadForMessage(message)}
+                    className="inline-flex items-center gap-1 rounded-xl border border-[#2E3547] bg-[#212533] px-2 py-1 text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                  >
+                    <Reply className="h-3.5 w-3.5" />
+                    {`Show thread (${repliesCount})`}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setReplyTarget(message)}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                  >
+                    <Reply className="h-3.5 w-3.5" />
+                    Reply
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1934,15 +1932,13 @@ export function GlobalChatClient() {
       <div
         key={message.id}
         className={cn(
-          "rounded-2xl px-3 py-2 shadow-sm",
-          user?.id === message.userId
-            ? "border-2 border-white/20 bg-[#101010]"
-            : "border border-white/5 bg-[#101010]"
+          "rounded-2xl border border-[#2E3547] px-3 py-2 shadow-sm",
+          user?.id === message.userId ? "bg-[#2A3042]" : "bg-[#212533]"
         )}
         style={{ marginLeft: Math.min((depth - 1) * 16, 64) }}
       >
         <div className="flex items-start gap-2">
-          <Avatar size="sm" className="mt-0.5 shrink-0 border border-white/10">
+          <Avatar size="default" className="shrink-0 border border-[#2E3547]">
             <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
             <AvatarFallback className="bg-[#151515] text:[10px] text-zinc-300">
               {getAvatarFallback(message.displayName)}
@@ -1950,22 +1946,25 @@ export function GlobalChatClient() {
           </Avatar>
 
           <div className="min-w-0 flex-1">
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-              <span className="text-sm font-bold text-white">{message.displayName}</span>
-              <span className="text-xs text-zinc-400">{formatRelativeTime(message.createdAt)}</span>
-              <span className="min-w-0 break-words">{renderMessageWithMentions(message.text, currentHandle)}</span>
-            </div>
-
-            <div className="mt-1 flex items-center gap-3 text-xs">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
+                  <span className="text-sm font-bold text-white">{message.displayName}</span>
+                </div>
+                <div className="min-w-0 break-words text-[15px] leading-relaxed text-zinc-200">
+                  {renderMessageWithMentions(message.text, currentHandle)}
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setReplyTarget(message)}
-                className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
               >
                 <Reply className="h-3.5 w-3.5" />
                 Reply
               </button>
             </div>
+
           </div>
         </div>
       </div>
@@ -1974,7 +1973,7 @@ export function GlobalChatClient() {
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="min-h-screen bg-[var(--global-chat-app-bg)] text-[var(--global-chat-text-primary)]">
+      <div className="min-h-screen bg-[#101219] text-[var(--global-chat-text-primary)]">
       <AnimatePresence>
         {isMobileSidebarOpen ? (
           <>
@@ -1988,7 +1987,7 @@ export function GlobalChatClient() {
               onClick={() => setIsMobileSidebarOpen(false)}
             />
             <motion.aside
-              className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#5d56a3]/45 bg-[var(--global-chat-sidebar-surface)] p-3 shadow-[0_22px_60px_rgba(7,5,28,0.65)] md:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(7,5,28,0.65)] md:hidden"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -1996,7 +1995,7 @@ export function GlobalChatClient() {
             >
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b3addf]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                     Global Chat
                   </p>
                   <p className="text-sm font-extrabold text-white">{activeRoomLabel}</p>
@@ -2004,7 +2003,7 @@ export function GlobalChatClient() {
                 <button
                   type="button"
                   onClick={() => setIsMobileSidebarOpen(false)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
                   aria-label="Close mobile sidebar"
                 >
                   <X className="h-4 w-4" />
@@ -2017,10 +2016,10 @@ export function GlobalChatClient() {
                   onClick={() => setSidebarMode("buy")}
                   aria-pressed={sidebarMode === "buy"}
                   className={cn(
-                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                     sidebarMode === "buy"
-                      ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
-                      : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                      ? "border border-[#2E3547] bg-[#212533]"
+                      : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
                   )}
                 >
                   Buy
@@ -2030,10 +2029,10 @@ export function GlobalChatClient() {
                   onClick={() => setSidebarMode("sell")}
                   aria-pressed={sidebarMode === "sell"}
                   className={cn(
-                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                    "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                     sidebarMode === "sell"
-                      ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
-                      : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                      ? "border border-[#2E3547] bg-[#212533]"
+                      : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
                   )}
                 >
                   Sell
@@ -2042,25 +2041,32 @@ export function GlobalChatClient() {
 
               {sidebarMode === "buy" ? (
                 <div className="space-y-2.5">
-                  <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                  <div
+                    className={cn(
+                      isMarketplaceSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : ""
+                    )}
+                  >
                     <button
                       type="button"
-                      className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                      className={cn(
+                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                        SIDEBAR_ROW_GRID_CLASS,
+                        "bg-[#212533]",
+                        !isMarketplaceSectionOpen ? "border border-[#2E3547]" : ""
+                      )}
                       onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
                       aria-expanded={isMarketplaceSectionOpen}
                     >
-                      <span className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                          <Store className="h-3.5 w-3.5" />
-                        </span>
-                        <span>Marketplace</span>
+                      <span className="grid h-7 w-7 place-items-center text-white">
+                        <Store className="h-3.5 w-3.5" />
                       </span>
-                      <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                      <span className="min-w-0 truncate">Marketplace</span>
+                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
                         <SectionChevron open={isMarketplaceSectionOpen} />
                       </span>
                     </button>
                     {isMarketplaceSectionOpen ? (
-                      <div className="mt-1 space-y-1 pb-1">
+                      <div className="mt-1 space-y-1 px-1.5 pb-1.5">
                         {MARKETPLACE_CATEGORIES.map((category) =>
                           renderMarketplaceNavItem(category, true)
                         )}
@@ -2068,10 +2074,19 @@ export function GlobalChatClient() {
                     ) : null}
                   </div>
 
-                  <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
+                  <div
+                    className={cn(
+                      isRoomsSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : ""
+                    )}
+                  >
                     <button
                       type="button"
-                      className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                      className={cn(
+                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                        SIDEBAR_ROW_GRID_CLASS,
+                        "bg-[#212533]",
+                        !isRoomsSectionOpen ? "border border-[#2E3547]" : ""
+                      )}
                       onClick={() =>
                         setIsRoomsSectionOpen((prev) => {
                           const next = !prev;
@@ -2081,63 +2096,32 @@ export function GlobalChatClient() {
                       }
                       aria-expanded={isRoomsSectionOpen}
                     >
-                      <span className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                          <Globe2 className="h-3.5 w-3.5" />
-                        </span>
-                        <span>Trading Rooms</span>
+                      <span className="grid h-7 w-7 place-items-center text-white">
+                        <Globe2 className="h-3.5 w-3.5" />
                       </span>
-                      <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                      <span className="min-w-0 truncate">Trading Rooms</span>
+                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
                         <SectionChevron open={isRoomsSectionOpen} />
                       </span>
                     </button>
                     {isRoomsSectionOpen ? (
-                      <div className="mt-1 space-y-1">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
+                      <div className="mt-1 space-y-1 px-1.5 pb-1.5">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
                     ) : null}
                   </div>
 
-                  <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
-                    <button
-                      type="button"
-                      className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
-                      onClick={() =>
-                        setIsCommunitySectionOpen((prev) => {
-                          const next = !prev;
-                          if (next) setIsRoomsSectionOpen(false);
-                          return next;
-                        })
-                      }
-                      aria-expanded={isCommunitySectionOpen}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                          <LifeBuoy className="h-3.5 w-3.5" />
-                        </span>
-                        <span>Community</span>
-                      </span>
-                      <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
-                        <SectionChevron open={isCommunitySectionOpen} />
-                      </span>
-                    </button>
-                    {isCommunitySectionOpen ? (
-                      <div className="mt-1 space-y-1">
-                        {communityRooms.map((room) => renderRoomNavItem(room))}
-                      </div>
-                    ) : null}
-                  </div>
                 </div>
               ) : (
                 renderSellSections(true)
               )}
 
-              <div className="mt-3 rounded-[22px] border border-[#4f4a8f]/55 bg-[#1f1b46] p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-[#bab4df]">
+              <div className="mt-3 rounded-[22px] border border-[#2E3547] bg-[#161923] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-zinc-400">
                   Live Activity
                 </p>
                 <p className="mt-1 text-sm font-bold text-white">
                   Online: {displayOnlineCount.toLocaleString("en-US")}
                 </p>
-                <p className="mt-1 text-xs text-[#bbb6dc]">
+                <p className="mt-1 text-xs text-zinc-400">
                   Threads: {topLevelMessages.length.toLocaleString("en-US")}
                 </p>
               </div>
@@ -2147,50 +2131,64 @@ export function GlobalChatClient() {
       </AnimatePresence>
 
       <div
-        className={cn("relative mx-auto flex min-h-screen w-full items-stretch gap-3 px-3 py-4 md:gap-5 md:px-4 md:py-6")}
+        className={cn(
+          "relative mx-auto flex min-h-screen w-full items-stretch gap-3 px-3 py-4 md:px-4 md:py-6",
+          isLeftSidebarClosed ? "md:gap-0" : "md:gap-5"
+        )}
       >
-        <aside
-          className={cn(
-            "relative hidden shrink-0 md:sticky md:top-6 md:block md:h-[calc(100vh-3rem)] md:transition-[width] md:duration-300 md:ease-[cubic-bezier(0.22,1,0.36,1)]",
-            isLeftSidebarClosed ? "md:w-[74px]" : "md:w-[264px]"
-          )}
+        <motion.aside
+          initial={false}
+          animate={{
+            width: isLeftSidebarClosed ? 0 : 264,
+            opacity: isLeftSidebarClosed ? 0 : 1,
+          }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="relative hidden shrink-0 overflow-hidden md:sticky md:top-6 md:block md:h-[calc(100vh-3rem)]"
+          aria-hidden={isLeftSidebarClosed}
         >
-          <div
+          <motion.div
+            initial={false}
+            animate={{
+              x: isLeftSidebarClosed ? -36 : 0,
+              opacity: isLeftSidebarClosed ? 0 : 1,
+            }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              "flex h-full flex-col rounded-[30px] border border-[#4f4a8f]/55 bg-[var(--global-chat-sidebar-surface)] shadow-[0_22px_60px_rgba(7,5,28,0.55)]",
-              isLeftSidebarClosed ? "p-2" : "p-3"
+              "flex h-full w-[264px] flex-col rounded-[30px] border border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(7,5,28,0.55)]",
+              isLeftSidebarClosed ? "pointer-events-none" : ""
             )}
           >
-            <div
-              className={cn("mb-3 flex items-center", isLeftSidebarClosed ? "justify-center" : "justify-between")}
-            >
-              <button
-                type="button"
-                onClick={() => setIsLeftSidebarClosed((prev) => !prev)}
-                className={cn(
-                  "inline-flex items-center justify-center rounded-xl border text-[#e3ddff] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
-                  isLeftSidebarClosed
-                    ? "h-10 w-10 border-[#474182]/65 bg-[#29245b]/68 hover:border-[#6c62b4]/75 hover:bg-[#3a336f]"
-                    : "h-9 w-9 border-[#5f58a8]/55 bg-[#2a2555] hover:bg-[#37306d]"
-                )}
-                aria-label={isLeftSidebarClosed ? "Expand left sidebar" : "Collapse left sidebar"}
-              >
-                {isLeftSidebarClosed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-              </button>
-            </div>
+              <div className="mb-3 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsLeftSidebarClosed(true)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+                  aria-label="Collapse left sidebar"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4 rotate-180 text-white"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path d="M10 22.5H18.5C20.7091 22.5 22.5 20.7091 22.5 18.5V5.5C22.5 3.29086 20.7091 1.5 18.5 1.5H10V22.5Z" fill="currentColor" />
+                    <path d="M8 1.5H5.5C3.29086 1.5 1.5 3.29086 1.5 5.5V18.5C1.5 20.7091 3.29086 22.5 5.5 22.5H8V1.5Z" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
 
-            <div className={cn("no-scrollbar min-h-0 flex-1 overflow-y-auto", isLeftSidebarClosed ? "" : "pr-1")}>
-              {!isLeftSidebarClosed ? (
+              <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
                 <div className="mb-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSidebarMode("buy")}
                     aria-pressed={sidebarMode === "buy"}
                     className={cn(
-                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                       sidebarMode === "buy"
-                        ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
-                        : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                        ? "border border-[#2E3547] bg-[#212533]"
+                        : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
                     )}
                   >
                     Buy
@@ -2200,170 +2198,104 @@ export function GlobalChatClient() {
                     onClick={() => setSidebarMode("sell")}
                     aria-pressed={sidebarMode === "sell"}
                     className={cn(
-                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]",
+                      "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                       sidebarMode === "sell"
-                        ? "border border-[#8377d2] bg-[#766bbf] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
-                        : "border border-[#5f58a8]/65 bg-[#2a2555] hover:bg-[#37306d]"
+                        ? "border border-[#2E3547] bg-[#212533]"
+                        : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
                     )}
                   >
                     Sell
                   </button>
                 </div>
-              ) : null}
 
-            {isLeftSidebarClosed ? (
-              sidebarMode === "buy" ? (
-                <div className="space-y-2">
-                  <div className="mx-auto w-10 space-y-1.5">
-                    <div className="space-y-1.5">
-                      {primaryRooms.map((room) => renderRoomNavItem(room, true))}
-                    </div>
-                    {communityRooms.length > 0 ? (
-                      <>
-                        <div className="mx-auto my-2 h-px w-6 bg-[#4a4488]/45" />
-                        <div className="space-y-1.5">
-                          {communityRooms.map((room) => renderRoomNavItem(room, true))}
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="mx-auto w-10 space-y-1.5">
-                    <div className="space-y-1.5">
-                      {SELL_SIDEBAR_SECTIONS.map((section) => renderSellCollapsedNavItem(section))}
-                    </div>
-                  </div>
-                </div>
-              )
-            ) : (
-                sidebarMode === "buy" ? (
+                {sidebarMode === "buy" ? (
                   <div className="space-y-2.5">
-                <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
-                  <button
-                    type="button"
-                    className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
-                    onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
-                    aria-expanded={isMarketplaceSectionOpen}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                        <Store className="h-3.5 w-3.5" />
-                      </span>
-                      <span>Marketplace</span>
-                    </span>
-                    <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
-                      <SectionChevron open={isMarketplaceSectionOpen} />
-                    </span>
-                  </button>
-                  {isMarketplaceSectionOpen ? (
-                    <div className="mt-1 space-y-1 pb-1">
-                      {MARKETPLACE_CATEGORIES.map((category) => renderMarketplaceNavItem(category))}
+                    <div className={cn(isMarketplaceSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : "")}>
+                      <button
+                        type="button"
+                        className={cn(
+                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                          SIDEBAR_ROW_GRID_CLASS,
+                          "bg-[#212533]",
+                          !isMarketplaceSectionOpen ? "border border-[#2E3547]" : ""
+                        )}
+                        onClick={() => setIsMarketplaceSectionOpen((prev) => !prev)}
+                        aria-expanded={isMarketplaceSectionOpen}
+                      >
+                        <span className="grid h-7 w-7 place-items-center text-white">
+                          <Store className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 truncate">Marketplace</span>
+                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
+                          <SectionChevron open={isMarketplaceSectionOpen} />
+                        </span>
+                      </button>
+                      {isMarketplaceSectionOpen ? (
+                        <div className="mt-1 space-y-1 px-1.5 pb-1.5">
+                          {MARKETPLACE_CATEGORIES.map((category) => renderMarketplaceNavItem(category))}
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
 
-                <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
-                  <button
-                    type="button"
-                    className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
-                    onClick={() =>
-                      setIsRoomsSectionOpen((prev) => {
-                        const next = !prev;
-                        if (next) setIsCommunitySectionOpen(false);
-                        return next;
-                      })
-                    }
-                    aria-expanded={isRoomsSectionOpen}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                        <Globe2 className="h-3.5 w-3.5" />
-                      </span>
-                      <span>Trading Rooms</span>
-                    </span>
-                    <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
-                      <SectionChevron open={isRoomsSectionOpen} />
-                    </span>
-                  </button>
-                  {isRoomsSectionOpen ? (
-                    <div className="mt-1 space-y-1">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
-                  ) : null}
-                </div>
-
-                <div className="rounded-[22px] border border-[#4f4a8f]/55 bg-[#2a2555]/62 p-2.5">
-                  <button
-                    type="button"
-                    className="flex h-10 w-full items-center justify-between rounded-xl border border-[#8377d2] bg-[#766bbf] px-3 text-left text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
-                    onClick={() =>
-                      setIsCommunitySectionOpen((prev) => {
-                        const next = !prev;
-                        if (next) setIsRoomsSectionOpen(false);
-                        return next;
-                      })
-                    }
-                    aria-expanded={isCommunitySectionOpen}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-xl bg-white text-[#5e52aa]">
-                        <LifeBuoy className="h-3.5 w-3.5" />
-                      </span>
-                      <span>Community</span>
-                    </span>
-                    <span className="grid h-7 w-7 place-items-center rounded-xl border border-[#a99df2]/55 bg-[#9589e0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
-                      <SectionChevron open={isCommunitySectionOpen} />
-                    </span>
-                  </button>
-                  {isCommunitySectionOpen ? (
-                    <div className="mt-1 space-y-1">
-                      {communityRooms.map((room) => renderRoomNavItem(room))}
+                    <div className={cn(isRoomsSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : "")}>
+                      <button
+                        type="button"
+                        className={cn(
+                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                          SIDEBAR_ROW_GRID_CLASS,
+                          "bg-[#212533]",
+                          !isRoomsSectionOpen ? "border border-[#2E3547]" : ""
+                        )}
+                        onClick={() => setIsRoomsSectionOpen((prev) => !prev)}
+                        aria-expanded={isRoomsSectionOpen}
+                      >
+                        <span className="grid h-7 w-7 place-items-center text-white">
+                          <Globe2 className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 truncate">Trading Rooms</span>
+                        <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
+                          <SectionChevron open={isRoomsSectionOpen} />
+                        </span>
+                      </button>
+                      {isRoomsSectionOpen ? (
+                        <div className="mt-1 space-y-1 px-1.5 pb-1.5">{primaryRooms.map((room) => renderRoomNavItem(room))}</div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-              </div>
+                  </div>
                 ) : (
                   renderSellSections()
-                )
-              )}
-            </div>
+                )}
+              </div>
 
-            <div
-              className={cn(
-                "mt-auto",
-                isLeftSidebarClosed
-                  ? "mx-auto w-12 rounded-[18px] border border-[#4a4488]/60 bg-[#211d4a]/88 p-1.5"
-                  : "rounded-[22px] border border-[#4f4a8f]/55 bg-[#1f1b46] p-3"
-              )}
+              <div className="mt-auto rounded-[22px] border border-[#2E3547] bg-[#161923] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-zinc-400">Live Activity</p>
+                <p className="mt-1 text-sm font-bold text-white">Online: {displayOnlineCount.toLocaleString("en-US")}</p>
+                <p className="mt-1 text-xs text-zinc-400">Threads: {topLevelMessages.length.toLocaleString("en-US")}</p>
+              </div>
+            </motion.div>
+        </motion.aside>
+
+        <div className={cn("relative hidden flex-1 md:block", isLeftSidebarClosed ? "md:-ml-1" : "")}>
+          <div className="h-[calc(100vh-3rem)] rounded-[30px] border border-[#2E3547] bg-[#161923]" />
+          {isLeftSidebarClosed ? (
+            <button
+              type="button"
+              onClick={() => setIsLeftSidebarClosed(false)}
+              aria-label="Expand left sidebar"
+              className="absolute left-6 top-6 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
             >
-              {isLeftSidebarClosed ? (
-                <div className="flex flex-col items-center gap-1">
-                  <span className="grid h-9 w-9 place-items-center rounded-xl border border-[#474182]/65 bg-[#29245b]/68 text-[#d5cff8]">
-                    <Globe2 className="h-4 w-4" />
-                  </span>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-[#f4f2ff]">
-                    {compactOnlineCount}
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-[#bab4df]">Live Activity</p>
-                  <p className="mt-1 text-sm font-bold text-white">Online: {displayOnlineCount.toLocaleString("en-US")}</p>
-                  <p className="mt-1 text-xs text-[#bbb6dc]">Threads: {topLevelMessages.length.toLocaleString("en-US")}</p>
-                </>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        <div className="relative hidden flex-1 md:block">
-          <Squircle
-            radius={30}
-            smoothing={1}
-            corners="all"
-            className="h-[calc(100vh-3rem)]"
-            innerClassName="bg-[rgba(42,37,85,0.36)]"
-          />
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4 text-white"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path d="M10 22.5H18.5C20.7091 22.5 22.5 20.7091 22.5 18.5V5.5C22.5 3.29086 20.7091 1.5 18.5 1.5H10V22.5Z" fill="currentColor" />
+                <path d="M8 1.5H5.5C3.29086 1.5 1.5 3.29086 1.5 5.5V18.5C1.5 20.7091 3.29086 22.5 5.5 22.5H8V1.5Z" fill="currentColor" />
+              </svg>
+            </button>
+          ) : null}
           <div className="absolute left-1/2 top-6 z-20 w-[min(760px,calc(100%-4rem))] -translate-x-1/2">
             <GlobalCommandSearch className="w-full max-w-none" />
           </div>
@@ -2372,7 +2304,7 @@ export function GlobalChatClient() {
         {!isChatClosed && (
           <aside
             className={cn(
-              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl border border-[#4f4a8f]/45 bg-[#1b1842]/95 shadow-[0_20px_45px_rgba(7,5,28,0.45)] transition-[width] duration-200",
+              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(7,5,28,0.45)] transition-[width] duration-200",
               isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
             )}
           >
@@ -2382,7 +2314,7 @@ export function GlobalChatClient() {
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(true)}
                 aria-label="Open room sidebar"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] md:hidden"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] md:hidden"
               >
                 <Menu className="h-4 w-4" />
               </button>
@@ -2391,26 +2323,26 @@ export function GlobalChatClient() {
                 <button
                   type="button"
                   onClick={() => setIsRoomMenuOpen((prev) => !prev)}
-                  className="inline-flex h-9 min-w-[144px] items-center justify-between rounded-2xl border border-[#5f58a8]/55 bg-[#2a2555] px-3 text-left text-sm font-semibold text-[#f6f4ff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                  className="inline-flex h-9 min-w-[144px] items-center justify-between rounded-2xl border border-[#2E3547] bg-[#212533] px-3 text-left text-sm font-semibold text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
                   aria-haspopup="listbox"
                   aria-expanded={isRoomMenuOpen}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="grid h-6 w-6 place-items-center rounded-lg bg-[#201b47] text-[#ddd8ff]">
+                    <span className="grid h-6 w-6 place-items-center text-white">
                       {renderRoomIcon(activeRoom, "h-3.5 w-3.5")}
                     </span>
                     <span>{activeRoomLabel}</span>
                   </span>
                   <ChevronDown
                     className={cn(
-                      "ml-2 h-4 w-4 text-[#d6d1f8] transition-transform",
+                      "ml-2 h-4 w-4 text-white transition-transform",
                       isRoomMenuOpen ? "rotate-180" : ""
                     )}
                   />
                 </button>
 
                 {isRoomMenuOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[210px] overflow-hidden rounded-2xl border border-[#5f58a8]/55 bg-[var(--global-chat-sidebar-surface)] p-2 shadow-[0_18px_38px_rgba(9,6,35,0.65)]">
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[210px] overflow-hidden rounded-2xl border border-[#2E3547] bg-[#212533] p-2 shadow-[0_14px_28px_rgba(9,6,35,0.42)]">
                     <ul role="listbox" aria-label="Chat rooms" className="space-y-1">
                       {GLOBAL_CHAT_ROOMS.map((room) => {
                         const isActive = room.slug === activeRoom;
@@ -2422,18 +2354,15 @@ export function GlobalChatClient() {
                               aria-selected={isActive}
                               onClick={() => handleRoomChange(room.slug)}
                               className={cn(
-                                "flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1f1a49]",
+                                "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-1 focus-visible:ring-offset-[#212533]",
                                 isActive
-                                  ? "border-[#6d64ba] bg-[#4b458d] text-white"
-                                  : "border-transparent text-[#ddd8ff] hover:border-[#5f58a8]/45 hover:bg-[#37306d]"
+                                  ? "bg-[#161923] text-white"
+                                  : "text-white hover:bg-[#2E3547]"
                               )}
                             >
                               <span
-                                className={cn(
-                                  "grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[#ddd8ff]",
-                                  isActive ? "bg-[#665eb9] text-white" : "bg-[#262050]"
-                                )}
+                                className="grid h-6 w-6 shrink-0 place-items-center text-white"
                               >
                                 {renderRoomIcon(room.slug, "h-3.5 w-3.5")}
                               </span>
@@ -2452,7 +2381,7 @@ export function GlobalChatClient() {
                 type="button"
                 onClick={() => setIsChatExpanded((prev) => !prev)}
                 aria-label={isChatExpanded ? "Shrink chat width" : "Stretch chat width"}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
               >
                 <svg className={cn("h-6 w-6 transition-transform", !isChatExpanded ? "rotate-180" : "")} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g stroke="#fff" strokeLinecap="round" strokeWidth="2">
@@ -2466,7 +2395,7 @@ export function GlobalChatClient() {
                 type="button"
                 onClick={() => setIsRulesOpen(true)}
                 aria-label="Open chat rules"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
               >
                 <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" aria-hidden="true">
                   <g transform="translate(-414 -101)">
@@ -2478,7 +2407,7 @@ export function GlobalChatClient() {
                 type="button"
                 onClick={() => setIsChatClosed(true)}
                 aria-label="Close chat"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#5f58a8]/55 bg-[#2a2555] text-[#e3ddff] transition hover:bg-[#37306d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a79bff]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -2501,16 +2430,16 @@ export function GlobalChatClient() {
             ) : null}
 
             {isFetching || isLoading ? (
-              <div className="rounded-xl border border-white/10 bg-[#101010] p-3 text-sm text-zinc-300">
+              <div className="rounded-2xl border border-[#2E3547] bg-[#161923] p-3 text-sm text-zinc-300 shadow-sm">
                 Loading chat...
               </div>
             ) : messages.length === 0 ? (
-              <div className="rounded-xl border border-white/10 bg-[#101010] p-3 text-sm text-zinc-300">
+              <div className="rounded-2xl border border-[#2E3547] bg-[#161923] p-3 text-sm text-zinc-300 shadow-sm">
                 No messages yet in this room.
               </div>
             ) : activeThreadRootId && threadRootMessage ? (
               <div className="space-y-3">
-                <div className="sticky top-0 z-10 -mx-3 border-b border-white/10 bg-[#101010]/95 px-3 py-2 backdrop-blur">
+                <div className="flex items-center">
                   <button
                     type="button"
                     onClick={() => {
@@ -2518,16 +2447,20 @@ export function GlobalChatClient() {
                       setReplyTarget(null);
                       setIsThreadLoading(false);
                     }}
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-300 hover:text-white"
+                    className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#2E3547] bg-[#212533] px-3 text-sm font-semibold text-zinc-300 transition hover:bg-[#2E3547] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to chat
                   </button>
                 </div>
-
-                <div className="rounded-xl border border-white/10 bg-[#101010] px-3 py-2 shadow-sm">
-                  <div className="flex items-start gap-2">
-                    <Avatar size="sm" className="mt-0.5 shrink-0 border border-white/10">
+                <div
+                  className={cn(
+                    "rounded-2xl border border-[#2E3547] px-3 py-2 shadow-sm",
+                    user?.id === threadRootMessage.userId ? "bg-[#2A3042]" : "bg-[#212533]"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar size="default" className="shrink-0 border border-[#2E3547]">
                       <AvatarImage
                         src={threadRootMessage.avatarUrl || undefined}
                         alt={threadRootMessage.displayName}
@@ -2538,23 +2471,19 @@ export function GlobalChatClient() {
                     </Avatar>
 
                     <div className="min-w-0 flex-1">
-                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                        <span className="text-sm font-bold text-white">
-                          {threadRootMessage.displayName}
-                        </span>
-                        <span className="text-xs text-zinc-400">
-                          {formatRelativeTime(threadRootMessage.createdAt)}
-                        </span>
-                        <span className="min-w-0 break-words">
-                          {renderMessageWithMentions(threadRootMessage.text, currentHandle)}
-                        </span>
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-3 text-xs">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
+                          <span className="text-sm font-bold text-white">
+                            {threadRootMessage.displayName}
+                          </span>
+                          <span className="min-w-0 break-words">
+                            {renderMessageWithMentions(threadRootMessage.text, currentHandle)}
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setReplyTarget(threadRootMessage)}
-                          className="inline-flex items-center gap-1 text-zinc-400 transition hover:text-white"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
                         >
                           <Reply className="h-3.5 w-3.5" />
                           Reply
@@ -2565,13 +2494,13 @@ export function GlobalChatClient() {
                 </div>
 
                 {threadMessages.length === 0 ? (
-                  <div className="rounded-xl border border-white/10 bg-[#101010] p-3 text-sm text-zinc-300">
+                    <div className="rounded-2xl border border-[#2E3547] bg-[#161923] p-3 text-sm text-zinc-300 shadow-sm">
                     {isThreadLoading
                       ? "Loading thread replies..."
                       : "No replies yet. Be the first to reply in this thread."}
                   </div>
                 ) : (
-                  <div className="space-y-2 border-l border-white/10 pl-2">
+                    <div className="space-y-2 border-l border-[#2E3547] pl-2">
                     {threadMessages.map((entry) => renderThreadReply(entry))}
                   </div>
                 )}
@@ -2581,43 +2510,32 @@ export function GlobalChatClient() {
             )}
           </div>
 
-          <div className="border-t border-white/10 bg-[#101010] p-3 rounded-b-3xl">
+          <div className="mx-3 mb-3 mt-2 rounded-[24px] border border-[#2E3547] bg-[#212533] p-3 shadow-[0_0_0_1px_rgba(46,53,71,0.05)] transition-shadow duration-200 focus-within:shadow-[0_0_0_1px_rgba(46,53,71,0.72),0_0_0_5px_rgba(46,53,71,0.12)]">
             {replyTarget ? (
-              <div className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-[#101010] px-3 py-2 text-xs text-zinc-300">
+              <div className="mb-2 flex items-center justify-between rounded-xl border border-[#2E3547] bg-[#161923] px-3 py-2 text-xs text-zinc-300">
                 <div className="min-w-0">
-                  <span className="font-semibold">Replying to {replyTarget.displayName}</span>
+                  <span className="font-semibold text-white">Replying to {replyTarget.displayName}</span>
                   <span className="ml-2 text-zinc-300">{truncateMessage(replyTarget.text, 70)}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    if (activeThreadRootId && threadRootMessage) {
-                      setReplyTarget(threadRootMessage);
-                    } else {
-                      setReplyTarget(null);
-                    }
+                    setReplyTarget(null);
                   }}
-                  className="ml-2 rounded p-1 text-zinc-400 transition hover:bg-white/5 hover:text-white"
+                  className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ) : null}
             {isRulesOpen ? (
-              <Squircle
-                radius={22}
-                smoothing={1}
-                borderWidth={2}
-                borderColor="rgba(255,255,255,0.2)"
-                className="mb-2"
-                innerClassName="bg-[#101010] px-3 py-3 text-sm text-zinc-300"
-              >
+              <div className="mb-2 rounded-2xl border border-[#2E3547] bg-[#161923] px-3 py-3 text-sm text-zinc-300">
                 <div className="flex items-center justify-between">
                   <span className="text-white font-semibold">Chat Rules</span>
                   <button
                     type="button"
                     onClick={() => setIsRulesOpen(false)}
-                    className="rounded p-1 text-zinc-400 transition hover:bg-white/5 hover:text-white"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -2644,7 +2562,7 @@ export function GlobalChatClient() {
                     Accept Rules
                   </Button>
                 </div>
-              </Squircle>
+              </div>
             ) : null}
             {isBanned ? (
               <div className="mb-2 inline-flex items-center gap-2 text-sm text-[#ff0000]">
@@ -2681,46 +2599,54 @@ export function GlobalChatClient() {
               </div>
             ) : null}
 
+            {mentionContext ? (
+              <div className="mb-2 max-h-60 overflow-y-auto rounded-2xl border border-[#2E3547] bg-[#161923] px-3 py-3 text-sm text-zinc-300 shadow-sm">
+                {mentionSuggestions.length > 0 ? (
+                  mentionSuggestions.map((candidate, index) => (
+                    <button
+                      key={`${candidate.userId}-${candidate.handle}`}
+                      type="button"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        applyMention(candidate);
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition",
+                        index === activeMentionIndex
+                          ? "bg-[#2E3547] text-white"
+                          : "text-zinc-200 hover:bg-[#2E3547]"
+                      )}
+                    >
+                      <Avatar size="default" className="shrink-0 border border-[#2E3547]">
+                        <AvatarImage src={candidate.avatarUrl || undefined} alt={candidate.displayName} />
+                        <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
+                          {getAvatarFallback(candidate.displayName)}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="truncate font-semibold">{candidate.displayName}</span>
+                          <span className="truncate text-xs text-zinc-400">@{candidate.handle}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                          {candidate.isSeller ? <span>Seller</span> : null}
+                          {candidate.isBuyer ? <span>Buyer</span> : null}
+                          <span>Online now</span>
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="rounded-xl px-1 py-1 text-sm text-zinc-400">
+                    No people found to mention.
+                  </div>
+                )}
+              </div>
+            ) : null}
+
             <div className="mb-2 flex items-center gap-2">
               <div className="relative flex-1">
-                {mentionContext && mentionSuggestions.length > 0 ? (
-                  <div className="absolute bottom-full left-0 right-0 mb-2 z-20 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#101010] p-1 shadow-2xl">
-                    {mentionSuggestions.map((candidate, index) => (
-                      <button
-                        key={`${candidate.userId}-${candidate.handle}`}
-                        type="button"
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          applyMention(candidate);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition",
-                          index === activeMentionIndex ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-white/5"
-                        )}
-                      >
-                        <Avatar size="sm" className="shrink-0 border border-white/10">
-                          <AvatarImage src={candidate.avatarUrl || undefined} alt={candidate.displayName} />
-                          <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
-                            {getAvatarFallback(candidate.displayName)}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="truncate font-semibold">{candidate.displayName}</span>
-                            <span className="truncate text-xs text-zinc-400">@{candidate.handle}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                            {candidate.isSeller ? <span>Seller</span> : null}
-                            {candidate.isBuyer ? <span>Buyer</span> : null}
-                            <span>Online now</span>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-
                 <input
                   ref={inputRef}
                   value={draft}
@@ -2794,7 +2720,7 @@ export function GlobalChatClient() {
                   }}
                   placeholder={
                     canWrite
-                      ? "Type your message (@ to mention)"
+                      ? "Type your message..."
                       : !user
                       ? "Login to write in chat"
                       : isBanned
@@ -2808,7 +2734,7 @@ export function GlobalChatClient() {
                       : `You are not ${requiredRoleText || "allowed"} to write here.`
                   }
                   disabled={!canWrite || isSending || isBanned || !!(mutedUntilTs && mutedUntilTs > Date.now()) || !!slowRemainingSeconds || !!(closedUntilTs && closedUntilTs > Date.now())}
-                  className="h-11 w-full rounded-2xl border-2 border-white/20 bg-[#0A0A0A]/80 px-3 pr-28 text-base text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-11 w-full rounded-2xl border border-[#2E3547] bg-[#161923] px-3 pr-28 text-base text-white shadow-[0_0_0_1px_rgba(46,53,71,0.06)] placeholder:text-zinc-500 focus:border-[#2E3547] focus:outline-none focus:shadow-[0_0_0_1px_rgba(46,53,71,0.76),0_0_0_4px_rgba(46,53,71,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
                 />
                 <AnimatePresence>
                   {draft.trim().length > 0 && (
