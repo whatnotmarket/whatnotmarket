@@ -9,6 +9,13 @@ export const dictionary: UiDictionary = {
     en: "English",
     it: "Italiano",
     de: "Deutsch",
+    es: "Español",
+    pl: "Polski",
+    ru: "Русский",
+    uk: "Українська",
+    tr: "Türkçe",
+    ro: "Română",
+    "pt-br": "Português (Brasil)",
   },
   home: {
     eyebrow: "OpenlyMarket",

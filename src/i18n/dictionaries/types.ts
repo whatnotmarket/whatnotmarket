@@ -26,6 +26,6 @@ export type UiDictionary = {
   };
   dynamic: {
     marketSummarySource: string;
-    marketSummary: Record<Exclude<Locale, "en">, string>;
+    marketSummary: Partial<Record<Exclude<Locale, "en">, string>>;
   };
 };

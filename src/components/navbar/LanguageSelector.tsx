@@ -26,6 +26,13 @@ const LANGUAGE_META: Record<
   en: { label: "English", nativeLabel: "English", Flag: Flags.US },
   it: { label: "Italian", nativeLabel: "Italiano", Flag: Flags.IT },
   de: { label: "German", nativeLabel: "Deutsch", Flag: Flags.DE },
+  es: { label: "Spanish", nativeLabel: "Español", Flag: Flags.ES },
+  pl: { label: "Polish", nativeLabel: "Polski", Flag: Flags.PL },
+  ru: { label: "Russian", nativeLabel: "Русский", Flag: Flags.RU },
+  uk: { label: "Ukrainian", nativeLabel: "Українська", Flag: Flags.UA },
+  tr: { label: "Turkish", nativeLabel: "Türkçe", Flag: Flags.TR },
+  ro: { label: "Romanian", nativeLabel: "Română", Flag: Flags.RO },
+  "pt-br": { label: "Portuguese (Brazil)", nativeLabel: "Português (Brasil)", Flag: Flags.BR },
 };
 
 function setLocaleCookie(locale: Locale) {

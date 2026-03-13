@@ -6,6 +6,13 @@ const OPEN_GRAPH_LOCALE_BY_LANG: Record<Locale, string> = {
   en: "en_US",
   it: "it_IT",
   de: "de_DE",
+  es: "es_ES",
+  pl: "pl_PL",
+  ru: "ru_RU",
+  uk: "uk_UA",
+  tr: "tr_TR",
+  ro: "ro_RO",
+  "pt-br": "pt_BR",
 };
 
 export function localizedPath(locale: Locale, pathname: string): string {
