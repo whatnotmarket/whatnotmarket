@@ -53,7 +53,7 @@ export function HomepageDesktopSidebar<
         opacity: isLeftSidebarClosed ? 0 : 1,
       }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="relative hidden h-[calc(100vh-3rem)] min-w-0 overflow-hidden md:block"
+      className="relative hidden h-full min-h-0 min-w-0 overflow-hidden md:block"
       aria-hidden={isLeftSidebarClosed}
     >
       <motion.div

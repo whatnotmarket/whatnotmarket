@@ -1,26 +1,28 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 export function HomepageCenterPanel({
   isLeftSidebarClosed,
   isChatClosed,
   onExpandSidebar,
   onExpandChat,
   commandSearchSlot,
+  children,
 }: {
   isLeftSidebarClosed: boolean;
   isChatClosed: boolean;
   onExpandSidebar: () => void;
   onExpandChat: () => void;
   commandSearchSlot: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
-    <div data-homepage-center-panel="true" className="relative hidden min-w-0 flex-1 md:block">
+    <div data-homepage-center-panel="true" className="relative hidden h-full min-h-0 min-w-0 flex-1 md:block">
       <div
         data-homepage-center-surface="true"
-        className="h-[calc(100vh-3rem)] rounded-[30px] border border-[#2E3547] bg-[#161923]"
-      />
+        className="no-scrollbar h-full min-h-0 overflow-y-auto rounded-[30px] border border-[#2E3547] bg-[#161923]"
+      >
+        {children ? <div className="min-h-full">{children}</div> : null}
+      </div>
       {isLeftSidebarClosed ? (
         <button
           type="button"

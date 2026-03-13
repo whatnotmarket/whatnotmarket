@@ -170,7 +170,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={`${inter.variable} ${inter.className} notranslate antialiased bg-black text-white min-h-screen flex flex-col`}
+        className={`${inter.variable} ${inter.className} notranslate antialiased bg-black text-white flex h-full min-h-0 flex-col overflow-hidden`}
         suppressHydrationWarning
       >
         <Script
@@ -183,7 +183,7 @@ export default function RootLayout({
 
         <PostHogProvider>
           <Providers>
-            <div className="flex-1 bg-black">
+            <div id="app-root-shell" className="flex-1 min-h-0 bg-black overflow-hidden">
               <Suspense fallback={null}>
                 <AckeeTracker />
               </Suspense>

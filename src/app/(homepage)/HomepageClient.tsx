@@ -639,6 +639,14 @@ export function HomepageClient() {
     setIsChatExpanded((prev) => !prev);
   }, []);
 
+  const handleRightSeparatorPointerDown = useCallback(() => {
+    if (isMobile || !isChatClosedRef.current) return;
+    isChatClosedRef.current = false;
+    setIsChatClosed(false);
+    rightPanelRef.current?.expand();
+    rightPanelRef.current?.resize(PANEL_REOPEN_THRESHOLD_PERCENT);
+  }, [isMobile]);
+
   useEffect(() => {
     setStablePathname(pathname || "/");
   }, [pathname]);
@@ -2272,7 +2280,7 @@ export function HomepageClient() {
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="min-h-screen bg-[#101219] text-[var(--global-chat-text-primary)]">
+      <div className="h-screen h-dvh min-h-0 overflow-hidden bg-[#101219] text-[var(--global-chat-text-primary)]">
       <AnimatePresence>
         {isMobileSidebarOpen ? (
           <HomepageMobileSidebar
@@ -2305,16 +2313,17 @@ export function HomepageClient() {
 
       <div
         className={cn(
-          "relative mx-auto flex min-h-screen w-full min-w-0 items-stretch gap-3 px-3 py-4 transition-opacity duration-150 md:gap-3 md:px-4 md:py-6",
+          "relative mx-auto flex h-full min-h-0 w-full min-w-0 items-stretch gap-3 overflow-hidden px-3 py-4 transition-opacity duration-150 md:gap-3 md:px-4 md:py-6",
           !isMobile && !isDesktopLayoutReady && "pointer-events-none opacity-0"
         )}
       >
         <Group
+          id="homepage-panel-group"
           groupRef={panelGroupRef}
           orientation="horizontal"
           defaultLayout={HOMEPAGE_LAYOUT_DEFAULT}
           onLayoutChanged={handlePanelLayoutChanged}
-          className="flex w-full min-w-0 items-stretch gap-0"
+          className="flex h-full min-h-0 w-full min-w-0 items-stretch gap-0 overflow-hidden"
         >
           {!isMobile ? (
             <Panel
@@ -2325,7 +2334,7 @@ export function HomepageClient() {
               collapsedSize={0}
               id="homepage-left"
               panelRef={leftPanelRef}
-              className="min-w-0"
+              className="min-h-0 min-w-0 overflow-hidden"
             >
               <HomepageDesktopSidebar
                 isLeftSidebarClosed={isLeftSidebarClosed}
@@ -2348,10 +2357,10 @@ export function HomepageClient() {
             </Panel>
           ) : null}
 
-          {!isMobile ? <HomepagePanelResizeHandle /> : null}
+          {!isMobile ? <HomepagePanelResizeHandle id="homepage-separator-left" /> : null}
 
           {!isMobile ? (
-            <Panel id="homepage-center" minSize="34%" className="min-w-0">
+            <Panel id="homepage-center" minSize="34%" className="min-h-0 min-w-0 overflow-hidden">
               <HomepageCenterPanel
                 isLeftSidebarClosed={isLeftSidebarClosed}
                 isChatClosed={isChatClosed}
@@ -2362,7 +2371,12 @@ export function HomepageClient() {
             </Panel>
           ) : null}
 
-          {!isMobile ? <HomepagePanelResizeHandle /> : null}
+          {!isMobile ? (
+            <HomepagePanelResizeHandle
+              id="homepage-separator-right"
+              onPointerDown={handleRightSeparatorPointerDown}
+            />
+          ) : null}
 
           <Panel
             id="homepage-right"
@@ -2372,7 +2386,7 @@ export function HomepageClient() {
             maxSize={isMobile ? "100%" : "50%"}
             collapsible={!isMobile}
             collapsedSize={0}
-            className="min-w-0"
+            className="min-h-0 min-w-0 overflow-hidden"
           >
             <AnimatePresence initial={false} mode="sync">
               {isChatClosed ? (
@@ -2382,7 +2396,7 @@ export function HomepageClient() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-[calc(100vh-3rem)]"
+                  className="h-full min-h-0"
                 />
               ) : (
                 <motion.aside
@@ -2392,7 +2406,7 @@ export function HomepageClient() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
                   style={{ transform: "none" }}
-                  className="flex h-[calc(100vh-3rem)] w-full min-w-0 flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
+                  className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
                 >
           <HomepageChatHeader
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
@@ -2410,7 +2424,7 @@ export function HomepageClient() {
             onCloseChat={closeChatPanel}
           />
 
-          <div ref={listRef} className="relative flex-1 space-y-2 overflow-y-auto no-scrollbar px-3 py-3">
+          <div ref={listRef} className="relative flex-1 min-h-0 space-y-2 overflow-y-auto no-scrollbar px-3 py-3">
             {showScrollToLatest ? (
               <div className="sticky top-0 z-20 -mx-3 px-3 pb-2">
                 <button

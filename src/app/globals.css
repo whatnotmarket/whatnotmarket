@@ -119,11 +119,18 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    @apply h-full overflow-hidden;
+  }
   html {
     @apply bg-black font-sans;
   }
   body {
     @apply font-sans bg-background text-foreground select-none;
+  }
+  #app-root-shell {
+    @apply h-full min-h-0 overflow-hidden;
   }
 }
 

@@ -183,9 +183,10 @@ export function HomepagePrivacyCard() {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md" />
-      <div className="fixed bottom-4 right-4 z-50 w-[400px] overflow-hidden rounded-3xl border border-white/10 bg-[#000000]/95 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
-        <div className="p-6">
+      <div className="fixed inset-0 z-[2147483647]">
+        <div className="absolute inset-0 bg-black/55 backdrop-blur-[15px]" />
+        <div className="absolute bottom-4 right-4 z-10 w-[400px] overflow-hidden rounded-[32px] border border-[#363636] bg-[#1A1A1A] shadow-[0_20px_45px_rgba(0,0,0,0.45)] animate-in slide-in-from-bottom-4 duration-500">
+          <div className="p-6">
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -225,8 +226,8 @@ export function HomepagePrivacyCard() {
                     <div
                       key={category.id}
                       className={cn(
-                        "rounded-xl bg-[#101010] border border-white/5 overflow-hidden transition-all duration-300",
-                        isExpanded ? "bg-[#151515] border-white/10" : "hover:bg-[#151515]"
+                        "rounded-xl bg-[#101010] border border-[#363636] overflow-hidden transition-all duration-300",
+                        isExpanded ? "bg-[#151515] border-[#363636]" : "hover:bg-[#151515]"
                       )}
                     >
                       <div className="flex items-center justify-between p-3">
@@ -254,7 +255,7 @@ export function HomepagePrivacyCard() {
 
                       {isExpanded && (
                         <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2">
-                          <div className="h-px w-full bg-white/5 mb-3" />
+                          <div className="mb-3 h-px w-full bg-[#363636]" />
                           <p className="text-xs leading-relaxed text-zinc-400">{category.description}</p>
                         </div>
                       )}
@@ -270,7 +271,7 @@ export function HomepagePrivacyCard() {
                   <Button
                     variant="outline"
                     onClick={handleRejectAll}
-                    className="flex-1 border-white/5 bg-[#101010] text-zinc-400 hover:bg-[#101010] hover:text-red-500 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all duration-300"
+                    className="flex-1 border-[#363636] bg-[#101010] text-zinc-400 hover:bg-[#101010] hover:text-red-500 hover:border-red-500 transition-all duration-300"
                   >
                     Reject all
                   </Button>
@@ -280,13 +281,13 @@ export function HomepagePrivacyCard() {
                       setPendingPreferences(storedPreferences);
                       setIsCustomizing(true);
                     }}
-                    className="flex-1 border-white/10 bg-[#101010] text-zinc-300 hover:bg-[#151515] hover:text-white hover:border-white/20"
+                    className="flex-1 border-[#363636] bg-[#101010] text-zinc-300 hover:bg-[#151515] hover:text-white hover:border-[#363636]"
                   >
                     Customize
                   </Button>
                   <Button
                     onClick={handleAcceptAll}
-                    className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                    className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold"
                   >
                     Accept all
                   </Button>
@@ -299,6 +300,7 @@ export function HomepagePrivacyCard() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </>
   );
