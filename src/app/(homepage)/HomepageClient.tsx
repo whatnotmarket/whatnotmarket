@@ -466,7 +466,7 @@ export function HomepageClient() {
     const panel = document.querySelector<HTMLElement>('[data-homepage-center-surface="true"]');
 
     const syncFeaturebaseAnchor = () => {
-      if (!panel || window.innerWidth < 768 || panel.offsetParent === null || isChatClosed) {
+      if (!panel || window.innerWidth < 768 || panel.offsetParent === null) {
         root.style.setProperty("--featurebase-anchor-right", "12px");
         root.style.setProperty("--featurebase-anchor-bottom", "16px");
         return;
@@ -492,7 +492,7 @@ export function HomepageClient() {
       root.style.setProperty("--featurebase-anchor-right", "12px");
       root.style.setProperty("--featurebase-anchor-bottom", "16px");
     };
-  }, [isLeftSidebarClosed, isChatExpanded, isChatClosed]);
+  }, [isLeftSidebarClosed, isChatExpanded]);
 
   const requiredRoleText = useMemo(() => {
     const isThreadReply = Boolean(replyTarget);
@@ -2031,6 +2031,19 @@ export function HomepageClient() {
           onExpandSidebar={() => setIsLeftSidebarClosed(false)}
           renderCommandSearch={() => <GlobalCommandSearch className="w-full max-w-none" />}
         />
+
+        {isChatClosed ? (
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={() => setIsChatClosed(false)}
+              className="fixed bottom-5 right-5 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#2E3547] bg-[#212533] text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] md:static md:z-auto"
+              aria-label="Reopen chat"
+            >
+              <ArrowLeft className="h-4 w-4 rotate-180" />
+            </button>
+          </div>
+        ) : null}
 
         {!isChatClosed && (
           <aside
