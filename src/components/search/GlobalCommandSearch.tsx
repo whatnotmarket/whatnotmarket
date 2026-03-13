@@ -202,14 +202,14 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
         type="button"
         onClick={openPalette}
         aria-label="Open global search"
-        className="hidden h-10 w-full items-center justify-between rounded-2xl border border-white/15 bg-[#101114] px-4 text-left text-sm text-zinc-300 transition-all duration-200 hover:border-white/25 hover:bg-[#17181d] md:flex"
+        className="relative hidden h-10 w-full items-center gap-3 rounded-2xl border border-white/15 bg-[#101114] px-4 text-left text-sm text-zinc-300 transition-all duration-200 hover:border-white/25 hover:bg-[#17181d] md:flex"
       >
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
           <SearchIcon className="h-4 w-4 text-zinc-400" />
           <span className="truncate">Search products, brands, categories, sellers, pages...</span>
         </span>
-        <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-zinc-400">
-          <CommandIcon className="h-3.5 w-3.5" />
+        <span className="pointer-events-none inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-zinc-400/85">
+          <CommandIcon className="h-3.5 w-3.5 text-zinc-500" />
           {hotkeyLabel}
         </span>
       </button>

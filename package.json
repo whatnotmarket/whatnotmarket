@@ -63,6 +63,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "react-qr-code": "^2.0.18",
+    "react-resizable-panels": "^4.7.2",
     "react-use": "^17.6.0",
     "recharts": "^2.15.4",
     "server-only": "^0.0.1",

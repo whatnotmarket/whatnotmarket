@@ -1,9 +1,16 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  Group,
+  Panel,
+  type GroupImperativeHandle,
+  type PanelImperativeHandle,
+} from "react-resizable-panels";
 import {
   ArrowDown,
   ArrowLeft,
@@ -36,12 +43,13 @@ import { GLOBAL_CHAT_ROOMS, type GlobalChatRoom } from "@/lib/chat/global-chat-c
 import Image from "next/image";
 import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import EnglishFlag from "@/flag/english.png";
-import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HomepageMobileSidebar } from "./components/HomepageMobileSidebar";
 import { HomepageDesktopSidebar } from "./components/HomepageDesktopSidebar";
 import { HomepageCenterPanel } from "./components/HomepageCenterPanel";
 import { HomepageChatHeader } from "./components/HomepageChatHeader";
+import { HomepagePanelResizeHandle } from "./components/HomepagePanelResizeHandle";
 import type {
   GlobalChatMessage,
   GlobalChatRow,
@@ -55,12 +63,49 @@ import type {
   SellSidebarSectionKey,
 } from "./types";
 
+const GlobalCommandSearch = dynamic(
+  () => import("@/components/search/GlobalCommandSearch").then((mod) => mod.GlobalCommandSearch),
+  { ssr: false }
+);
+
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,reply_to_id,mentioned_handles,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
 const LEGACY_MESSAGE_SELECT = `id,user_id,room,message,created_at,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;
 
 const LEFT_SIDEBAR_CLOSED_STORAGE_KEY = "global_chat_left_sidebar_closed";
 const CHAT_EXPANDED_STORAGE_KEY = "global_chat_expanded";
+const CHAT_CLOSED_STORAGE_KEY = "global_chat_closed";
+const SIDEBAR_MODE_STORAGE_KEY = "global_chat_sidebar_mode";
+const HOMEPAGE_LAYOUT_PERSISTENCE_ID = "homepage-layout-panels-v3";
+const HOMEPAGE_LAYOUT_DEFAULT = {
+  "homepage-left": 20,
+  "homepage-center": 60,
+  "homepage-right": 20,
+} as const;
+const PANEL_CLOSE_THRESHOLD_PERCENT = 2;
+const PANEL_REOPEN_THRESHOLD_PERCENT = 4;
+
+function sanitizeHomepageLayout(layout: Record<string, unknown> | null | undefined) {
+  if (!layout) return null;
+  const left = Number(layout["homepage-left"]);
+  const center = Number(layout["homepage-center"]);
+  const right = Number(layout["homepage-right"]);
+  if (!Number.isFinite(left) || !Number.isFinite(center) || !Number.isFinite(right)) return null;
+  const sum = left + center + right;
+  const isLeftValid = left === 0 || (left >= 16 && left <= 28);
+  const isRightValid = right === 0 || (right >= 14 && right <= 50);
+  const isValid =
+    isLeftValid &&
+    center >= 34 &&
+    isRightValid &&
+    Math.abs(sum - 100) <= 0.5;
+  if (!isValid) return null;
+  return {
+    "homepage-left": left,
+    "homepage-center": center,
+    "homepage-right": right,
+  } as const;
+}
 const PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "sell-services", "crypto-talk"];
 const COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", "english"];
 const MARKETPLACE_CATEGORIES = [
@@ -330,6 +375,7 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
 }
 
 export function HomepageClient() {
+  const isMobile = useIsMobile();
   const supabase = useMemo(() => createClient(), []);
   const { user, isLoading } = useUser();
   const pathname = usePathname();
@@ -376,6 +422,19 @@ export function HomepageClient() {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const roomMenuRef = useRef<HTMLDivElement | null>(null);
+  const panelGroupRef = useRef<GroupImperativeHandle | null>(null);
+  const leftPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const rightPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const layoutPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rightPanelPercentRafRef = useRef<number | null>(null);
+  const rightPanelOpenAnimRafRef = useRef<number | null>(null);
+  const pendingRightPanelPercentRef = useRef<number | null>(null);
+  const isRestoringLayoutRef = useRef(true);
+  const [isDesktopLayoutReady, setIsDesktopLayoutReady] = useState(false);
+  const [rightPanelPercent, setRightPanelPercent] = useState<number>(HOMEPAGE_LAYOUT_DEFAULT["homepage-right"]);
+  const isLeftSidebarClosedRef = useRef(false);
+  const isChatClosedRef = useRef(false);
+  const rightPanelPercentRef = useRef<number>(HOMEPAGE_LAYOUT_DEFAULT["homepage-right"]);
   const isLoggedIn = Boolean(user);
   const canWrite = useMemo(() => {
     if (!user) return false;
@@ -403,6 +462,183 @@ export function HomepageClient() {
   const activeRoomLabel =
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
 
+  const expandedRightPanelPercent = useMemo(() => (isChatExpanded ? 30 : 20), [isChatExpanded]);
+  const isChatCompact = useMemo(
+    () => !isMobile && !isChatClosed && rightPanelPercent <= 19,
+    [isChatClosed, isMobile, rightPanelPercent]
+  );
+
+  const animateRightPanelTo = useCallback((targetPercent: number, durationMs = 240) => {
+    if (typeof window === "undefined") return;
+    if (rightPanelOpenAnimRafRef.current !== null) {
+      window.cancelAnimationFrame(rightPanelOpenAnimRafRef.current);
+      rightPanelOpenAnimRafRef.current = null;
+    }
+    const startPercent = Math.max(0, rightPanelPercentRef.current);
+    const delta = targetPercent - startPercent;
+    if (Math.abs(delta) < 0.2) {
+      rightPanelRef.current?.resize(targetPercent);
+      rightPanelPercentRef.current = targetPercent;
+      setRightPanelPercent(targetPercent);
+      return;
+    }
+    const startTime = performance.now();
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / durationMs);
+      const eased = easeOutCubic(t);
+      const next = startPercent + delta * eased;
+      rightPanelRef.current?.resize(next);
+      rightPanelPercentRef.current = next;
+      setRightPanelPercent(next);
+      if (t < 1) {
+        rightPanelOpenAnimRafRef.current = window.requestAnimationFrame(step);
+        return;
+      }
+      rightPanelOpenAnimRafRef.current = null;
+    };
+
+    rightPanelOpenAnimRafRef.current = window.requestAnimationFrame(step);
+  }, []);
+
+  useEffect(() => {
+    isLeftSidebarClosedRef.current = isLeftSidebarClosed;
+  }, [isLeftSidebarClosed]);
+
+  useEffect(() => {
+    isChatClosedRef.current = isChatClosed;
+  }, [isChatClosed]);
+
+  const handlePanelLayoutChanged = useCallback(
+    (layout: Record<string, number>) => {
+      if (typeof window === "undefined") return;
+      if (!isMobile && isRestoringLayoutRef.current) return;
+
+      if (!isMobile) {
+        const leftSize = Number(layout["homepage-left"]);
+        if (Number.isFinite(leftSize)) {
+          const shouldCloseLeft = leftSize <= PANEL_CLOSE_THRESHOLD_PERCENT;
+          const shouldReopenLeft = leftSize >= PANEL_REOPEN_THRESHOLD_PERCENT;
+          if (!isLeftSidebarClosedRef.current && shouldCloseLeft) {
+            isLeftSidebarClosedRef.current = true;
+            setIsLeftSidebarClosed(true);
+          } else if (isLeftSidebarClosedRef.current && shouldReopenLeft) {
+            isLeftSidebarClosedRef.current = false;
+            setIsLeftSidebarClosed(false);
+          }
+        }
+
+        const rightSize = Number(layout["homepage-right"]);
+        if (Number.isFinite(rightSize)) {
+          if (Math.abs(rightSize - rightPanelPercentRef.current) >= 0.35) {
+            rightPanelPercentRef.current = rightSize;
+            pendingRightPanelPercentRef.current = rightSize;
+            if (rightPanelPercentRafRef.current === null) {
+              rightPanelPercentRafRef.current = window.requestAnimationFrame(() => {
+                rightPanelPercentRafRef.current = null;
+                if (pendingRightPanelPercentRef.current !== null) {
+                  setRightPanelPercent(pendingRightPanelPercentRef.current);
+                  pendingRightPanelPercentRef.current = null;
+                }
+              });
+            }
+          }
+
+          const shouldCloseRight = rightSize <= PANEL_CLOSE_THRESHOLD_PERCENT;
+          const shouldReopenRight = rightSize >= PANEL_REOPEN_THRESHOLD_PERCENT;
+          if (!isChatClosedRef.current && shouldCloseRight) {
+            isChatClosedRef.current = true;
+            setIsChatClosed(true);
+          } else if (isChatClosedRef.current && shouldReopenRight) {
+            isChatClosedRef.current = false;
+            setIsChatClosed(false);
+          }
+        }
+      }
+
+      const sanitized = sanitizeHomepageLayout(layout);
+      if (!sanitized) return;
+      if (layoutPersistTimerRef.current) clearTimeout(layoutPersistTimerRef.current);
+      layoutPersistTimerRef.current = setTimeout(() => {
+        try {
+          window.localStorage.setItem(HOMEPAGE_LAYOUT_PERSISTENCE_ID, JSON.stringify(sanitized));
+        } catch {}
+        layoutPersistTimerRef.current = null;
+      }, 120);
+    },
+    [isMobile]
+  );
+
+  const collapseLeftSidebar = useCallback(() => {
+    isLeftSidebarClosedRef.current = true;
+    setIsLeftSidebarClosed(true);
+    if (!isMobile) {
+      leftPanelRef.current?.collapse();
+    }
+  }, [isMobile]);
+
+  const expandLeftSidebar = useCallback(() => {
+    isLeftSidebarClosedRef.current = false;
+    setIsLeftSidebarClosed(false);
+    if (!isMobile) {
+      leftPanelRef.current?.expand();
+      leftPanelRef.current?.resize("20%");
+    }
+  }, [isMobile]);
+
+  const closeChatPanel = useCallback(() => {
+    isChatClosedRef.current = true;
+    setIsChatClosed(true);
+    if (!isMobile) {
+      const layout = panelGroupRef.current?.getLayout();
+      if (layout) {
+        const left = Number(layout["homepage-left"]);
+        const center = Number(layout["homepage-center"]);
+        if (Number.isFinite(left) && Number.isFinite(center)) {
+          panelGroupRef.current?.setLayout({
+            "homepage-left": left,
+            "homepage-center": Math.max(34, center + Number(layout["homepage-right"] || 0)),
+            "homepage-right": 0,
+          });
+        }
+      }
+      rightPanelRef.current?.collapse();
+    }
+  }, [isMobile]);
+
+  const reopenChatPanel = useCallback(() => {
+    isChatClosedRef.current = false;
+    setIsChatClosed(false);
+    if (!isMobile) {
+      const current = panelGroupRef.current?.getLayout();
+      const currentLeft = Number(current?.["homepage-left"]);
+      const safeLeft = Number.isFinite(currentLeft) ? Math.min(28, Math.max(0, currentLeft)) : 20;
+      const targetRight = expandedRightPanelPercent;
+      const nextCenter = Math.max(34, 100 - safeLeft - targetRight);
+      const nextRight = Math.max(14, 100 - safeLeft - nextCenter);
+
+      panelGroupRef.current?.setLayout({
+        "homepage-left": safeLeft,
+        "homepage-center": nextCenter,
+        "homepage-right": nextRight,
+      });
+      rightPanelRef.current?.expand();
+      rightPanelRef.current?.resize(nextRight);
+      rightPanelPercentRef.current = nextRight;
+      setRightPanelPercent(nextRight);
+      window.requestAnimationFrame(() => {
+        animateRightPanelTo(nextRight, 220);
+      });
+      return;
+    }
+  }, [animateRightPanelTo, expandedRightPanelPercent, isMobile]);
+
+  const toggleChatExpanded = useCallback(() => {
+    setIsChatExpanded((prev) => !prev);
+  }, []);
+
   useEffect(() => {
     setStablePathname(pathname || "/");
   }, [pathname]);
@@ -429,28 +665,116 @@ export function HomepageClient() {
     } catch {}
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    isRestoringLayoutRef.current = true;
+    setIsDesktopLayoutReady(false);
+
+    let nextLeftClosed = false;
+    let nextChatClosed = false;
+    let nextChatExpanded = false;
+    let nextSidebarMode: SidebarMode = "buy";
+
     try {
-      setIsLeftSidebarClosed(localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1");
-      const storedChatExpanded = localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY);
-      setIsChatExpanded(storedChatExpanded === "1");
-    } catch {
-      setIsLeftSidebarClosed(false);
-      setIsChatExpanded(false);
+      nextLeftClosed = localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1";
+      nextChatClosed = localStorage.getItem(CHAT_CLOSED_STORAGE_KEY) === "1";
+      nextChatExpanded = localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY) === "1";
+      const storedSidebarMode = localStorage.getItem(SIDEBAR_MODE_STORAGE_KEY);
+      if (storedSidebarMode === "buy" || storedSidebarMode === "sell") {
+        nextSidebarMode = storedSidebarMode;
+      }
+    } catch {}
+
+    if (!isMobile) {
+      try {
+        const raw = window.localStorage.getItem(HOMEPAGE_LAYOUT_PERSISTENCE_ID);
+        if (raw) {
+          const parsed = JSON.parse(raw) as Record<string, unknown>;
+          const sanitized = sanitizeHomepageLayout(parsed);
+          if (sanitized) {
+            panelGroupRef.current?.setLayout(sanitized);
+            if (sanitized["homepage-left"] <= PANEL_CLOSE_THRESHOLD_PERCENT) {
+              nextLeftClosed = true;
+            }
+            if (sanitized["homepage-right"] <= PANEL_CLOSE_THRESHOLD_PERCENT) {
+              nextChatClosed = true;
+            }
+            rightPanelPercentRef.current = sanitized["homepage-right"];
+            setRightPanelPercent(sanitized["homepage-right"]);
+          }
+        }
+      } catch {}
     }
-  }, []);
+
+    isLeftSidebarClosedRef.current = nextLeftClosed;
+    isChatClosedRef.current = nextChatClosed;
+    setIsLeftSidebarClosed(nextLeftClosed);
+    setIsChatClosed(nextChatClosed);
+    setIsChatExpanded(nextChatExpanded);
+    setSidebarMode(nextSidebarMode);
+
+    if (!isMobile) {
+      const rafId = window.requestAnimationFrame(() => {
+        if (nextLeftClosed) leftPanelRef.current?.collapse();
+        if (nextChatClosed) rightPanelRef.current?.collapse();
+        window.requestAnimationFrame(() => {
+          isRestoringLayoutRef.current = false;
+          setIsDesktopLayoutReady(true);
+        });
+      });
+      return () => {
+        window.cancelAnimationFrame(rafId);
+      };
+    }
+
+    isRestoringLayoutRef.current = false;
+    setIsDesktopLayoutReady(true);
+  }, [isMobile]);
 
   useEffect(() => {
+    if (isRestoringLayoutRef.current) return;
     try {
       localStorage.setItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY, isLeftSidebarClosed ? "1" : "0");
     } catch {}
   }, [isLeftSidebarClosed]);
 
   useEffect(() => {
+    if (isRestoringLayoutRef.current) return;
+    try {
+      localStorage.setItem(CHAT_CLOSED_STORAGE_KEY, isChatClosed ? "1" : "0");
+    } catch {}
+  }, [isChatClosed]);
+
+  useEffect(() => {
+    if (isRestoringLayoutRef.current) return;
     try {
       localStorage.setItem(CHAT_EXPANDED_STORAGE_KEY, isChatExpanded ? "1" : "0");
     } catch {}
   }, [isChatExpanded]);
+
+  useEffect(() => {
+    if (isRestoringLayoutRef.current) return;
+    try {
+      localStorage.setItem(SIDEBAR_MODE_STORAGE_KEY, sidebarMode);
+    } catch {}
+  }, [sidebarMode]);
+
+  useEffect(() => {
+    if (isMobile || isChatClosed) return;
+    animateRightPanelTo(expandedRightPanelPercent, 220);
+  }, [animateRightPanelTo, expandedRightPanelPercent, isChatClosed, isMobile]);
+
+  useEffect(() => {
+    return () => {
+      if (layoutPersistTimerRef.current) clearTimeout(layoutPersistTimerRef.current);
+      if (rightPanelPercentRafRef.current !== null) {
+        window.cancelAnimationFrame(rightPanelPercentRafRef.current);
+      }
+      if (rightPanelOpenAnimRafRef.current !== null) {
+        window.cancelAnimationFrame(rightPanelOpenAnimRafRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isMobileSidebarOpen) return;
@@ -460,39 +784,6 @@ export function HomepageClient() {
       document.body.style.overflow = previousOverflow;
     };
   }, [isMobileSidebarOpen]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const panel = document.querySelector<HTMLElement>('[data-homepage-center-surface="true"]');
-
-    const syncFeaturebaseAnchor = () => {
-      if (!panel || window.innerWidth < 768 || panel.offsetParent === null) {
-        root.style.setProperty("--featurebase-anchor-right", "12px");
-        root.style.setProperty("--featurebase-anchor-bottom", "16px");
-        return;
-      }
-
-      const rect = panel.getBoundingClientRect();
-      const right = Math.max(12, Math.round(window.innerWidth - rect.right + 18));
-      const bottom = Math.max(16, Math.round(window.innerHeight - rect.bottom + 18));
-      root.style.setProperty("--featurebase-anchor-right", `${right}px`);
-      root.style.setProperty("--featurebase-anchor-bottom", `${bottom}px`);
-    };
-
-    syncFeaturebaseAnchor();
-
-    const resizeObserver = panel ? new ResizeObserver(syncFeaturebaseAnchor) : null;
-    if (panel && resizeObserver) resizeObserver.observe(panel);
-
-    window.addEventListener("resize", syncFeaturebaseAnchor);
-
-    return () => {
-      window.removeEventListener("resize", syncFeaturebaseAnchor);
-      resizeObserver?.disconnect();
-      root.style.setProperty("--featurebase-anchor-right", "12px");
-      root.style.setProperty("--featurebase-anchor-bottom", "16px");
-    };
-  }, [isLeftSidebarClosed, isChatExpanded]);
 
   const requiredRoleText = useMemo(() => {
     const isThreadReply = Boolean(replyTarget);
@@ -1892,9 +2183,9 @@ export function HomepageClient() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                  <span className="text-sm font-bold text-white">{message.displayName}</span>
+                  <span className="break-words text-sm font-bold leading-tight text-white">{message.displayName}</span>
                 </div>
-                <div className="min-w-0 break-words text-[15px] leading-relaxed text-zinc-200">
+                <div className={cn("min-w-0 break-words text-zinc-200", isChatCompact ? "text-[14px] leading-6" : "text-[15px] leading-relaxed")}>
                   {renderMessageWithMentions(message.text, currentHandle)}
                 </div>
               </div>
@@ -1903,19 +2194,21 @@ export function HomepageClient() {
                   <button
                     type="button"
                     onClick={() => openThreadForMessage(message)}
+                    aria-label={`Show thread (${repliesCount})`}
                     className="inline-flex items-center gap-1 rounded-xl border border-[#2E3547] bg-[#212533] px-2 py-1 text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
                   >
                     <Reply className="h-3.5 w-3.5" />
-                    {`Show thread (${repliesCount})`}
+                    {isChatCompact ? <span className="font-semibold">{repliesCount}</span> : `Show thread (${repliesCount})`}
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setReplyTarget(message)}
+                    aria-label="Reply"
                     className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
                   >
                     <Reply className="h-3.5 w-3.5" />
-                    Reply
+                    {isChatCompact ? null : "Reply"}
                   </button>
                 )}
               </div>
@@ -1949,19 +2242,20 @@ export function HomepageClient() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                  <span className="text-sm font-bold text-white">{message.displayName}</span>
+                  <span className="break-words text-sm font-bold leading-tight text-white">{message.displayName}</span>
                 </div>
-                <div className="min-w-0 break-words text-[15px] leading-relaxed text-zinc-200">
+                <div className={cn("min-w-0 break-words text-zinc-200", isChatCompact ? "text-[14px] leading-6" : "text-[15px] leading-relaxed")}>
                   {renderMessageWithMentions(message.text, currentHandle)}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setReplyTarget(message)}
+                aria-label="Reply"
                 className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
               >
                 <Reply className="h-3.5 w-3.5" />
-                Reply
+                {isChatCompact ? null : "Reply"}
               </button>
             </div>
 
@@ -2005,53 +2299,96 @@ export function HomepageClient() {
       </AnimatePresence>
 
       <div
-        className="relative mx-auto flex min-h-screen w-full min-w-0 items-stretch gap-3 px-3 py-4 md:gap-3 md:px-4 md:py-6"
+        className={cn(
+          "relative mx-auto flex min-h-screen w-full min-w-0 items-stretch gap-3 px-3 py-4 transition-opacity duration-150 md:gap-3 md:px-4 md:py-6",
+          !isMobile && !isDesktopLayoutReady && "pointer-events-none opacity-0"
+        )}
       >
-        <HomepageDesktopSidebar
-          isLeftSidebarClosed={isLeftSidebarClosed}
-          onCollapse={() => setIsLeftSidebarClosed(true)}
-          sidebarMode={sidebarMode}
-          onSidebarModeChange={setSidebarMode}
-          isMarketplaceSectionOpen={isMarketplaceSectionOpen}
-          onToggleMarketplaceSection={() => setIsMarketplaceSectionOpen((prev) => !prev)}
-          isRoomsSectionOpen={isRoomsSectionOpen}
-          onToggleRoomsSection={() => setIsRoomsSectionOpen((prev) => !prev)}
-          primaryRooms={primaryRooms}
-          marketplaceCategories={MARKETPLACE_CATEGORIES}
-          renderMarketplaceNavItem={renderMarketplaceNavItem}
-          renderRoomNavItem={renderRoomNavItem}
-          renderSellSections={renderSellSections}
-          displayOnlineCount={displayOnlineCount}
-          threadCount={topLevelMessages.length}
-          sidebarRowGridClass={SIDEBAR_ROW_GRID_CLASS}
-        />
-
-        <HomepageCenterPanel
-          isLeftSidebarClosed={isLeftSidebarClosed}
-          onExpandSidebar={() => setIsLeftSidebarClosed(false)}
-          renderCommandSearch={() => <GlobalCommandSearch className="w-full max-w-none" />}
-        />
-
-        {isChatClosed ? (
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={() => setIsChatClosed(false)}
-              className="fixed bottom-5 right-5 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#2E3547] bg-[#212533] text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] md:static md:z-auto"
-              aria-label="Reopen chat"
+        <Group
+          groupRef={panelGroupRef}
+          orientation="horizontal"
+          defaultLayout={HOMEPAGE_LAYOUT_DEFAULT}
+          onLayoutChanged={handlePanelLayoutChanged}
+          className="flex w-full min-w-0 items-stretch gap-0"
+        >
+          {!isMobile ? (
+            <Panel
+              defaultSize="20%"
+              minSize="16%"
+              maxSize="28%"
+              collapsible
+              collapsedSize={0}
+              id="homepage-left"
+              panelRef={leftPanelRef}
+              className="min-w-0"
             >
-              <ArrowLeft className="h-4 w-4 rotate-180" />
-            </button>
-          </div>
-        ) : null}
+              <HomepageDesktopSidebar
+                isLeftSidebarClosed={isLeftSidebarClosed}
+                onCollapse={collapseLeftSidebar}
+                sidebarMode={sidebarMode}
+                onSidebarModeChange={setSidebarMode}
+                isMarketplaceSectionOpen={isMarketplaceSectionOpen}
+                onToggleMarketplaceSection={() => setIsMarketplaceSectionOpen((prev) => !prev)}
+                isRoomsSectionOpen={isRoomsSectionOpen}
+                onToggleRoomsSection={() => setIsRoomsSectionOpen((prev) => !prev)}
+                primaryRooms={primaryRooms}
+                marketplaceCategories={MARKETPLACE_CATEGORIES}
+                renderMarketplaceNavItem={renderMarketplaceNavItem}
+                renderRoomNavItem={renderRoomNavItem}
+                renderSellSections={renderSellSections}
+                displayOnlineCount={displayOnlineCount}
+                threadCount={topLevelMessages.length}
+                sidebarRowGridClass={SIDEBAR_ROW_GRID_CLASS}
+              />
+            </Panel>
+          ) : null}
 
-        {!isChatClosed && (
-          <aside
-            className={cn(
-              "flex h-[calc(100vh-3rem)] w-full flex-none flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)] transition-[width] duration-200",
-              isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
-            )}
+          {!isMobile ? <HomepagePanelResizeHandle /> : null}
+
+          {!isMobile ? (
+            <Panel id="homepage-center" minSize="34%" className="min-w-0">
+              <HomepageCenterPanel
+                isLeftSidebarClosed={isLeftSidebarClosed}
+                isChatClosed={isChatClosed}
+                onExpandSidebar={expandLeftSidebar}
+                onExpandChat={reopenChatPanel}
+                commandSearchSlot={<GlobalCommandSearch className="w-full max-w-none" />}
+              />
+            </Panel>
+          ) : null}
+
+          {!isMobile ? <HomepagePanelResizeHandle /> : null}
+
+          <Panel
+            id="homepage-right"
+            panelRef={rightPanelRef}
+            defaultSize={isMobile ? "100%" : "20%"}
+            minSize={isMobile ? "100%" : "14%"}
+            maxSize={isMobile ? "100%" : "50%"}
+            collapsible={!isMobile}
+            collapsedSize={0}
+            className="min-w-0"
           >
+            <AnimatePresence initial={false} mode="sync">
+              {isChatClosed ? (
+                <motion.div
+                  key="chat-closed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="h-[calc(100vh-3rem)]"
+                />
+              ) : (
+                <motion.aside
+                  key="chat-open"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ transform: "none" }}
+                  className="flex h-[calc(100vh-3rem)] w-full min-w-0 flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
+                >
           <HomepageChatHeader
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
             roomMenuRef={roomMenuRef}
@@ -2063,9 +2400,9 @@ export function HomepageClient() {
             onRoomChange={handleRoomChange}
             renderRoomIcon={renderRoomIcon}
             isChatExpanded={isChatExpanded}
-            onToggleChatExpanded={() => setIsChatExpanded((prev) => !prev)}
+            onToggleChatExpanded={toggleChatExpanded}
             onOpenRules={() => setIsRulesOpen(true)}
-            onCloseChat={() => setIsChatClosed(true)}
+            onCloseChat={closeChatPanel}
           />
 
           <div ref={listRef} className="relative flex-1 space-y-2 overflow-y-auto no-scrollbar px-3 py-3">
@@ -2415,7 +2752,7 @@ export function HomepageClient() {
 
             </div>
 
-            <div className="flex items-center justify-between text-xs text-zinc-300">
+	            <div className="flex items-center justify-between gap-2 text-xs text-zinc-300">
               <span className="inline-flex items-center gap-2">
                 <svg width="256px" height="256px" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#b8ffc0" strokeWidth="0.40800000000000003" className="h-6 w-6">
                   <g strokeWidth="0"></g>
@@ -2424,7 +2761,7 @@ export function HomepageClient() {
                     <path d="M12 9.5C13.3807 9.5 14.5 10.6193 14.5 12C14.5 13.3807 13.3807 14.5 12 14.5C10.6193 14.5 9.5 13.3807 9.5 12C9.5 10.6193 10.6193 9.5 12 9.5Z" fill="#04dc3a"></path>
                   </g>
                 </svg>
-                Online: {displayOnlineCount.toLocaleString("en-US")}
+                {isChatCompact ? displayOnlineCount.toLocaleString("en-US") : `Online: ${displayOnlineCount.toLocaleString("en-US")}`}
               </span>
 
               {mutedUntilTs && mutedUntilTs > Date.now() ? (
@@ -2437,18 +2774,20 @@ export function HomepageClient() {
                   className="inline-flex items-center gap-1 text-zinc-300 hover:text-white"
                 >
                   <LogIn className="h-3.5 w-3.5" />
-                  Sign in to write
+                  {isChatCompact ? "Sign in" : "Sign in to write"}
                 </Link>
               ) : !canWrite ? (
                 <span className="text-zinc-400">{isBanned ? "You are banned from global chat." : `You are not ${requiredRoleText || "allowed"} to write here.`}</span>
               ) : (
                 <span className="text-zinc-400">{draft.length}/180</span>
               )}
-            </div>
-          </div>
-        </aside>
-        )}
-
+	            </div>
+	          </div>
+                </motion.aside>
+              )}
+            </AnimatePresence>
+          </Panel>
+        </Group>
       </div>
       </div>
     </TooltipProvider>

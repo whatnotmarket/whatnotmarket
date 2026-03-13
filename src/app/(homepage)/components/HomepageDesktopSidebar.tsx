@@ -50,11 +50,10 @@ export function HomepageDesktopSidebar<
     <motion.aside
       initial={false}
       animate={{
-        width: isLeftSidebarClosed ? 0 : 264,
         opacity: isLeftSidebarClosed ? 0 : 1,
       }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="relative hidden shrink-0 overflow-hidden md:sticky md:top-6 md:block md:h-[calc(100vh-3rem)]"
+      className="relative hidden h-[calc(100vh-3rem)] min-w-0 overflow-hidden md:block"
       aria-hidden={isLeftSidebarClosed}
     >
       <motion.div
@@ -65,7 +64,7 @@ export function HomepageDesktopSidebar<
         }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "flex h-full w-[264px] flex-col rounded-[30px] border border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.55)]",
+          "flex h-full w-full flex-col rounded-[30px] border border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.55)]",
           isLeftSidebarClosed ? "pointer-events-none" : ""
         )}
       >
