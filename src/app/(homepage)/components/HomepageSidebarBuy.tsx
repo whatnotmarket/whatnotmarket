@@ -3,9 +3,9 @@
 import { Globe2, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
-import { SectionChevron } from "./SectionChevron";
+import { HomepageSectionChevron } from "./HomepageSectionChevron";
 
-export function GlobalChatSidebarBuy<
+export function HomepageSidebarBuy<
   RoomT extends { slug: GlobalChatRoom; label: string },
   CategoryT extends { label: string; href: string },
 >({
@@ -54,7 +54,7 @@ export function GlobalChatSidebarBuy<
           </span>
           <span className="min-w-0 truncate">Marketplace</span>
           <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
-            <SectionChevron open={isMarketplaceSectionOpen} />
+            <HomepageSectionChevron open={isMarketplaceSectionOpen} />
           </span>
         </button>
         {isMarketplaceSectionOpen ? (
@@ -85,7 +85,7 @@ export function GlobalChatSidebarBuy<
           </span>
           <span className="min-w-0 truncate">Trading Rooms</span>
           <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
-            <SectionChevron open={isRoomsSectionOpen} />
+            <HomepageSectionChevron open={isRoomsSectionOpen} />
           </span>
         </button>
         {isRoomsSectionOpen ? (

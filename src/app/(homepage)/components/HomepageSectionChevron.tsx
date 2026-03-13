@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export function SectionChevron({ open }: { open: boolean }) {
+export function HomepageSectionChevron({ open }: { open: boolean }) {
   return (
     <svg
       viewBox="0 -4.5 24 24"
@@ -20,4 +20,3 @@ export function SectionChevron({ open }: { open: boolean }) {
     </svg>
   );
 }
-

@@ -3,12 +3,12 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { SidebarMode } from "../types";
-import { GlobalChatSidebarModeToggle } from "./GlobalChatSidebarModeToggle";
-import { GlobalChatSidebarBuy } from "./GlobalChatSidebarBuy";
-import { GlobalChatSidebarSell } from "./GlobalChatSidebarSell";
+import { HomepageSidebarModeToggle } from "./HomepageSidebarModeToggle";
+import { HomepageSidebarBuy } from "./HomepageSidebarBuy";
+import { HomepageSidebarSell } from "./HomepageSidebarSell";
 import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
 
-export function GlobalChatDesktopSidebar<
+export function HomepageDesktopSidebar<
   RoomT extends { slug: GlobalChatRoom; label: string },
   CategoryT extends { label: string; href: string },
 >({
@@ -96,10 +96,10 @@ export function GlobalChatDesktopSidebar<
         </div>
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
-          <GlobalChatSidebarModeToggle sidebarMode={sidebarMode} onChange={onSidebarModeChange} />
+          <HomepageSidebarModeToggle sidebarMode={sidebarMode} onChange={onSidebarModeChange} />
 
           {sidebarMode === "buy" ? (
-            <GlobalChatSidebarBuy
+            <HomepageSidebarBuy
               isMarketplaceSectionOpen={isMarketplaceSectionOpen}
               onToggleMarketplaceSection={onToggleMarketplaceSection}
               isRoomsSectionOpen={isRoomsSectionOpen}
@@ -111,7 +111,7 @@ export function GlobalChatDesktopSidebar<
               renderRoomNavItem={renderRoomNavItem}
             />
           ) : (
-            <GlobalChatSidebarSell renderSellSections={renderSellSections} />
+            <HomepageSidebarSell renderSellSections={renderSellSections} />
           )}
         </div>
 

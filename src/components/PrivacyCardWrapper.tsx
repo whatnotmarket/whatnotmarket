@@ -1,13 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { PrivacyCard } from "@/components/global-chat/PrivacyCard";
+import { HomepagePrivacyCard } from "@/components/homepage/HomepagePrivacyCard";
 
 export function PrivacyCardWrapper() {
   const pathname = usePathname();
 
   if (pathname === "/link") return null;
 
-  return <PrivacyCard />;
+  return <HomepagePrivacyCard />;
 }
-

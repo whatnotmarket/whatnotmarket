@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,30 @@ const DEFAULT_PREFERENCES: CookiePreferences = {
   marketing: false,
   personalization: false,
 };
+
+const COOKIE_CONSENT_KEY = "cookie-consent";
+
+const subscribeCookieConsent = (onStoreChange: () => void) => {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => onStoreChange();
+  window.addEventListener("storage", handler);
+  window.addEventListener("cookie-consent-updated", handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener("cookie-consent-updated", handler);
+  };
+};
+
+const getCookieConsentSnapshot = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(COOKIE_CONSENT_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const getCookieConsentServerSnapshot = () => "ssr";
 
 const PrivacyIcon = ({ className }: { className?: string }) => (
   <svg
@@ -45,36 +69,34 @@ const PrivacyIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export function PrivacyCard() {
+export function HomepagePrivacyCard() {
   const pathname = usePathname();
-  const [isMounted, setIsMounted] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isCustomizing, setIsCustomizing] = useState(false);
-  const [preferences, setPreferences] = useState<CookiePreferences>(DEFAULT_PREFERENCES);
-  const [expandedCategory, setExpandedCategory] = useState<keyof CookiePreferences | null>("essential");
-
-  useEffect(() => {
-    setIsMounted(true);
-
+  const consentRaw = useSyncExternalStore(
+    subscribeCookieConsent,
+    getCookieConsentSnapshot,
+    getCookieConsentServerSnapshot
+  );
+  const storedPreferences = useMemo((): CookiePreferences => {
+    if (!consentRaw || consentRaw === "ssr") return DEFAULT_PREFERENCES;
     try {
-      const raw = localStorage.getItem("cookie-consent");
-      if (!raw) {
-        setIsVisible(true);
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as Partial<CookiePreferences>;
-      setPreferences({
+      const parsed = JSON.parse(consentRaw) as Partial<CookiePreferences>;
+      return {
         essential: true,
         analytics: Boolean(parsed.analytics),
         marketing: Boolean(parsed.marketing),
         personalization: Boolean(parsed.personalization),
-      });
-      setIsVisible(false);
+      };
     } catch {
-      setIsVisible(true);
+      return DEFAULT_PREFERENCES;
     }
-  }, []);
+  }, [consentRaw]);
+  const isVisible = consentRaw === null;
+
+  const [isDismissed, setIsDismissed] = useState(false);
+  const [isCustomizing, setIsCustomizing] = useState(false);
+  const [pendingPreferences, setPendingPreferences] = useState<CookiePreferences | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<keyof CookiePreferences | null>("essential");
+  const preferences = pendingPreferences ?? storedPreferences;
 
   const categories = [
     {
@@ -114,10 +136,13 @@ export function PrivacyCard() {
   ];
 
   const savePreferences = (prefs: CookiePreferences) => {
-    localStorage.setItem("cookie-consent", JSON.stringify(prefs));
-    setPreferences(prefs);
-    setIsVisible(false);
+    try {
+      localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
+    } catch {}
     window.dispatchEvent(new Event("cookie-consent-updated"));
+    setPendingPreferences(null);
+    setIsCustomizing(false);
+    setIsDismissed(true);
   };
 
   const handleAcceptAll = () => {
@@ -139,20 +164,22 @@ export function PrivacyCard() {
   };
 
   const handleSavePreferences = () => {
-    savePreferences(preferences);
+    savePreferences(pendingPreferences ?? storedPreferences);
   };
 
   const togglePreference = (key: keyof CookiePreferences) => {
     if (key === "essential") return;
-    setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
+    setPendingPreferences((prev) => {
+      const base = prev ?? storedPreferences;
+      return { ...base, [key]: !base[key] };
+    });
   };
 
   if (pathname === "/install" || pathname.startsWith("/install/")) {
     return null;
   }
 
-  if (!isMounted) return null;
-  if (!isVisible) return null;
+  if (!isVisible || isDismissed) return null;
 
   return (
     <>
@@ -169,7 +196,10 @@ export function PrivacyCard() {
                 {isCustomizing && (
                   <button
                     type="button"
-                    onClick={() => setIsCustomizing(false)}
+                    onClick={() => {
+                      setIsCustomizing(false);
+                      setPendingPreferences(null);
+                    }}
                     className="text-zinc-400 hover:text-white transition-colors"
                     aria-label="Close privacy customization"
                   >
@@ -246,7 +276,10 @@ export function PrivacyCard() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setIsCustomizing(true)}
+                    onClick={() => {
+                      setPendingPreferences(storedPreferences);
+                      setIsCustomizing(true);
+                    }}
                     className="flex-1 border-white/10 bg-[#101010] text-zinc-300 hover:bg-[#151515] hover:text-white hover:border-white/20"
                   >
                     Customize

@@ -38,10 +38,10 @@ import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import EnglishFlag from "@/flag/english.png";
 import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { GlobalChatMobileSidebar } from "./components/GlobalChatMobileSidebar";
-import { GlobalChatDesktopSidebar } from "./components/GlobalChatDesktopSidebar";
-import { GlobalChatCenterPanel } from "./components/GlobalChatCenterPanel";
-import { GlobalChatChatHeader } from "./components/GlobalChatChatHeader";
+import { HomepageMobileSidebar } from "./components/HomepageMobileSidebar";
+import { HomepageDesktopSidebar } from "./components/HomepageDesktopSidebar";
+import { HomepageCenterPanel } from "./components/HomepageCenterPanel";
+import { HomepageChatHeader } from "./components/HomepageChatHeader";
 import type {
   GlobalChatMessage,
   GlobalChatRow,
@@ -329,7 +329,7 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
   });
 }
 
-export function GlobalChatClient() {
+export function HomepageClient() {
   const supabase = useMemo(() => createClient(), []);
   const { user, isLoading } = useUser();
   const pathname = usePathname();
@@ -1938,7 +1938,7 @@ export function GlobalChatClient() {
       <div className="min-h-screen bg-[#101219] text-[var(--global-chat-text-primary)]">
       <AnimatePresence>
         {isMobileSidebarOpen ? (
-          <GlobalChatMobileSidebar
+          <HomepageMobileSidebar
             isOpen={isMobileSidebarOpen}
             onClose={() => setIsMobileSidebarOpen(false)}
             activeRoomLabel={activeRoomLabel}
@@ -1972,7 +1972,7 @@ export function GlobalChatClient() {
           isLeftSidebarClosed ? "md:gap-0" : "md:gap-5"
         )}
       >
-        <GlobalChatDesktopSidebar
+        <HomepageDesktopSidebar
           isLeftSidebarClosed={isLeftSidebarClosed}
           onCollapse={() => setIsLeftSidebarClosed(true)}
           sidebarMode={sidebarMode}
@@ -1991,7 +1991,7 @@ export function GlobalChatClient() {
           sidebarRowGridClass={SIDEBAR_ROW_GRID_CLASS}
         />
 
-        <GlobalChatCenterPanel
+        <HomepageCenterPanel
           isLeftSidebarClosed={isLeftSidebarClosed}
           onExpandSidebar={() => setIsLeftSidebarClosed(false)}
           renderCommandSearch={() => <GlobalCommandSearch className="w-full max-w-none" />}
@@ -2004,7 +2004,7 @@ export function GlobalChatClient() {
               isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
             )}
           >
-          <GlobalChatChatHeader
+          <HomepageChatHeader
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
             roomMenuRef={roomMenuRef}
             isRoomMenuOpen={isRoomMenuOpen}
@@ -2385,7 +2385,7 @@ export function GlobalChatClient() {
                 <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
               ) : !user ? (
                 <Link
-                  href="/auth?next=/global-chat"
+                  href="/auth?next=/"
                   className="inline-flex items-center gap-1 text-zinc-300 hover:text-white"
                 >
                   <LogIn className="h-3.5 w-3.5" />

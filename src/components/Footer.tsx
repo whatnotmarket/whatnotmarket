@@ -18,8 +18,7 @@ export function Footer() {
     pathname.startsWith("/admintest/") ||
     pathname === "/admin" ||
     pathname.startsWith("/admin/")
-    || pathname === "/global-chat"
-    || pathname.startsWith("/global-chat/")
+    || pathname === "/"
     || pathname === "/install"
     || pathname.startsWith("/install/")
   ) {

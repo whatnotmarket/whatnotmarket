@@ -3,9 +3,9 @@
 import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
-import { GlobalChatRoomMenu } from "./GlobalChatRoomMenu";
+import { HomepageRoomMenu } from "./HomepageRoomMenu";
 
-export function GlobalChatChatHeader({
+export function HomepageChatHeader({
   onOpenMobileSidebar,
   roomMenuRef,
   isRoomMenuOpen,
@@ -46,7 +46,7 @@ export function GlobalChatChatHeader({
           <Menu className="h-4 w-4" />
         </button>
 
-        <GlobalChatRoomMenu
+        <HomepageRoomMenu
           containerRef={roomMenuRef}
           isOpen={isRoomMenuOpen}
           onToggle={onToggleRoomMenu}

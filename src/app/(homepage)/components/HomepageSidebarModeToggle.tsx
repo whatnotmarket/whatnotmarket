@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { SidebarMode } from "../types";
 
-export function GlobalChatSidebarModeToggle({
+export function HomepageSidebarModeToggle({
   sidebarMode,
   onChange,
 }: {
@@ -41,4 +41,3 @@ export function GlobalChatSidebarModeToggle({
     </div>
   );
 }
-

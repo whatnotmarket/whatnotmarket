@@ -25,10 +25,10 @@ declare global {
 
 export function FeaturebaseMessenger() {
   const pathname = usePathname();
-  const isGlobalChatRoute = pathname === "/global-chat";
+  const isHomepageRoute = pathname === "/";
 
   useEffect(() => {
-    if (isGlobalChatRoute) return;
+    if (isHomepageRoute) return;
 
     const win = window;
 
@@ -51,9 +51,9 @@ export function FeaturebaseMessenger() {
 
     win.Featurebase("boot", payload);
     win.Featurebase._booted = true;
-  }, [isGlobalChatRoute]);
+  }, [isHomepageRoute]);
 
-  if (isGlobalChatRoute) {
+  if (isHomepageRoute) {
     return null;
   }
 

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-export function GlobalChatRulesCard({
+export function HomepageRulesCard({
   onClose,
   onAccept,
 }: {
@@ -38,4 +38,3 @@ export function GlobalChatRulesCard({
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
 "use client";
 
-export function GlobalChatSidebarSell({
+export function HomepageSidebarSell({
   renderSellSections,
   closeMobileOnClick = false,
 }: {
@@ -9,4 +9,3 @@ export function GlobalChatSidebarSell({
 }) {
   return <>{renderSellSections(closeMobileOnClick)}</>;
 }
-

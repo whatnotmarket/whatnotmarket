@@ -319,7 +319,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     id: "trending-global-chat",
     title: "Global chat",
     description: "Public community room",
-    href: "/global-chat",
+    href: "/",
     group: "Trending",
     icon: MessageCircle,
     entityType: "page",

@@ -8,9 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
 import type { GlobalChatMessage, MentionContext, MentionableUser } from "../types";
-import { GlobalChatRulesCard } from "./GlobalChatRulesCard";
+import { HomepageRulesCard } from "./HomepageRulesCard";
 
-export function GlobalChatFooter({
+export function HomepageFooter({
   replyTarget,
   onClearReplyTarget,
   truncateMessage,
@@ -77,6 +77,9 @@ export function GlobalChatFooter({
   slowModeMinutes: number;
   user: { id: string } | null;
 }) {
+  const isMuted = mutedUntilTs > 0;
+  const isClosed = closedRemainingSeconds > 0 || closedUntilTs > 0;
+
   return (
     <div className="mx-3 mb-3 mt-2 rounded-[24px] border border-[#2E3547] bg-[#212533] p-3 shadow-[0_0_0_1px_rgba(46,53,71,0.05)] transition-shadow duration-200 focus-within:shadow-[0_0_0_1px_rgba(46,53,71,0.72),0_0_0_5px_rgba(46,53,71,0.12)]">
       {replyTarget ? (
@@ -95,7 +98,7 @@ export function GlobalChatFooter({
         </div>
       ) : null}
 
-      {isRulesOpen ? <GlobalChatRulesCard onClose={onCloseRules} onAccept={onAcceptRules} /> : null}
+      {isRulesOpen ? <HomepageRulesCard onClose={onCloseRules} onAccept={onAcceptRules} /> : null}
 
       {isBanned ? (
         <div className="mb-2 inline-flex items-center gap-2 text-sm text-[#ff0000]">
@@ -109,7 +112,7 @@ export function GlobalChatFooter({
           </svg>
           <span className="font-semibold">You are banned to write here</span>
         </div>
-      ) : mutedUntilTs && mutedUntilTs > Date.now() ? (
+      ) : isMuted ? (
         <div className="mb-2 inline-flex items-center gap-2 text-sm text-white">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
             <path d="M5 5L19 19" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -132,12 +135,10 @@ export function GlobalChatFooter({
           </svg>
           <span className="font-semibold">You are muted to write here</span>
         </div>
-      ) : closedUntilTs && closedUntilTs > Date.now() ? (
+      ) : isClosed ? (
         <div className="mb-2 inline-flex items-center gap-2 text-sm text-white">
           <span className="font-semibold">
-            {closedUntilTs > Date.now() + 365 * 24 * 60 * 60 * 1000
-              ? "This chat is closed"
-              : `This chat is closed for ${closedRemainingSeconds}s`}
+            {closedRemainingSeconds > 0 ? `This chat is closed for ${closedRemainingSeconds}s` : "This chat is closed"}
           </span>
         </div>
       ) : slowRemainingSeconds > 0 ? (
@@ -274,10 +275,10 @@ export function GlobalChatFooter({
                   ? "Login to write in chat"
                   : isBanned
                     ? "You are banned from global chat."
-                    : mutedUntilTs && mutedUntilTs > Date.now()
-                      ? `You are muted for ${Math.ceil((mutedUntilTs - Date.now()) / 1000)} seconds.`
-                      : closedUntilTs && closedUntilTs > Date.now()
-                        ? `This chat is closed`
+                    : isMuted
+                      ? "You are muted."
+                      : isClosed
+                        ? "This chat is closed"
                         : slowRemainingSeconds > 0
                           ? `Slow mode active`
                           : `You are not ${requiredRoleText || "allowed"} to write here.`
@@ -286,9 +287,9 @@ export function GlobalChatFooter({
               !canWrite ||
               isSending ||
               isBanned ||
-              !!(mutedUntilTs && mutedUntilTs > Date.now()) ||
+              isMuted ||
               !!slowRemainingSeconds ||
-              !!(closedUntilTs && closedUntilTs > Date.now())
+              isClosed
             }
             className="h-11 w-full rounded-2xl border border-[#2E3547] bg-[#161923] px-3 pr-28 text-base text-white shadow-[0_0_0_1px_rgba(46,53,71,0.06)] placeholder:text-zinc-500 focus:border-[#2E3547] focus:outline-none focus:shadow-[0_0_0_1px_rgba(46,53,71,0.76),0_0_0_4px_rgba(46,53,71,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
           />
@@ -347,12 +348,12 @@ export function GlobalChatFooter({
           Online: {displayOnlineCount.toLocaleString("en-US")}
         </span>
 
-        {mutedUntilTs && mutedUntilTs > Date.now() ? (
-          <span className="text-zinc-400">Muted: {Math.ceil((mutedUntilTs - Date.now()) / 1000)}s</span>
+        {isMuted ? (
+          <span className="text-zinc-400">Muted</span>
         ) : activeRoom === "help" && slowModeMinutes > 0 ? (
           <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
         ) : !user ? (
-          <Link href="/auth?next=/global-chat" className="inline-flex items-center gap-1 text-zinc-300 hover:text-white">
+          <Link href="/auth?next=/" className="inline-flex items-center gap-1 text-zinc-300 hover:text-white">
             <LogIn className="h-3.5 w-3.5" />
             Sign in to write
           </Link>

@@ -2,14 +2,13 @@
 
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { SidebarMode } from "../types";
 import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
-import { GlobalChatSidebarModeToggle } from "./GlobalChatSidebarModeToggle";
-import { GlobalChatSidebarBuy } from "./GlobalChatSidebarBuy";
-import { GlobalChatSidebarSell } from "./GlobalChatSidebarSell";
+import { HomepageSidebarModeToggle } from "./HomepageSidebarModeToggle";
+import { HomepageSidebarBuy } from "./HomepageSidebarBuy";
+import { HomepageSidebarSell } from "./HomepageSidebarSell";
 
-export function GlobalChatMobileSidebar<
+export function HomepageMobileSidebar<
   RoomT extends { slug: GlobalChatRoom; label: string },
   CategoryT extends { label: string; href: string },
 >({
@@ -84,10 +83,10 @@ export function GlobalChatMobileSidebar<
           </button>
         </div>
 
-        <GlobalChatSidebarModeToggle sidebarMode={sidebarMode} onChange={onSidebarModeChange} />
+        <HomepageSidebarModeToggle sidebarMode={sidebarMode} onChange={onSidebarModeChange} />
 
         {sidebarMode === "buy" ? (
-          <GlobalChatSidebarBuy
+          <HomepageSidebarBuy
             isMarketplaceSectionOpen={isMarketplaceSectionOpen}
             onToggleMarketplaceSection={onToggleMarketplaceSection}
             isRoomsSectionOpen={isRoomsSectionOpen}
@@ -100,7 +99,7 @@ export function GlobalChatMobileSidebar<
             closeMobileOnClick
           />
         ) : (
-          <GlobalChatSidebarSell renderSellSections={renderSellSections} closeMobileOnClick />
+          <HomepageSidebarSell renderSellSections={renderSellSections} closeMobileOnClick />
         )}
 
         <div className="mt-3 rounded-[22px] border border-[#2E3547] bg-[#161923] p-3">

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export function GlobalChatCenterPanel({
+export function HomepageCenterPanel({
   isLeftSidebarClosed,
   onExpandSidebar,
   renderCommandSearch,
@@ -45,4 +45,3 @@ export function GlobalChatCenterPanel({
     </div>
   );
 }
-

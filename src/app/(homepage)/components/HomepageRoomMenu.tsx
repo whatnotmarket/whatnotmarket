@@ -4,7 +4,7 @@ import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 
-export function GlobalChatRoomMenu({
+export function HomepageRoomMenu({
   containerRef,
   isOpen,
   onToggle,
