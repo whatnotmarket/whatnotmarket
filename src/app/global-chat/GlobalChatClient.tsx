@@ -472,6 +472,21 @@ export function GlobalChatClient() {
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
 
   useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRootBackground = root.style.backgroundColor;
+    const previousBodyBackground = body.style.backgroundColor;
+
+    root.style.backgroundColor = "#101219";
+    body.style.backgroundColor = "#101219";
+
+    return () => {
+      root.style.backgroundColor = previousRootBackground;
+      body.style.backgroundColor = previousBodyBackground;
+    };
+  }, []);
+
+  useEffect(() => {
     try {
       const flag = localStorage.getItem("global_chat_rules_accepted") === "1";
       setHasAcceptedRules(Boolean(flag));
@@ -655,6 +670,7 @@ export function GlobalChatClient() {
     (room: (typeof GLOBAL_CHAT_ROOMS)[number], iconOnly = false) => {
       const isActive = room.slug === activeRoom;
       const badge = roomBadgeBySlug[room.slug as keyof typeof roomBadgeBySlug];
+      const isCryptoBadge = room.slug === "crypto-talk";
       const button = (
         <button
           type="button"
@@ -696,7 +712,21 @@ export function GlobalChatClient() {
             <>
               <span className="truncate text-sm font-semibold">{room.label}</span>
               {badge ? (
-                <span className="ml-auto rounded-full border border-[#2E3547] bg-[#161923] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white">
+                <span
+                  className={cn(
+                    "ml-auto rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide",
+                    isCryptoBadge ? "" : "border-[#2E3547] bg-[#161923] text-white"
+                  )}
+                  style={
+                    isCryptoBadge
+                      ? {
+                          borderColor: selectedCryptoData.color,
+                          backgroundColor: `${selectedCryptoData.color}1A`,
+                          color: selectedCryptoData.color,
+                        }
+                      : undefined
+                  }
+                >
                   {badge}
                 </span>
               ) : (
@@ -724,7 +754,7 @@ export function GlobalChatClient() {
         </Tooltip>
       );
     },
-    [activeRoom, handleSidebarRoomSelect, renderRoomIcon, roomBadgeBySlug]
+    [activeRoom, handleSidebarRoomSelect, renderRoomIcon, roomBadgeBySlug, selectedCryptoData.color]
   );
 
   const renderMarketplaceNavItem = useCallback(
@@ -923,12 +953,12 @@ export function GlobalChatClient() {
             return (
               <div
                 key={section.key}
-                className={cn(isOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : "")}
+                className={cn(isOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : "")}
               >
                 <button
                   type="button"
                   className={cn(
-                    "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                    "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                     SIDEBAR_ROW_GRID_CLASS,
                     "bg-[#161923]",
                     !isOpen ? "border border-[#2E3547]" : ""
@@ -1987,7 +2017,7 @@ export function GlobalChatClient() {
               onClick={() => setIsMobileSidebarOpen(false)}
             />
             <motion.aside
-              className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(7,5,28,0.65)] md:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.65)] md:hidden"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -2043,13 +2073,15 @@ export function GlobalChatClient() {
                 <div className="space-y-2.5">
                   <div
                     className={cn(
-                      isMarketplaceSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : ""
+                      isMarketplaceSectionOpen
+                        ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]"
+                        : ""
                     )}
                   >
                     <button
                       type="button"
                       className={cn(
-                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                         SIDEBAR_ROW_GRID_CLASS,
                         "bg-[#212533]",
                         !isMarketplaceSectionOpen ? "border border-[#2E3547]" : ""
@@ -2076,13 +2108,13 @@ export function GlobalChatClient() {
 
                   <div
                     className={cn(
-                      isRoomsSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : ""
+                      isRoomsSectionOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : ""
                     )}
                   >
                     <button
                       type="button"
                       className={cn(
-                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                        "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                         SIDEBAR_ROW_GRID_CLASS,
                         "bg-[#212533]",
                         !isRoomsSectionOpen ? "border border-[#2E3547]" : ""
@@ -2154,7 +2186,7 @@ export function GlobalChatClient() {
             }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              "flex h-full w-[264px] flex-col rounded-[30px] border border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(7,5,28,0.55)]",
+              "flex h-full w-[264px] flex-col rounded-[30px] border border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.55)]",
               isLeftSidebarClosed ? "pointer-events-none" : ""
             )}
           >
@@ -2210,11 +2242,15 @@ export function GlobalChatClient() {
 
                 {sidebarMode === "buy" ? (
                   <div className="space-y-2.5">
-                    <div className={cn(isMarketplaceSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : "")}>
+                    <div
+                      className={cn(
+                        isMarketplaceSectionOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : ""
+                      )}
+                    >
                       <button
                         type="button"
                         className={cn(
-                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                           SIDEBAR_ROW_GRID_CLASS,
                           "bg-[#212533]",
                           !isMarketplaceSectionOpen ? "border border-[#2E3547]" : ""
@@ -2237,11 +2273,15 @@ export function GlobalChatClient() {
                       ) : null}
                     </div>
 
-                    <div className={cn(isRoomsSectionOpen ? "rounded-[22px] border border-[#2E3547] bg-[#161923]" : "")}>
+                    <div
+                      className={cn(
+                        isRoomsSectionOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : ""
+                      )}
+                    >
                       <button
                         type="button"
                         className={cn(
-                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                          "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
                           SIDEBAR_ROW_GRID_CLASS,
                           "bg-[#212533]",
                           !isRoomsSectionOpen ? "border border-[#2E3547]" : ""
@@ -2304,7 +2344,7 @@ export function GlobalChatClient() {
         {!isChatClosed && (
           <aside
             className={cn(
-              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(7,5,28,0.45)] transition-[width] duration-200",
+              "flex h-[calc(100vh-3rem)] w-full flex-col rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)] transition-[width] duration-200",
               isChatExpanded ? "md:w-[520px]" : "md:w-[420px]"
             )}
           >
@@ -2342,7 +2382,7 @@ export function GlobalChatClient() {
                 </button>
 
                 {isRoomMenuOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[210px] overflow-hidden rounded-2xl border border-[#2E3547] bg-[#212533] p-2 shadow-[0_14px_28px_rgba(9,6,35,0.42)]">
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[210px] overflow-hidden rounded-2xl border border-[#2E3547] bg-[#212533] p-2 shadow-none">
                     <ul role="listbox" aria-label="Chat rooms" className="space-y-1">
                       {GLOBAL_CHAT_ROOMS.map((room) => {
                         const isActive = room.slug === activeRoom;
