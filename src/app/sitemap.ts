@@ -6,7 +6,7 @@ import { PUBLIC_CATEGORY_PRODUCT_PATHS, PUBLIC_CATEGORY_SLUGS } from "@/lib/publ
 export const revalidate = 3600; // Revalidate sitemap every hour
 
 const BASE_URL = SITE_URL;
-const SITEMAP_QUERY_TIMEOUT_MS = 2500;
+const SITEMAP_QUERY_TIMEOUT_MS = 1500;
 const DEFAULT_LAST_MODIFIED = new Date();
 
 function withTimeout<T>(task: () => Promise<T>, timeoutMs: number): Promise<T> {
@@ -249,21 +249,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }));
       dynamicRoutes = [...dynamicRoutes, ...requestRoutes];
-    } else {
-      const fallbackRequests = await withTimeout(
-        async () => supabase.from("requests").select("id, created_at").eq("status", "open").limit(500),
-        SITEMAP_QUERY_TIMEOUT_MS
-      ).catch(() => null);
-
-      if (fallbackRequests?.data) {
-        const requestRoutes = fallbackRequests.data.map((req) => ({
-          url: `${BASE_URL}/requests/${req.id}`,
-          lastModified: req.created_at ? new Date(req.created_at) : now,
-          changeFrequency: "daily" as const,
-          priority: 0.6,
-        }));
-        dynamicRoutes = [...dynamicRoutes, ...requestRoutes];
-      }
     }
 
   } catch (error) {
