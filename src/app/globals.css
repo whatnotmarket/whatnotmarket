@@ -222,5 +222,7 @@ iframe[src*="featurebase"] {
   left: auto !important;
   right: var(--featurebase-anchor-right) !important;
   bottom: var(--featurebase-anchor-bottom) !important;
+  transform: none !important;
+  margin: 0 !important;
   z-index: 2147483647 !important;
 }

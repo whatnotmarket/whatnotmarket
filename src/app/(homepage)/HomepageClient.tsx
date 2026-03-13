@@ -463,17 +463,20 @@ export function HomepageClient() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const panel = document.querySelector<HTMLElement>('[data-homepage-center-panel="true"]');
+    const panel = document.querySelector<HTMLElement>('[data-homepage-center-surface="true"]');
 
     const syncFeaturebaseAnchor = () => {
       if (!panel || window.innerWidth < 768 || panel.offsetParent === null || isChatClosed) {
         root.style.setProperty("--featurebase-anchor-right", "12px");
+        root.style.setProperty("--featurebase-anchor-bottom", "16px");
         return;
       }
 
       const rect = panel.getBoundingClientRect();
-      const right = Math.max(12, Math.round(window.innerWidth - rect.right + 12));
+      const right = Math.max(12, Math.round(window.innerWidth - rect.right + 18));
+      const bottom = Math.max(16, Math.round(window.innerHeight - rect.bottom + 18));
       root.style.setProperty("--featurebase-anchor-right", `${right}px`);
+      root.style.setProperty("--featurebase-anchor-bottom", `${bottom}px`);
     };
 
     syncFeaturebaseAnchor();
@@ -487,6 +490,7 @@ export function HomepageClient() {
       window.removeEventListener("resize", syncFeaturebaseAnchor);
       resizeObserver?.disconnect();
       root.style.setProperty("--featurebase-anchor-right", "12px");
+      root.style.setProperty("--featurebase-anchor-bottom", "16px");
     };
   }, [isLeftSidebarClosed, isChatExpanded, isChatClosed]);
 
