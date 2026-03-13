@@ -1,0 +1,3 @@
+﻿https://openlymarket.xyz/auth?next=%2F
+https://openlymarket.xyz/auth?next=%2Fmarket
+https://openlymarket.xyz/inbox

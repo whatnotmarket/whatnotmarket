@@ -28,7 +28,7 @@ import { buildIndexableMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildIndexableMetadata({
   title: "Escrow Infrastructure for Brokers and Intermediaries",
   description:
-    "Manage broker-led transactions between buyers and sellers with protected commissions, transparent escrow flows, and infrastructure designed for reliable deal execution.",
+    "Manage broker-led deals with protected commissions, transparent escrow workflows, and reliable execution for buyers and sellers.",
   path: "/broker",
 });
 

@@ -1,4 +1,19 @@
 import Link from "next/link";
+import { PUBLIC_CATEGORY_PRODUCT_PATHS } from "@/lib/public-catalog";
+
+function humanizePathLabel(path: string): string {
+  return path
+    .replace(/^\/category\//, "")
+    .replace(/\//g, " ")
+    .replace(/-/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+const CATEGORY_PRODUCT_LINKS = PUBLIC_CATEGORY_PRODUCT_PATHS.map((path) => ({
+  href: path,
+  label: `${humanizePathLabel(path)} Listing`,
+}));
 
 const INTERNAL_LINKS = [
   { href: "/", label: "OpenlyMarket Home" },
@@ -31,6 +46,7 @@ const INTERNAL_LINKS = [
   { href: "/category/home-garden", label: "Home and Garden Category" },
   { href: "/category/collectibles", label: "Collectibles Category" },
   { href: "/category/services", label: "Services Category" },
+  ...CATEGORY_PRODUCT_LINKS,
 ] as const;
 
 export function SeoInternalLinks() {

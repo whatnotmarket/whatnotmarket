@@ -1,13 +1,13 @@
 import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { SITE_URL } from "@/lib/site-config";
+import { PUBLIC_CATEGORY_PRODUCT_PATHS, PUBLIC_CATEGORY_SLUGS } from "@/lib/public-catalog";
 
 export const revalidate = 3600; // Revalidate sitemap every hour
 
 const BASE_URL = SITE_URL;
 const SITEMAP_QUERY_TIMEOUT_MS = 2500;
 const DEFAULT_LAST_MODIFIED = new Date();
-const PUBLIC_CATEGORY_SLUGS = ["electronics", "fashion", "home-garden", "collectibles", "services"] as const;
 
 function withTimeout<T>(task: () => Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -132,6 +132,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
+      url: `${BASE_URL}/requests/new`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.45,
+    },
+    {
       url: `${BASE_URL}/privacy`,
       lastModified: now,
       changeFrequency: "yearly",
@@ -184,6 +190,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.75,
+    })),
+    ...PUBLIC_CATEGORY_PRODUCT_PATHS.map((path) => ({
+      url: `${BASE_URL}${path}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.55,
     })),
   ];
 

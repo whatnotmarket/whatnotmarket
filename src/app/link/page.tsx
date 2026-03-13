@@ -19,7 +19,7 @@ type LinkItem = {
   title: string;
   description: string;
   href: string;
-  icon?: any;
+  icon?: React.ReactNode;
   priority?: boolean;
   external?: boolean;
 };
@@ -39,7 +39,7 @@ const LINKS: LinkItem[] = [
   {
     title: "Escrow Protection",
     description: "How our smart contracts keep you safe",
-    href: "/escrow",
+    href: "/secure-transaction",
   },
   {
     title: "Official Telegram",
@@ -194,37 +194,54 @@ function LinkList() {
 
 function LinkCard({ link }: { link: LinkItem }) {
   const isExternal = link.external;
-  const Wrapper = isExternal ? "a" : Link;
-  const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : { href: link.href };
 
-  return (
-    // @ts-ignore
-    <Wrapper {...props} className="block group w-full">
-      <div className={cn(
+  const card = (
+    <div
+      className={cn(
         "relative flex items-center justify-between p-5 rounded-2xl border transition-all duration-300 w-full",
         "bg-zinc-900/40 border-white/5 backdrop-blur-md",
         "hover:bg-zinc-800/60 hover:border-white/10 hover:translate-y-[-2px] hover:shadow-xl hover:shadow-black/20",
         link.priority && "border-white/10 bg-zinc-900/60 shadow-lg shadow-black/10"
-      )}>
-        <div className="flex flex-col gap-1 flex-1">
-            <div className="flex items-center gap-2">
-                {link.icon && (
-                    <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-                        {link.icon}
-                    </div>
-                )}
-                <span className="text-base font-bold text-zinc-100 group-hover:text-white tracking-tight">{link.title}</span>
+      )}
+    >
+      <div className="flex flex-col gap-1 flex-1">
+        <div className="flex items-center gap-2">
+          {link.icon && (
+            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+              {link.icon}
             </div>
-            <span className={cn(
-              "text-xs text-zinc-500 group-hover:text-zinc-400 font-medium",
-              link.icon && "pl-8"
-            )}>{link.description}</span>
+          )}
+          <span className="text-base font-bold text-zinc-100 group-hover:text-white tracking-tight">
+            {link.title}
+          </span>
         </div>
-        
-        <div className="pl-4 text-zinc-700 group-hover:text-white group-hover:translate-x-1 transition-all duration-300">
-            <ArrowRight className="w-5 h-5 opacity-50 group-hover:opacity-100" />
-        </div>
+        <span
+          className={cn(
+            "text-xs text-zinc-500 group-hover:text-zinc-400 font-medium",
+            link.icon && "pl-8"
+          )}
+        >
+          {link.description}
+        </span>
       </div>
-    </Wrapper>
+
+      <div className="pl-4 text-zinc-700 group-hover:text-white group-hover:translate-x-1 transition-all duration-300">
+        <ArrowRight className="w-5 h-5 opacity-50 group-hover:opacity-100" />
+      </div>
+    </div>
+  );
+
+  if (isExternal) {
+    return (
+      <a href={link.href} target="_blank" rel="noopener noreferrer" className="block group w-full">
+        {card}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={link.href} className="block group w-full">
+      {card}
+    </Link>
   );
 }

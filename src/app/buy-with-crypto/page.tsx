@@ -92,6 +92,8 @@ export default function BuyWithCryptoPage() {
       <Navbar />
 
       <main className="mx-auto max-w-4xl px-4 py-12 space-y-12 relative">
+        <h1 className="sr-only">Buy Anywhere With Crypto on OpenlyMarket</h1>
+
         {/* Background Ambient Light */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
 

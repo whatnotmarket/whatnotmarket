@@ -1,0 +1,9 @@
+﻿"PR","URL","Title","Content type","Is rendered page","HTTP status code","Organic traffic","Redirect URL","Redirect URL code","Redirect URL patch","Redirect URL patch status","Redirect chain URLs","Redirect chain URLs codes","Is redirect loop","No. of all inlinks","No. of redirect inlinks","First found at"
+"0","http://openlymarket.xyz/","","text/plain","false","308","0","https://openlymarket.xyz/","200","","","https://openlymarket.xyz/","200","false","0","0",""
+"0","http://www.openlymarket.xyz/","","text/plain","false","308","0","https://www.openlymarket.xyz/","307","","","https://www.openlymarket.xyz/
+https://openlymarket.xyz/","307
+200","false","0","0",""
+"0","https://openlymarket.xyz/admintest/escrow","","text/plain","false","307","0","https://openlymarket.xyz/admin/login","","","","https://openlymarket.xyz/admin/login","","false","1","1","https://openlymarket.xyz/escrow"
+"0","https://openlymarket.xyz/escrow","","text/html; charset=utf-8","false","307","0","https://openlymarket.xyz/admintest/escrow","307","","","https://openlymarket.xyz/admintest/escrow
+https://openlymarket.xyz/admin/login","307","false","1","0","https://openlymarket.xyz/link"
+"0","https://www.openlymarket.xyz/","","text/plain","false","307","0","https://openlymarket.xyz/","200","","","https://openlymarket.xyz/","200","false","1","1",""

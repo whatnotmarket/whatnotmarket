@@ -329,7 +329,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     id: "trust-escrow",
     title: "Escrow protection",
     description: "Secure transactions",
-    href: "/escrow",
+    href: "/secure-transaction",
     group: "Trust & Safety",
     icon: ShieldCheck,
     entityType: "page",
