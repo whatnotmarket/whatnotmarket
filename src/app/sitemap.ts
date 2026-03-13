@@ -5,6 +5,27 @@ import { SITE_URL } from "@/lib/site-config";
 export const revalidate = 3600; // Revalidate sitemap every hour
 
 const BASE_URL = SITE_URL;
+const SITEMAP_QUERY_TIMEOUT_MS = 2500;
+const DEFAULT_LAST_MODIFIED = new Date();
+const PUBLIC_CATEGORY_SLUGS = ["electronics", "fashion", "home-garden", "collectibles", "services"] as const;
+
+function withTimeout<T>(task: () => Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Sitemap query timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    task()
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
 
 // Helper to clean handles
 function cleanHandle(handle: string) {
@@ -12,222 +33,208 @@ function cleanHandle(handle: string) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = DEFAULT_LAST_MODIFIED;
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${BASE_URL}`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "daily",
       priority: 1,
     },
     {
       url: `${BASE_URL}/link`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.9,
     },
     {
       url: `${BASE_URL}/market`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "hourly",
       priority: 0.9,
     },
     {
       url: `${BASE_URL}/buy-with-crypto`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${BASE_URL}/sell`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${BASE_URL}/smart-search`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
       url: `${BASE_URL}/escrow`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${BASE_URL}/become-seller`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${BASE_URL}/become-escrow`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${BASE_URL}/fee-calculator`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${BASE_URL}/proxy-orders`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.5,
-    },
-    {
       url: `${BASE_URL}/promote-listings`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${BASE_URL}/about`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
     },
     {
       url: `${BASE_URL}/faq`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.4,
     },
     {
       url: `${BASE_URL}/contact`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
     },
     {
       url: `${BASE_URL}/privacy`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/terms`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/disclaimer`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/roadmap`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/open-source`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/refund`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/secure-transaction`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/redeem`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.3,
     },
+    ...PUBLIC_CATEGORY_SLUGS.map((slug) => ({
+      url: `${BASE_URL}/category/${slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.75,
+    })),
   ];
 
   let dynamicRoutes: MetadataRoute.Sitemap = [];
 
   try {
     const supabase = createAdminClient();
+    const sellersPromise = withTimeout(
+      async () =>
+        supabase
+          .from("profiles")
+          .select("username, updated_at")
+          .eq("seller_status", "verified")
+          .not("username", "is", null)
+          .not("username", "in", '("lucatest","whatnotmarket")')
+          .limit(1000),
+      SITEMAP_QUERY_TIMEOUT_MS
+    );
 
-    // 1. Fetch Categories
-    const { data: categories } = await supabase
-      .from("categories")
-      .select("id, created_at")
-      .limit(100);
+    const requestsPromise = withTimeout(
+      async () =>
+        supabase
+          .from("requests")
+          .select("id, created_at")
+          .eq("status", "open")
+          .eq("safety_status", "published")
+          .eq("visibility_state", "normal")
+          .limit(500),
+      SITEMAP_QUERY_TIMEOUT_MS
+    );
 
-    if (categories) {
-      const categoryRoutes = categories.map((cat) => ({
-        url: `${BASE_URL}/category/${cat.id}`,
-        lastModified: cat.created_at ? new Date(cat.created_at) : new Date(),
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
-      }));
-      dynamicRoutes = [...dynamicRoutes, ...categoryRoutes];
-    }
+    const [sellersResult, requestsResult] = await Promise.allSettled([sellersPromise, requestsPromise]);
 
-    // 2. Fetch Verified Sellers
-    const { data: sellers } = await supabase
-      .from("profiles")
-      .select("username, updated_at")
-      .eq("seller_status", "verified")
-      .not("username", "is", null)
-      .not("username", "in", '("lucatest","whatnotmarket")') // Exclude test/internal accounts
-      .limit(1000);
-
-    if (sellers) {
-      const sellerRoutes = sellers
+    if (sellersResult.status === "fulfilled" && sellersResult.value.data) {
+      const sellerRoutes = sellersResult.value.data
         .filter((s) => s.username)
         .map((s) => ({
-          url: `${BASE_URL}/seller/@${cleanHandle(s.username!)}`,
-          lastModified: s.updated_at ? new Date(s.updated_at) : new Date(),
+          url: `${BASE_URL}/seller/${cleanHandle(s.username!)}`,
+          lastModified: s.updated_at ? new Date(s.updated_at) : now,
           changeFrequency: "weekly" as const,
           priority: 0.7,
         }));
       dynamicRoutes = [...dynamicRoutes, ...sellerRoutes];
     }
 
-    // 3. Fetch Active Requests (Public Listings)
-    // Using explicit safety checks if columns exist, otherwise fallback to basic status
-    // We try to select columns that we know exist from migration analysis
-    try {
-      const { data: requests } = await supabase
-        .from("requests")
-        .select("id, created_at")
-        .eq("status", "open")
-        .eq("safety_status", "published") // Assuming migration 20260311170000_trust_safety_core.sql is applied
-        .eq("visibility_state", "normal")
-        .limit(500);
+    if (requestsResult.status === "fulfilled" && requestsResult.value.data) {
+      const requestRoutes = requestsResult.value.data.map((req) => ({
+        url: `${BASE_URL}/requests/${req.id}`,
+        lastModified: req.created_at ? new Date(req.created_at) : now,
+        changeFrequency: "daily" as const,
+        priority: 0.6,
+      }));
+      dynamicRoutes = [...dynamicRoutes, ...requestRoutes];
+    } else {
+      const fallbackRequests = await withTimeout(
+        async () => supabase.from("requests").select("id, created_at").eq("status", "open").limit(500),
+        SITEMAP_QUERY_TIMEOUT_MS
+      ).catch(() => null);
 
-      if (requests) {
-        const requestRoutes = requests.map((req) => ({
+      if (fallbackRequests?.data) {
+        const requestRoutes = fallbackRequests.data.map((req) => ({
           url: `${BASE_URL}/requests/${req.id}`,
-          lastModified: req.created_at ? new Date(req.created_at) : new Date(),
-          changeFrequency: "daily" as const,
-          priority: 0.6,
-        }));
-        dynamicRoutes = [...dynamicRoutes, ...requestRoutes];
-      }
-    } catch (e) {
-      // Fallback if safety columns don't exist yet
-      const { data: requests } = await supabase
-        .from("requests")
-        .select("id, created_at")
-        .eq("status", "open")
-        .limit(500);
-
-       if (requests) {
-        const requestRoutes = requests.map((req) => ({
-          url: `${BASE_URL}/requests/${req.id}`,
-          lastModified: req.created_at ? new Date(req.created_at) : new Date(),
+          lastModified: req.created_at ? new Date(req.created_at) : now,
           changeFrequency: "daily" as const,
           priority: 0.6,
         }));
@@ -240,5 +247,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Fallback to just static routes if DB fails
   }
 
-  return [...staticRoutes, ...dynamicRoutes];
+  const seen = new Set<string>();
+  return [...staticRoutes, ...dynamicRoutes].filter((entry) => {
+    if (seen.has(entry.url)) return false;
+    seen.add(entry.url);
+    return true;
+  });
 }

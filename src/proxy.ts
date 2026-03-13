@@ -8,6 +8,19 @@ import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
+  const seoCriticalPaths = new Set<string>([
+    "/sitemap.xml",
+    "/robots.txt",
+    "/manifest.json",
+  ]);
+
+  if (
+    seoCriticalPaths.has(pathname) ||
+    pathname.startsWith("/sitemap-") ||
+    pathname.startsWith("/sitemap/")
+  ) {
+    return NextResponse.next({ request });
+  }
 
   const supabaseResponse = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -178,7 +191,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
     "/api/admin/:path*",
   ],
 };

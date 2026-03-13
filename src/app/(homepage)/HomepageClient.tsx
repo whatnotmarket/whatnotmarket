@@ -693,12 +693,8 @@ export function HomepageClient() {
           const sanitized = sanitizeHomepageLayout(parsed);
           if (sanitized) {
             panelGroupRef.current?.setLayout(sanitized);
-            if (sanitized["homepage-left"] <= PANEL_CLOSE_THRESHOLD_PERCENT) {
-              nextLeftClosed = true;
-            }
-            if (sanitized["homepage-right"] <= PANEL_CLOSE_THRESHOLD_PERCENT) {
-              nextChatClosed = true;
-            }
+            nextLeftClosed = sanitized["homepage-left"] <= PANEL_CLOSE_THRESHOLD_PERCENT;
+            nextChatClosed = sanitized["homepage-right"] <= PANEL_CLOSE_THRESHOLD_PERCENT;
             rightPanelPercentRef.current = sanitized["homepage-right"];
             setRightPanelPercent(sanitized["homepage-right"]);
           }
@@ -712,6 +708,15 @@ export function HomepageClient() {
     setIsChatClosed(nextChatClosed);
     setIsChatExpanded(nextChatExpanded);
     setSidebarMode(nextSidebarMode);
+
+    // Keep persisted UI state aligned with restored layout to avoid stale keys
+    // (e.g. chat previously marked closed while layout says open).
+    try {
+      localStorage.setItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY, nextLeftClosed ? "1" : "0");
+      localStorage.setItem(CHAT_CLOSED_STORAGE_KEY, nextChatClosed ? "1" : "0");
+      localStorage.setItem(CHAT_EXPANDED_STORAGE_KEY, nextChatExpanded ? "1" : "0");
+      localStorage.setItem(SIDEBAR_MODE_STORAGE_KEY, nextSidebarMode);
+    } catch {}
 
     if (!isMobile) {
       const rafId = window.requestAnimationFrame(() => {
