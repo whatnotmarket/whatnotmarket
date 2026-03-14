@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import {
   SITEMAP_CACHE_CONTROL,
   getCategoriesSitemapEntries,
+  getCompanySitemapEntries,
   getListingSitemapChunks,
   getPagesSitemapEntries,
+  getProductsSitemapEntries,
+  getServicesSitemapEntries,
   getUsersSitemapEntries,
   renderUrlset,
 } from "@/lib/sitemaps";
@@ -70,6 +73,20 @@ export async function GET(_request: Request, context: RouteContext) {
     return xmlResponse(renderUrlset(entries));
   }
 
+  if (key === "company") {
+    const entries = getCompanySitemapEntries();
+    return xmlResponse(renderUrlset(entries));
+  }
+
+  if (key === "products") {
+    const entries = getProductsSitemapEntries();
+    return xmlResponse(renderUrlset(entries));
+  }
+
+  if (key === "services") {
+    const entries = getServicesSitemapEntries();
+    return xmlResponse(renderUrlset(entries));
+  }
+
   return new NextResponse("Not found", { status: 404 });
 }
-
