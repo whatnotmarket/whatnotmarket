@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:security": "node --import tsx --test tests/security/**/*.test.ts",
-    "i18n:catalog": "tsx scripts/i18n/generate-master-i18n-catalog.ts"
+    "i18n:catalog": "tsx scripts/i18n/generate-master-i18n-catalog.ts",
+    "i18n:englishify": "python scripts/i18n/translate_site_master_to_english.py"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
