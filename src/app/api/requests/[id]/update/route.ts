@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase-server";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/security/abuse-guards";
 import { moderateContent } from "@/lib/moderation/moderation.service";
+import { revalidateMarketplaceSitemaps } from "@/lib/sitemaps";
 
 const updateRequestSchema = z.object({
   title: z.string().trim().min(5).max(160).optional(),
@@ -160,6 +161,8 @@ export async function PATCH(
   if (updateError) {
     return NextResponse.json({ ok: false, error: "Unable to update listing" }, { status: 500 });
   }
+
+  revalidateMarketplaceSitemaps();
 
   return NextResponse.json({
     ok: true,

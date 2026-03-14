@@ -25,7 +25,8 @@ export async function proxy(request: NextRequest) {
   if (
     seoCriticalPaths.has(pathname) ||
     pathname.startsWith("/sitemap-") ||
-    pathname.startsWith("/sitemap/")
+    pathname.startsWith("/sitemap/") ||
+    pathname.startsWith("/sitemaps/")
   ) {
     return NextResponse.next({ request });
   }
@@ -235,7 +236,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sitemap\\.xml|sitemaps|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
     "/api/admin/:path*",
   ],
 };

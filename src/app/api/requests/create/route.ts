@@ -12,6 +12,7 @@ import {
 import { appendTrustAuditLog } from "@/lib/trust/services/trust-store";
 import { getClientIp, getRequestDeviceHint, hashSignal } from "@/lib/trust/utils";
 import { moderateContent } from "@/lib/moderation/moderation.service";
+import { revalidateMarketplaceSitemaps } from "@/lib/sitemaps";
 
 type CreateRequestPayload = {
   title?: string;
@@ -270,6 +271,8 @@ export async function POST(req: Request) {
       );
     }
 
+    revalidateMarketplaceSitemaps();
+
     return NextResponse.json({
       ok: true,
       requestId: data.id,
@@ -291,4 +294,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Unexpected server error" }, { status: 500 });
   }
 }
-
