@@ -3,6 +3,7 @@
 import { Container } from "@/components/ui/primitives/container";
 import { Card } from "@/components/ui/primitives/card";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { ArrowLeft, FileText, Scale } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,8 @@ export default function TermsPage() {
                         </p>
                     </div>
                 </Card>
+
+                <CrossClusterLinks variant="terms" className="mt-6" />
             </motion.div>
         </div>
       </Container>

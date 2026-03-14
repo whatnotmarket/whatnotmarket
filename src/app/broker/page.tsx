@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -283,6 +284,8 @@ export default function BrokerPage() {
             </CardContent>
           </Card>
         </section>
+
+        <CrossClusterLinks variant="broker" />
 
         <section className="pb-2">
           <p className="text-xs text-zinc-500">

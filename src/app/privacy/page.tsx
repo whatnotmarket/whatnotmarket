@@ -13,6 +13,7 @@ import {
   Cookie
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 
@@ -167,6 +168,8 @@ export default function PrivacyPage() {
 
               </div>
             </Squircle>
+
+            <CrossClusterLinks variant="privacy" className="mt-6" />
           </motion.div>
         </div>
       </main>

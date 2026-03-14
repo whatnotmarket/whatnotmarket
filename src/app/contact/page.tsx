@@ -12,6 +12,7 @@ import {
   MapPin
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 
@@ -139,7 +140,7 @@ export default function ContactPage() {
                             <Button 
                                 variant="outline" 
                                 className="h-10 border-white/10 hover:bg-white/5 text-white"
-                                onClick={() => router.push('/about')} // Placeholder link
+                                onClick={() => router.push('/faq')}
                             >
                                 Vai alle FAQ
                             </Button>
@@ -172,6 +173,8 @@ export default function ContactPage() {
 
               </div>
             </Squircle>
+
+            <CrossClusterLinks variant="contact" className="mt-6" />
           </motion.div>
         </div>
       </main>

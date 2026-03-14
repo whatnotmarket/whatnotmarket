@@ -6,24 +6,24 @@ import { motion } from "framer-motion";
 import { 
   ArrowLeft, 
   Search, 
-  Filter,
-  TrendingUp,
   LayoutGrid,
-  Gamepad2,
-  User,
-  Shield,
-  Smartphone,
-  Globe,
-  Monitor,
+  Gem,
+  Cpu,
+  Shirt,
+  Home,
+  Briefcase,
   ChevronRight
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { InternalBreadcrumbs } from "@/components/InternalBreadcrumbs";
+import { RelatedLinks } from "@/components/RelatedLinks";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/primitives/container";
 import { Section } from "@/components/ui/primitives/section";
 import { Card } from "@/components/ui/primitives/card";
+import { PUBLIC_CATEGORY_SLUGS, getPublicCategoryProductSlugs } from "@/lib/public-catalog";
 
 // Mock Data Generators
 const generateItems = (category: string, count: number) => {
@@ -38,45 +38,43 @@ const generateItems = (category: string, count: number) => {
   }));
 };
 
-const CATEGORY_CONFIG: Record<string, { label: string, icon: any, description: string }> = {
-  accounts: { 
-    label: "Accounts", 
-    icon: User,
-    description: "Premium accounts for gaming, streaming, and social media."
+const CATEGORY_CONFIG: Record<string, { label: string; icon: any; description: string }> = {
+  collectibles: {
+    label: "Collectibles",
+    icon: Gem,
+    description: "Rare and limited collectible items with secure escrow delivery.",
   },
-  gaming: { 
-    label: "Gaming", 
-    icon: Gamepad2,
-    description: "In-game items, currency, and boosting services."
+  electronics: {
+    label: "Electronics",
+    icon: Cpu,
+    description: "Devices, gadgets, and electronics offers from verified sellers.",
   },
-  telco: { 
-    label: "Telco", 
-    icon: Smartphone,
-    description: "VoIP numbers, eSIMs, and mobile data plans."
+  fashion: {
+    label: "Fashion",
+    icon: Shirt,
+    description: "Fashion items and accessories listed by trusted marketplace members.",
   },
-  software: { 
-    label: "Software", 
-    icon: Monitor,
-    description: "Licenses, keys, and SaaS subscriptions."
+  "home-garden": {
+    label: "Home & Garden",
+    icon: Home,
+    description: "Home, decor, and garden-related marketplace listings.",
   },
-  skins: { 
-    label: "Skins", 
-    icon: Shield,
-    description: "Exclusive skins and cosmetics for your favorite games."
+  services: {
+    label: "Services",
+    icon: Briefcase,
+    description: "Professional and digital services with secure transaction flow.",
   },
-  crypto: { 
-    label: "Crypto", 
-    icon: Globe,
-    description: "P2P exchange, wallet services, and more."
-  }
 };
 
 export default function CategoryPage() {
   const router = useRouter();
   const params = useParams();
-  const categorySlug = params.category as string;
-  const config = CATEGORY_CONFIG[categorySlug] || { 
-    label: categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1), 
+  const categorySlug = String(params.category || "").toLowerCase();
+  const normalizedCategory = PUBLIC_CATEGORY_SLUGS.includes(categorySlug as (typeof PUBLIC_CATEGORY_SLUGS)[number])
+    ? categorySlug
+    : "services";
+  const config = CATEGORY_CONFIG[normalizedCategory] || { 
+    label: normalizedCategory.charAt(0).toUpperCase() + normalizedCategory.slice(1), 
     icon: LayoutGrid,
     description: "Explore the best deals in this category."
   };
@@ -90,6 +88,25 @@ export default function CategoryPage() {
     offers: 1000 + i * 500 
   }));
   const allItems = generateItems(config.label, 32);
+  const siblingCategoryLinks = PUBLIC_CATEGORY_SLUGS.filter((slug) => slug !== normalizedCategory)
+    .slice(0, 4)
+    .map((slug) => ({
+      href: `/category/${slug}`,
+      label: `${slug.replace(/-/g, " ")} category`,
+    }));
+  const popularProductLinks = getPublicCategoryProductSlugs(normalizedCategory)
+    .slice(0, 6)
+    .map((slug) => ({
+      href: `/category/${normalizedCategory}/${slug}`,
+      label: slug.replace(/-/g, " "),
+    }));
+  const relatedLinks = [
+    { href: "/market", label: "Marketplace home" },
+    { href: "/requests", label: "Buyer requests" },
+    { href: "/secure-transaction", label: "How escrow works" },
+    ...siblingCategoryLinks,
+    ...popularProductLinks,
+  ];
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-zinc-800 selection:text-white font-sans">
@@ -105,6 +122,14 @@ export default function CategoryPage() {
         {/* Header & Search Section */}
         <Container>
           <div className="space-y-8">
+          <InternalBreadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Marketplace", href: "/market" },
+              { label: "Categories", href: "/market" },
+              { label: config.label },
+            ]}
+          />
           <Button 
             variant="ghost" 
             className="pl-0 hover:bg-transparent hover:text-zinc-300 text-zinc-500 transition-colors"
@@ -163,7 +188,7 @@ export default function CategoryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Link href={`/category/${categorySlug}/${item.name.toLowerCase().replace(/ /g, '-')}`} className="block h-full">
+                <Link href={`/category/${normalizedCategory}/${item.name.toLowerCase().replace(/ /g, '-')}`} className="block h-full">
                 <Card
                   as="div"
                   radius={20}
@@ -209,7 +234,7 @@ export default function CategoryPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + (i * 0.01) }}
               >
-                <Link href={`/category/${categorySlug}/${item.name.toLowerCase().replace(/ /g, '-')}`} className="block h-full">
+                <Link href={`/category/${normalizedCategory}/${item.name.toLowerCase().replace(/ /g, '-')}`} className="block h-full">
                 <Card
                   as="div"
                   radius={16}
@@ -267,6 +292,10 @@ export default function CategoryPage() {
                 </Button>
             </div>
         </div>
+        </Container>
+
+        <Container>
+          <RelatedLinks title="Related pages" links={relatedLinks} className="pb-20" />
         </Container>
 
       </main>

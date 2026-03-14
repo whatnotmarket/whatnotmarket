@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 
 export default function DisclaimerPage() {
   return (
@@ -44,6 +45,9 @@ export default function DisclaimerPage() {
               Utilizzando OpenlyMarket, accetti i termini di questo disclaimer e sollevi la piattaforma da qualsiasi responsabilitÃ  legata alle attivitÃ  degli utenti e ai contenuti delle inserzioni.
             </p>
           </div>
+        </div>
+        <div className="max-w-4xl mx-auto mt-6">
+          <CrossClusterLinks variant="disclaimer" />
         </div>
       </main>
     </div>

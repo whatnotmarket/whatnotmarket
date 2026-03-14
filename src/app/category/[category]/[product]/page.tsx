@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import Script from "next/script";
 import { motion } from "framer-motion";
 import { 
   Search, 
@@ -9,15 +10,21 @@ import {
   Clock,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  HelpCircle
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { InternalBreadcrumbs } from "@/components/InternalBreadcrumbs";
+import { RelatedLinks } from "@/components/RelatedLinks";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/primitives/container";
 import { Card } from "@/components/ui/primitives/card";
 import { Input } from "@/components/ui/primitives/input";
 import { ListingWalletPayment } from "@/components/listing/ListingWalletPayment";
+import { PUBLIC_CATEGORY_SLUGS, getPublicCategoryProductSlugs } from "@/lib/public-catalog";
 
 // Mock Offers Data
 const OFFERS = Array.from({ length: 8 }).map((_, i) => ({
@@ -36,18 +43,118 @@ const OFFERS = Array.from({ length: 8 }).map((_, i) => ({
   targetWalletAddress: `0x${(i + 1).toString(16).padStart(40, "0")}`,
 }));
 
+const FAQ_GROUPS = {
+  security: [
+    {
+      id: "security-escrow",
+      question: "Is payment protected?",
+      answer:
+        "Yes. Funds are held in escrow and released only after delivery is verified or confirmed by the buyer.",
+    },
+    {
+      id: "security-seller",
+      question: "How do you verify sellers?",
+      answer:
+        "Sellers are monitored through activity, deal outcomes, and account controls. High-risk behavior is restricted automatically.",
+    },
+  ],
+  payment: [
+    {
+      id: "payment-release",
+      question: "When is payment released to the seller?",
+      answer:
+        "After successful delivery confirmation. If there is a dispute, funds remain protected until resolution.",
+    },
+    {
+      id: "payment-refund",
+      question: "Can I get refunded if delivery fails?",
+      answer:
+        "Yes. If conditions are not met, escrow allows dispute handling and refund flow according to policy.",
+    },
+  ],
+  delivery: [
+    {
+      id: "delivery-how",
+      question: "How do I receive the account or service?",
+      answer:
+        "After checkout, you continue in a protected deal flow where seller delivery details are shared securely.",
+    },
+    {
+      id: "delivery-time",
+      question: "How fast is delivery?",
+      answer:
+        "Delivery speed depends on the seller offer. You can compare delivery notes before completing payment.",
+    },
+  ],
+} as const;
+
+const FAQ_TAB_LABELS: Record<keyof typeof FAQ_GROUPS, string> = {
+  security: "Security",
+  payment: "Payments",
+  delivery: "Delivery",
+};
+
 export default function ProductListingPage() {
-  const router = useRouter();
   const params = useParams();
-  const categorySlug = params.category as string;
-  const productSlug = decodeURIComponent(params.product as string);
+  const categorySlug = String(params.category || "");
+  const rawProductSlug = String(params.product || "");
+  const productSlug = decodeURIComponent(rawProductSlug);
   const productName = productSlug.replace(/-/g, " ");
 
   const [activeSort, setActiveSort] = useState("Recommended");
+  const [openFaqId, setOpenFaqId] = useState<string | null>("security-escrow");
+  const normalizedCategory = PUBLIC_CATEGORY_SLUGS.includes(categorySlug.toLowerCase() as (typeof PUBLIC_CATEGORY_SLUGS)[number])
+    ? categorySlug.toLowerCase()
+    : "services";
+
+  const siblingCategoryLinks = PUBLIC_CATEGORY_SLUGS
+    .filter((slug) => slug !== normalizedCategory)
+    .slice(0, 4)
+    .map((slug) => ({
+      href: `/category/${slug}`,
+      label: `${slug.replace(/-/g, " ")} category`,
+    }));
+
+  const siblingProductLinks = getPublicCategoryProductSlugs(normalizedCategory)
+    .filter((slug) => slug !== rawProductSlug)
+    .slice(0, 6)
+    .map((slug) => ({
+      href: `/category/${normalizedCategory}/${slug}`,
+      label: slug.replace(/-/g, " "),
+    }));
+
+  const contextualLinks = [
+    { href: "/market", label: "Back to marketplace" },
+    { href: "/requests", label: "Explore buyer requests" },
+    { href: "/secure-transaction", label: "How secure transactions work" },
+    { href: "/faq", label: "FAQ and support" },
+    ...siblingCategoryLinks,
+    ...siblingProductLinks,
+  ];
+
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: Object.values(FAQ_GROUPS)
+      .flat()
+      .map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+  };
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-zinc-800 selection:text-white font-sans">
       <Navbar />
+      <Script
+        id="product-faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
       
       {/* Background Glow */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -59,13 +166,14 @@ export default function ProductListingPage() {
         {/* Breadcrumb & Header */}
         <Container>
         <section className="space-y-6">
-          <div className="flex items-center gap-2 text-sm text-zinc-500">
-            <span className="hover:text-white cursor-pointer" onClick={() => router.push('/market')}>Home</span>
-            <span>&gt;</span>
-            <span className="hover:text-white cursor-pointer capitalize" onClick={() => router.push(`/category/${categorySlug}`)}>{categorySlug}</span>
-            <span>&gt;</span>
-            <span className="text-white font-medium capitalize">{productName}</span>
-          </div>
+          <InternalBreadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Marketplace", href: "/market" },
+              { label: categorySlug.replace(/-/g, " "), href: `/category/${normalizedCategory}` },
+              { label: productName },
+            ]}
+          />
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-4">
@@ -75,7 +183,7 @@ export default function ProductListingPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-white capitalize">{productName}</h1>
                     <p className="text-zinc-400 text-sm">
-                        {categorySlug === 'accounts' ? 'Accounts' : 'Items'} ({OFFERS.length} offers)
+                        {normalizedCategory === "services" ? "Services" : "Items"} ({OFFERS.length} offers)
                     </p>
                 </div>
             </div>
@@ -250,19 +358,73 @@ export default function ProductListingPage() {
             </div>
         </section>
 
+        <RelatedLinks title="Related pages" links={contextualLinks} className="pt-6" />
+
         {/* FAQ Section */}
         <section className="space-y-6 pt-8">
-            <h2 className="text-2xl font-bold text-white">FAQ</h2>
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <h4 className="font-bold text-white text-sm">How do I receive the account?</h4>
-                    <p className="text-xs text-zinc-400">After payment, a chat room will open with the seller where they will provide the credentials securely.</p>
-                </div>
-                <div className="space-y-2">
-                    <h4 className="font-bold text-white text-sm">Is it safe?</h4>
-                    <p className="text-xs text-zinc-400">Yes, the seller does not receive payment until you verify the account works as described.</p>
-                </div>
+            <div className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-zinc-300" />
+              <h2 className="text-2xl font-bold text-white">FAQ</h2>
             </div>
+
+            <Tabs defaultValue="security" className="space-y-4">
+              <TabsList variant="line" className="w-full justify-start bg-transparent p-0">
+                {(Object.keys(FAQ_GROUPS) as Array<keyof typeof FAQ_GROUPS>).map((groupKey) => (
+                  <TabsTrigger
+                    key={groupKey}
+                    value={groupKey}
+                    className="h-9 px-3 text-zinc-400 data-active:text-white"
+                  >
+                    {FAQ_TAB_LABELS[groupKey]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {(Object.entries(FAQ_GROUPS) as Array<[keyof typeof FAQ_GROUPS, (typeof FAQ_GROUPS)[keyof typeof FAQ_GROUPS]]>).map(
+                ([groupKey, items]) => (
+                  <TabsContent key={groupKey} value={groupKey} className="space-y-3">
+                    {items.map((item) => {
+                      const isOpen = openFaqId === item.id;
+                      return (
+                        <Card
+                          key={item.id}
+                          radius={14}
+                          smoothing={1}
+                          border="subtle"
+                          innerClassName="bg-[#1C1C1E] p-0"
+                          className="overflow-hidden"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setOpenFaqId((current) => (current === item.id ? null : item.id))}
+                            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                          >
+                            <span className="text-sm font-bold text-white">{item.question}</span>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 text-zinc-400 transition-transform duration-200",
+                                isOpen && "rotate-180 text-white"
+                              )}
+                            />
+                          </button>
+                          <motion.div
+                            initial={false}
+                            animate={{
+                              height: isOpen ? "auto" : 0,
+                              opacity: isOpen ? 1 : 0,
+                            }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="overflow-hidden"
+                          >
+                            <p className="px-4 pb-4 text-sm leading-relaxed text-zinc-400">{item.answer}</p>
+                          </motion.div>
+                        </Card>
+                      );
+                    })}
+                  </TabsContent>
+                )
+              )}
+            </Tabs>
         </section>
         </Container>
 

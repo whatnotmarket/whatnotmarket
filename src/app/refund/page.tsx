@@ -3,6 +3,7 @@
 import { Container } from "@/components/ui/primitives/container";
 import { Card } from "@/components/ui/primitives/card";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { ShieldCheck, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -171,6 +172,8 @@ export default function RefundPage() {
                         </p>
                     </div>
                 </Card>
+
+                <CrossClusterLinks variant="refund" className="mt-6" />
             </motion.div>
         </div>
       </Container>

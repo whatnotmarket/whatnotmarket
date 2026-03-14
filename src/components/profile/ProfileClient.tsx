@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
+import { RelatedLinks } from "@/components/RelatedLinks";
 import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { profileToast as toast } from "@/lib/notifications";
@@ -88,6 +89,7 @@ type PurchaseItem = {
   title: string;
   price: number;
   purchasedAt: string;
+  requestId?: string;
 };
 
 type OfferItem = {
@@ -96,6 +98,7 @@ type OfferItem = {
   price: number;
   status: string;
   createdAt: string;
+  requestId?: string;
 };
 
 type DealSummaryRow = {
@@ -103,6 +106,7 @@ type DealSummaryRow = {
   request_id: string;
   offer_id: string;
   created_at: string;
+  status?: string;
 };
 
 type ProfileClientProps = {
@@ -485,6 +489,7 @@ export function ProfileClient({
           title: requestMap.get(row.request_id) || "Purchase",
           price: offerMap.get(row.offer_id) || 0,
           purchasedAt: row.created_at,
+          requestId: row.request_id,
         }));
       }
 
@@ -510,12 +515,38 @@ export function ProfileClient({
          }
       }
 
-      // Mock offers for seller
+      // Load real seller activity links for public profile context.
       if (resolvedRole === "seller") {
-        offers = [
-            { id: "1", title: "Example Offer 1", price: 50, status: "active", createdAt: new Date().toISOString() },
-            { id: "2", title: "Example Offer 2", price: 120, status: "pending", createdAt: new Date().toISOString() }
-        ];
+        const { data: sellerDealsRows } = await supabase
+          .from("deals")
+          .select("id,request_id,offer_id,created_at,status")
+          .eq("seller_id", finalTargetId)
+          .order("created_at", { ascending: false })
+          .limit(12);
+
+        const sellerDeals = (sellerDealsRows || []) as DealSummaryRow[];
+        if (sellerDeals.length > 0) {
+          const sellerRequestIds = [...new Set(sellerDeals.map((row) => row.request_id))];
+          const sellerOfferIds = [...new Set(sellerDeals.map((row) => row.offer_id))];
+          const [sellerRequestsRes, sellerOffersRes] = await Promise.all([
+            supabase.from("requests").select("id,title").in("id", sellerRequestIds),
+            supabase.from("offers").select("id,price").in("id", sellerOfferIds),
+          ]);
+
+          const sellerRequestMap = new Map<string, string>();
+          const sellerOfferMap = new Map<string, number>();
+          (sellerRequestsRes.data || []).forEach((row) => sellerRequestMap.set(row.id, row.title));
+          (sellerOffersRes.data || []).forEach((row) => sellerOfferMap.set(row.id, Number(row.price || 0)));
+
+          offers = sellerDeals.map((row) => ({
+            id: row.id,
+            title: sellerRequestMap.get(row.request_id) || "Offer",
+            price: sellerOfferMap.get(row.offer_id) || 0,
+            status: String(row.status || "pending"),
+            createdAt: row.created_at,
+            requestId: row.request_id,
+          }));
+        }
       }
 
       const defaults = getRoleDefaults(resolvedRole === "seller");
@@ -882,6 +913,49 @@ export function ProfileClient({
 
   const isSeller = profileRole === "seller";
   const isFounderProfile = profile.isAdmin;
+  const canonicalProfileHandle = normalizeHandle(profile.handle);
+  const activityRequestLinks = [
+    ...offerItems
+      .map((item) => item.requestId)
+      .filter((id): id is string => typeof id === "string")
+      .filter((id) => isUuid(id)),
+    ...purchaseItems
+      .map((item) => item.requestId)
+      .filter((id): id is string => typeof id === "string")
+      .filter((id) => isUuid(id)),
+  ]
+    .filter((id, index, list) => list.indexOf(id) === index)
+    .slice(0, 4)
+    .map((requestId) => ({
+      href: `/requests/${requestId}`,
+      label: `Request ${requestId.slice(0, 8)}`,
+    }));
+
+  const profileRelatedLinks = [
+    { href: "/market", label: "Explore marketplace" },
+    { href: "/requests", label: "Browse buyer requests" },
+    { href: "/category/electronics", label: "Electronics category" },
+    { href: "/category/services", label: "Services category" },
+    ...activityRequestLinks,
+    ...(isSeller
+      ? [
+          { href: "/sell", label: "Create a listing" },
+          { href: "/promote-listings", label: "Promote your listings" },
+          { href: "/secure-transaction", label: "Seller protection" },
+        ]
+      : [
+          { href: "/buy-with-crypto", label: "Buy with crypto" },
+          { href: "/secure-transaction", label: "Buyer protection" },
+          { href: "/faq", label: "Buyer FAQ" },
+        ]),
+  ];
+
+  if (canonicalProfileHandle) {
+    profileRelatedLinks.unshift({
+      href: `/user/${encodeURIComponent(canonicalProfileHandle)}`,
+      label: `Public profile ${profile.handle}`,
+    });
+  }
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-zinc-800 selection:text-white pb-20">
@@ -1318,6 +1392,8 @@ export function ProfileClient({
                  </div>
               )}
             </div>
+
+            <RelatedLinks title="Explore more" links={profileRelatedLinks} />
           </div>
         </div>
       </main>

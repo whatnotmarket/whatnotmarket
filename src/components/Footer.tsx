@@ -84,12 +84,12 @@ export function Footer() {
             <div className="space-y-4">
               <h4 className="font-bold text-white">Popular Categories</h4>
               <ul className="space-y-2 text-zinc-400">
-                <li><Link href="/category/accounts" className="hover:text-white transition-colors">Accounts</Link></li>
-                <li><Link href="/category/gaming" className="hover:text-white transition-colors">Gaming Items</Link></li>
-                <li><Link href="/category/telco" className="hover:text-white transition-colors">VoIP Numbers</Link></li>
-                <li><Link href="/category/software" className="hover:text-white transition-colors">Software Keys</Link></li>
-                <li><Link href="/category/social" className="hover:text-white transition-colors">Social Media</Link></li>
-                <li><Link href="/category/crypto" className="hover:text-white transition-colors">Crypto Exchange</Link></li>
+                <li><Link href="/category/electronics" className="hover:text-white transition-colors">Electronics</Link></li>
+                <li><Link href="/category/fashion" className="hover:text-white transition-colors">Fashion</Link></li>
+                <li><Link href="/category/home-garden" className="hover:text-white transition-colors">Home &amp; Garden</Link></li>
+                <li><Link href="/category/collectibles" className="hover:text-white transition-colors">Collectibles</Link></li>
+                <li><Link href="/category/services" className="hover:text-white transition-colors">Services</Link></li>
+                <li><Link href="/requests" className="hover:text-white transition-colors">Buyer Requests</Link></li>
               </ul>
             </div>
 

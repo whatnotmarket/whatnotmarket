@@ -14,6 +14,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -309,6 +310,8 @@ export default function RoadmapPage() {
               </div>
             </div>
           </Squircle>
+
+          <CrossClusterLinks variant="roadmap" className="mt-6" />
         </motion.div>
       </main>
     </div>

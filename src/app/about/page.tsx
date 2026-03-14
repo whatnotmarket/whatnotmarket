@@ -16,6 +16,7 @@ import {
   Scale
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CrossClusterLinks } from "@/components/CrossClusterLinks";
 import { Squircle } from "@/components/ui/Squircle";
 import { Button } from "@/components/ui/button";
 
@@ -231,6 +232,8 @@ export default function AboutPage() {
 
               </div>
             </Squircle>
+
+            <CrossClusterLinks variant="about" title="Esplora OpenlyMarket" />
           </motion.div>
         </div>
       </main>

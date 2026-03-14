@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { MapPin, Clock, DollarSign, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
+import { InternalBreadcrumbs } from "@/components/InternalBreadcrumbs";
+import { RelatedLinks } from "@/components/RelatedLinks";
 import { Modal } from "@/components/ui/Modal";
 import { dealsToast as toast } from "@/lib/notifications";
 import { Container } from "@/components/ui/primitives/container";
@@ -287,6 +289,13 @@ export default function RequestDetailPage() {
   const requestBudget = requestRow
     ? formatBudget(requestRow.budget_min, requestRow.budget_max)
     : DEMO_REQUEST.budgetLabel;
+  const requestRelatedLinks = [
+    { href: "/requests", label: "All buyer requests" },
+    { href: "/market", label: "Marketplace homepage" },
+    { href: "/category/services", label: "Services category" },
+    { href: "/secure-transaction", label: "Secure transaction guide" },
+    { href: "/faq", label: "Platform FAQ" },
+  ];
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-zinc-800 selection:text-white font-sans">
@@ -298,6 +307,14 @@ export default function RequestDetailPage() {
 
       <main className="relative z-10 py-8 space-y-8">
         <Container>
+          <InternalBreadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Buyer Requests", href: "/requests" },
+              { label: requestTitle },
+            ]}
+            className="mb-6"
+          />
           <Button
             variant="ghost"
             className="pl-0 hover:bg-transparent hover:text-zinc-300 text-zinc-500 transition-colors -ml-2 mb-8"
@@ -458,6 +475,8 @@ export default function RequestDetailPage() {
                   </li>
                 </ul>
               </Card>
+
+              <RelatedLinks title="Related pages" links={requestRelatedLinks} />
             </div>
           </div>
         </Container>

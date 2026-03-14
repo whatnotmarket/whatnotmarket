@@ -21,7 +21,7 @@ export function DealHeader({ status, dealId, className, onBack }: DealHeaderProp
             <span className="sr-only">Home</span>
         </Link>
         <ChevronRight className="h-4 w-4 text-zinc-700" />
-        <Link href="/deals" className="hover:text-white transition-colors">
+        <Link href="/my-deals" className="hover:text-white transition-colors">
             Deals
         </Link>
         <ChevronRight className="h-4 w-4 text-zinc-700" />
