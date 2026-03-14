@@ -182,6 +182,12 @@ export default async function RootLayout({
           id="schema-jsonld"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
+        <Script
+          id="ahrefs-analytics"
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="V/7wncVpO6P5ODy8x3Cqsw"
+          strategy="afterInteractive"
+        />
 
         <ConsentTrackingScripts />
 
