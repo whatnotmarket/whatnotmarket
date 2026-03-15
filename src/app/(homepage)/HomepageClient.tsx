@@ -424,7 +424,7 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
   });
 }
 
-export function HomepageClient() {
+export function HomepageClient({ hideChat = false }: { hideChat?: boolean } = {}) {
   const isMobile = useIsMobile();
   const supabase = useMemo(() => createClient(), []);
   const { user, isLoading } = useUser();
@@ -632,6 +632,12 @@ export function HomepageClient() {
           } else if (isChatClosedRef.current && shouldReopenRight) {
             isChatClosedRef.current = false;
             setIsChatClosed(false);
+            rightPanelRef.current?.expand();
+            rightPanelPercentRef.current = expandedRightPanelPercent;
+            setRightPanelPercent(expandedRightPanelPercent);
+            window.requestAnimationFrame(() => {
+              animateRightPanelTo(expandedRightPanelPercent, 180);
+            });
           }
         }
       }
@@ -646,7 +652,7 @@ export function HomepageClient() {
         layoutPersistTimerRef.current = null;
       }, 120);
     },
-    [isMobile]
+    [animateRightPanelTo, expandedRightPanelPercent, isLeftHandleDragging, isMobile]
   );
 
   const collapseLeftSidebar = useCallback(() => {
@@ -722,8 +728,13 @@ export function HomepageClient() {
     isChatClosedRef.current = false;
     setIsChatClosed(false);
     rightPanelRef.current?.expand();
-    rightPanelRef.current?.resize(PANEL_REOPEN_THRESHOLD_PERCENT);
-  }, [isMobile]);
+    rightPanelRef.current?.resize(expandedRightPanelPercent);
+    rightPanelPercentRef.current = expandedRightPanelPercent;
+    setRightPanelPercent(expandedRightPanelPercent);
+    window.requestAnimationFrame(() => {
+      animateRightPanelTo(expandedRightPanelPercent, 180);
+    });
+  }, [animateRightPanelTo, expandedRightPanelPercent, isMobile]);
 
   const handleLeftSeparatorPointerDown = useCallback(() => {
     setIsLeftHandleDragging(true);
@@ -2576,7 +2587,7 @@ export function HomepageClient() {
         style={{ ...COLORI_CHAT_GLOBAL_CSS_VARS, backgroundColor: "var(--gc-home-bg)", backgroundImage: "none" }}
       >
       <AnimatePresence>
-        {isMobileSidebarOpen ? (
+        {!hideChat && isMobileSidebarOpen ? (
           <HomepageMobileSidebar
             isOpen={isMobileSidebarOpen}
             onClose={() => setIsMobileSidebarOpen(false)}
@@ -2662,50 +2673,67 @@ export function HomepageClient() {
             <Panel id="homepage-center" minSize="34%" className="min-h-0 min-w-0 overflow-hidden">
               <HomepageCenterPanel
                 isLeftSidebarClosed={isLeftSidebarClosed}
-                isChatClosed={isChatClosed}
+                isChatClosed={hideChat ? false : isChatClosed}
                 onExpandSidebar={expandLeftSidebar}
-                onExpandChat={reopenChatPanel}
+                onExpandChat={hideChat ? () => {} : reopenChatPanel}
                 commandSearchSlot={<GlobalCommandSearch className="w-full max-w-none" />}
               />
             </Panel>
           ) : null}
 
-          {!isMobile ? (
+          {!isMobile && !hideChat ? (
             <HomepagePanelResizeHandle
               onPointerDown={handleRightSeparatorPointerDown}
             />
           ) : null}
 
-          <Panel
-            id="homepage-right"
-            panelRef={rightPanelRef}
-                    defaultSize={isMobile ? "100%" : "20%"}
-            minSize={isMobile ? "100%" : "14%"}
-            maxSize={isMobile ? "100%" : "50%"}
-            collapsible={!isMobile}
-            collapsedSize={0}
-            className="min-h-0 min-w-0 overflow-hidden"
-          >
-            <AnimatePresence initial={false} mode="sync">
-              {isChatClosed ? (
-                <motion.div
-                  key="chat-closed"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full min-h-0"
-                />
-              ) : (
-                <motion.aside
-                  key="chat-open"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transform: "none", backgroundColor: "var(--gc-chat-panel)" }}
-                  className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-3xl border-2 border-[var(--gc-border)] bg-transparent shadow-none"
-                >
+          {hideChat && isMobile ? (
+            <Panel
+              id="homepage-mobile-center"
+              defaultSize="100%"
+              minSize="100%"
+              maxSize="100%"
+              className="min-h-0 min-w-0 overflow-hidden"
+            >
+              <div className="relative h-full min-h-0 min-w-0">
+                <div className="no-scrollbar h-full min-h-0 overflow-y-auto rounded-[30px] border-2 border-[#395565] bg-[#161923] px-3 py-4">
+                  <GlobalCommandSearch className="w-full max-w-none" />
+                </div>
+              </div>
+            </Panel>
+          ) : null}
+
+          {!hideChat ? (
+            <Panel
+              id="homepage-right"
+              panelRef={rightPanelRef}
+              defaultSize={isMobile ? "100%" : "20%"}
+              minSize={isMobile ? "100%" : "14%"}
+              maxSize={isMobile ? "100%" : "50%"}
+              collapsible={!isMobile}
+              collapsedSize={0}
+              className="min-h-0 min-w-0 overflow-hidden"
+            >
+              <AnimatePresence initial={false} mode="sync">
+                {isChatClosed ? (
+                  <motion.div
+                    key="chat-closed"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="h-full min-h-0"
+                  />
+                ) : (
+                  <motion.aside
+                    key="chat-open"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transform: "none", backgroundColor: "var(--gc-chat-panel)" }}
+                    className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-3xl border-2 border-[var(--gc-border)] bg-transparent shadow-none"
+                  >
           <div className="relative z-20">
             <HomepageChatHeader
               onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
@@ -3327,10 +3355,11 @@ export function HomepageClient() {
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
-                </motion.aside>
-              )}
-            </AnimatePresence>
-          </Panel>
+                  </motion.aside>
+                )}
+              </AnimatePresence>
+            </Panel>
+          ) : null}
         </Group>
       </div>
       </div>
