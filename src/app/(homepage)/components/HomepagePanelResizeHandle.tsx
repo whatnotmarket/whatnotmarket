@@ -4,9 +4,22 @@ import { Separator as ResizableSeparator } from "react-resizable-panels";
 
 export function HomepagePanelResizeHandle({
   onPointerDown,
+  interactive = true,
 }: {
   onPointerDown?: () => void;
+  interactive?: boolean;
 }) {
+  if (!interactive) {
+    return (
+      <div
+        aria-hidden="true"
+        className="pointer-events-none relative hidden w-3 shrink-0 overflow-visible md:flex"
+      >
+        <div className="absolute inset-y-3 left-1/2 w-px -translate-x-1/2 rounded-full bg-[var(--gc-border)]/45" />
+      </div>
+    );
+  }
+
   return (
     <ResizableSeparator
       onPointerDown={onPointerDown}
@@ -30,4 +43,3 @@ export function HomepagePanelResizeHandle({
     </ResizableSeparator>
   );
 }
-

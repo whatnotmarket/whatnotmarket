@@ -51,7 +51,7 @@ import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HomepageMobileSidebar } from "./components/HomepageMobileSidebar";
-import { HomepageDesktopSidebar } from "./components/HomepageDesktopSidebar";
+import SidebarTestClient from "../sidebar-test/SidebarTestClient";
 import { HomepageCenterPanel } from "./components/HomepageCenterPanel";
 import { HomepageChatHeader } from "./components/HomepageChatHeader";
 import { HomepagePanelResizeHandle } from "./components/HomepagePanelResizeHandle";
@@ -2618,59 +2618,44 @@ export function HomepageClient({ hideChat = false }: { hideChat?: boolean } = {}
 
       <div
         className={cn(
-          "relative mx-auto flex h-full min-h-0 w-full min-w-0 items-stretch gap-3 overflow-hidden px-3 py-4 transition-opacity duration-150 md:gap-3 md:px-4 md:py-6",
+          "relative mx-auto flex h-full min-h-0 w-full min-w-0 items-stretch gap-3 overflow-visible px-3 py-4 transition-opacity duration-150 md:gap-3 md:px-4 md:py-6",
           !isMobile && !isDesktopLayoutReady && "pointer-events-none opacity-0"
         )}
       >
+        {!isMobile ? (
+          <div className="pointer-events-none absolute inset-y-4 left-3 z-[2100] md:inset-y-6 md:left-4">
+            <SidebarTestClient embedded className="pointer-events-auto z-[2150]" />
+          </div>
+        ) : null}
+
         <Group
           groupRef={panelGroupRef}
           orientation="horizontal"
           defaultLayout={HOMEPAGE_LAYOUT_DEFAULT}
           onLayoutChanged={handlePanelLayoutChanged}
-          className="flex h-full min-h-0 w-full min-w-0 items-stretch gap-0 overflow-hidden"
+          className="flex h-full min-h-0 w-full min-w-0 items-stretch gap-0 overflow-visible"
         >
           {!isMobile ? (
             <Panel
-              defaultSize="4%"
-              minSize="0%"
-              maxSize="28%"
-              collapsible
-              collapsedSize={0}
+              defaultSize="6%"
+              minSize="6%"
+              maxSize="6%"
               id="homepage-left"
               panelRef={leftPanelRef}
-              className="min-h-0 min-w-0 overflow-hidden"
+              className="no-scrollbar relative z-10 min-h-0 min-w-0 overflow-visible"
             >
-              <HomepageDesktopSidebar
-                isLeftSidebarClosed={isLeftSidebarClosed}
-                forceRail={leftPanelPercent > PANEL_CLOSE_THRESHOLD_PERCENT && leftPanelPercent <= 14}
-                renderEmpty={
-                  isLeftSidebarClosed ||
-                  (isLeftHandleDragging && leftPanelPercent <= LEFT_PANEL_CLOSE_THRESHOLD_PERCENT)
-                }
-                onCollapse={collapseLeftSidebar}
-                onExpand={expandLeftSidebar}
-                sidebarMode={sidebarMode}
-                onSidebarModeChange={setSidebarMode}
-                isMarketplaceSectionOpen={isMarketplaceSectionOpen}
-                onToggleMarketplaceSection={() => setIsMarketplaceSectionOpen((prev) => !prev)}
-                isRoomsSectionOpen={isRoomsSectionOpen}
-                onToggleRoomsSection={() => setIsRoomsSectionOpen((prev) => !prev)}
-                primaryRooms={primaryRooms}
-                marketplaceCategories={MARKETPLACE_CATEGORIES}
-                renderMarketplaceNavItem={renderMarketplaceNavItem}
-                renderRoomNavItem={renderRoomNavItem}
-                renderSellSections={renderSellSections}
-                displayOnlineCount={displayOnlineCount}
-                threadCount={topLevelMessages.length}
-                sidebarRowGridClass={SIDEBAR_ROW_GRID_CLASS}
-              />
+              <div aria-hidden="true" className="h-full w-full" />
             </Panel>
           ) : null}
 
-          {!isMobile ? <HomepagePanelResizeHandle onPointerDown={handleLeftSeparatorPointerDown} /> : null}
+          {!isMobile ? (
+            <div aria-hidden="true" className="pointer-events-none relative hidden w-3 shrink-0 md:flex">
+              <div className="absolute inset-y-3 left-1/2 w-px -translate-x-1/2 rounded-full bg-[var(--gc-border)]/45" />
+            </div>
+          ) : null}
 
           {!isMobile ? (
-            <Panel id="homepage-center" minSize="34%" className="min-h-0 min-w-0 overflow-hidden">
+            <Panel id="homepage-center" minSize="34%" className="relative z-0 min-h-0 min-w-0 overflow-hidden">
               <HomepageCenterPanel
                 isLeftSidebarClosed={isLeftSidebarClosed}
                 isChatClosed={hideChat ? false : isChatClosed}
