@@ -34,7 +34,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         <WalletProvider>
           <CryptoProvider>
             <CartProvider>
-              <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+              <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="openlymarket-theme">
                 {children}
                 {showToasters ? <NotificationToasters /> : null}
               </ThemeProvider>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PUBLIC_CATEGORY_PRODUCT_PATHS } from "@/lib/public-catalog";
 import { INTERNAL_LINK_CATALOG } from "@/lib/internal-linking";
 
@@ -16,18 +15,22 @@ const CATEGORY_PRODUCT_LINKS = PUBLIC_CATEGORY_PRODUCT_PATHS.map((path) => ({
   label: `${humanizePathLabel(path)} Listing`,
 }));
 
-const INTERNAL_LINKS = [
+const INTERNAL_LINKS_RAW = [
   ...INTERNAL_LINK_CATALOG.map((item) => ({ href: item.href, label: item.label })),
   ...CATEGORY_PRODUCT_LINKS,
 ] as const;
+
+const INTERNAL_LINKS = Array.from(
+  new Map(INTERNAL_LINKS_RAW.map((item) => [item.href, item.label])).entries()
+).map(([href, label]) => ({ href, label }));
 
 export function SeoInternalLinks() {
   return (
     <nav className="sr-only" aria-label="Internal navigation links">
       <ul>
         {INTERNAL_LINKS.map((item) => (
-          <li key={item.href}>
-            <Link href={item.href}>{item.label}</Link>
+          <li key={`${item.href}-${item.label}`}>
+            <a href={item.href}>{item.label}</a>
           </li>
         ))}
       </ul>

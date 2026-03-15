@@ -495,16 +495,6 @@ export function HomepageClient({ hideChat = false }: { hideChat?: boolean } = {}
   const rightPanelPercentRef = useRef<number>(HOMEPAGE_LAYOUT_DEFAULT["homepage-right"]);
 
   useEffect(() => {
-    document.documentElement.classList.add("homepage-no-scrollbar");
-    document.body.classList.add("homepage-no-scrollbar");
-
-    return () => {
-      document.documentElement.classList.remove("homepage-no-scrollbar");
-      document.body.classList.remove("homepage-no-scrollbar");
-    };
-  }, []);
-
-  useEffect(() => {
     setIsHydrated(true);
   }, []);
 

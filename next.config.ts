@@ -9,6 +9,14 @@ const supabaseHostname = (() => {
   }
 })();
 
+const shouldDisablePwa = (() => {
+  if (process.env.NODE_ENV === "development") return true;
+  if (process.env.DISABLE_PWA === "true") return true;
+  if (process.env.NEXT_PUBLIC_DISABLE_PWA === "true") return true;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(appUrl);
+})();
+
 const nextConfig: NextConfig = {
   experimental: {
     inlineCss: true,
@@ -128,10 +136,10 @@ const nextConfig: NextConfig = {
 
 const withPWAConfig = withPWA({
   dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
-  disable: process.env.NODE_ENV === "development",
+  disable: shouldDisablePwa,
   workboxOptions: {
     disableDevLogs: true,
   },

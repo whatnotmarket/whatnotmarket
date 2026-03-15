@@ -11,6 +11,7 @@ import { SeoInternalLinks } from "@/components/SeoInternalLinks";
 import Providers from "@/components/providers";
 import AckeeTracker from "@/components/providers/AckeeTracker";
 import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
+import { LocalhostServiceWorkerReset } from "@/components/providers/LocalhostServiceWorkerReset";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-config";
@@ -27,7 +28,7 @@ const inter = Inter({
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const viewport: Viewport = {
-  themeColor: "#13232D",
+  themeColor: "#FFFFFF",
 };
 
 export const metadata: Metadata = {
@@ -169,14 +170,14 @@ export default async function RootLayout({
     <html
       lang={htmlLocale}
       translate="no"
-      className={cn("dark notranslate overflow-x-hidden overflow-y-auto", "font-sans", geist.variable)}
-      style={{ colorScheme: "dark" }}
+      className={cn("notranslate overflow-x-hidden overflow-y-auto", "font-sans", geist.variable)}
       suppressHydrationWarning
     >
       <body
-        className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased bg-[#13232D] text-white`}
+        className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased`}
         suppressHydrationWarning
       >
+        <LocalhostServiceWorkerReset />
         <Script
           type="application/ld+json"
           id="schema-jsonld"
@@ -193,16 +194,16 @@ export default async function RootLayout({
 
         <PostHogProvider>
           <Providers>
-            <div id="app-root-shell" className="bg-[#13232D] overflow-visible">
+            <div id="app-root-shell" className="overflow-visible">
               <Suspense fallback={null}>
                 <AckeeTracker />
               </Suspense>
               {children}
-              <SeoInternalLinks />
             </div>
             <PrivacyCardWrapper />
           </Providers>
         </PostHogProvider>
+        <SeoInternalLinks />
         <Analytics />
         <SpeedInsights />
         <FaviconAttention />
