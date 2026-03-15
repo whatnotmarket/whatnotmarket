@@ -27,7 +27,7 @@ const inter = Inter({
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#13232D",
 };
 
 export const metadata: Metadata = {
@@ -174,7 +174,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased bg-black text-white`}
+        className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased bg-[#13232D] text-white`}
         suppressHydrationWarning
       >
         <Script
@@ -193,7 +193,7 @@ export default async function RootLayout({
 
         <PostHogProvider>
           <Providers>
-            <div id="app-root-shell" className="bg-black overflow-visible">
+            <div id="app-root-shell" className="bg-[#13232D] overflow-visible">
               <Suspense fallback={null}>
                 <AckeeTracker />
               </Suspense>

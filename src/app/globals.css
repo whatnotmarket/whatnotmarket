@@ -73,6 +73,30 @@
   --global-chat-text-primary: #f8f7ff;
   --global-chat-text-muted: #b8b3d9;
   --global-chat-divider: rgba(185, 177, 232, 0.18);
+  --gc-home-bg: #13232d;
+  --gc-chat-panel: #1a2e39;
+  --gc-surface: #13232d;
+  --gc-surface-soft: #1a2e39;
+  --gc-surface-deep: #161923;
+  --gc-border: #395565;
+  --gc-text-primary: #ffffff;
+  --gc-text-secondary: #d1d5db;
+  --gc-text-muted: #9ca3af;
+  --gc-text-tertiary: #a1a1aa;
+  --gc-avatar-fallback-bg: #151515;
+  --gc-tooltip-bg: #000000;
+  --gc-tooltip-border: #101010;
+  --gc-success-dot: #04dc3a;
+  --gc-success-stroke: #b8ffc0;
+  --gc-danger: #ff0000;
+  --gc-resize-handle-icon: #d6e2ef;
+  --gc-info-badge-bg: #35546a;
+  --gc-info-badge-text: #d8ecff;
+  --gc-warning-badge-bg: #6f5d1f;
+  --gc-warning-badge-text: #fff4bf;
+  --gc-button-primary-bg: #ffffff;
+  --gc-button-primary-text: #000000;
+  --gc-button-primary-hover-bg: #e4e4e7;
 }
 
 .dark {
@@ -124,7 +148,8 @@
     @apply min-h-screen;
   }
   html {
-    @apply bg-black font-sans;
+    @apply font-sans;
+    background-color: #13232d;
   }
   body {
     @apply min-h-screen overflow-x-hidden overflow-y-auto font-sans bg-background text-foreground select-none;
@@ -161,22 +186,48 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000; /* Match body background */
+  background: #13232d; /* Match body background */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a; /* zinc-800 */
+  background: #1a2e39;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46; /* zinc-700 */
+  background: #1a2e39;
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #27272a #000000;
+  scrollbar-color: #1a2e39 #13232d;
+}
+
+/* Keep chat containers scrollbar-free even during mount/reopen frames */
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  scrollbar-gutter: auto !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+html.homepage-no-scrollbar,
+body.homepage-no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+html.homepage-no-scrollbar::-webkit-scrollbar,
+body.homepage-no-scrollbar::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }
 
 @theme inline {

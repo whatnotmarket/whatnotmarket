@@ -55,6 +55,7 @@ import { HomepageDesktopSidebar } from "./components/HomepageDesktopSidebar";
 import { HomepageCenterPanel } from "./components/HomepageCenterPanel";
 import { HomepageChatHeader } from "./components/HomepageChatHeader";
 import { HomepagePanelResizeHandle } from "./components/HomepagePanelResizeHandle";
+import { COLORI_CHAT_GLOBAL_CSS_VARS } from "./Colori-Chat-Global";
 import type {
   GlobalChatMessage,
   GlobalChatRow,
@@ -83,12 +84,16 @@ const CHAT_CLOSED_STORAGE_KEY = "global_chat_closed";
 const SIDEBAR_MODE_STORAGE_KEY = "global_chat_sidebar_mode";
 const HOMEPAGE_LAYOUT_PERSISTENCE_ID = "homepage-layout-panels-v3";
 const HOMEPAGE_LAYOUT_DEFAULT = {
-  "homepage-left": 20,
-  "homepage-center": 60,
+  "homepage-left": 4,
+  "homepage-center": 76,
   "homepage-right": 20,
 } as const;
 const PANEL_CLOSE_THRESHOLD_PERCENT = 2;
 const PANEL_REOPEN_THRESHOLD_PERCENT = 4;
+const LEFT_PANEL_CLOSE_THRESHOLD_PERCENT = 4;
+const LEFT_PANEL_REOPEN_THRESHOLD_PERCENT = 5;
+const LEFT_RAIL_PERCENT = 4;
+const LEFT_EXPANDED_PERCENT = 20;
 
 function sanitizeHomepageLayout(layout: Record<string, unknown> | null | undefined) {
   if (!layout) return null;
@@ -97,7 +102,7 @@ function sanitizeHomepageLayout(layout: Record<string, unknown> | null | undefin
   const right = Number(layout["homepage-right"]);
   if (!Number.isFinite(left) || !Number.isFinite(center) || !Number.isFinite(right)) return null;
   const sum = left + center + right;
-  const isLeftValid = left === 0 || (left >= 16 && left <= 28);
+  const isLeftValid = left >= 5 && left <= 28;
   const isRightValid = right === 0 || (right >= 14 && right <= 50);
   const isValid =
     isLeftValid &&
@@ -112,7 +117,7 @@ function sanitizeHomepageLayout(layout: Record<string, unknown> | null | undefin
   } as const;
 }
 const PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "sell-services", "crypto-talk"];
-const COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", ...LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS];
+const COMMUNITY_ROOMS: GlobalChatRoom[] = [...LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS, "help"];
 const MARKETPLACE_CATEGORIES = [
   { label: "Electronics", href: "/category/electronics" },
   { label: "Fashion", href: "/category/fashion" },
@@ -170,6 +175,21 @@ const SELL_DEFAULT_ACTIVE_TAB = getSellTabId(
   SELL_SIDEBAR_SECTIONS[0].key,
   SELL_SIDEBAR_SECTIONS[0].tabs[0]
 );
+type ChatUserProfileCard = {
+  userId: string;
+  displayName: string;
+  handle: string;
+  avatarUrl: string | null;
+  memberSince: string | null;
+  isSeller: boolean;
+  isBuyer: boolean;
+  sellerStatus: string | null;
+  buyerRanking: string | null;
+  isFollowing: boolean;
+  totalMessages: number;
+  lastMessageAt: string | null;
+  purchasesCount: number | null;
+};
 const SELL_DEFAULT_OPEN_STATE = SELL_SIDEBAR_SECTIONS.reduce(
   (acc, section, index) => {
     acc[section.key] = index === 0;
@@ -180,7 +200,7 @@ const SELL_DEFAULT_OPEN_STATE = SELL_SIDEBAR_SECTIONS.reduce(
 const SIDEBAR_ROW_GRID_CLASS = "grid-cols-[1.75rem_minmax(0,1fr)_auto]";
 const SIDEBAR_ICON_BOX_CLASS = "grid h-7 w-7 shrink-0 place-items-center rounded-xl";
 const GUEST_PRIMARY_ROOMS: GlobalChatRoom[] = ["global", "buy-services", "crypto-talk"];
-const GUEST_COMMUNITY_ROOMS: GlobalChatRoom[] = ["help", ...LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS];
+const GUEST_COMMUNITY_ROOMS: GlobalChatRoom[] = [...LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS, "help"];
 const LANGUAGE_ROOM_SET = new Set<GlobalChatRoom>(LANGUAGE_GLOBAL_CHAT_ROOM_SLUGS);
 const LANGUAGE_ROOM_FLAG_BY_SLUG = {
   english: Flags.GB,
@@ -296,6 +316,13 @@ function truncateMessage(text: string, maxLength = 90) {
   return `${text.slice(0, maxLength)}...`;
 }
 
+function getBuyerRanking(totalPurchases: number) {
+  if (totalPurchases >= 20) return "Elite Buyer";
+  if (totalPurchases >= 5) return "Trusted Buyer";
+  if (totalPurchases >= 1) return "Active Buyer";
+  return "Rookie Buyer";
+}
+
 function chunkArray<T>(items: T[], size: number) {
   if (size <= 0) return [items];
   const chunks: T[][] = [];
@@ -318,6 +345,13 @@ function formatRelativeTime(createdAt: string) {
   return `${Math.max(1, Math.floor(diffMs / hour))} h ago`;
 }
 
+function formatDateLabel(value: string | null) {
+  if (!value) return "Unknown";
+  const ts = new Date(value);
+  if (Number.isNaN(ts.getTime())) return "Unknown";
+  return ts.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
 function renderMessageWithMentions(text: string, currentHandle: string | null) {
   const normalizedCurrentHandle = currentHandle?.toLowerCase() || null;
   const parts = text.split(/(@[a-zA-Z0-9_]{1,30})/g);
@@ -333,8 +367,8 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
           className={cn(
             "rounded px-1 py-0.5 font-semibold",
             isCurrentUserMention
-              ? "bg-[#6f5d1f] text-[#fff4bf]"
-              : "bg-[#35546a] text-[#d8ecff]"
+              ? "bg-[var(--gc-warning-badge-bg)] text-[var(--gc-warning-badge-text)]"
+              : "bg-[var(--gc-info-badge-bg)] text-[var(--gc-info-badge-text)]"
           )}
         >
           {part}
@@ -375,7 +409,7 @@ function renderMessageWithMentions(text: string, currentHandle: string | null) {
               <a
                 key={`link-${index}-${j}`}
                 href={href}
-                className="underline text-zinc-200 hover:text-white break-words"
+                className="underline text-[var(--gc-text-secondary)] hover:text-[var(--gc-text-primary)] break-words"
               >
                 {url.href}
               </a>
@@ -413,7 +447,7 @@ export function HomepageClient() {
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
-  const [isLeftSidebarClosed, setIsLeftSidebarClosed] = useState(false);
+  const [isLeftSidebarClosed, setIsLeftSidebarClosed] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("buy");
   const [isMarketplaceSectionOpen, setIsMarketplaceSectionOpen] = useState(true);
@@ -434,10 +468,15 @@ export function HomepageClient() {
   const [slowRemainingSeconds, setSlowRemainingSeconds] = useState<number>(0);
   const [closedUntilTs, setClosedUntilTs] = useState<number>(0);
   const [closedRemainingSeconds, setClosedRemainingSeconds] = useState<number>(0);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<GlobalChatMessage | null>(null);
+  const [selectedUserProfileData, setSelectedUserProfileData] = useState<ChatUserProfileCard | null>(null);
+  const [isSelectedUserProfileLoading, setIsSelectedUserProfileLoading] = useState(false);
+  const [isPopupFollowLoading, setIsPopupFollowLoading] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const roomMenuRef = useRef<HTMLDivElement | null>(null);
+  const rulesCardRef = useRef<HTMLDivElement | null>(null);
   const panelGroupRef = useRef<GroupImperativeHandle | null>(null);
   const leftPanelRef = useRef<PanelImperativeHandle | null>(null);
   const rightPanelRef = useRef<PanelImperativeHandle | null>(null);
@@ -448,9 +487,27 @@ export function HomepageClient() {
   const isRestoringLayoutRef = useRef(true);
   const [isDesktopLayoutReady, setIsDesktopLayoutReady] = useState(false);
   const [rightPanelPercent, setRightPanelPercent] = useState<number>(HOMEPAGE_LAYOUT_DEFAULT["homepage-right"]);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [leftPanelPercent, setLeftPanelPercent] = useState<number>(HOMEPAGE_LAYOUT_DEFAULT["homepage-left"]);
+  const [isLeftHandleDragging, setIsLeftHandleDragging] = useState(false);
   const isLeftSidebarClosedRef = useRef(false);
   const isChatClosedRef = useRef(false);
   const rightPanelPercentRef = useRef<number>(HOMEPAGE_LAYOUT_DEFAULT["homepage-right"]);
+
+  useEffect(() => {
+    document.documentElement.classList.add("homepage-no-scrollbar");
+    document.body.classList.add("homepage-no-scrollbar");
+
+    return () => {
+      document.documentElement.classList.remove("homepage-no-scrollbar");
+      document.body.classList.remove("homepage-no-scrollbar");
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const isLoggedIn = Boolean(user);
   const canWrite = useMemo(() => {
     if (!user) return false;
@@ -535,11 +592,16 @@ export function HomepageClient() {
       if (!isMobile) {
         const leftSize = Number(layout["homepage-left"]);
         if (Number.isFinite(leftSize)) {
-          const shouldCloseLeft = leftSize <= PANEL_CLOSE_THRESHOLD_PERCENT;
-          const shouldReopenLeft = leftSize >= PANEL_REOPEN_THRESHOLD_PERCENT;
+          setLeftPanelPercent(leftSize);
+          const shouldCloseLeft =
+            isLeftHandleDragging && leftSize <= LEFT_PANEL_CLOSE_THRESHOLD_PERCENT;
+          const shouldReopenLeft = leftSize >= LEFT_PANEL_REOPEN_THRESHOLD_PERCENT;
           if (!isLeftSidebarClosedRef.current && shouldCloseLeft) {
             isLeftSidebarClosedRef.current = true;
             setIsLeftSidebarClosed(true);
+            if (!isMobile) {
+              leftPanelRef.current?.collapse();
+            }
           } else if (isLeftSidebarClosedRef.current && shouldReopenLeft) {
             isLeftSidebarClosedRef.current = false;
             setIsLeftSidebarClosed(false);
@@ -588,19 +650,23 @@ export function HomepageClient() {
   );
 
   const collapseLeftSidebar = useCallback(() => {
-    isLeftSidebarClosedRef.current = true;
-    setIsLeftSidebarClosed(true);
+    isLeftSidebarClosedRef.current = false;
+    setIsLeftSidebarClosed(false);
+    setLeftPanelPercent(LEFT_RAIL_PERCENT);
     if (!isMobile) {
-      leftPanelRef.current?.collapse();
+      leftPanelRef.current?.expand();
+      leftPanelRef.current?.resize(`${LEFT_RAIL_PERCENT}%`);
     }
   }, [isMobile]);
 
   const expandLeftSidebar = useCallback(() => {
+    const targetPercent = isLeftSidebarClosedRef.current ? LEFT_RAIL_PERCENT : LEFT_EXPANDED_PERCENT;
     isLeftSidebarClosedRef.current = false;
     setIsLeftSidebarClosed(false);
+    setLeftPanelPercent(targetPercent);
     if (!isMobile) {
       leftPanelRef.current?.expand();
-      leftPanelRef.current?.resize("20%");
+      leftPanelRef.current?.resize(`${targetPercent}%`);
     }
   }, [isMobile]);
 
@@ -651,10 +717,6 @@ export function HomepageClient() {
     }
   }, [animateRightPanelTo, expandedRightPanelPercent, isMobile]);
 
-  const toggleChatExpanded = useCallback(() => {
-    setIsChatExpanded((prev) => !prev);
-  }, []);
-
   const handleRightSeparatorPointerDown = useCallback(() => {
     if (isMobile || !isChatClosedRef.current) return;
     isChatClosedRef.current = false;
@@ -662,6 +724,10 @@ export function HomepageClient() {
     rightPanelRef.current?.expand();
     rightPanelRef.current?.resize(PANEL_REOPEN_THRESHOLD_PERCENT);
   }, [isMobile]);
+
+  const handleLeftSeparatorPointerDown = useCallback(() => {
+    setIsLeftHandleDragging(true);
+  }, []);
 
   useEffect(() => {
     setStablePathname(pathname || "/");
@@ -672,13 +738,19 @@ export function HomepageClient() {
     const body = document.body;
     const previousRootBackground = root.style.backgroundColor;
     const previousBodyBackground = body.style.backgroundColor;
+    const previousRootBackgroundImage = root.style.backgroundImage;
+    const previousBodyBackgroundImage = body.style.backgroundImage;
 
-    root.style.backgroundColor = "#101219";
-    body.style.backgroundColor = "#101219";
+    root.style.backgroundColor = "var(--gc-surface)";
+    body.style.backgroundColor = "var(--gc-surface)";
+    root.style.backgroundImage = "none";
+    body.style.backgroundImage = "none";
 
     return () => {
       root.style.backgroundColor = previousRootBackground;
       body.style.backgroundColor = previousBodyBackground;
+      root.style.backgroundImage = previousRootBackgroundImage;
+      body.style.backgroundImage = previousBodyBackgroundImage;
     };
   }, []);
 
@@ -695,12 +767,12 @@ export function HomepageClient() {
     setIsDesktopLayoutReady(false);
 
     let nextLeftClosed = false;
+    let nextLeftPercent = LEFT_RAIL_PERCENT;
     let nextChatClosed = false;
     let nextChatExpanded = false;
     let nextSidebarMode: SidebarMode = "buy";
 
     try {
-      nextLeftClosed = localStorage.getItem(LEFT_SIDEBAR_CLOSED_STORAGE_KEY) === "1";
       nextChatClosed = localStorage.getItem(CHAT_CLOSED_STORAGE_KEY) === "1";
       nextChatExpanded = localStorage.getItem(CHAT_EXPANDED_STORAGE_KEY) === "1";
       const storedSidebarMode = localStorage.getItem(SIDEBAR_MODE_STORAGE_KEY);
@@ -718,7 +790,9 @@ export function HomepageClient() {
           if (sanitized) {
             panelGroupRef.current?.setLayout(sanitized);
             nextLeftClosed = sanitized["homepage-left"] <= PANEL_CLOSE_THRESHOLD_PERCENT;
+            nextLeftPercent = sanitized["homepage-left"];
             nextChatClosed = sanitized["homepage-right"] <= PANEL_CLOSE_THRESHOLD_PERCENT;
+            setLeftPanelPercent(sanitized["homepage-left"]);
             rightPanelPercentRef.current = sanitized["homepage-right"];
             setRightPanelPercent(sanitized["homepage-right"]);
           }
@@ -744,7 +818,12 @@ export function HomepageClient() {
 
     if (!isMobile) {
       const rafId = window.requestAnimationFrame(() => {
-        if (nextLeftClosed) leftPanelRef.current?.collapse();
+        if (nextLeftClosed) {
+          leftPanelRef.current?.collapse();
+        } else {
+          leftPanelRef.current?.expand();
+          leftPanelRef.current?.resize(`${Math.max(LEFT_RAIL_PERCENT, nextLeftPercent)}%`);
+        }
         if (nextChatClosed) rightPanelRef.current?.collapse();
         window.requestAnimationFrame(() => {
           isRestoringLayoutRef.current = false;
@@ -804,6 +883,15 @@ export function HomepageClient() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isLeftHandleDragging) return;
+    const onPointerUp = () => setIsLeftHandleDragging(false);
+    window.addEventListener("pointerup", onPointerUp);
+    return () => {
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [isLeftHandleDragging]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -893,16 +981,21 @@ export function HomepageClient() {
 
   const renderRoomIcon = useCallback(
     (room: GlobalChatRoom, iconClassName = "h-4 w-4") => {
+      const normalizedIconClass = iconClassName.includes("h-3.5")
+        ? "h-3.5 w-5"
+        : iconClassName.includes("h-4")
+        ? "h-4 w-6"
+        : iconClassName;
       switch (room) {
         case "global":
           return (
-            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className={iconClassName} aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" className={normalizedIconClass} aria-hidden="true">
               <path fill="currentColor" d="M32,0C14.328,0,0,14.328,0,32s14.328,32,32,32s32-14.328,32-32S49.672,0,32,0z M52.812,20.078 c-2.293,1.973-4.105,3.762-7.457,3.887c-2.562,0.094-4.445,0.105-6.359-1.598c-2.727-2.477-0.859-5.777-0.758-9.504 C38.273,11.43,38.512,10.18,38.824,9C44.789,10.766,49.773,14.789,52.812,20.078z M9.867,41.289c2.09-2.031,5.508-3.109,7.949-5.816 c2.492-2.785,2.41-7.836,6.129-7.375c3.039,0.422,2.5,4.23,4.906,6.125c2.836,2.266,6.328,0.824,8.59,3.676 c2.969,3.77,2.277,8.066,0,12.293c-1.676,3.055-3.836,4.137-6.723,5.742C21.316,55.438,13.34,49.555,9.867,41.289z"/>
             </svg>
           );
         case "buy-services":
           return (
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClassName} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={normalizedIconClass} aria-hidden="true">
               <path d="M4.46785 10.2658C4.47574 10.3372 4.48376 10.4094 4.49187 10.4823L4.61751 11.6131C4.7057 12.4072 4.78218 13.0959 4.91562 13.6455C5.05917 14.2367 5.29582 14.7937 5.78931 15.2354C6.28281 15.6771 6.86251 15.8508 7.46598 15.9281C8.02694 16.0001 8.71985 16 9.51887 16H14.8723C15.4201 16 15.9036 16 16.3073 15.959C16.7448 15.9146 17.1698 15.8162 17.5785 15.5701C17.9872 15.324 18.2731 14.9944 18.5171 14.6286C18.7422 14.291 18.9684 13.8637 19.2246 13.3797L21.7141 8.67734C22.5974 7.00887 21.3879 4.99998 19.5 4.99998L9.39884 4.99998C8.41604 4.99993 7.57525 4.99988 6.90973 5.09287C6.5729 5.13994 6.24284 5.21529 5.93326 5.34375L5.78941 4.04912C5.65979 2.88255 4.67375 2 3.5 2H3C2.44772 2 2 2.44771 2 3C2 3.55228 2.44772 4 3 4H3.5C3.65465 4 3.78456 4.11628 3.80164 4.26998L4.46785 10.2658Z" fill="currentColor"></path>
               <path fillRule="evenodd" clipRule="evenodd" d="M14 19.5C14 18.1193 15.1193 17 16.5 17C17.8807 17 19 18.1193 19 19.5C19 20.8807 17.8807 22 16.5 22C15.1193 22 14 20.8807 14 19.5Z" fill="currentColor"></path>
               <path fillRule="evenodd" clipRule="evenodd" d="M5 19.5C5 18.1193 6.11929 17 7.5 17C8.88071 17 10 18.1193 10 19.5C10 20.8807 8.88071 22 7.5 22C6.11929 22 5 20.8807 5 19.5Z" fill="currentColor"></path>
@@ -910,7 +1003,7 @@ export function HomepageClient() {
           );
         case "sell-services":
           return (
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClassName} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={normalizedIconClass} aria-hidden="true">
               <path fillRule="evenodd" clipRule="evenodd" d="M12.052 1.25H11.948C11.0495 1.24997 10.3003 1.24995 9.70552 1.32991C9.07773 1.41432 8.51093 1.59999 8.05546 2.05546C7.59999 2.51093 7.41432 3.07773 7.32991 3.70552C7.27259 4.13189 7.25637 5.15147 7.25179 6.02566C5.22954 6.09171 4.01536 6.32778 3.17157 7.17157C2 8.34315 2 10.2288 2 14C2 17.7712 2 19.6569 3.17157 20.8284C4.34314 22 6.22876 22 9.99998 22H14C17.7712 22 19.6569 22 20.8284 20.8284C22 19.6569 22 17.7712 22 14C22 10.2288 22 8.34315 20.8284 7.17157C19.9846 6.32778 18.7705 6.09171 16.7482 6.02566C16.7436 5.15147 16.7274 4.13189 16.6701 3.70552C16.5857 3.07773 16.4 2.51093 15.9445 2.05546C15.4891 1.59999 14.9223 1.41432 14.2945 1.32991C13.6997 1.24995 12.9505 1.24997 12.052 1.25ZM15.2479 6.00188C15.2434 5.15523 15.229 4.24407 15.1835 3.9054C15.1214 3.44393 15.0142 3.24644 14.8839 3.11612C14.7536 2.9858 14.5561 2.87858 14.0946 2.81654C13.6116 2.7516 12.964 2.75 12 2.75C11.036 2.75 10.3884 2.7516 9.90539 2.81654C9.44393 2.87858 9.24644 2.9858 9.11612 3.11612C8.9858 3.24644 8.87858 3.44393 8.81654 3.9054C8.771 4.24407 8.75661 5.15523 8.75208 6.00188C9.1435 6 9.55885 6 10 6H14C14.4412 6 14.8565 6 15.2479 6.00188ZM12 9.25C12.4142 9.25 12.75 9.58579 12.75 10V10.0102C13.8388 10.2845 14.75 11.143 14.75 12.3333C14.75 12.7475 14.4142 13.0833 14 13.0833C13.5858 13.0833 13.25 12.7475 13.25 12.3333C13.25 11.9493 12.8242 11.4167 12 11.4167C11.1758 11.4167 10.75 11.9493 10.75 12.3333C10.75 12.7174 11.1758 13.25 12 13.25C13.3849 13.25 14.75 14.2098 14.75 15.6667C14.75 16.857 13.8388 17.7155 12.75 17.9898V18C12.75 18.4142 12.4142 18.75 12 18.75C11.5858 18.75 11.25 18.4142 11.25 18V17.9898C10.1612 17.7155 9.25 16.857 9.25 15.6667C9.25 15.2525 9.58579 14.9167 10 14.9167C10.4142 14.9167 10.75 15.2525 10.75 15.6667C10.75 16.0507 11.1758 16.5833 12 16.5833C12.8242 16.5833 13.25 16.0507 13.25 15.6667C13.25 15.2826 12.8242 14.75 12 14.75C10.6151 14.75 9.25 13.7903 9.25 12.3333C9.25 11.143 10.1612 10.2845 11.25 10.0102V10C11.25 9.58579 11.5858 9.25 12 9.25Z" fill="currentColor"></path>
             </svg>
           );
@@ -921,12 +1014,12 @@ export function HomepageClient() {
               alt={selectedCryptoData.code}
               width={20}
               height={20}
-              className={cn(iconClassName, "rounded-full")}
+              className={cn(normalizedIconClass, "rounded-full")}
             />
           );
         case "help":
           return (
-            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className={iconClassName} aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" className={normalizedIconClass} aria-hidden="true">
               <path fill="currentColor" d="M12 1C6.49 1 2 5.34 2 10.67v4.61a1 1 0 0 0 .69.95l3.89 1.26c1.25.27 2.42-.68 2.42-1.96v-4.05c0-1.27-1.17-2.22-2.42-1.96l-2.55.55C4.35 6.12 7.8 3.01 12 3.01s7.65 3.12 7.97 7.06l-2.55-.55c-1.25-.27-2.42.68-2.42 1.96v4.05c0 1.27 1.17 2.22 2.42 1.96l2.58-.55v1.07c0 1.1-.9 2-2 2h-4v-.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v1.5c0 .55.45 1 1 1h6c2.21 0 4-1.79 4-4v-7.33c0-5.33-4.49-9.67-10-9.67z"></path>
             </svg>
           );
@@ -943,14 +1036,14 @@ export function HomepageClient() {
             <Flag
               aria-hidden="true"
               className={cn(
-                "rounded-[3px] border border-[#2E3547]",
+                "rounded-[3px] border-0 bg-transparent",
                 iconClassName.includes("h-3.5") ? "h-3.5 w-5" : "h-4 w-6"
               )}
             />
           );
         }
         default:
-          return <Globe2 className={iconClassName} aria-hidden="true" />;
+          return <Globe2 className={normalizedIconClass} aria-hidden="true" />;
       }
     },
     [selectedCryptoData.Icon, selectedCryptoData.code]
@@ -998,30 +1091,31 @@ export function HomepageClient() {
           aria-label={iconOnly ? room.label : undefined}
           className={cn(
             "group rounded-2xl border text-left transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gc-surface-deep)]",
             iconOnly
               ? "mx-auto flex h-10 w-10 items-center justify-center rounded-xl border p-0"
               : cn("grid h-10 items-center gap-2.5 border-transparent px-3", SIDEBAR_ROW_GRID_CLASS),
             iconOnly
               ? isActive
-                ? "border-[#2E3547] bg-[#212533] text-white"
-                : "border-[#2E3547] bg-[#161923] text-white hover:bg-[#2E3547] hover:text-white"
+                ? "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
+                : "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] hover:bg-[var(--gc-surface)] hover:text-[var(--gc-text-primary)]"
               : isActive
-                ? "w-full border-[#2E3547] bg-[#212533] text-white"
-                : "w-full text-white hover:border-[#2E3547] hover:bg-[#2E3547] hover:text-white"
+                ? "w-full border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
+                : "w-full border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] hover:border-[var(--gc-border)] hover:bg-[var(--gc-surface)] hover:text-[var(--gc-text-primary)]"
           )}
+          style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
         >
           <span
             className={cn(
-              "text-white",
+              "text-[var(--gc-text-primary)]",
               iconOnly ? "grid h-4 w-4 shrink-0 place-items-center" : "grid h-7 w-7 shrink-0 place-items-center",
               iconOnly
                 ? isActive
-                  ? "text-white"
-                  : "text-white group-hover:text-white"
+                  ? "text-[var(--gc-text-primary)]"
+                  : "text-[var(--gc-text-primary)] group-hover:text-[var(--gc-text-primary)]"
                 : isActive
-                  ? "text-white"
-                  : "group-hover:text-white"
+                  ? "text-[var(--gc-text-primary)]"
+                  : "group-hover:text-[var(--gc-text-primary)]"
             )}
           >
             {renderRoomIcon(room.slug)}
@@ -1034,7 +1128,7 @@ export function HomepageClient() {
                 <span
                   className={cn(
                     "ml-auto rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide",
-                    isCryptoBadge ? "" : "border-[#2E3547] bg-[#161923] text-white"
+                    isCryptoBadge ? "" : "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
                   )}
                   style={
                     isCryptoBadge
@@ -1066,7 +1160,7 @@ export function HomepageClient() {
           <TooltipContent
             side="right"
             sideOffset={8}
-            className="border-[#101010] bg-[#000000] px-2 py-1 text-[10px] font-semibold text-white"
+            className="border-[var(--gc-tooltip-border)] bg-[var(--gc-tooltip-bg)] px-2 py-1 text-[10px] font-semibold text-[var(--gc-text-primary)]"
           >
             {room.label}
           </TooltipContent>
@@ -1089,19 +1183,19 @@ export function HomepageClient() {
           className={cn(
             "group grid h-10 w-full items-center gap-2.5 rounded-2xl border px-3 text-left transition-all duration-200",
             SIDEBAR_ROW_GRID_CLASS,
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gc-surface-deep)]",
             isActive
-              ? "border-[#2E3547] bg-[#161923] text-white"
-              : "border-transparent bg-[#161923] text-white hover:border-[#2E3547] hover:bg-[#2E3547] hover:text-white"
+              ? "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
+              : "border-transparent bg-[var(--gc-surface)] text-[var(--gc-text-primary)] hover:border-[var(--gc-border)] hover:bg-[var(--gc-surface)] hover:text-[var(--gc-text-primary)]"
           )}
         >
           <span
             className={cn(
               SIDEBAR_ICON_BOX_CLASS,
-              "text-white",
+              "text-[var(--gc-text-primary)]",
               isActive
-                ? "bg-[#161923] text-white"
-                : "bg-[#161923] group-hover:bg-[#2E3547] group-hover:text-white"
+                ? "bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
+                : "bg-[var(--gc-surface)] group-hover:bg-[var(--gc-surface)] group-hover:text-[var(--gc-text-primary)]"
             )}
           >
             {renderMarketplaceIcon(category.href)}
@@ -1184,10 +1278,10 @@ export function HomepageClient() {
           className={cn(
             "group relative grid h-10 w-full items-center gap-2.5 rounded-2xl border px-3 text-left transition-all duration-200",
             SIDEBAR_ROW_GRID_CLASS,
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gc-surface-deep)]",
             isActive
-              ? "border-[#2E3547] bg-[#212533] text-white"
-              : "border-transparent text-white hover:border-[#2E3547] hover:bg-[#2E3547] hover:text-white"
+              ? "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
+              : "border-transparent text-[var(--gc-text-primary)] hover:border-[var(--gc-border)] hover:bg-[var(--gc-surface)] hover:text-[var(--gc-text-primary)]"
           )}
         >
           <span className="h-7 w-7" aria-hidden="true" />
@@ -1196,7 +1290,7 @@ export function HomepageClient() {
           {isLocked ? (
             <span
               role="tooltip"
-              className="pointer-events-none invisible absolute right-2 top-[-1.9rem] z-20 rounded-lg border border-[#101010] bg-[#000000] px-2 py-1 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.55)] group-hover:visible group-focus-visible:visible"
+              className="pointer-events-none invisible absolute right-2 top-[-1.9rem] z-20 rounded-lg border border-[var(--gc-tooltip-border)] bg-[var(--gc-tooltip-bg)] px-2 py-1 text-[10px] font-semibold text-[var(--gc-text-primary)] shadow-[0_8px_18px_rgba(0,0,0,0.55)] group-hover:visible group-focus-visible:visible"
             >
               {lockTooltip}
             </span>
@@ -1229,16 +1323,16 @@ export function HomepageClient() {
           }}
           className={cn(
             "group mx-auto flex h-10 w-10 items-center justify-center rounded-xl border p-0 transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161923]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gc-surface-deep)]",
             isSectionActive
-              ? "border-[#2E3547] bg-[#212533] text-white"
-              : "border-[#2E3547] bg-[#161923] text-white hover:bg-[#2E3547] hover:text-white"
+              ? "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)]"
+              : "border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] hover:bg-[var(--gc-surface)] hover:text-[var(--gc-text-primary)]"
           )}
         >
           <span
             className={cn(
               "grid h-4 w-4 shrink-0 place-items-center",
-              isSectionActive ? "text-white" : "text-white group-hover:text-white"
+              isSectionActive ? "text-[var(--gc-text-primary)]" : "text-[var(--gc-text-primary)] group-hover:text-[var(--gc-text-primary)]"
             )}
           >
             {renderSellSectionIcon(section.key)}
@@ -1252,7 +1346,7 @@ export function HomepageClient() {
           <TooltipContent
             side="right"
             sideOffset={8}
-            className="border-[#101010] bg-[#000000] px-2 py-1 text-[10px] font-semibold text-white"
+            className="border-[var(--gc-tooltip-border)] bg-[var(--gc-tooltip-bg)] px-2 py-1 text-[10px] font-semibold text-[var(--gc-text-primary)]"
           >
             {section.label}
           </TooltipContent>
@@ -1271,24 +1365,24 @@ export function HomepageClient() {
             return (
               <div
                 key={section.key}
-                className={cn(isOpen ? "rounded-[22px] overflow-hidden border border-[#2E3547] bg-[#161923]" : "")}
+                className={cn(isOpen ? "rounded-[22px] overflow-hidden border-2 border-[var(--gc-border)] bg-[var(--gc-surface)]" : "")}
               >
                 <button
                   type="button"
                   className={cn(
-                    "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+                    "grid h-10 w-full items-center gap-2.5 overflow-hidden rounded-[22px] px-3 text-left text-sm font-extrabold text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)]",
                     SIDEBAR_ROW_GRID_CLASS,
-                    "bg-[#161923]",
-                    !isOpen ? "border border-[#2E3547]" : ""
+                    "bg-[var(--gc-surface)]",
+                    !isOpen ? "border-2 border-[var(--gc-border)]" : ""
                   )}
                   onClick={() => toggleSellSection(section.key)}
                   aria-expanded={isOpen}
                 >
-                  <span className="grid h-7 w-7 place-items-center text-white">
+                  <span className="grid h-7 w-7 place-items-center text-[var(--gc-text-primary)]">
                     {renderSellSectionIcon(section.key)}
                   </span>
                   <span className="min-w-0 truncate">{section.label}</span>
-                  <span className="grid h-7 w-7 place-items-center rounded-xl bg-[#2E3547] text-white">
+                  <span className="grid h-7 w-7 place-items-center rounded-xl bg-[var(--gc-border)] text-[var(--gc-text-primary)]">
                     <SectionChevron open={isOpen} />
                   </span>
                 </button>
@@ -1447,17 +1541,140 @@ export function HomepageClient() {
   }, [supabase, user]);
 
   useEffect(() => {
+    let active = true;
+    if (!selectedUserProfile) {
+      setSelectedUserProfileData(null);
+      setIsSelectedUserProfileLoading(false);
+      return;
+    }
+
+    const loadSelectedUserProfile = async () => {
+      setIsSelectedUserProfileLoading(true);
+
+      const [profileResult, totalCountResult, lastMessageResult, purchasesResult, followStateResult] = await Promise.all([
+        supabase.from("profiles").select(PROFILE_SELECT).eq("id", selectedUserProfile.userId).maybeSingle(),
+        supabase
+          .from("global_chat_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", selectedUserProfile.userId)
+          .eq("is_deleted", false),
+        supabase
+          .from("global_chat_messages")
+          .select("created_at")
+          .eq("user_id", selectedUserProfile.userId)
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle<{ created_at: string }>(),
+        supabase
+          .from("deals")
+          .select("id", { count: "exact", head: true })
+          .eq("buyer_id", selectedUserProfile.userId)
+          .eq("status", "completed"),
+        user
+          ? supabase
+              .from("follows")
+              .select("id")
+              .eq("follower_id", user.id)
+              .eq("following_id", selectedUserProfile.userId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (!active) return;
+
+      const profile = (profileResult.data as ProfileRef | null) || null;
+      const fallbackRoles = { isSeller: selectedUserProfile.isSeller, isBuyer: selectedUserProfile.isBuyer };
+      const roles = profile ? resolveRoles(profile) : fallbackRoles;
+
+      setSelectedUserProfileData({
+        userId: selectedUserProfile.userId,
+        displayName: selectedUserProfile.displayName,
+        handle: deriveHandle(profile, selectedUserProfile.userId).replace(/^@+/, "") || selectedUserProfile.handle,
+        avatarUrl: profile?.avatar_url || selectedUserProfile.avatarUrl || null,
+        memberSince: profile?.created_at || selectedUserProfile.memberSince || null,
+        isSeller: roles.isSeller,
+        isBuyer: roles.isBuyer,
+        sellerStatus: profile?.seller_status || null,
+        buyerRanking: purchasesResult.error ? null : getBuyerRanking(purchasesResult.count || 0),
+        isFollowing: Boolean(followStateResult?.data),
+        totalMessages: totalCountResult.count || 0,
+        lastMessageAt: lastMessageResult.data?.created_at || null,
+        purchasesCount: purchasesResult.error ? null : purchasesResult.count || 0,
+      });
+      setIsSelectedUserProfileLoading(false);
+    };
+
+    void loadSelectedUserProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedUserProfile, supabase, user]);
+
+  const handlePopupFollowToggle = useCallback(async () => {
+    const targetUserId = selectedUserProfileData?.userId || selectedUserProfile?.userId;
+    if (!targetUserId) return;
+    if (!user) {
+      router.push(`/auth?next=${encodeURIComponent(stablePathname || "/")}`);
+      return;
+    }
+    if (targetUserId === user.id) return;
+
+    try {
+      setIsPopupFollowLoading(true);
+      const response = await fetch("/api/follows/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetUserId,
+          action: selectedUserProfileData?.isFollowing ? "unfollow" : "follow",
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as
+        | { ok?: boolean; error?: string; following?: boolean }
+        | undefined;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error || "Unable to update follow state");
+      }
+
+      setSelectedUserProfileData((prev) =>
+        prev
+          ? {
+              ...prev,
+              isFollowing: payload.following === true,
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error("Popup follow toggle error:", error);
+      toast.error("Failed to update follow status.");
+    } finally {
+      setIsPopupFollowLoading(false);
+    }
+  }, [router, selectedUserProfile, selectedUserProfileData, stablePathname, user]);
+
+  useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
       const targetNode = event.target as Node | null;
       if (!targetNode) return;
       if (!roomMenuRef.current?.contains(targetNode)) {
         setIsRoomMenuOpen(false);
       }
+      const targetEl = targetNode instanceof Element ? targetNode : null;
+      const clickedRulesToggle = Boolean(targetEl?.closest("[data-chat-rules-toggle='true']"));
+      if (!clickedRulesToggle && !rulesCardRef.current?.contains(targetNode)) {
+        setIsRulesOpen(false);
+      }
     };
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsRoomMenuOpen(false);
+        setSelectedUserProfile(null);
+        setIsRulesOpen(false);
       }
     };
 
@@ -2226,14 +2443,15 @@ export function HomepageClient() {
       <div
         key={message.id}
         className={cn(
-          "rounded-2xl border border-[#2E3547] px-3 py-2 text-sm leading-relaxed shadow-sm",
-          user?.id === message.userId ? "bg-[#2A3042]" : "bg-[#212533]"
+          "rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-none",
+          "bg-[var(--gc-surface)]"
         )}
+        style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
       >
         <div className="flex items-start gap-2">
-          <Avatar size="default" className="shrink-0 border border-[#2E3547]">
+          <Avatar size="default" className="shrink-0 border-2 border-[var(--gc-border)]">
             <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
-            <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
+            <AvatarFallback className="bg-[var(--gc-avatar-fallback-bg)] text-[10px] text-[var(--gc-text-secondary)]">
               {getAvatarFallback(message.displayName)}
             </AvatarFallback>
           </Avatar>
@@ -2241,10 +2459,16 @@ export function HomepageClient() {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                  <span className="break-words text-sm font-bold leading-tight text-white">{message.displayName}</span>
+                <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-[var(--gc-text-secondary)]">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserProfile(message)}
+                    className="break-words text-left text-sm font-bold leading-tight text-[var(--gc-text-primary)] transition hover:underline"
+                  >
+                    {message.displayName}
+                  </button>
                 </div>
-                <div className={cn("min-w-0 break-words text-zinc-200", isChatCompact ? "text-[14px] leading-6" : "text-[15px] leading-relaxed")}>
+                <div className={cn("min-w-0 break-words text-[var(--gc-text-secondary)]", isChatCompact ? "text-[14px] leading-6" : "text-[15px] leading-relaxed")}>
                   {renderMessageWithMentions(message.text, currentHandle)}
                 </div>
               </div>
@@ -2254,7 +2478,7 @@ export function HomepageClient() {
                     type="button"
                     onClick={() => openThreadForMessage(message)}
                     aria-label={`Show thread (${repliesCount})`}
-                    className="inline-flex items-center gap-1 rounded-xl border border-[#2E3547] bg-[#212533] px-2 py-1 text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                    className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-chat-panel)] px-2 py-1 text-[var(--gc-text-tertiary)] transition hover:bg-[var(--gc-border)] hover:text-[var(--gc-text-primary)]"
                   >
                     <Reply className="h-3.5 w-3.5" />
                     {isChatCompact ? <span className="font-semibold">{repliesCount}</span> : `Show thread (${repliesCount})`}
@@ -2264,7 +2488,7 @@ export function HomepageClient() {
                     type="button"
                     onClick={() => setReplyTarget(message)}
                     aria-label="Reply"
-                    className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-[var(--gc-text-tertiary)] transition hover:bg-[var(--gc-chat-panel)] hover:text-[var(--gc-text-primary)]"
                   >
                     <Reply className="h-3.5 w-3.5" />
                     {isChatCompact ? null : "Reply"}
@@ -2284,15 +2508,20 @@ export function HomepageClient() {
       <div
         key={message.id}
         className={cn(
-          "rounded-2xl border border-[#2E3547] px-3 py-2 shadow-sm",
-          user?.id === message.userId ? "bg-[#2A3042]" : "bg-[#212533]"
+          "rounded-2xl px-3 py-2 shadow-none",
+          "bg-[var(--gc-surface)]"
         )}
-        style={{ marginLeft: Math.min((depth - 1) * 16, 64) }}
+        style={{
+          marginLeft: Math.min((depth - 1) * 16, 64),
+          backgroundColor: "var(--gc-surface)",
+          backgroundImage: "none",
+          opacity: 1,
+        }}
       >
         <div className="flex items-start gap-2">
-          <Avatar size="default" className="shrink-0 border border-[#2E3547]">
+          <Avatar size="default" className="shrink-0 border-2 border-[var(--gc-border)]">
             <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
-            <AvatarFallback className="bg-[#151515] text:[10px] text-zinc-300">
+            <AvatarFallback className="bg-[var(--gc-avatar-fallback-bg)] text:[10px] text-[var(--gc-text-secondary)]">
               {getAvatarFallback(message.displayName)}
             </AvatarFallback>
           </Avatar>
@@ -2300,10 +2529,16 @@ export function HomepageClient() {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                  <span className="break-words text-sm font-bold leading-tight text-white">{message.displayName}</span>
+                <div className="flex items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-[var(--gc-text-secondary)]">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserProfile(message)}
+                    className="break-words text-left text-sm font-bold leading-tight text-[var(--gc-text-primary)] transition hover:underline"
+                  >
+                    {message.displayName}
+                  </button>
                 </div>
-                <div className={cn("min-w-0 break-words text-zinc-200", isChatCompact ? "text-[14px] leading-6" : "text-[15px] leading-relaxed")}>
+                <div className={cn("min-w-0 break-words text-[var(--gc-text-secondary)]", isChatCompact ? "text-[14px] leading-6" : "text-[15px] leading-relaxed")}>
                   {renderMessageWithMentions(message.text, currentHandle)}
                 </div>
               </div>
@@ -2311,7 +2546,7 @@ export function HomepageClient() {
                 type="button"
                 onClick={() => setReplyTarget(message)}
                 aria-label="Reply"
-                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-[var(--gc-text-tertiary)] transition hover:bg-[var(--gc-chat-panel)] hover:text-[var(--gc-text-primary)]"
               >
                 <Reply className="h-3.5 w-3.5" />
                 {isChatCompact ? null : "Reply"}
@@ -2324,10 +2559,21 @@ export function HomepageClient() {
     );
   };
 
+  if (!isHydrated) {
+    return (
+      <div
+        className="h-screen h-dvh min-h-0 overflow-hidden bg-[var(--gc-surface)] text-[var(--global-chat-text-primary)]"
+        style={{ ...COLORI_CHAT_GLOBAL_CSS_VARS, backgroundColor: "var(--gc-home-bg)", backgroundImage: "none" }}
+      />
+    );
+  }
+
   return (
     <TooltipProvider delayDuration={120}>
       <div
-        className="h-screen h-dvh min-h-0 overflow-hidden bg-[#101219] text-[var(--global-chat-text-primary)]"
+        data-global-chat-theme="true"
+        className="h-screen h-dvh min-h-0 overflow-hidden bg-[var(--gc-surface)] text-[var(--global-chat-text-primary)]"
+        style={{ ...COLORI_CHAT_GLOBAL_CSS_VARS, backgroundColor: "var(--gc-home-bg)", backgroundImage: "none" }}
       >
       <AnimatePresence>
         {isMobileSidebarOpen ? (
@@ -2374,8 +2620,8 @@ export function HomepageClient() {
         >
           {!isMobile ? (
             <Panel
-              defaultSize="20%"
-              minSize="16%"
+              defaultSize="4%"
+              minSize="0%"
               maxSize="28%"
               collapsible
               collapsedSize={0}
@@ -2385,7 +2631,13 @@ export function HomepageClient() {
             >
               <HomepageDesktopSidebar
                 isLeftSidebarClosed={isLeftSidebarClosed}
+                forceRail={leftPanelPercent > PANEL_CLOSE_THRESHOLD_PERCENT && leftPanelPercent <= 14}
+                renderEmpty={
+                  isLeftSidebarClosed ||
+                  (isLeftHandleDragging && leftPanelPercent <= LEFT_PANEL_CLOSE_THRESHOLD_PERCENT)
+                }
                 onCollapse={collapseLeftSidebar}
+                onExpand={expandLeftSidebar}
                 sidebarMode={sidebarMode}
                 onSidebarModeChange={setSidebarMode}
                 isMarketplaceSectionOpen={isMarketplaceSectionOpen}
@@ -2404,7 +2656,7 @@ export function HomepageClient() {
             </Panel>
           ) : null}
 
-          {!isMobile ? <HomepagePanelResizeHandle /> : null}
+          {!isMobile ? <HomepagePanelResizeHandle onPointerDown={handleLeftSeparatorPointerDown} /> : null}
 
           {!isMobile ? (
             <Panel id="homepage-center" minSize="34%" className="min-h-0 min-w-0 overflow-hidden">
@@ -2427,7 +2679,7 @@ export function HomepageClient() {
           <Panel
             id="homepage-right"
             panelRef={rightPanelRef}
-            defaultSize={isMobile ? "100%" : "20%"}
+                    defaultSize={isMobile ? "100%" : "20%"}
             minSize={isMobile ? "100%" : "14%"}
             maxSize={isMobile ? "100%" : "50%"}
             collapsible={!isMobile}
@@ -2451,24 +2703,24 @@ export function HomepageClient() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transform: "none" }}
-                  className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-[#2E3547] bg-[#161923] shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
+                  style={{ transform: "none", backgroundColor: "var(--gc-chat-panel)" }}
+                  className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-3xl border-2 border-[var(--gc-border)] bg-transparent shadow-none"
                 >
-          <HomepageChatHeader
-            onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
-            roomMenuRef={roomMenuRef}
-            isRoomMenuOpen={isRoomMenuOpen}
-            onToggleRoomMenu={() => setIsRoomMenuOpen((prev) => !prev)}
-            activeRoom={activeRoom}
-            activeRoomLabel={activeRoomLabel}
-            rooms={GLOBAL_CHAT_ROOMS}
-            onRoomChange={handleRoomChange}
-            renderRoomIcon={renderRoomIcon}
-            isChatExpanded={isChatExpanded}
-            onToggleChatExpanded={toggleChatExpanded}
-            onOpenRules={() => setIsRulesOpen(true)}
-            onCloseChat={closeChatPanel}
-          />
+          <div className="relative z-20">
+            <HomepageChatHeader
+              onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+              roomMenuRef={roomMenuRef}
+              isRoomMenuOpen={isRoomMenuOpen}
+              onToggleRoomMenu={() => setIsRoomMenuOpen((prev) => !prev)}
+              activeRoom={activeRoom}
+              activeRoomLabel={activeRoomLabel}
+              rooms={GLOBAL_CHAT_ROOMS}
+              onRoomChange={handleRoomChange}
+              renderRoomIcon={renderRoomIcon}
+              onOpenRules={() => setIsRulesOpen((prev) => !prev)}
+              onCloseChat={closeChatPanel}
+            />
+          </div>
 
           <div ref={listRef} className="relative flex-1 min-h-0 space-y-2 overflow-y-auto no-scrollbar px-3 py-3">
             {showScrollToLatest ? (
@@ -2485,11 +2737,17 @@ export function HomepageClient() {
             ) : null}
 
             {isFetching || isLoading ? (
-              <div className="rounded-2xl border border-[#2E3547] bg-[#161923] p-3 text-sm text-zinc-300 shadow-sm">
+              <div
+                className="rounded-2xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-3 text-sm text-[var(--gc-text-secondary)] shadow-none"
+                style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
+              >
                 Loading chat...
               </div>
             ) : messages.length === 0 ? (
-              <div className="rounded-2xl border border-[#2E3547] bg-[#161923] p-3 text-sm text-zinc-300 shadow-sm">
+              <div
+                className="rounded-2xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-3 text-sm text-[var(--gc-text-secondary)] shadow-none"
+                style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
+              >
                 No messages yet in this room.
               </div>
             ) : activeThreadRootId && threadRootMessage ? (
@@ -2502,7 +2760,7 @@ export function HomepageClient() {
                       setReplyTarget(null);
                       setIsThreadLoading(false);
                     }}
-                    className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#2E3547] bg-[#212533] px-3 text-sm font-semibold text-zinc-300 transition hover:bg-[#2E3547] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+                    className="inline-flex h-9 items-center gap-1 rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-chat-panel)] px-3 text-sm font-semibold text-[var(--gc-text-secondary)] transition hover:bg-[var(--gc-border)] hover:text-[var(--gc-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)]"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to chat
@@ -2510,27 +2768,32 @@ export function HomepageClient() {
                 </div>
                 <div
                   className={cn(
-                    "rounded-2xl border border-[#2E3547] px-3 py-2 shadow-sm",
-                    user?.id === threadRootMessage.userId ? "bg-[#2A3042]" : "bg-[#212533]"
+                    "rounded-2xl border-2 border-[var(--gc-border)] px-3 py-2 shadow-none",
+                    "bg-[var(--gc-surface)]"
                   )}
+                  style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
                 >
                   <div className="flex items-center gap-2">
-                    <Avatar size="default" className="shrink-0 border border-[#2E3547]">
+                    <Avatar size="default" className="shrink-0 border-2 border-[var(--gc-border)]">
                       <AvatarImage
                         src={threadRootMessage.avatarUrl || undefined}
                         alt={threadRootMessage.displayName}
                       />
-                      <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
+                      <AvatarFallback className="bg-[var(--gc-avatar-fallback-bg)] text-[10px] text-[var(--gc-text-secondary)]">
                         {getAvatarFallback(threadRootMessage.displayName)}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-zinc-200">
-                          <span className="text-sm font-bold text-white">
+                        <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] leading-relaxed text-[var(--gc-text-secondary)]">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedUserProfile(threadRootMessage)}
+                            className="text-sm font-bold text-[var(--gc-text-primary)] transition hover:underline"
+                          >
                             {threadRootMessage.displayName}
-                          </span>
+                          </button>
                           <span className="min-w-0 break-words">
                             {renderMessageWithMentions(threadRootMessage.text, currentHandle)}
                           </span>
@@ -2538,7 +2801,7 @@ export function HomepageClient() {
                         <button
                           type="button"
                           onClick={() => setReplyTarget(threadRootMessage)}
-                          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-[var(--gc-text-tertiary)] transition hover:bg-[var(--gc-chat-panel)] hover:text-[var(--gc-text-primary)]"
                         >
                           <Reply className="h-3.5 w-3.5" />
                           Reply
@@ -2549,13 +2812,16 @@ export function HomepageClient() {
                 </div>
 
                 {threadMessages.length === 0 ? (
-                    <div className="rounded-2xl border border-[#2E3547] bg-[#161923] p-3 text-sm text-zinc-300 shadow-sm">
+                    <div
+                      className="rounded-2xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-3 text-sm text-[var(--gc-text-secondary)] shadow-none"
+                      style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
+                    >
                     {isThreadLoading
                       ? "Loading thread replies..."
                       : "No replies yet. Be the first to reply in this thread."}
                   </div>
                 ) : (
-                    <div className="space-y-2 border-l border-[#2E3547] pl-2">
+                    <div className="space-y-2 border-l-2 border-[var(--gc-border)] pl-2">
                     {threadMessages.map((entry) => renderThreadReply(entry))}
                   </div>
                 )}
@@ -2565,32 +2831,45 @@ export function HomepageClient() {
             )}
           </div>
 
-          <div className="mx-3 mb-3 mt-2 rounded-[24px] border border-[#2E3547] bg-[#212533] p-3 shadow-[0_0_0_1px_rgba(46,53,71,0.05)] transition-shadow duration-200 focus-within:shadow-[0_0_0_1px_rgba(46,53,71,0.72),0_0_0_5px_rgba(46,53,71,0.12)]">
+          <div
+            className="mx-3 mb-3 mt-2 rounded-[24px] border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-3 shadow-none"
+            style={{
+              backgroundColor: "var(--gc-surface)",
+              backgroundImage: "none",
+            }}
+          >
             {replyTarget ? (
-              <div className="mb-2 flex items-center justify-between rounded-xl border border-[#2E3547] bg-[#161923] px-3 py-2 text-xs text-zinc-300">
+              <div
+                className="mb-2 flex items-center justify-between rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-3 py-2 text-xs text-[var(--gc-text-secondary)]"
+                style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
+              >
                 <div className="min-w-0">
-                  <span className="font-semibold text-white">Replying to {replyTarget.displayName}</span>
-                  <span className="ml-2 text-zinc-300">{truncateMessage(replyTarget.text, 70)}</span>
+                  <span className="font-semibold text-[var(--gc-text-primary)]">Replying to {replyTarget.displayName}</span>
+                  <span className="ml-2 text-[var(--gc-text-secondary)]">{truncateMessage(replyTarget.text, 70)}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     setReplyTarget(null);
                   }}
-                  className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                  className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-xl text-[var(--gc-text-tertiary)] transition hover:bg-[var(--gc-border)] hover:text-[var(--gc-text-primary)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ) : null}
             {isRulesOpen ? (
-              <div className="mb-2 rounded-2xl border border-[#2E3547] bg-[#161923] px-3 py-3 text-sm text-zinc-300">
+              <div
+                ref={rulesCardRef}
+                className="mb-2 rounded-2xl border-2 border-[var(--gc-border)] bg-[var(--gc-chat-panel)] px-3 py-3 text-sm text-[var(--gc-text-secondary)]"
+                style={{ backgroundColor: "var(--gc-chat-panel)", backgroundImage: "none", opacity: 1 }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-white font-semibold">Chat Rules</span>
+                  <span className="text-[var(--gc-text-primary)] font-semibold">Chat Rules</span>
                   <button
                     type="button"
                     onClick={() => setIsRulesOpen(false)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-[#2E3547] hover:text-white"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)]"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -2612,7 +2891,8 @@ export function HomepageClient() {
                       setHasAcceptedRules(true);
                       setIsRulesOpen(false);
                     }}
-                    className="w-full py-3 px-4 rounded-2xl bg-white text-black hover:bg-zinc-200"
+                    className="w-full py-3 px-4 rounded-2xl bg-[var(--gc-button-primary-bg)] text-[var(--gc-button-primary-text)] hover:bg-[var(--gc-button-primary-hover-bg)]"
+                    style={{ backgroundColor: "var(--gc-button-primary-bg)", color: "var(--gc-button-primary-text)", opacity: 1 }}
                   >
                     Accept Rules
                   </Button>
@@ -2620,24 +2900,24 @@ export function HomepageClient() {
               </div>
             ) : null}
             {isBanned ? (
-              <div className="mb-2 inline-flex items-center gap-2 text-sm text-[#ff0000]">
+              <div className="mb-2 inline-flex items-center gap-2 text-sm text-[var(--gc-danger)]">
                 <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8ZM10.3128 12.4341C9.62116 12.7956 8.83445 13 8 13C5.23858 13 3 10.7614 3 8C3 7.16555 3.20441 6.37884 3.5659 5.68722L10.3128 12.4341ZM12.4341 10.3128L5.68722 3.5659C6.37884 3.20441 7.16555 3 8 3C10.7614 3 13 5.23858 13 8C13 8.83445 12.7956 9.62116 12.4341 10.3128Z" fill="#ff0000"></path>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8ZM10.3128 12.4341C9.62116 12.7956 8.83445 13 8 13C5.23858 13 3 10.7614 3 8C3 7.16555 3.20441 6.37884 3.5659 5.68722L10.3128 12.4341ZM12.4341 10.3128L5.68722 3.5659C6.37884 3.20441 7.16555 3 8 3C10.7614 3 13 5.23858 13 8C13 8.83445 12.7956 9.62116 12.4341 10.3128Z" fill="var(--gc-danger)"></path>
                 </svg>
                 <span className="font-semibold">You are banned to write here</span>
               </div>
             ) : mutedUntilTs && mutedUntilTs > Date.now() ? (
-              <div className="mb-2 inline-flex items-center gap-2 text-sm text-white">
+              <div className="mb-2 inline-flex items-center gap-2 text-sm text-[var(--gc-text-primary)]">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                  <path d="M5 5L19 19" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M9.68219 5.56134C10.0533 4.64576 10.9513 4 12 4C13.3807 4 14.5 5.11929 14.5 6.5V10.3792L9.68219 5.56134ZM12.7605 12.8822L9.5 9.62179V10.5C9.5 11.8807 10.6193 13 12 13C12.2651 13 12.5207 12.9587 12.7605 12.8822Z" fill="#ffffff"></path>
-                  <path d="M9.68219 5.56134L8.97509 6.26845L8.50647 5.79984L8.75544 5.18566L9.68219 5.56134ZM14.5 10.3792H15.5V12.7934L13.7929 11.0863L14.5 10.3792ZM12.7605 12.8822L13.4676 12.1751L14.6285 13.3361L13.0643 13.835L12.7605 12.8822ZM9.5 9.62179H8.5V7.20758L10.2071 8.91469L9.5 9.62179ZM8.75544 5.18566C9.27431 3.90569 10.5302 3 12 3V5C11.3723 5 10.8324 5.38583 10.6089 5.93702L8.75544 5.18566ZM12 3C13.933 3 15.5 4.567 15.5 6.5H13.5C13.5 5.67157 12.8284 5 12 5V3ZM15.5 6.5V10.3792H13.5V6.5H15.5ZM10.3893 4.85424L15.2071 9.67204L13.7929 11.0863L8.97509 6.26845L10.3893 4.85424ZM12.0533 13.5893L8.79289 10.3289L10.2071 8.91469L13.4676 12.1751L12.0533 13.5893ZM8.5 10.5V9.62179H10.5V10.5H8.5ZM12 14C10.067 14 8.5 12.433 8.5 10.5H10.5C10.5 11.3284 11.1716 12 12 12V14ZM13.0643 13.835C12.7274 13.9424 12.3695 14 12 14V12C12.1608 12 12.3139 11.975 12.4566 11.9295L13.0643 13.835Z" fill="#ffffff"></path>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M8.46291 13.7293C8.31338 13.1976 7.76117 12.8878 7.22951 13.0373C6.69785 13.1869 6.38808 13.7391 6.5376 14.2707C7.17394 16.5333 8.82364 18.063 11.0003 18.42V21C11.0003 21.5523 11.448 22 12.0003 22C12.5525 22 13.0003 21.5523 13.0003 21V18.42C13.7841 18.2914 14.4996 18.0108 15.124 17.5986L13.6608 16.1355C13.1713 16.3753 12.6119 16.5 12.0003 16.5C10.2727 16.5 8.9625 15.5056 8.46291 13.7293ZM15.7806 13.3054C16.0279 13.0495 16.4044 12.9342 16.771 13.0373C17.3027 13.1869 17.6124 13.7391 17.4629 14.2707C17.4108 14.456 17.3519 14.6363 17.2865 14.8114L15.7806 13.3054Z" fill="#ffffff"></path>
+                  <path d="M5 5L19 19" stroke="var(--gc-text-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M9.68219 5.56134C10.0533 4.64576 10.9513 4 12 4C13.3807 4 14.5 5.11929 14.5 6.5V10.3792L9.68219 5.56134ZM12.7605 12.8822L9.5 9.62179V10.5C9.5 11.8807 10.6193 13 12 13C12.2651 13 12.5207 12.9587 12.7605 12.8822Z" fill="var(--gc-text-primary)"></path>
+                  <path d="M9.68219 5.56134L8.97509 6.26845L8.50647 5.79984L8.75544 5.18566L9.68219 5.56134ZM14.5 10.3792H15.5V12.7934L13.7929 11.0863L14.5 10.3792ZM12.7605 12.8822L13.4676 12.1751L14.6285 13.3361L13.0643 13.835L12.7605 12.8822ZM9.5 9.62179H8.5V7.20758L10.2071 8.91469L9.5 9.62179ZM8.75544 5.18566C9.27431 3.90569 10.5302 3 12 3V5C11.3723 5 10.8324 5.38583 10.6089 5.93702L8.75544 5.18566ZM12 3C13.933 3 15.5 4.567 15.5 6.5H13.5C13.5 5.67157 12.8284 5 12 5V3ZM15.5 6.5V10.3792H13.5V6.5H15.5ZM10.3893 4.85424L15.2071 9.67204L13.7929 11.0863L8.97509 6.26845L10.3893 4.85424ZM12.0533 13.5893L8.79289 10.3289L10.2071 8.91469L13.4676 12.1751L12.0533 13.5893ZM8.5 10.5V9.62179H10.5V10.5H8.5ZM12 14C10.067 14 8.5 12.433 8.5 10.5H10.5C10.5 11.3284 11.1716 12 12 12V14ZM13.0643 13.835C12.7274 13.9424 12.3695 14 12 14V12C12.1608 12 12.3139 11.975 12.4566 11.9295L13.0643 13.835Z" fill="var(--gc-text-primary)"></path>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M8.46291 13.7293C8.31338 13.1976 7.76117 12.8878 7.22951 13.0373C6.69785 13.1869 6.38808 13.7391 6.5376 14.2707C7.17394 16.5333 8.82364 18.063 11.0003 18.42V21C11.0003 21.5523 11.448 22 12.0003 22C12.5525 22 13.0003 21.5523 13.0003 21V18.42C13.7841 18.2914 14.4996 18.0108 15.124 17.5986L13.6608 16.1355C13.1713 16.3753 12.6119 16.5 12.0003 16.5C10.2727 16.5 8.9625 15.5056 8.46291 13.7293ZM15.7806 13.3054C16.0279 13.0495 16.4044 12.9342 16.771 13.0373C17.3027 13.1869 17.6124 13.7391 17.4629 14.2707C17.4108 14.456 17.3519 14.6363 17.2865 14.8114L15.7806 13.3054Z" fill="var(--gc-text-primary)"></path>
                 </svg>
                 <span className="font-semibold">You are muted to write here</span>
               </div>
             ) : closedUntilTs && closedUntilTs > Date.now() ? (
-              <div className="mb-2 inline-flex items-center gap-2 text-sm text-white">
+              <div className="mb-2 inline-flex items-center gap-2 text-sm text-[var(--gc-text-primary)]">
                 <span className="font-semibold">
                   {closedUntilTs > Date.now() + 365 * 24 * 60 * 60 * 1000
                     ? "This chat is closed"
@@ -2645,17 +2925,17 @@ export function HomepageClient() {
                 </span>
               </div>
             ) : slowRemainingSeconds > 0 ? (
-              <div className="mb-2 flex items-center gap-2 text-sm text-white">
-                <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-zinc-300">
+              <div className="mb-2 flex items-center gap-2 text-sm text-[var(--gc-text-primary)]">
+                <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[var(--gc-text-secondary)]">
                   <path fillRule="evenodd" clipRule="evenodd" d="M8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM7 3V8.41421L10.2929 11.7071L11.7071 10.2929L9 7.58579V3H7Z"></path>
                 </svg>
                 <span className="font-semibold">Slow mode attivo</span>
-                <span className="text-zinc-400">({slowRemainingSeconds}s)</span>
+                <span className="text-[var(--gc-text-tertiary)]">({slowRemainingSeconds}s)</span>
               </div>
             ) : null}
 
             {mentionContext ? (
-              <div className="mb-2 max-h-60 overflow-y-auto rounded-2xl border border-[#2E3547] bg-[#161923] px-3 py-3 text-sm text-zinc-300 shadow-sm">
+              <div className="mb-2 max-h-60 overflow-y-auto rounded-2xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface-deep)] px-3 py-3 text-sm text-[var(--gc-text-secondary)] shadow-sm">
                 {mentionSuggestions.length > 0 ? (
                   mentionSuggestions.map((candidate, index) => (
                     <button
@@ -2668,13 +2948,13 @@ export function HomepageClient() {
                       className={cn(
                         "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition",
                         index === activeMentionIndex
-                          ? "bg-[#2E3547] text-white"
-                          : "text-zinc-200 hover:bg-[#2E3547]"
+                          ? "bg-[var(--gc-border)] text-[var(--gc-text-primary)]"
+                          : "text-[var(--gc-text-secondary)] hover:bg-[var(--gc-border)]"
                       )}
                     >
-                      <Avatar size="default" className="shrink-0 border border-[#2E3547]">
+                      <Avatar size="default" className="shrink-0 border-2 border-[var(--gc-border)]">
                         <AvatarImage src={candidate.avatarUrl || undefined} alt={candidate.displayName} />
-                        <AvatarFallback className="bg-[#151515] text-[10px] text-zinc-300">
+                        <AvatarFallback className="bg-[var(--gc-avatar-fallback-bg)] text-[10px] text-[var(--gc-text-secondary)]">
                           {getAvatarFallback(candidate.displayName)}
                         </AvatarFallback>
                       </Avatar>
@@ -2682,9 +2962,9 @@ export function HomepageClient() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-sm">
                           <span className="truncate font-semibold">{candidate.displayName}</span>
-                          <span className="truncate text-xs text-zinc-400">@{candidate.handle}</span>
+                          <span className="truncate text-xs text-[var(--gc-text-tertiary)]">@{candidate.handle}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                        <div className="flex items-center gap-2 text-[11px] text-[var(--gc-text-tertiary)]">
                           {candidate.isSeller ? <span>Seller</span> : null}
                           {candidate.isBuyer ? <span>Buyer</span> : null}
                           <span>Online now</span>
@@ -2693,7 +2973,7 @@ export function HomepageClient() {
                     </button>
                   ))
                 ) : (
-                  <div className="rounded-xl px-1 py-1 text-sm text-zinc-400">
+                  <div className="rounded-xl px-1 py-1 text-sm text-[var(--gc-text-tertiary)]">
                     No people found to mention.
                   </div>
                 )}
@@ -2711,11 +2991,20 @@ export function HomepageClient() {
                   }}
                   maxLength={180}
                   onFocus={() => {
+                    if (!user) {
+                      router.push(`/auth?next=${encodeURIComponent(stablePathname || "/")}`);
+                      return;
+                    }
                     if (!hasAcceptedRules) {
                       setIsRulesOpen(true);
                     }
                   }}
                   onClick={(event) => {
+                    if (!user) {
+                      event.preventDefault();
+                      router.push(`/auth?next=${encodeURIComponent(stablePathname || "/")}`);
+                      return;
+                    }
                     syncMentionContextFromInput(event.currentTarget);
                   }}
                   onKeyUp={(event) => {
@@ -2788,8 +3077,17 @@ export function HomepageClient() {
                       ? `Slow mode active`
                       : `You are not ${requiredRoleText || "allowed"} to write here.`
                   }
-                  disabled={!canWrite || isSending || isBanned || !!(mutedUntilTs && mutedUntilTs > Date.now()) || !!slowRemainingSeconds || !!(closedUntilTs && closedUntilTs > Date.now())}
-                  className="h-11 w-full rounded-2xl border border-[#2E3547] bg-[#161923] px-3 pr-28 text-base text-white shadow-[0_0_0_1px_rgba(46,53,71,0.06)] placeholder:text-zinc-500 focus:border-[#2E3547] focus:outline-none focus:shadow-[0_0_0_1px_rgba(46,53,71,0.76),0_0_0_4px_rgba(46,53,71,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                  readOnly={!canWrite}
+                  disabled={(!!user && !canWrite) || isSending || isBanned || !!(mutedUntilTs && mutedUntilTs > Date.now()) || !!slowRemainingSeconds || !!(closedUntilTs && closedUntilTs > Date.now())}
+                  className={cn(
+                    "h-11 w-full rounded-2xl border-2 border-[var(--gc-border)] px-3 text-base shadow-none focus:border-[var(--gc-border)] focus:outline-none focus:shadow-none disabled:cursor-not-allowed",
+                    canWrite ? "bg-[var(--gc-chat-panel)] pr-28 text-[var(--gc-text-primary)] placeholder:text-[var(--gc-text-tertiary)]" : "bg-[var(--gc-surface)] pr-3 text-[var(--gc-text-primary)]/60 placeholder:text-[var(--gc-text-tertiary)]/70"
+                  )}
+                  style={{
+                    backgroundColor: "var(--gc-chat-panel)",
+                    backgroundImage: "none",
+                    opacity: canWrite ? 1 : 0.3,
+                  }}
                 />
                 <AnimatePresence>
                   {draft.trim().length > 0 && (
@@ -2803,7 +3101,8 @@ export function HomepageClient() {
                       <Button
                         onClick={handleSend}
                         disabled={!canWrite || isSending}
-                        className="h-full px-4 rounded-2xl bg-white text-black hover:bg-zinc-200 flex items-center gap-2 font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="h-full px-4 rounded-2xl border-0 bg-white text-black hover:bg-zinc-200 flex items-center gap-2 font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ backgroundImage: "none", opacity: 1 }}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -2817,37 +3116,217 @@ export function HomepageClient() {
 
             </div>
 
-	            <div className="flex items-center justify-between gap-2 text-xs text-zinc-300">
+	            <div className="flex items-center justify-between gap-2 text-xs text-[var(--gc-text-secondary)]">
               <span className="inline-flex items-center gap-2">
-                <svg width="256px" height="256px" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#b8ffc0" strokeWidth="0.40800000000000003" className="h-6 w-6">
+                <svg width="256px" height="256px" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="var(--gc-success-stroke)" strokeWidth="0.40800000000000003" className="h-6 w-6">
                   <g strokeWidth="0"></g>
                   <g strokeLinecap="round" strokeLinejoin="round"></g>
                   <g>
-                    <path d="M12 9.5C13.3807 9.5 14.5 10.6193 14.5 12C14.5 13.3807 13.3807 14.5 12 14.5C10.6193 14.5 9.5 13.3807 9.5 12C9.5 10.6193 10.6193 9.5 12 9.5Z" fill="#04dc3a"></path>
+                    <path d="M12 9.5C13.3807 9.5 14.5 10.6193 14.5 12C14.5 13.3807 13.3807 14.5 12 14.5C10.6193 14.5 9.5 13.3807 9.5 12C9.5 10.6193 10.6193 9.5 12 9.5Z" fill="var(--gc-success-dot)"></path>
                   </g>
                 </svg>
                 {isChatCompact ? displayOnlineCount.toLocaleString("en-US") : `Online: ${displayOnlineCount.toLocaleString("en-US")}`}
               </span>
 
               {mutedUntilTs && mutedUntilTs > Date.now() ? (
-                <span className="text-zinc-400">Muted: {Math.ceil((mutedUntilTs - Date.now()) / 1000)}s</span>
+                <span className="text-[var(--gc-text-tertiary)]">Muted: {Math.ceil((mutedUntilTs - Date.now()) / 1000)}s</span>
               ) : activeRoom === "help" && slowModeMinutes > 0 ? (
-                <span className="text-zinc-400">Slow mode: {slowModeMinutes} min</span>
+                <span className="text-[var(--gc-text-tertiary)]">Slow mode: {slowModeMinutes} min</span>
               ) : !user ? (
                 <Link
                   href={`/auth?next=${encodeURIComponent(stablePathname || "/")}`}
-                  className="inline-flex items-center gap-1 text-zinc-300 hover:text-white"
+                  className="inline-flex items-center gap-1 text-[var(--gc-text-secondary)] hover:text-[var(--gc-text-primary)]"
                 >
                   <LogIn className="h-3.5 w-3.5" />
                   {isChatCompact ? "Sign in" : "Sign in to write"}
                 </Link>
               ) : !canWrite ? (
-                <span className="text-zinc-400">{isBanned ? "You are banned from global chat." : `You are not ${requiredRoleText || "allowed"} to write here.`}</span>
+                <span className="text-[var(--gc-text-tertiary)]">{isBanned ? "You are banned from global chat." : `You are not ${requiredRoleText || "allowed"} to write here.`}</span>
               ) : (
-                <span className="text-zinc-400">{draft.length}/180</span>
+                <span className="text-[var(--gc-text-tertiary)]">{draft.length}/180</span>
               )}
 	            </div>
 	          </div>
+
+                <AnimatePresence>
+                  {selectedUserProfile ? (
+                    <motion.div
+                      key="chat-user-sheet"
+                      initial={{ y: "100%" }}
+                      animate={{ y: "0%" }}
+                      exit={{ y: "100%" }}
+                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute left-2 right-2 bottom-2 z-40 min-h-[320px] overflow-y-auto no-scrollbar rounded-3xl bg-[var(--gc-surface)] p-3"
+                      style={{
+                        height: "60%",
+                        backgroundColor: "var(--gc-surface)",
+                        backgroundImage: "none",
+                        opacity: 1,
+                      }}
+                    >
+                      {(() => {
+                        const targetUserId = selectedUserProfileData?.userId || selectedUserProfile.userId;
+                        const isOwnProfilePopup = Boolean(user && targetUserId === user.id);
+                        return (
+                      <div className="w-full bg-[var(--gc-surface)] p-1">
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar size="default" className="shrink-0 border-2 border-[var(--gc-border)]">
+                              <AvatarImage src={selectedUserProfileData?.avatarUrl || selectedUserProfile.avatarUrl || undefined} alt={selectedUserProfile.displayName} />
+                              <AvatarFallback className="bg-[var(--gc-avatar-fallback-bg)] text-[10px] text-[var(--gc-text-secondary)]">
+                                {getAvatarFallback(selectedUserProfile.displayName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const target = selectedUserProfileData?.userId || selectedUserProfile.userId;
+                                  setSelectedUserProfile(null);
+                                  router.push(`/profile/${target}`);
+                                }}
+                                className="truncate text-left text-sm font-bold text-[var(--gc-text-primary)] transition hover:underline"
+                              >
+                                {selectedUserProfile.displayName}
+                              </button>
+                              <p className="truncate text-xs text-[var(--gc-text-tertiary)]">
+                                @{selectedUserProfileData?.handle || selectedUserProfile.handle}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end gap-2">
+                            {!isOwnProfilePopup ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={handlePopupFollowToggle}
+                                  disabled={isPopupFollowLoading}
+                                  className="inline-flex h-8 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-3 text-xs font-semibold text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)] disabled:cursor-not-allowed disabled:opacity-60"
+                                  aria-label="Follow user"
+                                >
+                                  {isPopupFollowLoading
+                                    ? "Updating..."
+                                    : selectedUserProfileData?.isFollowing
+                                    ? "Following"
+                                    : "Follow"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const target = selectedUserProfileData?.userId || selectedUserProfile.userId;
+                                    setSelectedUserProfile(null);
+                                    if (!user) {
+                                      router.push(`/auth?next=${encodeURIComponent(`/inbox/${target}`)}`);
+                                      return;
+                                    }
+                                    router.push(`/inbox/${target}`);
+                                  }}
+                                  className="inline-flex h-8 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-3 text-xs font-semibold text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)]"
+                                  aria-label="Message user"
+                                >
+                                  Message
+                                </button>
+                              </>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedUserProfile(null)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-[var(--gc-text-tertiary)] transition hover:bg-[var(--gc-border)] hover:text-[var(--gc-text-primary)]"
+                              aria-label="Close user popup"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {isSelectedUserProfileLoading ? (
+                          <p className="text-sm text-[var(--gc-text-secondary)]">Loading profile...</p>
+                        ) : (
+                          <div className="space-y-2 text-sm text-[var(--gc-text-secondary)]">
+                            <p>
+                              <span className="text-[var(--gc-text-tertiary)]">Member since:</span>{" "}
+                              {formatDateLabel(selectedUserProfileData?.memberSince || selectedUserProfile.memberSince || null)}
+                            </p>
+                            <p>
+                              <span className="text-[var(--gc-text-tertiary)]">Roles:</span>{" "}
+                              {selectedUserProfileData?.isSeller && selectedUserProfileData?.isBuyer
+                                ? "Seller, Buyer"
+                                : selectedUserProfileData?.isSeller
+                                ? "Seller"
+                                : "Buyer"}
+                            </p>
+                            {selectedUserProfileData?.isSeller ? (
+                              <p>
+                                <span className="text-[var(--gc-text-tertiary)]">Seller status:</span>{" "}
+                                {selectedUserProfileData?.sellerStatus || "Standard"}
+                              </p>
+                            ) : null}
+                            <p>
+                              <span className="text-[var(--gc-text-tertiary)]">Total messages:</span>{" "}
+                              {selectedUserProfileData?.totalMessages ?? 0}
+                            </p>
+                            {selectedUserProfileData?.isBuyer ? (
+                              <p>
+                                <span className="text-[var(--gc-text-tertiary)]">Purchases:</span>{" "}
+                                {selectedUserProfileData?.purchasesCount ?? "Private"}
+                              </p>
+                            ) : null}
+                            {selectedUserProfileData?.isBuyer ? (
+                              <p>
+                                <span className="text-[var(--gc-text-tertiary)]">Buyer ranking:</span>{" "}
+                                {selectedUserProfileData?.buyerRanking ?? "Private"}
+                              </p>
+                            ) : null}
+                            <p>
+                              <span className="text-[var(--gc-text-tertiary)]">Last active:</span>{" "}
+                              {selectedUserProfileData?.lastMessageAt
+                                ? `${formatDateLabel(selectedUserProfileData.lastMessageAt)} (${formatRelativeTime(selectedUserProfileData.lastMessageAt)})`
+                                : "Unknown"}
+                            </p>
+                            {!isOwnProfilePopup ? (
+                              <div className="pt-1 flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const target = selectedUserProfileData?.userId || selectedUserProfile.userId;
+                                    setSelectedUserProfile(null);
+                                    if (!user) {
+                                      router.push(`/auth?next=${encodeURIComponent(`/profile/${target}`)}`);
+                                      return;
+                                    }
+                                    router.push(`/profile/${target}`);
+                                  }}
+                                  className="inline-flex h-8 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-3 text-xs font-semibold text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)]"
+                                  aria-label="Open purchases on profile"
+                                >
+                                  What he buy
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const target = selectedUserProfileData?.userId || selectedUserProfile.userId;
+                                    setSelectedUserProfile(null);
+                                    if (!user) {
+                                      router.push(`/auth?next=${encodeURIComponent(`/profile/${target}`)}`);
+                                      return;
+                                    }
+                                    router.push(`/profile/${target}`);
+                                  }}
+                                  className="inline-flex h-8 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-3 text-xs font-semibold text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)]"
+                                  aria-label="Open reviews on profile"
+                                >
+                                  Review
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                        );
+                      })()}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
                 </motion.aside>
               )}
             </AnimatePresence>
@@ -2858,4 +3337,7 @@ export function HomepageClient() {
     </TooltipProvider>
   );
 }
+
+
+
 

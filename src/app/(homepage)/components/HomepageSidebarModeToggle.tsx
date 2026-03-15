@@ -17,10 +17,10 @@ export function HomepageSidebarModeToggle({
         onClick={() => onChange("buy")}
         aria-pressed={sidebarMode === "buy"}
         className={cn(
-          "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+          "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#395565]",
           sidebarMode === "buy"
-            ? "border border-[#2E3547] bg-[#212533]"
-            : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
+            ? "border-2 border-[#395565] bg-[#13232D]"
+            : "border-2 border-[#395565] bg-[#13232D] hover:bg-[#13232D]"
         )}
       >
         Buy
@@ -30,10 +30,10 @@ export function HomepageSidebarModeToggle({
         onClick={() => onChange("sell")}
         aria-pressed={sidebarMode === "sell"}
         className={cn(
-          "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]",
+          "h-9 rounded-xl text-sm font-extrabold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#395565]",
           sidebarMode === "sell"
-            ? "border border-[#2E3547] bg-[#212533]"
-            : "border border-[#2E3547] bg-[#161923] hover:bg-[#2E3547]"
+            ? "border-2 border-[#395565] bg-[#13232D]"
+            : "border-2 border-[#395565] bg-[#13232D] hover:bg-[#13232D]"
         )}
       >
         Sell

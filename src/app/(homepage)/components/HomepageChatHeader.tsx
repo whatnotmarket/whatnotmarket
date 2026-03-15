@@ -1,7 +1,6 @@
 "use client";
 
 import type { GlobalChatRoom } from "@/lib/chat/global-chat-config";
-import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 import { HomepageRoomMenu } from "./HomepageRoomMenu";
 
@@ -15,8 +14,6 @@ export function HomepageChatHeader({
   rooms,
   onRoomChange,
   renderRoomIcon,
-  isChatExpanded,
-  onToggleChatExpanded,
   onOpenRules,
   onCloseChat,
 }: {
@@ -29,19 +26,17 @@ export function HomepageChatHeader({
   rooms: readonly { slug: GlobalChatRoom; label: string }[];
   onRoomChange: (room: GlobalChatRoom) => void;
   renderRoomIcon: (room: GlobalChatRoom, iconClassName?: string) => React.ReactNode;
-  isChatExpanded: boolean;
-  onToggleChatExpanded: () => void;
   onOpenRules: () => void;
   onCloseChat: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-4">
+    <div className="flex items-center justify-between gap-3 px-3 py-4">
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onOpenMobileSidebar}
           aria-label="Open room sidebar"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547] md:hidden"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)] md:hidden"
         >
           <Menu className="h-4 w-4" />
         </button>
@@ -61,28 +56,10 @@ export function HomepageChatHeader({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={onToggleChatExpanded}
-          aria-label={isChatExpanded ? "Shrink chat width" : "Stretch chat width"}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
-        >
-          <svg
-            className={cn("h-6 w-6 transition-transform", !isChatExpanded ? "rotate-180" : "")}
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g stroke="#fff" strokeLinecap="round" strokeWidth="2">
-              <path d="M18 16V8" />
-              <path d="M5 12h8" />
-              <path d="M10.1538 7.84619 13.8461 11.8462 10.1538 15.8462" />
-            </g>
-          </svg>
-        </button>
-        <button
-          type="button"
           onClick={onOpenRules}
           aria-label="Open chat rules"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+          data-chat-rules-toggle="true"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)]"
         >
           <svg
             viewBox="0 0 32 32"
@@ -100,7 +77,7 @@ export function HomepageChatHeader({
           type="button"
           onClick={onCloseChat}
           aria-label="Close chat"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#262c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)]"
         >
           <X className="h-4 w-4" />
         </button>
@@ -108,3 +85,5 @@ export function HomepageChatHeader({
     </div>
   );
 }
+
+

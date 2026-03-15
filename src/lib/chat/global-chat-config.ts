@@ -18,7 +18,9 @@ export const LANGUAGE_GLOBAL_CHAT_ROOMS = [
 ] as const;
 
 export const GLOBAL_CHAT_ROOMS = [
-  ...CORE_GLOBAL_CHAT_ROOMS,
+  ...CORE_GLOBAL_CHAT_ROOMS.filter((room) => room.slug !== "help" && room.slug !== "crypto-talk"),
+  CORE_GLOBAL_CHAT_ROOMS.find((room) => room.slug === "help")!,
+  CORE_GLOBAL_CHAT_ROOMS.find((room) => room.slug === "crypto-talk")!,
   ...LANGUAGE_GLOBAL_CHAT_ROOMS,
 ] as const;
 

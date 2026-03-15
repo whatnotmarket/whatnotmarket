@@ -29,14 +29,14 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
       value={`${item.title} ${item.description} ${item.keywords.join(" ")}`}
       onSelect={() => onSelect(item)}
       className={[
-        "group/item gap-3 py-2.5 data-[selected=true]:bg-white/10",
-        featured ? "border border-white/10 bg-white/[0.04]" : "",
+        "group/item gap-3 py-2.5 data-[selected=true]:bg-[var(--gc-surface)]",
+        featured ? "border-2 border-[var(--gc-border)] bg-[var(--gc-surface)]" : "",
       ].join(" ")}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5 text-zinc-300 transition-colors">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-secondary)] transition-colors">
         {item.avatarUrl ? (
-          <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-[#22242a]">
-            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-zinc-300">
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-[var(--gc-surface)]">
+            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-[var(--gc-text-secondary)]">
               {fallbackInitial(item.title)}
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -60,7 +60,7 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate font-bold text-zinc-100">
+          <span className="truncate font-bold text-[var(--gc-text-primary)]">
             <SearchHighlightedText text={item.title} query={query} />
           </span>
           {item.id === "feature-buy-anywhere" ? (
@@ -81,7 +81,7 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
           ) : null}
         </div>
 
-        <p className="truncate text-xs text-zinc-400">
+        <p className="truncate text-xs text-[var(--gc-text-tertiary)]">
           <SearchHighlightedText text={item.description} query={query} />
         </p>
       </div>
@@ -93,3 +93,6 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
     </CommandItem>
   );
 }
+
+
+

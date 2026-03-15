@@ -19,7 +19,7 @@ export function HomepageCenterPanel({
     <div data-homepage-center-panel="true" className="relative hidden h-full min-h-0 min-w-0 flex-1 md:block">
       <div
         data-homepage-center-surface="true"
-        className="no-scrollbar h-full min-h-0 overflow-y-auto rounded-[30px] border border-[#2E3547] bg-[#161923]"
+        className="no-scrollbar h-full min-h-0 overflow-y-auto rounded-[30px] border-2 border-[#395565] bg-[#161923]"
       >
         {children ? <div className="min-h-full">{children}</div> : null}
       </div>
@@ -28,7 +28,7 @@ export function HomepageCenterPanel({
           type="button"
           onClick={onExpandSidebar}
           aria-label="Expand left sidebar"
-          className="absolute left-6 top-6 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+          className="absolute left-6 top-6 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#395565] bg-[#212533] text-white transition hover:bg-[#395565] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#395565]"
         >
           <svg
             viewBox="0 0 24 24"
@@ -53,7 +53,7 @@ export function HomepageCenterPanel({
           type="button"
           onClick={onExpandChat}
           aria-label="Reopen chat"
-          className="absolute right-6 top-6 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+          className="absolute right-6 top-6 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#395565] bg-[#212533] text-white transition hover:bg-[#395565] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#395565]"
         >
           <svg
             viewBox="0 0 24 24"

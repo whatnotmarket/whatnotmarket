@@ -202,14 +202,32 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
         type="button"
         onClick={openPalette}
         aria-label="Open global search"
-        className="relative hidden h-10 w-full items-center gap-3 rounded-2xl border border-white/15 bg-[#101114] px-4 text-left text-sm text-zinc-300 transition-all duration-200 hover:border-white/25 hover:bg-[#17181d] md:flex"
+        className="relative hidden h-9 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold transition md:flex"
+        style={{
+          backgroundColor: "#13232D",
+          backgroundImage: "none",
+          borderColor: "var(--gc-border)",
+          borderWidth: "2px",
+          borderStyle: "solid",
+          color: "var(--gc-text-primary)",
+          opacity: 1,
+        }}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-          <SearchIcon className="h-4 w-4 text-zinc-400" />
-          <span className="truncate">Search products, brands, categories, sellers, pages...</span>
+          <SearchIcon className="h-4 w-4 text-[var(--gc-text-primary)]" />
+          <span className="truncate text-[var(--gc-text-primary)]">Search products, brands, categories, sellers, pages...</span>
         </span>
-        <span className="pointer-events-none inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-zinc-400/85">
-          <CommandIcon className="h-3.5 w-3.5 text-zinc-500" />
+        <span
+          className="pointer-events-none inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+          style={{
+            backgroundColor: "#13232D",
+            borderColor: "var(--gc-border)",
+            borderWidth: "2px",
+            borderStyle: "solid",
+            color: "rgba(255,255,255,0.8)",
+          }}
+        >
+          <CommandIcon className="h-3.5 w-3.5 text-[var(--gc-text-primary)]/80" />
           {hotkeyLabel}
         </span>
       </button>
@@ -218,7 +236,16 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
         type="button"
         onClick={openPalette}
         aria-label="Open global search"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-zinc-200 transition-all hover:bg-white/20 md:hidden"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl transition md:hidden"
+        style={{
+          backgroundColor: "#13232D",
+          backgroundImage: "none",
+          borderColor: "var(--gc-border)",
+          borderWidth: "2px",
+          borderStyle: "solid",
+          color: "var(--gc-text-primary)",
+          opacity: 1,
+        }}
       >
         <SearchIcon className="h-4 w-4" />
       </button>
@@ -230,15 +257,17 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.99 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-0 top-[calc(100%+0.5rem)] z-[80] w-full origin-top overflow-hidden rounded-3xl border border-white/15 bg-[#0b0c0e]/95 p-0 shadow-2xl backdrop-blur-xl"
+            className="absolute left-0 top-[calc(100%+0.5rem)] z-[80] w-full origin-top overflow-hidden rounded-3xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-0 shadow-none backdrop-blur-xl"
+            style={{ backgroundColor: "#13232D", backgroundImage: "none", opacity: 1 }}
           >
-            <Command className="font-sans [&_*]:font-sans [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:tracking-normal [&_[cmdk-group-heading]]:text-zinc-200 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-1 [&_[cmdk-input]]:h-12 [&_[cmdk-input]]:w-full [&_[cmdk-input]]:bg-transparent [&_[cmdk-input]]:text-sm [&_[cmdk-input]]:outline-none [&_[cmdk-input]]:placeholder:text-zinc-500 [&_[cmdk-item]]:transition-colors [&_[cmdk-list]]:max-h-[68vh] [&_[cmdk-list]]:overflow-y-auto [&_[cmdk-list]]:overscroll-contain [&_[cmdk-item][data-disabled=true]]:pointer-events-none [&_[cmdk-item][data-selected=true]]:bg-white/10 [&_[cmdk-item][data-selected=true]]:text-white">
+            <Command className="font-sans [&_*]:font-sans [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:tracking-normal [&_[cmdk-group-heading]]:text-[var(--gc-text-secondary)] [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-1 [&_[cmdk-input]]:h-12 [&_[cmdk-input]]:w-full [&_[cmdk-input]]:bg-transparent [&_[cmdk-input]]:text-sm [&_[cmdk-input]]:outline-none [&_[cmdk-input]]:placeholder:text-[var(--gc-text-tertiary)] [&_[cmdk-item]]:transition-colors [&_[cmdk-list]]:max-h-[68vh] [&_[cmdk-list]]:overflow-y-auto [&_[cmdk-list]]:overscroll-contain [&_[cmdk-item][data-disabled=true]]:pointer-events-none [&_[cmdk-item][data-selected=true]]:bg-[var(--gc-surface)] [&_[cmdk-item][data-selected=true]]:text-[var(--gc-text-primary)]">
               {activeScope ? (
                 <div className="px-4 pt-3">
                   <button
                     type="button"
                     onClick={() => setActiveScope(null)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:bg-white/10"
+                    className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--gc-text-secondary)] transition hover:bg-[var(--gc-surface)]"
+                    style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
                     aria-label="Clear search scope"
                   >
                     {(() => {
@@ -246,7 +275,7 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
                       return <ScopeIcon className="h-3.5 w-3.5" />;
                     })()}
                     <span>{SEARCH_SCOPES[activeScope].label}</span>
-                    <X className="h-3.5 w-3.5 text-zinc-400" />
+                    <X className="h-3.5 w-3.5 text-[var(--gc-text-secondary)]" />
                   </button>
                 </div>
               ) : null}
@@ -262,7 +291,7 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
 
               <CommandList className="no-scrollbar">
                 {parsed.isShort && query.trim() ? (
-                  <p className="px-4 pt-2 text-[11px] text-zinc-500">Keep typing for smarter intent detection…</p>
+                  <p className="px-4 pt-2 text-[11px] text-[var(--gc-text-tertiary)]">Keep typing for smarter intent detection...</p>
                 ) : null}
 
                 {isLoading ? (
@@ -291,22 +320,25 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
                   <SmartEmptyState query={query || "your search"} />
                 )}
 
-                <div className="sticky bottom-0 z-30 mt-2 border-t border-white/10 bg-[#0c0d10]/95 px-3 py-2 backdrop-blur-md">
+                <div
+                  className="sticky bottom-0 z-30 mt-2 border-t-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-3 py-2 backdrop-blur-md"
+                  style={{ backgroundColor: "var(--gc-surface)", backgroundImage: "none", opacity: 1 }}
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2 text-xs">
-                      <span className="truncate font-semibold text-zinc-100">Open</span>
-                      <kbd className="inline-flex h-6 items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold text-zinc-300">
+                      <span className="truncate font-semibold text-[var(--gc-text-primary)]">Open</span>
+                      <kbd className="inline-flex h-6 items-center justify-center rounded-md border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-2 text-[11px] font-semibold text-[var(--gc-text-secondary)]">
                         <CornerDownLeft className="h-3.5 w-3.5" />
                       </kbd>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2 text-xs">
-                      <span className="text-zinc-400">Actions</span>
+                      <span className="text-[var(--gc-text-secondary)]">Actions</span>
                       <div className="inline-flex items-center gap-1">
-                        <kbd className="inline-flex h-6 items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold text-zinc-300">
+                        <kbd className="inline-flex h-6 items-center justify-center rounded-md border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-2 text-[11px] font-semibold text-[var(--gc-text-secondary)]">
                           {hotkeyLabel === "Cmd K" ? "Cmd" : "Ctrl"}
                         </kbd>
-                        <kbd className="inline-flex h-6 items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold text-zinc-300">
+                        <kbd className="inline-flex h-6 items-center justify-center rounded-md border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] px-2 text-[11px] font-semibold text-[var(--gc-text-secondary)]">
                           K
                         </kbd>
                       </div>
@@ -321,3 +353,8 @@ export function GlobalCommandSearch({ className }: GlobalCommandSearchProps) {
     </div>
   );
 }
+
+
+
+
+

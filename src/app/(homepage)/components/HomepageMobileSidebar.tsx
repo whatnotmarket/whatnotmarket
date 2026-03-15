@@ -55,14 +55,14 @@ export function HomepageMobileSidebar<
       <motion.button
         type="button"
         aria-label="Close chat sidebar"
-        className="fixed inset-0 z-40 bg-[#09071f]/70 backdrop-blur-[2px] md:hidden"
+        className="fixed inset-0 z-40 bg-[var(--gc-surface)] md:hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       />
       <motion.aside
-        className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r border-[#2E3547] bg-[#161923] p-3 shadow-[0_22px_60px_rgba(0,0,0,0.65)] md:hidden"
+        className="fixed inset-y-0 left-0 z-50 w-[min(84vw,280px)] overflow-y-auto border-r-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-3 shadow-none md:hidden"
         initial={{ x: "-100%" }}
         animate={{ x: 0 }}
         exit={{ x: "-100%" }}
@@ -70,13 +70,13 @@ export function HomepageMobileSidebar<
       >
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">Global Chat</p>
-            <p className="text-sm font-extrabold text-white">{activeRoomLabel}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--gc-text-tertiary)]">Global Chat</p>
+            <p className="text-sm font-extrabold text-[var(--gc-text-primary)]">{activeRoomLabel}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#2E3547] bg-[#212533] text-white transition hover:bg-[#2E3547] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E3547]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-primary)] transition hover:bg-[var(--gc-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gc-border)]"
             aria-label="Close mobile sidebar"
           >
             <X className="h-4 w-4" />
@@ -102,12 +102,14 @@ export function HomepageMobileSidebar<
           <HomepageSidebarSell renderSellSections={renderSellSections} closeMobileOnClick />
         )}
 
-        <div className="mt-3 rounded-[22px] border border-[#2E3547] bg-[#161923] p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-zinc-400">Live Activity</p>
-          <p className="mt-1 text-sm font-bold text-white">Online: {displayOnlineCount.toLocaleString("en-US")}</p>
-          <p className="mt-1 text-xs text-zinc-400">Threads: {threadCount.toLocaleString("en-US")}</p>
+        <div className="mt-3 rounded-[22px] border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.11em] text-[var(--gc-text-tertiary)]">Live Activity</p>
+          <p className="mt-1 text-sm font-bold text-[var(--gc-text-primary)]">Online: {displayOnlineCount.toLocaleString("en-US")}</p>
+          <p className="mt-1 text-xs text-[var(--gc-text-tertiary)]">Threads: {threadCount.toLocaleString("en-US")}</p>
         </div>
       </motion.aside>
     </>
   );
 }
+
+
