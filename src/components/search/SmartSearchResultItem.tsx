@@ -29,14 +29,32 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
       value={`${item.title} ${item.description} ${item.keywords.join(" ")}`}
       onSelect={() => onSelect(item)}
       className={[
-        "group/item gap-3 py-2.5 data-[selected=true]:bg-[var(--gc-surface)]",
-        featured ? "border-2 border-[var(--gc-border)] bg-[var(--gc-surface)]" : "",
+        "group/item gap-3 py-2.5 transition-colors duration-150 data-[selected=true]:bg-[var(--cmdk-item-selected-bg,var(--gc-surface))] hover:bg-[var(--cmdk-item-hover-bg,var(--cmdk-item-selected-bg,var(--gc-surface)))]",
       ].join(" ")}
+      style={
+        featured
+          ? {
+              borderColor: "var(--cmdk-item-featured-border-color, var(--gc-border))",
+              borderWidth: "var(--cmdk-item-featured-border-width, 2px)",
+              borderStyle: "solid",
+              backgroundColor: "var(--cmdk-item-featured-bg, var(--gc-surface))",
+            }
+          : undefined
+      }
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--gc-border)] bg-[var(--gc-surface)] text-[var(--gc-text-secondary)] transition-colors">
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors"
+        style={{
+          borderColor: "var(--cmdk-item-icon-border-color, var(--gc-border))",
+          borderWidth: "var(--cmdk-item-icon-border-width, 2px)",
+          borderStyle: "solid",
+          backgroundColor: "var(--cmdk-item-icon-bg, var(--gc-surface))",
+          color: "var(--cmdk-item-icon-color, var(--gc-text-secondary))",
+        }}
+      >
         {item.avatarUrl ? (
-            <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-[var(--gc-surface)]">
-            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-[var(--gc-text-secondary)]">
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg" style={{ backgroundColor: "var(--cmdk-item-icon-bg, var(--gc-surface))" }}>
+            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold" style={{ color: "var(--cmdk-item-icon-color, var(--gc-text-secondary))" }}>
               {fallbackInitial(item.title)}
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -60,7 +78,7 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate font-bold text-[var(--gc-text-primary)]">
+          <span className="truncate font-bold" style={{ color: "var(--cmdk-item-title-color, var(--gc-text-primary))" }}>
             <SearchHighlightedText text={item.title} query={query} />
           </span>
           {item.id === "feature-buy-anywhere" ? (
@@ -81,12 +99,12 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
           ) : null}
         </div>
 
-        <p className="truncate text-xs text-[var(--gc-text-tertiary)]">
+        <p className="truncate text-xs" style={{ color: "var(--cmdk-item-description-color, var(--gc-text-tertiary))" }}>
           <SearchHighlightedText text={item.description} query={query} />
         </p>
       </div>
 
-      <CommandShortcut className="flex items-center gap-1 text-zinc-500">
+      <CommandShortcut className="flex items-center gap-1" style={{ color: "var(--cmdk-item-action-color, var(--gc-text-secondary))" }}>
         {actionLabel}
         <ArrowUpRight className="h-3.5 w-3.5" />
       </CommandShortcut>

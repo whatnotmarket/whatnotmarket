@@ -2890,6 +2890,7 @@ export function HomepageClient({ hideChat = false }: { hideChat?: boolean } = {}
                     onClick={() => {
                       try {
                         localStorage.setItem("global_chat_rules_accepted", "1");
+                        window.dispatchEvent(new Event("global_chat_rules_accepted_change"));
                       } catch {}
                       setHasAcceptedRules(true);
                       setIsRulesOpen(false);

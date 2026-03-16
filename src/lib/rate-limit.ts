@@ -50,7 +50,8 @@ export type RateLimitAction =
   | "internal_onboarding_username_check"
   | "internal_onboarding_progress"
   | "internal_onboarding_avatar_upload"
-  | "onboarding_gate_access";
+  | "onboarding_gate_access"
+  | "sidebar_test_gate_access";
 
 export type RateLimitOptions = {
   action?: RateLimitAction;
@@ -111,6 +112,7 @@ const RATE_LIMIT_CONFIGS: Record<RateLimitAction, RateLimitConfig> = {
   internal_onboarding_progress: { limit: 24, windowMs: 60_000 },
   internal_onboarding_avatar_upload: { limit: 10, windowMs: 60_000 },
   onboarding_gate_access: { limit: 10, windowMs: 60_000 },
+  sidebar_test_gate_access: { limit: 10, windowMs: 60_000 },
 };
 
 const rateLimiter = new LRUCache<string, RateLimitEntry>({
