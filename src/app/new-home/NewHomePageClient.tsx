@@ -240,6 +240,15 @@ export function NewHomePageClient() {
       if (target instanceof Node && block.contains(target)) {
         return;
       }
+      if (
+        target instanceof Element &&
+        (target.closest("[cmdk-root]") ||
+          target.closest("[cmdk-list]") ||
+          target.closest('[role="listbox"]') ||
+          target.closest('[role="combobox"]'))
+      ) {
+        return;
+      }
       if (target instanceof Element && target.closest('[data-sidebar-keep-open="true"]')) {
         return;
       }
