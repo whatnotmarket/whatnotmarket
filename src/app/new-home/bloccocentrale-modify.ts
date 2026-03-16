@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 export const bloccoCentraleLayoutModify = {
-  leftSpace: "clamp(122px, 15vw, 90px)",
+  leftSpace: "clamp(90px, 15vw, 122px)",
 } as const;
 
 export const bloccoCentraleModify = {

@@ -205,6 +205,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
   const [displayOnlineCount, setDisplayOnlineCount] = useState<number>(
     chatGlobalBehaviorModify.onlineDisplayBase
   );
+  const activeRoomRef = useRef<GlobalChatRoom>(activeRoom);
 
   const canWrite = Boolean(user && hasAcceptedRules);
   const activeRoomLabel =
@@ -219,6 +220,10 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
   const inputStyle = getChatGlobalInputStyle(canWrite);
   const sendButtonStyle = getChatGlobalSendButtonStyle();
   const userSheetStyle = getChatGlobalUserSheetStyle();
+
+  useEffect(() => {
+    activeRoomRef.current = activeRoom;
+  }, [activeRoom]);
 
   const mapRowToMessage = useCallback((row: ChatMessageRow): ChatMessage => {
     const profile = firstProfile(row.profiles);
@@ -239,33 +244,43 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
 
   const loadMessages = useCallback(async (options?: { showLoader?: boolean }) => {
     if (!open) return;
+    const roomAtRequest = activeRoom;
     const showLoader = options?.showLoader === true;
     if (showLoader) {
       setIsLoading(true);
     }
 
-    const { data, error } = await supabase
-      .from("global_chat_messages")
-      .select(MESSAGE_SELECT)
-      .eq("room", activeRoom)
-      .order("created_at", { ascending: true })
-      .limit(300);
+    try {
+      const { data, error } = await supabase
+        .from("global_chat_messages")
+        .select(MESSAGE_SELECT)
+        .eq("room", roomAtRequest)
+        .order("created_at", { ascending: true })
+        .limit(300);
 
-    if (error) {
+      if (activeRoomRef.current !== roomAtRequest) {
+        return;
+      }
+
+      if (error) {
+        setErrorText("Unable to load chat right now.");
+        return;
+      }
+
+      const normalized = ((data ?? []) as ChatMessageRow[])
+        .filter((row) => !row.is_deleted)
+        .map(mapRowToMessage);
+      setMessages(normalized);
+      setErrorText(null);
+    } catch {
+      if (activeRoomRef.current !== roomAtRequest) {
+        return;
+      }
       setErrorText("Unable to load chat right now.");
-      if (showLoader) {
+    } finally {
+      if (showLoader && activeRoomRef.current === roomAtRequest) {
         setIsLoading(false);
       }
-      return;
-    }
-
-    const normalized = ((data ?? []) as ChatMessageRow[])
-      .filter((row) => !row.is_deleted)
-      .map(mapRowToMessage);
-    setMessages(normalized);
-    setErrorText(null);
-    if (showLoader) {
-      setIsLoading(false);
     }
   }, [activeRoom, mapRowToMessage, open, supabase]);
 
@@ -285,6 +300,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
 
   useEffect(() => {
     if (open) return;
+    setIsRoomMenuOpen(false);
     setSelectedUserProfile(null);
     setSelectedUserProfileData(null);
     setIsSelectedUserProfileLoading(false);
@@ -300,53 +316,62 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
 
     const loadSelectedUserProfile = async () => {
       setIsSelectedUserProfileLoading(true);
+      try {
+        const [profileResult, totalCountResult, lastMessageResult, purchasesResult] = await Promise.all([
+          supabase.from("profiles").select(PROFILE_SELECT).eq("id", selectedUserProfile.userId).maybeSingle(),
+          supabase
+            .from("global_chat_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", selectedUserProfile.userId)
+            .eq("is_deleted", false),
+          supabase
+            .from("global_chat_messages")
+            .select("created_at")
+            .eq("user_id", selectedUserProfile.userId)
+            .eq("is_deleted", false)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle<{ created_at: string }>(),
+          supabase
+            .from("deals")
+            .select("id", { count: "exact", head: true })
+            .eq("buyer_id", selectedUserProfile.userId)
+            .eq("status", "completed"),
+        ]);
 
-      const [profileResult, totalCountResult, lastMessageResult, purchasesResult] = await Promise.all([
-        supabase.from("profiles").select(PROFILE_SELECT).eq("id", selectedUserProfile.userId).maybeSingle(),
-        supabase
-          .from("global_chat_messages")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", selectedUserProfile.userId)
-          .eq("is_deleted", false),
-        supabase
-          .from("global_chat_messages")
-          .select("created_at")
-          .eq("user_id", selectedUserProfile.userId)
-          .eq("is_deleted", false)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle<{ created_at: string }>(),
-        supabase
-          .from("deals")
-          .select("id", { count: "exact", head: true })
-          .eq("buyer_id", selectedUserProfile.userId)
-          .eq("status", "completed"),
-      ]);
+        if (!active) return;
 
-      if (!active) return;
+        const profile = (profileResult.data as ChatProfile | null) || null;
+        const fallbackRoles = {
+          isSeller: selectedUserProfile.isSeller,
+          isBuyer: selectedUserProfile.isBuyer,
+        };
+        const roles = profile ? resolveRoles(profile) : fallbackRoles;
 
-      const profile = (profileResult.data as ChatProfile | null) || null;
-      const fallbackRoles = {
-        isSeller: selectedUserProfile.isSeller,
-        isBuyer: selectedUserProfile.isBuyer,
-      };
-      const roles = profile ? resolveRoles(profile) : fallbackRoles;
-
-      setSelectedUserProfileData({
-        userId: selectedUserProfile.userId,
-        displayName: selectedUserProfile.displayName,
-        handle: deriveHandle(profile, selectedUserProfile.userId).replace(/^@+/, "") || selectedUserProfile.handle,
-        avatarUrl: profile?.avatar_url || selectedUserProfile.avatarUrl || null,
-        memberSince: profile?.created_at || selectedUserProfile.memberSince || null,
-        isSeller: roles.isSeller,
-        isBuyer: roles.isBuyer,
-        sellerStatus: profile?.seller_status || null,
-        buyerRanking: purchasesResult.error ? null : getBuyerRanking(purchasesResult.count || 0),
-        totalMessages: totalCountResult.count || 0,
-        lastMessageAt: lastMessageResult.data?.created_at || null,
-        purchasesCount: purchasesResult.error ? null : purchasesResult.count || 0,
-      });
-      setIsSelectedUserProfileLoading(false);
+        setSelectedUserProfileData({
+          userId: selectedUserProfile.userId,
+          displayName: selectedUserProfile.displayName,
+          handle:
+            deriveHandle(profile, selectedUserProfile.userId).replace(/^@+/, "") ||
+            selectedUserProfile.handle,
+          avatarUrl: profile?.avatar_url || selectedUserProfile.avatarUrl || null,
+          memberSince: profile?.created_at || selectedUserProfile.memberSince || null,
+          isSeller: roles.isSeller,
+          isBuyer: roles.isBuyer,
+          sellerStatus: profile?.seller_status || null,
+          buyerRanking: purchasesResult.error ? null : getBuyerRanking(purchasesResult.count || 0),
+          totalMessages: totalCountResult.count || 0,
+          lastMessageAt: lastMessageResult.data?.created_at || null,
+          purchasesCount: purchasesResult.error ? null : purchasesResult.count || 0,
+        });
+      } catch {
+        if (!active) return;
+        setSelectedUserProfileData(null);
+      } finally {
+        if (active) {
+          setIsSelectedUserProfileLoading(false);
+        }
+      }
     };
 
     void loadSelectedUserProfile();

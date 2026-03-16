@@ -240,6 +240,9 @@ export function NewHomePageClient() {
       if (target instanceof Node && block.contains(target)) {
         return;
       }
+      if (target instanceof Element && target.closest('[data-sidebar-keep-open="true"]')) {
+        return;
+      }
       if (
         sidebarBehaviorModify.stopWheelForwardWhenHover &&
         target instanceof Node &&
