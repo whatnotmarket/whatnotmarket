@@ -52,18 +52,16 @@ Roles can be assigned automatically using **invite codes**.
 
 Unlike traditional listings, OpenlyMarket uses **buyer requests**.
 
-Workflow:
+```markdown
+### Workflow
 
-Buyer posts request
+[ Buyer posts request ]
 ↓
-Sellers submit offers
+[ Sellers submit offers ]
 ↓
-Buyer accepts best offer
+[ Buyer accepts best offer ]
 ↓
-Deal Room is created
-
-
----
+[ Deal Room is created ]
 
 ## Deal Room
 
