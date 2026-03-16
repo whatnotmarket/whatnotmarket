@@ -1,10 +1,10 @@
 # OpenlyMarket
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black)]()
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)]()
-[![Supabase](https://img.shields.io/badge/Supabase-Backend-green)]()
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
-[![Status](https://img.shields.io/badge/status-active-success)]()
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=nextdotjs)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)]()
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)]()
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)]()
 
 A modern **buyer–seller marketplace platform** built with **Next.js, Supabase, and Tailwind CSS**.
 
