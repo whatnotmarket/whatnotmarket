@@ -25,6 +25,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { SIDEBAR_TOOLTIPS } from "./tooltip-modify";
 import { useUser } from "@/contexts/UserContext";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -430,12 +431,8 @@ function SidebarToggleHandle({
   theme: SidebarTestTheme;
 }) {
   const sidebarTooltipRightClassName =
-    "pointer-events-none absolute left-full top-1/2 z-[2147483647] ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#11161a] px-2 py-1 text-[11px] font-medium text-white/95 opacity-0 shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition-opacity duration-150 group-hover:opacity-100";
-  const sidebarTooltipTopClassName =
-    "pointer-events-none absolute left-1/2 bottom-full z-[2147483647] mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#11161a] px-2 py-1 text-[11px] font-medium text-white/95 opacity-0 shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition-opacity duration-150 group-hover:opacity-100";
-  const sidebarToggleTooltipClassName = expanded
-    ? sidebarTooltipTopClassName
-    : sidebarTooltipRightClassName;
+    "pointer-events-none absolute left-full top-[59px] z-[2147483647] ml-0 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#11161a] px-2 py-1 text-[11px] font-medium text-white/95 opacity-0 shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition-opacity duration-150 group-hover:opacity-100";
+  const sidebarToggleTooltipClassName = sidebarTooltipRightClassName;
 
   return (
     <button
@@ -443,7 +440,7 @@ function SidebarToggleHandle({
       aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
       aria-expanded={expanded}
       onClick={onToggle}
-      className="group absolute left-full -ml-4px bottom-[46px] z-50 h-[142px] w-[42px]"
+      className="group absolute left-full -ml-[4px] bottom-[46px] z-10 h-[142px] w-[42px]"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -503,7 +500,7 @@ function SidebarToggleHandle({
         </defs>
       </svg>
       <span className={sidebarToggleTooltipClassName}>
-        {expanded ? "Close Sidebar Menu" : "Expand Sidebar Menu"}
+        {expanded ? SIDEBAR_TOOLTIPS.handle.expanded : SIDEBAR_TOOLTIPS.handle.collapsed}
       </span>
     </button>
   );
@@ -823,7 +820,9 @@ export function SidebarTestClient({
     : RAIL_WIDTH;
   const isCompactExpanded = isExpanded && !openPanelItemId;
   const isUserLoggedIn = Boolean(user?.id);
-  const profileTriggerTooltip = isUserLoggedIn ? "Your profile" : "Profile - Log in";
+  const profileTriggerTooltip = isUserLoggedIn
+    ? SIDEBAR_TOOLTIPS.collapsed.profileLoggedIn
+    : SIDEBAR_TOOLTIPS.collapsed.profileLoggedOut;
   const sidebarTooltipRightClassName =
     "pointer-events-none absolute left-full top-1/2 z-[2147483647] ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#11161a] px-2 py-1 text-[11px] font-medium text-white/95 opacity-0 shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition-opacity duration-150 group-hover:opacity-100";
   const sidebarTooltipTopClassName =
@@ -1146,9 +1145,10 @@ export function SidebarTestClient({
               aria-label="Logo"
               onClick={goHome}
               onContextMenu={openLogoContextMenu}
-              className="mx-auto mt-1 grid h-11 w-11 place-items-center rounded-[14px] text-base font-semibold"
+              className="group mx-auto mt-1 grid h-11 w-11 place-items-center rounded-[14px] text-base font-semibold"
             >
               <CollapsedSidebarLogoIcon className="h-8 w-8 text-white" />
+              <span className={sidebarTooltipRightClassName}>{SIDEBAR_TOOLTIPS.collapsed.logo}</span>
             </button>
 
             <nav className="mt-4 flex flex-col items-center gap-1.5">
@@ -1171,7 +1171,7 @@ export function SidebarTestClient({
                       setIsProfileSheetOpen(false);
                     }}
                     className={cn(
-                      "relative grid h-11 w-11 place-items-center rounded-2xl transition-[background-color,color,transform,box-shadow] duration-220 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                      "group relative grid h-11 w-11 place-items-center rounded-2xl transition-[background-color,color,transform,box-shadow] duration-220 ease-[cubic-bezier(0.22,1,0.36,1)]",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)] focus-visible:ring-offset-0",
                       hoveredItemId === item.id && !isActive && "text-[var(--sidebar-hover-text)]",
                       isActive &&
@@ -1187,13 +1187,17 @@ export function SidebarTestClient({
                     }}
                   >
                     <Icon className="h-[18px] w-[18px]" />
+                    <span className={sidebarTooltipRightClassName}>
+                      {SIDEBAR_TOOLTIPS.collapsed.items[item.id as keyof typeof SIDEBAR_TOOLTIPS.collapsed.items] ??
+                        item.label}
+                    </span>
                   </motion.button>
                 );
               })}
             </nav>
 
-            <div className="relative z-[130] mt-auto flex flex-col items-center gap-1.5 pb-1">
-              <div className="group relative">
+            <div className="relative z-[2147483647] mt-auto flex flex-col items-center gap-1.5 pb-1">
+              <div className="group relative z-[2147483647]">
                 <motion.button
                   type="button"
                   aria-label="Open profile panel"
@@ -1223,25 +1227,28 @@ export function SidebarTestClient({
                 type="button"
                 whileTap={{ scale: 0.98 }}
                 aria-label="Notifications"
-                className="grid h-10 w-10 place-items-center rounded-2xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)]"
+                className="group relative z-[2147483647] grid h-10 w-10 place-items-center rounded-2xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)]"
               >
                 <Bell className="h-[18px] w-[18px]" />
+                <span className={sidebarTooltipRightClassName}>{SIDEBAR_TOOLTIPS.collapsed.notifications}</span>
               </motion.button>
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.98 }}
                 aria-label="Help"
-                className="grid h-10 w-10 place-items-center rounded-2xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)]"
+                className="group relative z-[2147483647] grid h-10 w-10 place-items-center rounded-2xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)]"
               >
                 <CircleHelp className="h-[18px] w-[18px]" />
+                <span className={sidebarTooltipRightClassName}>{SIDEBAR_TOOLTIPS.collapsed.help}</span>
               </motion.button>
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.98 }}
                 aria-label="Settings"
-                className="grid h-10 w-10 place-items-center rounded-2xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)]"
+                className="group relative z-[2147483647] grid h-10 w-10 place-items-center rounded-2xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-focus-ring)]"
               >
                 <Settings className="h-[18px] w-[18px]" />
+                <span className={sidebarTooltipRightClassName}>{SIDEBAR_TOOLTIPS.collapsed.settings}</span>
               </motion.button>
             </div>
 
@@ -1396,25 +1403,28 @@ export function SidebarTestClient({
                   type="button"
                   whileTap={{ scale: 0.98 }}
                   aria-label="Notifications"
-                  className="grid h-9 w-9 place-items-center rounded-xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)]"
+                  className="group relative grid h-9 w-9 place-items-center rounded-xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)]"
                 >
                   <Bell className="h-[18px] w-[18px]" />
+                  <span className={sidebarTooltipTopClassName}>{SIDEBAR_TOOLTIPS.collapsed.notifications}</span>
                 </motion.button>
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.98 }}
                   aria-label="Help"
-                  className="grid h-9 w-9 place-items-center rounded-xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)]"
+                  className="group relative grid h-9 w-9 place-items-center rounded-xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)]"
                 >
                   <CircleHelp className="h-[18px] w-[18px]" />
+                  <span className={sidebarTooltipTopClassName}>{SIDEBAR_TOOLTIPS.collapsed.help}</span>
                 </motion.button>
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.98 }}
                   aria-label="Settings"
-                  className="grid h-9 w-9 place-items-center rounded-xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)]"
+                  className="group relative grid h-9 w-9 place-items-center rounded-xl text-[var(--sidebar-icon-muted)] transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-hover-text)]"
                 >
                   <Settings className="h-[18px] w-[18px]" />
+                  <span className={sidebarTooltipTopClassName}>{SIDEBAR_TOOLTIPS.collapsed.settings}</span>
                 </motion.button>
               </div>
 
