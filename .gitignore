@@ -10,6 +10,18 @@
 !.yarn/releases
 !.yarn/versions
 
+# ahrefs
+/ahrefs
+
+# docs
+/docs
+
+# reports
+/reports
+
+# indexnow
+indexnow_payload_*.json
+
 # testing
 /coverage
 

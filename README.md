@@ -1,124 +1,135 @@
 # OpenlyMarket
 
-A buyer/seller marketplace web app built with Next.js, Tailwind CSS, and Supabase.
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)]()
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-green)]()
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
+[![Status](https://img.shields.io/badge/status-active-success)]()
 
-## Features
+A modern **buyer–seller marketplace platform** built with **Next.js, Supabase, and Tailwind CSS**.
 
-- **Auth0-Centered Auth**: Email passwordless, Google, Apple, Wallet Connect, Telegram.
-- **Role by Invite Code**: Optional invite code assigns `buyer` or `seller` role.
-- **Request-Driven Marketplace**: Buyers post requests, sellers make offers.
-- **Deal Room**: Real-time chat and transaction timeline for accepted offers.
-- **Secure Payments (Escrow)**:
-  - Multi-chain support (Ethereum, Polygon, Base, Bitcoin).
-  - Mock payment adapter for demo purposes.
-  - Buyer pays -> Funds held -> Seller fulfills -> Funds released.
-- **Listing Wallet Escrow**:
-  - Authenticated users can connect and verify wallet ownership.
-  - Listing payments go to platform escrow first.
-  - Admin manually releases escrow to target wallet with audit trail.
-- **Onboarding Wizard**:
-  - Role selection (Buyer/Seller).
-  - Payout wallet setup.
-  - Telegram verification (Mocked).
-- **Admin Dashboard**: Moderate content and resolve payment disputes.
-- **Premium UI**: Dark mode first, fluid animations, glassmorphism effects.
+OpenlyMarket introduces a **request-driven commerce model** where buyers publish requests and sellers compete with offers, powered by secure escrow payments and real-time deal rooms.
 
-## Tech Stack
+---
 
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4 + Framer Motion
-- **Icons**: Lucide React
-- **State**: TanStack Query
-- **Backend**: Auth0 + Supabase (Postgres, Realtime, bridge auth session)
-- **Forms**: React Hook Form + Zod
+# Preview
 
-## Getting Started
+*(Add screenshots here later)*
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
 
-2. **Set up Supabase**:
-   - Create a new project at [supabase.com](https://supabase.com).
-   - Follow [SUPABASE_SETUP.md](SUPABASE_SETUP.md) and apply the SQL migrations in `supabase/migrations`.
-   - Copy your project URL, anon key, and service-role key.
+---
 
-3. **Environment Variables**:
-   - Copy `.env.example` to `.env.local`.
-   - Fill in the required values (Supabase + admin + wallet vars).
+# Core Features
 
-4. **Run the development server**:
-   ```bash
-   npm run dev
-   ```
+## Authentication
 
-5. **Access the app**:
-   - Go to `http://localhost:3000`.
-   - Use `/login` for Auth0/email/social/external auth flows.
+Multi-provider authentication powered by **Auth0**.
 
-## Demo Workflows
+Supported login methods:
 
-### Onboarding
-- After signing up, you will be redirected to `/onboarding`.
-- Choose **"I want to sell"** to see the full flow.
-- **Telegram Verification**: Click "Open Telegram Bot" to generate a mock code, then copy-paste it to verify.
+- Email passwordless
+- Google
+- Apple
+- WalletConnect
+- Telegram login
 
-### Payments (Deal Room)
-- Go to any deal (or create a request -> make offer -> accept).
-- **Buyer View**: Select a network/token (e.g., Ethereum / USDC). Click "Pay".
-- **Deposit**: A QR code and address will appear.
-- **Simulate**: Click "Simulate Payment (Demo)" to instantly fund the deal.
-- **Seller View**: Toggle "View as Seller" to see the "Awaiting Payment" status change to "Funds Secured".
+---
 
-## Contributing
+## Role System
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
+Users can join as:
 
-## License
+- **Buyer**
+- **Seller**
+- **Investors**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Roles can be assigned automatically using **invite codes**.
 
-## Security Checklist (Supabase + GitHub)
+---
 
-- Do not expose secrets in the frontend
-  - Frontend uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` only
-  - Backend uses `SUPABASE_SERVICE_ROLE_KEY` (server-only)
-- Do not commit `.env` files
-  - `.gitignore` includes `.env*`; use `.env.example` for documentation
-- Do not hardcode keys in source
-  - Always read from `process.env.*`
-- Enforce Row Level Security (RLS)
-  - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`
-  - Policies restrict read/write by `auth.uid()` when appropriate
-- Keep migrations versioned
-  - Use `supabase/migrations/*.sql` for schema changes
-- Keep operational scripts private
-  - Use `supabase/scripts/private/` (ignored by Git)
-  - No real data or secrets inside the repository
-- Avoid public endpoints without auth
+## Request-Based Marketplace
 
-## SEO & IndexNow
+Unlike traditional listings, OpenlyMarket uses **buyer requests**.
 
-This project includes automated IndexNow submission for faster indexing of public content (requests, verified seller profiles).
+Workflow:
 
-### Configuration
-1. Generate an IndexNow key (e.g. from Bing Webmaster Tools).
-2. Add it to `.env.local`:
-   ```bash
-   INDEXNOW_KEY=your-generated-key
-   ```
-3. The key verification file is automatically served at `https://openlymarket.xyz/<key>.txt`.
+Buyer posts request
+↓
+Sellers submit offers
+↓
+Buyer accepts best offer
+↓
+Deal Room is created
 
-### Automatic Submission
-- **New Requests**: Triggered when a user creates a public request.
-- **Profile Updates**: Triggered when a user updates their public profile (username/bio).
-- **Exclusions**: Private routes (`/admin`, `/dashboard`, `/inbox`) are never submitted.
 
-### Debugging
-To enable IndexNow logs in development/preview environments, set `INDEXNOW_DEBUG=true`. By default, it only runs in production (`NODE_ENV=production`).
-  - Check auth in server routes and edge functions
-- Rate limiting and spam protection
-  - Flood and slow-mode checks are implemented for chat; add rate-limits where needed
+---
+
+## Deal Room
+
+Each accepted offer creates a **real-time collaboration environment**.
+
+Features:
+
+- Buyer ↔ Seller chat
+- Deal status timeline
+- Escrow tracking
+- Payment verification
+
+Built using **Supabase Realtime**.
+
+---
+
+## Escrow Payments
+
+Secure multi-chain escrow system.
+
+Supported networks:
+
+- Ethereum
+- Polygon
+- Base
+- Bitcoin
+
+Escrow flow:
+
+Buyer pays
+↓
+Funds locked in escrow
+↓
+Seller fulfills order
+↓
+Funds released
+
+
+A **mock payment adapter** is included for development environments.
+
+---
+
+## Wallet Escrow System
+
+Users can connect wallets and receive payouts.
+
+Process:
+
+1. Wallet ownership verified
+2. Escrow holds payment
+3. Admin releases payout
+4. Full audit trail logged
+
+---
+
+## Onboarding Wizard
+
+New users complete onboarding after signup.
+
+Steps:
+
+- Choose role (Buyer / Seller)
+- Connect payout wallet
+- Verify Telegram (mock flow)
+
+Route:
+
+/onboarding
+
 
