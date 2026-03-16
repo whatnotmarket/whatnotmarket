@@ -207,7 +207,13 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
   );
   const activeRoomRef = useRef<GlobalChatRoom>(activeRoom);
 
-  const canWrite = Boolean(user && hasAcceptedRules);
+  const isAuthenticated = Boolean(user);
+  const canWrite = Boolean(isAuthenticated && hasAcceptedRules);
+  const inputPlaceholder = !isAuthenticated
+    ? "Login to write in chat"
+    : !hasAcceptedRules
+    ? "Accept chat rules to write"
+    : "Type your message...";
   const activeRoomLabel =
     GLOBAL_CHAT_ROOMS.find((room) => room.slug === activeRoom)?.label || "English";
   const cssVars = getChatGlobalCssVars();
@@ -784,6 +790,12 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                 setDraft(event.target.value);
               }}
               maxLength={chatGlobalBehaviorModify.maxMessageLength}
+              onClick={() => {
+                if (!user) return;
+                if (!hasAcceptedRules) {
+                  setIsRulesOpen(true);
+                }
+              }}
               onFocus={() => {
                 if (!user) return;
                 if (!hasAcceptedRules) {
@@ -796,9 +808,9 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                   void handleSend();
                 }
               }}
-              placeholder={canWrite ? "Type your message..." : "Login to write in chat"}
+              placeholder={inputPlaceholder}
               readOnly={!canWrite}
-              disabled={!canWrite || isSending}
+              disabled={!isAuthenticated || isSending}
               className={cn(
                 chatGlobalComponentClassModify.inputBase,
                 canWrite
