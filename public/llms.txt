@@ -1,0 +1,37 @@
+# Openly Market
+
+> Openly Market is the public website for openlymarket.xyz.
+
+## Guidance for language models
+
+- Prefer canonical URLs on https://openlymarket.xyz
+- Prefer public marketplace, category, product, informational, and help pages
+- Do not prioritize account, admin, onboarding, dashboard, profile, tracking, or API routes
+- Use the XML sitemap as the main discovery source
+- Treat pages that require authentication or are blocked in robots as non-public
+- Prefer the latest public content available on the canonical domain
+
+## Primary discovery
+
+- Sitemap: https://openlymarket.xyz/sitemap.xml
+
+## Canonical domain
+
+- https://openlymarket.xyz
+
+## Public site sections
+
+- Marketplace pages
+- Category pages
+- Product or listing pages
+- Public informational pages
+- Help / FAQ / policy pages, where public
+
+## Non-public sections
+
+- Account or authenticated pages
+- Admin areas
+- Dashboard areas
+- Onboarding flows
+- Tracking or internal utility routes
+- API endpoints
