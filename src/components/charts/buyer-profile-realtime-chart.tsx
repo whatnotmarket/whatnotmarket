@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import LightweightChart from "@/components/charts/lightweight-chart";
-import { modifyChartChat } from "@/components/charts/modifychart-chat";
+import { profileChartTheme } from "@/components/charts/profile-chart-theme";
 
 type BuyerProfileRealtimeChartProps = {
   userId: string;
@@ -339,16 +339,16 @@ export default function BuyerProfileRealtimeChart({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const refreshDebounceRef = useRef<number | null>(null);
   const messageAlertTimeoutRef = useRef<number | null>(null);
-  const [dynamicHeight, setDynamicHeight] = useState<number>(modifyChartChat.buyerProfileChartFallbackHeightPx);
+  const [dynamicHeight, setDynamicHeight] = useState<number>(profileChartTheme.buyerProfileChartFallbackHeightPx);
 
   const [seriesData, setSeriesData] = useState<SingleValueData<Time>[]>([]);
   const [ratingByTime, setRatingByTime] = useState<Map<number, number>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [isMessageAlertActive, setIsMessageAlertActive] = useState(false);
-  const chartColors = modifyChartChat.colors;
+  const chartColors = profileChartTheme.colors;
   const chartHeight =
-    typeof height === "number" && height > modifyChartChat.buyerProfileChartMinHeightPx ? height : dynamicHeight;
+    typeof height === "number" && height > profileChartTheme.buyerProfileChartMinHeightPx ? height : dynamicHeight;
 
   const applyRealtimePulse = useCallback((metric: MetricEventType, direction: 1 | -1 = 1) => {
     setSeriesData((previous) => {
@@ -395,13 +395,13 @@ export default function BuyerProfileRealtimeChart({
   }, []);
 
   useEffect(() => {
-    if (typeof height === "number" && height > modifyChartChat.buyerProfileChartMinHeightPx) return;
+    if (typeof height === "number" && height > profileChartTheme.buyerProfileChartMinHeightPx) return;
     const node = rootRef.current;
     if (!node) return;
 
     const updateHeight = () => {
       const measured = Math.floor(node.clientHeight);
-      if (Number.isFinite(measured) && measured > modifyChartChat.buyerProfileChartMinHeightPx) {
+      if (Number.isFinite(measured) && measured > profileChartTheme.buyerProfileChartMinHeightPx) {
         setDynamicHeight(measured);
       }
     };
@@ -647,7 +647,7 @@ export default function BuyerProfileRealtimeChart({
     [ratingByTime]
   );
   const containerStyle =
-    typeof height === "number" && height > modifyChartChat.buyerProfileChartMinHeightPx
+    typeof height === "number" && height > profileChartTheme.buyerProfileChartMinHeightPx
       ? { height: `${height}px`, backgroundColor: chartColors.containerBackground }
       : { backgroundColor: chartColors.containerBackground };
 
@@ -663,29 +663,29 @@ export default function BuyerProfileRealtimeChart({
         data={seriesData}
         autoFitContent
         trackingTooltip={{
-          enabled: modifyChartChat.tooltip.enabled,
-          mode: modifyChartChat.tooltip.mode,
-          title: roleRatingTitle || modifyChartChat.tooltip.title,
+          enabled: profileChartTheme.tooltip.enabled,
+          mode: profileChartTheme.tooltip.mode,
+          title: roleRatingTitle || profileChartTheme.tooltip.title,
           subtitleBuilder: ({ time }) => {
             const rating = resolveTooltipRating(time);
             if (rating === null) return null;
             return {
-              label: modifyChartChat.tooltip.ratingLabel,
+              label: profileChartTheme.tooltip.ratingLabel,
               value: rating.toFixed(2),
             };
           },
-          widthPx: modifyChartChat.tooltip.widthPx,
-          minHeightPx: modifyChartChat.tooltip.minHeightPx,
-          offsetPx: modifyChartChat.tooltip.offsetPx,
-          borderRadiusPx: modifyChartChat.tooltip.borderRadiusPx,
-          fontSizePx: modifyChartChat.tooltip.fontSizePx,
-          priceDecimals: modifyChartChat.tooltip.priceDecimals,
-          locale: modifyChartChat.tooltip.locale,
-          backgroundColor: modifyChartChat.tooltip.backgroundColor,
-          borderColor: isMessageAlertActive ? chartPalette.priceLineColor : modifyChartChat.tooltip.borderColor,
-          titleColor: modifyChartChat.tooltip.titleColor,
-          valueColor: modifyChartChat.tooltip.valueColor,
-          dateColor: modifyChartChat.tooltip.dateColor,
+          widthPx: profileChartTheme.tooltip.widthPx,
+          minHeightPx: profileChartTheme.tooltip.minHeightPx,
+          offsetPx: profileChartTheme.tooltip.offsetPx,
+          borderRadiusPx: profileChartTheme.tooltip.borderRadiusPx,
+          fontSizePx: profileChartTheme.tooltip.fontSizePx,
+          priceDecimals: profileChartTheme.tooltip.priceDecimals,
+          locale: profileChartTheme.tooltip.locale,
+          backgroundColor: profileChartTheme.tooltip.backgroundColor,
+          borderColor: isMessageAlertActive ? chartPalette.priceLineColor : profileChartTheme.tooltip.borderColor,
+          titleColor: profileChartTheme.tooltip.titleColor,
+          valueColor: profileChartTheme.tooltip.valueColor,
+          dateColor: profileChartTheme.tooltip.dateColor,
         }}
         chartOptions={{
           layout: {
@@ -709,11 +709,11 @@ export default function BuyerProfileRealtimeChart({
           timeScale: {
             visible: true,
             borderVisible: false,
-            rightOffset: modifyChartChat.timeScale.rightOffset,
-            rightOffsetPixels: modifyChartChat.timeScale.rightOffsetPixels,
-            barSpacing: modifyChartChat.timeScale.barSpacing,
-            fixLeftEdge: modifyChartChat.timeScale.fixLeftEdge,
-            fixRightEdge: modifyChartChat.timeScale.fixRightEdge,
+            rightOffset: profileChartTheme.timeScale.rightOffset,
+            rightOffsetPixels: profileChartTheme.timeScale.rightOffsetPixels,
+            barSpacing: profileChartTheme.timeScale.barSpacing,
+            fixLeftEdge: profileChartTheme.timeScale.fixLeftEdge,
+            fixRightEdge: profileChartTheme.timeScale.fixRightEdge,
             timeVisible: true,
             secondsVisible: false,
             tickMarkFormatter: (time: Time, tickMarkType: TickMarkType) =>

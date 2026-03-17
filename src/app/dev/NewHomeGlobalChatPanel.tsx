@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BuyerProfileRealtimeChart from "@/components/charts/buyer-profile-realtime-chart";
-import { modifyChartChat } from "@/components/charts/modifychart-chat";
+import { profileChartTheme } from "@/components/charts/profile-chart-theme";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
@@ -27,9 +27,9 @@ import {
   type GlobalChatRoom,
 } from "@/lib/chat/global-chat-config";
 import {
-  chatGlobalBehaviorModify,
-  chatGlobalClassModify,
-  chatGlobalComponentClassModify,
+  globalChatBehavior,
+  globalChatClassNames,
+  globalChatComponentClassNames,
   getChatGlobalComposerShellStyle,
   getChatGlobalCssVars,
   getChatGlobalErrorCardStyle,
@@ -40,7 +40,7 @@ import {
   getChatGlobalSendButtonStyle,
   getChatGlobalStateCardStyle,
   getChatGlobalUserSheetStyle,
-} from "./chatglobal-modify";
+} from "./global-chat-layout";
 import { HomepageChatHeader } from "./components/HomepageChatHeader";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
@@ -205,7 +205,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
   const [isSelectedUserProfileLoading, setIsSelectedUserProfileLoading] = useState(false);
   const [realOnlineCount, setRealOnlineCount] = useState(0);
   const [displayOnlineCount, setDisplayOnlineCount] = useState<number>(
-    chatGlobalBehaviorModify.onlineDisplayBase
+    globalChatBehavior.onlineDisplayBase
   );
   const activeRoomRef = useRef<GlobalChatRoom>(activeRoom);
 
@@ -444,11 +444,11 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
   useEffect(() => {
     if (!open) return;
 
-    const minFloor = chatGlobalBehaviorModify.onlineMinFloor;
+    const minFloor = globalChatBehavior.onlineMinFloor;
     const target = Math.max(
       minFloor,
-      chatGlobalBehaviorModify.onlineDisplayBase +
-        Math.round(realOnlineCount * chatGlobalBehaviorModify.onlineInflateFactor)
+      globalChatBehavior.onlineDisplayBase +
+        Math.round(realOnlineCount * globalChatBehavior.onlineInflateFactor)
     );
 
     const tick = () => {
@@ -457,16 +457,16 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
         if (diff === 0) return current;
 
         const stepBase = Math.max(
-          chatGlobalBehaviorModify.onlineStepMin,
+          globalChatBehavior.onlineStepMin,
           Math.min(
-            chatGlobalBehaviorModify.onlineStepMax,
-            Math.floor(Math.abs(diff) * chatGlobalBehaviorModify.onlineStepScale)
+            globalChatBehavior.onlineStepMax,
+            Math.floor(Math.abs(diff) * globalChatBehavior.onlineStepScale)
           )
         );
 
         const jitter =
-          Math.floor(Math.random() * (chatGlobalBehaviorModify.onlineJitterAbs * 2 + 1)) -
-          chatGlobalBehaviorModify.onlineJitterAbs;
+          Math.floor(Math.random() * (globalChatBehavior.onlineJitterAbs * 2 + 1)) -
+          globalChatBehavior.onlineJitterAbs;
 
         const step = (diff > 0 ? 1 : -1) * (stepBase + jitter);
         const next = current + step;
@@ -476,8 +476,8 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
 
     const interval = window.setInterval(
       tick,
-      chatGlobalBehaviorModify.onlineTickBaseMs +
-        Math.floor(Math.random() * chatGlobalBehaviorModify.onlineTickJitterMs)
+      globalChatBehavior.onlineTickBaseMs +
+        Math.floor(Math.random() * globalChatBehavior.onlineTickJitterMs)
     );
 
     return () => {
@@ -680,9 +680,9 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
         ...cssVars,
         ...panelStyle,
       }}
-      className={cn(chatGlobalClassModify.panel, className)}
+      className={cn(globalChatClassNames.panel, className)}
     >
-      <div className={chatGlobalComponentClassModify.headerLayer}>
+      <div className={globalChatComponentClassNames.headerLayer}>
         <HomepageChatHeader
           onOpenMobileSidebar={() => {}}
           roomMenuRef={roomMenuRef}
@@ -698,40 +698,40 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
         />
       </div>
 
-      <div ref={listRef} className={chatGlobalComponentClassModify.messageList}>
+      <div ref={listRef} className={globalChatComponentClassNames.messageList}>
         {isLoading && messages.length === 0 ? (
-          <div className={chatGlobalComponentClassModify.stateCard} style={stateCardStyle}>
+          <div className={globalChatComponentClassNames.stateCard} style={stateCardStyle}>
             Loading chat...
           </div>
         ) : messages.length === 0 ? (
-          <div className={chatGlobalComponentClassModify.stateCard} style={stateCardStyle}>
+          <div className={globalChatComponentClassNames.stateCard} style={stateCardStyle}>
             No messages yet in this room.
           </div>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className={chatGlobalComponentClassModify.messageCard} style={messageCardStyle}>
-              <div className={chatGlobalComponentClassModify.messageRow}>
-                <Avatar size="default" className={chatGlobalComponentClassModify.messageAvatar}>
+            <div key={message.id} className={globalChatComponentClassNames.messageCard} style={messageCardStyle}>
+              <div className={globalChatComponentClassNames.messageRow}>
+                <Avatar size="default" className={globalChatComponentClassNames.messageAvatar}>
                   <AvatarImage src={message.avatarUrl || undefined} alt={message.displayName} />
-                  <AvatarFallback className={chatGlobalComponentClassModify.messageAvatarFallback}>
+                  <AvatarFallback className={globalChatComponentClassNames.messageAvatarFallback}>
                     {getAvatarFallback(message.displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <div className={chatGlobalComponentClassModify.messageBody}>
-                  <div className={chatGlobalComponentClassModify.messageHeader}>
+                <div className={globalChatComponentClassNames.messageBody}>
+                  <div className={globalChatComponentClassNames.messageHeader}>
                     <button
                       type="button"
                       onClick={() => setSelectedUserProfile(message)}
                       className={cn(
-                        chatGlobalComponentClassModify.messageDisplayName,
+                        globalChatComponentClassNames.messageDisplayName,
                         "cursor-pointer text-left transition hover:underline"
                       )}
                     >
                       {message.displayName}
                     </button>
-                    <span className={chatGlobalComponentClassModify.messageTime}>{formatTime(message.createdAt)}</span>
+                    <span className={globalChatComponentClassNames.messageTime}>{formatTime(message.createdAt)}</span>
                   </div>
-                  <p className={chatGlobalComponentClassModify.messageText}>{message.text}</p>
+                  <p className={globalChatComponentClassNames.messageText}>{message.text}</p>
                 </div>
               </div>
             </div>
@@ -739,27 +739,27 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
         )}
       </div>
 
-      <div className={chatGlobalComponentClassModify.composerShell} style={composerShellStyle}>
+      <div className={globalChatComponentClassNames.composerShell} style={composerShellStyle}>
         {isRulesOpen ? (
-          <div className={chatGlobalComponentClassModify.rulesCard} style={rulesCardStyle}>
-            <div className={chatGlobalComponentClassModify.rulesHeader}>
-              <span className={chatGlobalComponentClassModify.rulesTitle}>Chat Rules</span>
+          <div className={globalChatComponentClassNames.rulesCard} style={rulesCardStyle}>
+            <div className={globalChatComponentClassNames.rulesHeader}>
+              <span className={globalChatComponentClassNames.rulesTitle}>Chat Rules</span>
               <button
                 type="button"
                 onClick={() => setIsRulesOpen(false)}
-                className={chatGlobalComponentClassModify.rulesCloseButton}
+                className={globalChatComponentClassNames.rulesCloseButton}
                 aria-label="Close rules"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <ul className={chatGlobalComponentClassModify.rulesList}>
+            <ul className={globalChatComponentClassNames.rulesList}>
               <li>No spamming</li>
               <li>No advertising</li>
               <li>Zero tolerance for harassment</li>
               <li>No posting external links</li>
             </ul>
-            <div className={chatGlobalComponentClassModify.rulesActionWrap}>
+            <div className={globalChatComponentClassNames.rulesActionWrap}>
               <Button
                 onClick={() => {
                   try {
@@ -769,7 +769,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                   setHasAcceptedRules(true);
                   setIsRulesOpen(false);
                 }}
-                className={chatGlobalComponentClassModify.rulesAcceptButton}
+                className={globalChatComponentClassNames.rulesAcceptButton}
               >
                 Accept Rules
               </Button>
@@ -778,20 +778,20 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
         ) : null}
 
         {errorText ? (
-          <div className={chatGlobalComponentClassModify.errorCard} style={errorCardStyle}>
+          <div className={globalChatComponentClassNames.errorCard} style={errorCardStyle}>
             {errorText}
           </div>
         ) : null}
 
-        <div className={chatGlobalComponentClassModify.inputRow}>
-          <div className={chatGlobalComponentClassModify.inputWrap}>
+        <div className={globalChatComponentClassNames.inputRow}>
+          <div className={globalChatComponentClassNames.inputWrap}>
             <input
               ref={inputRef}
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value);
               }}
-              maxLength={chatGlobalBehaviorModify.maxMessageLength}
+              maxLength={globalChatBehavior.maxMessageLength}
               onClick={() => {
                 if (!user) return;
                 if (!hasAcceptedRules) {
@@ -814,10 +814,10 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
               readOnly={!canWrite}
               disabled={!isAuthenticated || isSending}
               className={cn(
-                chatGlobalComponentClassModify.inputBase,
+                globalChatComponentClassNames.inputBase,
                 canWrite
-                  ? chatGlobalComponentClassModify.inputCanWrite
-                  : chatGlobalComponentClassModify.inputReadOnly
+                  ? globalChatComponentClassNames.inputCanWrite
+                  : globalChatComponentClassNames.inputReadOnly
               )}
               style={inputStyle}
             />
@@ -828,15 +828,15 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: chatGlobalBehaviorModify.sendButtonMotionDuration }}
-                  className={chatGlobalComponentClassModify.sendButtonWrap}
+                  transition={{ duration: globalChatBehavior.sendButtonMotionDuration }}
+                  className={globalChatComponentClassNames.sendButtonWrap}
                 >
                   <Button
                     onClick={() => {
                       void handleSend();
                     }}
                     disabled={!canWrite || isSending}
-                    className={chatGlobalComponentClassModify.sendButton}
+                    className={globalChatComponentClassNames.sendButton}
                     style={sendButtonStyle}
                   >
                     <svg
@@ -862,8 +862,8 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
           </div>
         </div>
 
-        <div className={chatGlobalComponentClassModify.statusRow}>
-          <span className={chatGlobalComponentClassModify.statusOnline}>
+        <div className={globalChatComponentClassNames.statusRow}>
+          <span className={globalChatComponentClassNames.statusOnline}>
             <svg
               width="256px"
               height="256px"
@@ -872,7 +872,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
               xmlns="http://www.w3.org/2000/svg"
               stroke="var(--gc-footer-online-dot-stroke)"
               strokeWidth="0.40800000000000003"
-              className={chatGlobalComponentClassModify.statusOnlineDotIcon}
+              className={globalChatComponentClassNames.statusOnlineDotIcon}
             >
               <g strokeWidth="0" />
               <g strokeLinecap="round" strokeLinejoin="round" />
@@ -889,14 +889,14 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
           {!user ? (
             <Link
               href={`/auth?next=${encodeURIComponent(pathname || "/")}`}
-              className={chatGlobalComponentClassModify.statusSignInLink}
+              className={globalChatComponentClassNames.statusSignInLink}
             >
               <LogIn className="h-3.5 w-3.5" />
               Sign in to write
             </Link>
           ) : (
-            <span className={chatGlobalComponentClassModify.statusCounter}>
-              {draft.length}/{chatGlobalBehaviorModify.maxMessageLength}
+            <span className={globalChatComponentClassNames.statusCounter}>
+              {draft.length}/{globalChatBehavior.maxMessageLength}
             </span>
           )}
         </div>
@@ -910,17 +910,17 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
             animate={{ y: "0%" }}
             exit={{ y: "100%" }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className={chatGlobalComponentClassModify.userSheetPanel}
+            className={globalChatComponentClassNames.userSheetPanel}
             style={userSheetStyle}
           >
             <div className="mb-3 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Avatar size="default" className={chatGlobalComponentClassModify.userSheetAvatar}>
+                <Avatar size="default" className={globalChatComponentClassNames.userSheetAvatar}>
                   <AvatarImage
                     src={selectedUserProfileData?.avatarUrl || selectedUserProfile.avatarUrl || undefined}
                     alt={selectedUserProfile.displayName}
                   />
-                  <AvatarFallback className={chatGlobalComponentClassModify.messageAvatarFallback}>
+                  <AvatarFallback className={globalChatComponentClassNames.messageAvatarFallback}>
                     {getAvatarFallback(selectedUserProfile.displayName)}
                   </AvatarFallback>
                 </Avatar>
@@ -933,11 +933,11 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                       setSelectedUserProfile(null);
                       router.push(`/profile/${targetUserId}`);
                     }}
-                    className={chatGlobalComponentClassModify.userSheetDisplayName}
+                    className={globalChatComponentClassNames.userSheetDisplayName}
                   >
                     {selectedUserProfile.displayName}
                   </button>
-                  <p className={chatGlobalComponentClassModify.userSheetHandle}>
+                  <p className={globalChatComponentClassNames.userSheetHandle}>
                     @{selectedUserProfileData?.handle || selectedUserProfile.handle}
                   </p>
                 </div>
@@ -946,7 +946,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
               <button
                 type="button"
                 onClick={() => setSelectedUserProfile(null)}
-                className={chatGlobalComponentClassModify.rulesCloseButton}
+                className={globalChatComponentClassNames.rulesCloseButton}
                 aria-label="Close user profile"
               >
                 <X className="h-4 w-4" />
@@ -954,15 +954,15 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
             </div>
 
             {isSelectedUserProfileLoading ? (
-              <p className={chatGlobalComponentClassModify.userSheetLoading}>Loading profile...</p>
+              <p className={globalChatComponentClassNames.userSheetLoading}>Loading profile...</p>
             ) : (
-              <div className={cn(chatGlobalComponentClassModify.userSheetBody, "space-y-1")}>
+              <div className={cn(globalChatComponentClassNames.userSheetBody, "space-y-1")}>
                 <p>
-                  <span className={chatGlobalComponentClassModify.userSheetLabel}>Member since:</span>{" "}
+                  <span className={globalChatComponentClassNames.userSheetLabel}>Member since:</span>{" "}
                   {formatDateLabel(selectedUserProfileData?.memberSince || selectedUserProfile.memberSince || null)}
                 </p>
                 <p>
-                  <span className={chatGlobalComponentClassModify.userSheetLabel}>Roles:</span>{" "}
+                  <span className={globalChatComponentClassNames.userSheetLabel}>Roles:</span>{" "}
                   {selectedUserProfileData?.isSeller && selectedUserProfileData?.isBuyer
                     ? "Seller, Buyer"
                     : selectedUserProfileData?.isSeller
@@ -971,28 +971,28 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                 </p>
                 {selectedUserProfileData?.isSeller ? (
                   <p>
-                    <span className={chatGlobalComponentClassModify.userSheetLabel}>Seller status:</span>{" "}
+                    <span className={globalChatComponentClassNames.userSheetLabel}>Seller status:</span>{" "}
                     {selectedUserProfileData.sellerStatus || "Standard"}
                   </p>
                 ) : null}
                 <p>
-                  <span className={chatGlobalComponentClassModify.userSheetLabel}>Total messages:</span>{" "}
+                  <span className={globalChatComponentClassNames.userSheetLabel}>Total messages:</span>{" "}
                   {selectedUserProfileData?.totalMessages ?? 0}
                 </p>
                 {selectedUserProfileData?.isBuyer ? (
                   <p>
-                    <span className={chatGlobalComponentClassModify.userSheetLabel}>Purchases:</span>{" "}
+                    <span className={globalChatComponentClassNames.userSheetLabel}>Purchases:</span>{" "}
                     {selectedUserProfileData?.purchasesCount ?? "Private"}
                   </p>
                 ) : null}
                 {selectedUserProfileData?.isBuyer ? (
                   <p>
-                    <span className={chatGlobalComponentClassModify.userSheetLabel}>Buyer ranking:</span>{" "}
+                    <span className={globalChatComponentClassNames.userSheetLabel}>Buyer ranking:</span>{" "}
                     {selectedUserProfileData?.buyerRanking ?? "Private"}
                   </p>
                 ) : null}
                 <p>
-                  <span className={chatGlobalComponentClassModify.userSheetLabel}>Last active:</span>{" "}
+                  <span className={globalChatComponentClassNames.userSheetLabel}>Last active:</span>{" "}
                   {selectedUserProfileData?.lastMessageAt
                     ? `${formatDateLabel(selectedUserProfileData.lastMessageAt)} (${formatRelativeTime(selectedUserProfileData.lastMessageAt)})`
                     : "Unknown"}
@@ -1001,8 +1001,8 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                   <div
                     className="mt-2 overflow-hidden rounded-2xl"
                     style={{
-                      height: `${modifyChartChat.buyerProfileChartHeightPx}px`,
-                      backgroundColor: modifyChartChat.colors.containerBackground,
+                      height: `${profileChartTheme.buyerProfileChartHeightPx}px`,
+                      backgroundColor: profileChartTheme.colors.containerBackground,
                     }}
                   >
                     <BuyerProfileRealtimeChart
@@ -1015,7 +1015,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                             : "Buyer Rating"
                         }
                         className="h-full w-full"
-                        height={modifyChartChat.buyerProfileChartHeightPx}
+                        height={profileChartTheme.buyerProfileChartHeightPx}
                       />
                     </div>
                 ) : null}

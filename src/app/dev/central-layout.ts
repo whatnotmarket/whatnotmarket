@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 
-export const bloccoCentraleLayoutModify = {
+export const centralLayoutConfig = {
   leftSpace: "clamp(90px, 15vw, 122px)",
 } as const;
 
-export const bloccoCentraleModify = {
+export const centralSurfaceStyle = {
   backgroundColor: "rgba(30, 36, 40, 0.43)",
   boxShadow: "inset 0 2px 0 rgba(255,255,255,0.02)",
   borderTopLeftRadius: "20px",
@@ -13,10 +13,10 @@ export const bloccoCentraleModify = {
   borderBottom: "none",
 } as const;
 
-export function getBloccoCentraleModifyStyle(): CSSProperties {
-  return { ...bloccoCentraleModify } as CSSProperties;
+export function getCentralLayoutStyle(): CSSProperties {
+  return { ...centralSurfaceStyle } as CSSProperties;
 }
 
-export function getBloccoCentraleLeftSpace(): string {
-  return bloccoCentraleLayoutModify.leftSpace;
+export function getCentralLeftSpace(): string {
+  return centralLayoutConfig.leftSpace;
 }

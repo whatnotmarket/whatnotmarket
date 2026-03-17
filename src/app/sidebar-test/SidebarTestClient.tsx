@@ -25,7 +25,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { SIDEBAR_TOOLTIPS } from "./tooltip-modify";
+import { SIDEBAR_TOOLTIPS } from "./sidebar-tooltips";
 import { useUser } from "@/contexts/UserContext";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";

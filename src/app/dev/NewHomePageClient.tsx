@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { NewHomeCommandSearch } from "./NewHomeCommandSearch";
-import { getBloccoCentraleLeftSpace, getBloccoCentraleModifyStyle } from "./bloccocentrale-modify";
+import { getCentralLeftSpace, getCentralLayoutStyle } from "./central-layout";
 import {
   getActionsToSearchGapWhenChatClosed,
   getAuthButtonsShellStyle,
@@ -22,24 +22,24 @@ import {
   getSignUpButtonGap,
   getSignUpButtonLabelStyle,
   getSignUpButtonStyle,
-} from "./chatglobalbutton-modify";
+} from "./global-chat-button-layout";
 import {
-  chatGlobalClassModify,
+  globalChatClassNames,
   getChatGlobalCentralBlockOpenTopRightRadius,
   getChatGlobalCenterRightInset,
   getChatGlobalContainerStyle,
   getChatGlobalMotionSpec,
-} from "./chatglobal-modify";
+} from "./global-chat-layout";
 import { NewHomeGlobalChatPanel } from "./NewHomeGlobalChatPanel";
-import { getSearchbarModifyVars } from "./searchbar-modify";
+import { getCommandSearchThemeVars } from "./command-search-theme";
 import {
   getSidebarContainerStyle,
   getSidebarLeftSpace,
-  getSidebarProfileSheetModify,
-  getSidebarThemeModify,
-  sidebarBehaviorModify,
-  sidebarClassModify,
-} from "./sidebar-modify";
+  getSidebarProfileSheetLayoutOverrides,
+  getSidebarThemeOverrides,
+  sidebarBehavior,
+  sidebarClassNames,
+} from "./sidebar-layout";
 import SidebarTestClient from "../sidebar-test/SidebarTestClient";
 
 const NEW_HOME_GLOBAL_CHAT_OPEN_STORAGE_KEY = "new_home_global_chat_open";
@@ -122,13 +122,13 @@ export function NewHomePageClient() {
   const chatContainerStyle = getChatGlobalContainerStyle(searchTop);
   const chatMotionSpec = getChatGlobalMotionSpec();
   const centralBlockOpenTopRightRadius = getChatGlobalCentralBlockOpenTopRightRadius();
-  const searchbarVars = getSearchbarModifyVars();
-  const bloccoCentraleStyle = getBloccoCentraleModifyStyle();
-  const bloccoCentraleLeftSpace = getBloccoCentraleLeftSpace();
-  const sidebarLeftSpace = getSidebarLeftSpace(bloccoCentraleLeftSpace);
+  const searchbarVars = getCommandSearchThemeVars();
+  const centralLayoutStyle = getCentralLayoutStyle();
+  const centralLeftSpace = getCentralLeftSpace();
+  const sidebarLeftSpace = getSidebarLeftSpace(centralLeftSpace);
   const sidebarContainerStyle = getSidebarContainerStyle(panelTop, sidebarLeftSpace);
-  const sidebarTheme = getSidebarThemeModify();
-  const sidebarProfileSheetLayout = getSidebarProfileSheetModify();
+  const sidebarTheme = getSidebarThemeOverrides();
+  const sidebarProfileSheetLayout = getSidebarProfileSheetLayoutOverrides();
   const [hasHydrated, setHasHydrated] = useState(false);
   const [sidebarActiveWidthPx, setSidebarActiveWidthPx] = useState(sidebarClosedRailWidthPx);
   const [isInitialRestoreMotionLocked, setIsInitialRestoreMotionLocked] = useState(true);
@@ -253,7 +253,7 @@ export function NewHomePageClient() {
         return;
       }
       if (
-        sidebarBehaviorModify.stopWheelForwardWhenHover &&
+        sidebarBehavior.stopWheelForwardWhenHover &&
         target instanceof Node &&
         leftSidebarRef.current?.contains(target)
       ) {
@@ -374,20 +374,20 @@ export function NewHomePageClient() {
 
       <section
         ref={leftSidebarRef}
-        className={sidebarClassModify.container}
+        className={sidebarClassNames.container}
         style={sidebarContainerStyle}
       >
-        <div className={sidebarClassModify.inner}>
+        <div className={sidebarClassNames.inner}>
           <SidebarTestClient
-            embedded={sidebarBehaviorModify.embedded}
-            forceVisible={sidebarBehaviorModify.forceVisible}
+            embedded={sidebarBehavior.embedded}
+            forceVisible={sidebarBehavior.forceVisible}
             theme={sidebarTheme}
             profileSheetLayout={sidebarProfileSheetLayout}
             compactExpandedPersistenceKey={NEW_HOME_SIDEBAR_COMPACT_EXPANDED_STORAGE_KEY}
             onWidthChange={(width) => {
               setSidebarActiveWidthPx((current) => (current === width ? current : width));
             }}
-            className={sidebarClassModify.client}
+            className={sidebarClassNames.client}
           />
         </div>
       </section>
@@ -401,7 +401,7 @@ export function NewHomePageClient() {
             exit={chatMotionSpec.exit}
             transition={chatPanelTransition}
             data-sidebar-keep-open="true"
-            className={chatGlobalClassModify.container}
+            className={globalChatClassNames.container}
             style={chatContainerStyle}
           >
             <NewHomeGlobalChatPanel
@@ -422,10 +422,10 @@ export function NewHomePageClient() {
           right: adaptiveRightInset,
           bottom: "calc(env(safe-area-inset-bottom, 0px) * -1)",
           transition: layoutTransition,
-          ...bloccoCentraleStyle,
+          ...centralLayoutStyle,
           borderTopRightRadius: isGlobalChatOpen
             ? centralBlockOpenTopRightRadius
-            : bloccoCentraleStyle.borderTopRightRadius,
+            : centralLayoutStyle.borderTopRightRadius,
         }}
       >
         <div
@@ -438,7 +438,7 @@ export function NewHomePageClient() {
           }}
         >
           <p className="text-sm font-medium text-white/80">
-            Test scroll in fondo al blocco centrale: se leggi questa riga, lo scroll interno funziona.
+            Internal scroll check: if this text is visible at the bottom, central scrolling is working.
           </p>
         </div>
       </section>

@@ -76,7 +76,7 @@ const panelVars = {
   "--gc-text-tertiary": "#e2e2e2ff",
 } as const;
 
-export const searchbarModify = {
+export const commandSearchTheme = {
   triggerPlaceholder: "Search openly for products, categories, sellers, and more....",
   rightHint: "Ctrl K",
   searchbar: searchbarVars,
@@ -89,6 +89,6 @@ export const searchbarModify = {
   } as CssVarMap,
 } as const;
 
-export function getSearchbarModifyVars(): CSSProperties {
-  return { ...searchbarModify.vars } as CSSProperties;
+export function getCommandSearchThemeVars(): CSSProperties {
+  return { ...commandSearchTheme.vars } as CSSProperties;
 }

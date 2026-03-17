@@ -1,7 +1,7 @@
 "use client";
 
 import { GlobalCommandSearch } from "@/components/search/GlobalCommandSearch";
-import { searchbarModify } from "./searchbar-modify";
+import { commandSearchTheme } from "./command-search-theme";
 
 type NewHomeCommandSearchProps = {
   className?: string;
@@ -12,8 +12,8 @@ export function NewHomeCommandSearch({ className }: NewHomeCommandSearchProps) {
     <GlobalCommandSearch
       className={className}
       variant="polymarket"
-      triggerPlaceholder={searchbarModify.triggerPlaceholder}
-      rightHint={searchbarModify.rightHint}
+      triggerPlaceholder={commandSearchTheme.triggerPlaceholder}
+      rightHint={commandSearchTheme.rightHint}
     />
   );
 }

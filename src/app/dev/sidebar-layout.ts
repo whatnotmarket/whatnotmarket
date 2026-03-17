@@ -6,7 +6,7 @@ const sidebarPaddingLeftPx = 15;
 const sidebarPaddingRightPx = 6;
 const sidebarPaddingBottomPx = 0;
 
-export const sidebarLayoutModify = {
+export const sidebarLayoutConfig = {
   minRailWidth: "92px",
   left: `${sidebarLeftPx}px`,
   bottom: "calc(env(safe-area-inset-bottom, 0px) * -1)",
@@ -15,20 +15,19 @@ export const sidebarLayoutModify = {
   paddingBottom: `${sidebarPaddingBottomPx}px`,
 } as const;
 
-export const sidebarClassModify = {
+export const sidebarClassNames = {
   container: "fixed z-[80] block overflow-visible",
   inner: "h-full min-h-0",
   client: "h-full min-h-0 w-full",
 } as const;
 
-export const sidebarBehaviorModify = {
+export const sidebarBehavior = {
   stopWheelForwardWhenHover: true,
   embedded: true,
   forceVisible: true,
 } as const;
 
-// Posizione pannello profilo che si apre dalla sidebar piccola.
-export const sidebarProfileSheetModify: Partial<SidebarProfileSheetLayout> = {
+export const sidebarProfileSheetLayoutOverrides: Partial<SidebarProfileSheetLayout> = {
   leftTop: "-1px",
   leftBottom: "86px",
   leftLeft: "0px",
@@ -43,8 +42,7 @@ export const sidebarProfileSheetModify: Partial<SidebarProfileSheetLayout> = {
   duplicateToggleZIndex: 240,
 };
 
-// Tutto il tema visivo della sidebar sta qui: colori, bordi, radius, shadow.
-export const sidebarThemeModify: Partial<SidebarTestTheme> = {
+export const sidebarThemeOverrides: Partial<SidebarTestTheme> = {
   shellBackground: "#1e2428aa",
   shellBorderColor: "#1e242849",
   shellBorderWidth: "0px",
@@ -97,26 +95,26 @@ export const sidebarThemeModify: Partial<SidebarTestTheme> = {
   toggleHint: "rgba(255, 255, 255, 0.8)",
 };
 
-export function getSidebarLeftSpace(bloccoCentraleLeftSpace: string): string {
-  return `max(${sidebarLayoutModify.minRailWidth}, ${bloccoCentraleLeftSpace})`;
+export function getSidebarLeftSpace(centralLeftSpace: string): string {
+  return `max(${sidebarLayoutConfig.minRailWidth}, ${centralLeftSpace})`;
 }
 
 export function getSidebarContainerStyle(panelTop: string, sidebarLeftSpace: string): CSSProperties {
   return {
     top: panelTop,
-    left: sidebarLayoutModify.left,
-    bottom: sidebarLayoutModify.bottom,
+    left: sidebarLayoutConfig.left,
+    bottom: sidebarLayoutConfig.bottom,
     width: sidebarLeftSpace,
-    paddingLeft: sidebarLayoutModify.paddingLeft,
-    paddingRight: sidebarLayoutModify.paddingRight,
-    paddingBottom: sidebarLayoutModify.paddingBottom,
+    paddingLeft: sidebarLayoutConfig.paddingLeft,
+    paddingRight: sidebarLayoutConfig.paddingRight,
+    paddingBottom: sidebarLayoutConfig.paddingBottom,
   } as CSSProperties;
 }
 
-export function getSidebarThemeModify(): Partial<SidebarTestTheme> {
-  return { ...sidebarThemeModify };
+export function getSidebarThemeOverrides(): Partial<SidebarTestTheme> {
+  return { ...sidebarThemeOverrides };
 }
 
-export function getSidebarProfileSheetModify(): Partial<SidebarProfileSheetLayout> {
-  return { ...sidebarProfileSheetModify };
+export function getSidebarProfileSheetLayoutOverrides(): Partial<SidebarProfileSheetLayout> {
+  return { ...sidebarProfileSheetLayoutOverrides };
 }

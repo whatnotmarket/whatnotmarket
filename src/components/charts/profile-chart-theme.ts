@@ -1,4 +1,4 @@
-export const modifyChartChat = {
+export const profileChartTheme = {
   buyerProfileChartHeightPx: 330,
   buyerProfileChartFallbackHeightPx: 330,
   buyerProfileChartMinHeightPx: 60,
