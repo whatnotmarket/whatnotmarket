@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import BuyerProfileRealtimeChart from "@/components/charts/buyer-profile-realtime-chart";
+import { modifyChartChat } from "@/components/charts/modifychart-chat";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
@@ -954,7 +956,7 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
             {isSelectedUserProfileLoading ? (
               <p className={chatGlobalComponentClassModify.userSheetLoading}>Loading profile...</p>
             ) : (
-              <div className={chatGlobalComponentClassModify.userSheetBody}>
+              <div className={cn(chatGlobalComponentClassModify.userSheetBody, "space-y-1")}>
                 <p>
                   <span className={chatGlobalComponentClassModify.userSheetLabel}>Member since:</span>{" "}
                   {formatDateLabel(selectedUserProfileData?.memberSince || selectedUserProfile.memberSince || null)}
@@ -995,6 +997,28 @@ export function NewHomeGlobalChatPanel({ open, onClose, className }: NewHomeGlob
                     ? `${formatDateLabel(selectedUserProfileData.lastMessageAt)} (${formatRelativeTime(selectedUserProfileData.lastMessageAt)})`
                     : "Unknown"}
                 </p>
+                {selectedUserProfileData?.isBuyer ? (
+                  <div
+                    className="mt-2 overflow-hidden rounded-2xl"
+                    style={{
+                      height: `${modifyChartChat.buyerProfileChartHeightPx}px`,
+                      backgroundColor: modifyChartChat.colors.containerBackground,
+                    }}
+                  >
+                    <BuyerProfileRealtimeChart
+                      key={`buyer-chart-${selectedUserProfileData.userId}`}
+                        userId={selectedUserProfileData.userId}
+                        memberSince={selectedUserProfileData.memberSince}
+                        roleRatingTitle={
+                          selectedUserProfileData?.isSeller && !selectedUserProfileData?.isBuyer
+                            ? "Seller Rating"
+                            : "Buyer Rating"
+                        }
+                        className="h-full w-full"
+                        height={modifyChartChat.buyerProfileChartHeightPx}
+                      />
+                    </div>
+                ) : null}
               </div>
             )}
           </motion.div>

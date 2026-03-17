@@ -182,7 +182,7 @@ export const chatGlobalComponentClassModify = {
   statusCounter: "text-[var(--gc-footer-counter)]",
   statusOnlineDotIcon: "h-6 w-6",
   userSheetPanel:
-    "absolute bottom-2 left-2 right-2 z-[95] h-[60%] overflow-y-auto rounded-3xl border p-3",
+    "absolute bottom-2 left-2 right-2 z-[95] h-[60%] overflow-hidden rounded-3xl border p-3",
   userSheetAvatar: "shrink-0 border border-[var(--gc-user-sheet-border)]",
   userSheetDisplayName:
     "truncate text-left text-sm font-bold text-[var(--gc-user-sheet-title-text)] transition hover:underline",
