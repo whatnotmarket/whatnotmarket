@@ -53,7 +53,7 @@ export function buildIndexableMetadata({
       siteName: "OpenlyMarket",
       images: [
         {
-          url: "/images/svg/openly-logowhite.svg",
+          url: "/images/ico/faviconbianco.ico",
           alt: "OpenlyMarket",
         },
       ],
@@ -62,7 +62,7 @@ export function buildIndexableMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: ["/images/svg/openly-logowhite.svg"],
+      images: ["/images/ico/faviconbianco.ico"],
     },
   };
 }

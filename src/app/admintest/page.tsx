@@ -1531,7 +1531,7 @@ export default function AdminPage() {
         <Sidebar variant="inset" collapsible="offcanvas" className="border-r border-zinc-900">
           <SidebarHeader className="border-b border-zinc-900">
             <Link href={routeBase} className="flex items-center gap-2 rounded-md px-1 py-1.5">
-              <Image src="/images/svg/openly-logowhite.svg" alt="OpenlyMarket logo" width={28} height={28} className="h-7 w-7 object-contain" />
+              <Image src="/images/ico/faviconbianco.ico" alt="OpenlyMarket logo" width={28} height={28} className="h-7 w-7 object-contain" />
               <div className="flex flex-col leading-none">
                 <span className="text-sm font-semibold">OpenlyMarket</span>
                 <span className="text-[11px] uppercase tracking-wide text-zinc-500">Admin</span>

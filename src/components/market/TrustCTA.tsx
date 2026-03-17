@@ -58,10 +58,7 @@ export function TrustCTA({ copy }: TrustCTAProps) {
           innerClassName="p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden"
         >
           <div className="absolute inset-0 z-0">
-            <div
-              className="absolute inset-0 h-full w-full bg-cover bg-center opacity-80"
-              style={{ backgroundImage: "url('/images/svg/openly-affiliate-bg.svg')" }}
-            />
+            <div className="absolute inset-0 h-full w-full bg-[radial-gradient(circle_at_20%_40%,rgba(255,255,255,0.2),transparent_45%),radial-gradient(circle_at_80%_60%,rgba(255,255,255,0.15),transparent_50%)]" />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 

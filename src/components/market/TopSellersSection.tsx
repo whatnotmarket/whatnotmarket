@@ -38,7 +38,7 @@ function SellerRow({ title, sellers }: { title: string; sellers: Seller[] }) {
             <div className="relative">
               <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden bg-zinc-800 border-2 border-transparent group-hover:border-white/20 transition-all relative">
                 <Image 
-                  src={seller.avatar || "/images/svg/openly-placeholder.svg"} 
+                  src={seller.avatar || "/images/ico/faviconbianco.ico"} 
                   alt={seller.name || "Seller"} 
                   fill 
                   className="object-cover group-hover:scale-110 transition-transform duration-500" 

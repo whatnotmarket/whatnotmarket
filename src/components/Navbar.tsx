@@ -37,7 +37,7 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link href="/market" className="group flex cursor-pointer items-center gap-2">
               <Image
-                src="/images/svg/openly-logowhite.svg"
+                src="/images/ico/faviconbianco.ico"
                 alt="OpenlyMarket"
                 width={80}
                 height={40}

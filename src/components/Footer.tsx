@@ -45,7 +45,7 @@ export function Footer() {
             <Link href="/" className="block">
               <div className="relative w-40 h-10">
                 <Image 
-                  src="/images/svg/openly-logowhite.svg" 
+                  src="/images/ico/faviconbianco.ico" 
                   alt="OpenlyMarket" 
                   fill 
                   className="object-contain object-left" 

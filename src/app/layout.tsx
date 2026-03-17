@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { FaviconAttention } from "@/components/FaviconAttention";
 import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
 import { SeoInternalLinks } from "@/components/SeoInternalLinks";
 import Providers from "@/components/providers";
@@ -63,7 +62,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/images/svg/openly-logowhite.svg",
+        url: "/images/ico/faviconbianco.ico",
         alt: "OpenlyMarket",
       },
     ],
@@ -72,13 +71,13 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "OpenlyMarket | Secure Crypto Marketplace for Buyers and Sellers",
     description: DEFAULT_SEO_DESCRIPTION,
-    images: ["/images/svg/openly-logowhite.svg"],
+    images: ["/images/ico/faviconbianco.ico"],
   },
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/images/ico/faviconbase.ico", type: "image/x-icon" }],
+    icon: [{ url: "/images/ico/faviconbianco.ico", type: "image/x-icon" }],
     apple: [{ url: "/images/png/openly-pwa-192.png", sizes: "192x192", type: "image/png" }],
-    shortcut: ["/images/ico/faviconbase.ico"],
+    shortcut: ["/images/ico/faviconbianco.ico"],
   },
   appleWebApp: {
     capable: true,
@@ -185,7 +184,6 @@ export default async function RootLayout({
         <SeoInternalLinks />
         <Analytics />
         <SpeedInsights />
-        <FaviconAttention />
       </body>
     </html>
   );
