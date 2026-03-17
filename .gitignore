@@ -13,6 +13,10 @@
 # ahrefs
 /ahrefs
 
+# local runtime data (keep only explicit examples if needed)
+/data/*.json
+!/data/*.example.json
+
 # docs
 /docs
 

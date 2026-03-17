@@ -3,10 +3,9 @@ import { NextResponse } from "next/server";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 
 const ONBOARDING_GATE_COOKIE = "onboarding_gate_access";
-const DEFAULT_ONBOARDING_GATE_PASSWORD = "29Aprile!";
 
 function getGatePassword() {
-  return process.env.ONBOARDING_GATE_PASSWORD || DEFAULT_ONBOARDING_GATE_PASSWORD;
+  return String(process.env.ONBOARDING_GATE_PASSWORD || "").trim();
 }
 
 function safeEqual(input: string, expected: string) {
@@ -26,6 +25,13 @@ export async function POST(request: Request) {
   const candidate = String(body.password || "");
   const expected = getGatePassword();
 
+  if (!expected) {
+    return NextResponse.json(
+      { ok: false, error: "Onboarding gate password is not configured." },
+      { status: 503 },
+    );
+  }
+
   // Small fixed delay to reduce brute-force signal quality.
   await new Promise((resolve) => setTimeout(resolve, 250));
 
@@ -43,4 +49,3 @@ export async function POST(request: Request) {
   });
   return response;
 }
-

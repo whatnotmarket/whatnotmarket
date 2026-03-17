@@ -3,10 +3,9 @@ import { NextResponse } from "next/server";
 import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/rate-limit";
 
 const SIDEBAR_TEST_GATE_COOKIE = "sidebar_test_gate_access";
-const DEFAULT_SIDEBAR_TEST_GATE_PASSWORD = "29Aprile!";
 
 function getGatePassword() {
-  return process.env.SIDEBAR_TEST_GATE_PASSWORD || DEFAULT_SIDEBAR_TEST_GATE_PASSWORD;
+  return String(process.env.SIDEBAR_TEST_GATE_PASSWORD || "").trim();
 }
 
 function safeEqual(input: string, expected: string) {
@@ -25,6 +24,13 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { password?: string };
   const candidate = String(body.password || "");
   const expected = getGatePassword();
+
+  if (!expected) {
+    return NextResponse.json(
+      { ok: false, error: "Sidebar test gate password is not configured." },
+      { status: 503 },
+    );
+  }
 
   // Small fixed delay to reduce brute-force signal quality.
   await new Promise((resolve) => setTimeout(resolve, 250));
