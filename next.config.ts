@@ -9,6 +9,16 @@ const supabaseHostname = (() => {
   }
 })();
 
+const twicPicsHostname = (() => {
+  const value = (process.env.NEXT_PUBLIC_TWICPICS_DOMAIN ?? "").trim();
+  if (!value) return "";
+  try {
+    return value.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+})();
+
 const shouldDisablePwa = (() => {
   if (process.env.NODE_ENV === "development") return true;
   if (process.env.DISABLE_PWA === "true") return true;
@@ -50,6 +60,16 @@ const nextConfig: NextConfig = {
             {
               protocol: "https" as const,
               hostname: supabaseHostname,
+              port: "",
+              pathname: "/**",
+            },
+          ]
+        : []),
+      ...(twicPicsHostname
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: twicPicsHostname,
               port: "",
               pathname: "/**",
             },
@@ -128,6 +148,11 @@ const nextConfig: NextConfig = {
       {
         source: "/trust",
         destination: "/secure-transaction",
+        permanent: true,
+      },
+      {
+        source: "/favicon.ico",
+        destination: "/images/ico/favicon.ico",
         permanent: true,
       },
     ];

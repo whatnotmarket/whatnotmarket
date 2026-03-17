@@ -43,7 +43,7 @@ export function MarketSearch() {
         />
         <Link href="/smart-search" className="flex items-center justify-center w-12 h-12 hover:scale-105 transition-transform cursor-pointer" title="Smart Search">
           <Image 
-            src="/thinsmooth.svg" 
+            src="/images/svg/openly-thinsmooth.svg" 
             alt="Smart Search" 
             width={24} 
             height={24}

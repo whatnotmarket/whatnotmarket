@@ -71,7 +71,7 @@ export function ProductUrlInput({
       <div className="space-y-4 text-center">
         <div className="mb-2 flex items-center justify-center gap-2">
           <Image
-            src="/thinsmooth.svg"
+            src="/images/svg/openly-thinsmooth.svg"
             alt="Smart Search"
             width={24}
             height={24}

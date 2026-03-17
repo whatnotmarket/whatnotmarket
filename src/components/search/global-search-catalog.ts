@@ -150,7 +150,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     category: "Running",
     color: "black",
     condition: "used",
-    thumbnailUrl: "/thinsmooth.svg",
+    thumbnailUrl: "/images/svg/openly-thinsmooth.svg",
   },
   {
     id: "product-adidas-ultraboost",
@@ -172,7 +172,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     category: "Running",
     color: "white",
     condition: "new",
-    thumbnailUrl: "/thinsmooth.svg",
+    thumbnailUrl: "/images/svg/openly-thinsmooth.svg",
   },
   {
     id: "brand-nike",
@@ -187,7 +187,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     conversionScore: 0.73,
     businessPriority: 7,
     recencyTs: NOW - 12 * 3_600_000,
-    thumbnailUrl: "/thinsmooth.svg",
+    thumbnailUrl: "/images/svg/openly-thinsmooth.svg",
   },
   {
     id: "brand-apple",
@@ -202,7 +202,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     conversionScore: 0.7,
     businessPriority: 7,
     recencyTs: NOW - 40 * 3_600_000,
-    thumbnailUrl: "/thinsmooth.svg",
+    thumbnailUrl: "/images/svg/openly-thinsmooth.svg",
   },
   {
     id: "category-running",

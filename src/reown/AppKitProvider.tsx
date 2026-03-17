@@ -16,7 +16,7 @@ const metadata = {
   name: "openlymarket-appkit-test",
   description: "OpenlyMarket AppKit test",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  icons: ["/logowhite.svg"],
+  icons: ["/images/svg/openly-logowhite.svg"],
 };
 
 createAppKit({

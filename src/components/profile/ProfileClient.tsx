@@ -161,7 +161,7 @@ function getRoleDefaults(isSeller: boolean) {
     avatar: isSeller
       ? "https://ui-avatars.com/api/?name=Seller&background=10b981&color=fff"
       : "https://ui-avatars.com/api/?name=Buyer&background=3b82f6&color=fff",
-    banner: "/framehero.svg",
+    banner: "/images/svg/openly-framehero.svg",
   };
 }
 
@@ -343,7 +343,7 @@ export function ProfileClient({
   const bannerRef = useRef<HTMLDivElement>(null);
   const [bannerObjectFit, setBannerObjectFit] = useState<"cover" | "fill">("cover");
 
-  const displayBannerSrc = isEditing ? editForm.banner || profile?.banner || "/framehero.svg" : profile?.banner || "/framehero.svg";
+  const displayBannerSrc = isEditing ? editForm.banner || profile?.banner || "/images/svg/openly-framehero.svg" : profile?.banner || "/images/svg/openly-framehero.svg";
 
   // Use dynamic copy
   const statsCopy = copy['stats'] || {};
@@ -1191,7 +1191,7 @@ export function ProfileClient({
                         className="w-full h-9 md:h-10 rounded-xl font-bold bg-black text-white hover:bg-zinc-900 border border-white/10 flex items-center justify-center gap-2 transition-all text-sm md:text-base"
                       >
                         <Image 
-                          src="/chat.png" 
+                          src="/images/png/openly-chat.png" 
                           alt="Chat" 
                           width={20} 
                           height={20} 

@@ -7,15 +7,81 @@ import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
 import {
   LOCALE_COOKIE_NAME,
   detectPreferredLocale,
+  isSupportedLocale,
   isPathNonLocalized,
   shouldLocalizePath,
   stripLocaleFromPathname,
   withLocale,
 } from "@/i18n/config";
 
+const LOCAL_ONLY_EXACT_PATHS = new Set<string>([
+  "/about",
+  "/auth",
+  "/become-escrow",
+  "/become-seller",
+  "/broker",
+  "/business",
+  "/buy-with-crypto",
+  "/contact",
+  "/copy-demo",
+  "/dashboard",
+  "/dev",
+  "/disclaimer",
+  "/escrow",
+  "/faq",
+  "/fee-calculator",
+  "/grafici-dev",
+  "/homepage",
+  "/install",
+  "/link",
+  "/market",
+  "/my-deals",
+  "/notifications",
+  "/notifichetest",
+  "/open-dispute",
+  "/open-source",
+  "/privacy",
+  "/profile",
+  "/promote-listings",
+  "/redeem",
+  "/refund",
+  "/requests",
+  "/roadmap",
+  "/secure-transaction",
+  "/sell",
+  "/sidebar-test",
+  "/smart-search",
+  "/terms",
+  "/testlogin",
+]);
+
+const LOCAL_ONLY_PREFIXES = [
+  "/buyer/",
+  "/category/",
+  "/deal/",
+  "/deals/",
+  "/inbox",
+  "/listing/",
+  "/profile/",
+  "/requests/",
+  "/seller/",
+  "/track/",
+  "/user/",
+] as const;
+
+function isLocalHostname(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+function isLocalOnlyPath(pathname: string) {
+  if (LOCAL_ONLY_EXACT_PATHS.has(pathname)) return true;
+  return LOCAL_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
+}
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
+  const hostname = request.nextUrl.hostname.toLowerCase();
   const seoCriticalPaths = new Set<string>([
     "/sitemap.xml",
     "/robots.txt",
@@ -29,6 +95,18 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/sitemaps/")
   ) {
     return NextResponse.next({ request });
+  }
+
+  // Keep listed pages available only on localhost/dev. On public hosts redirect to app root.
+  const [, firstSegment] = pathname.split("/");
+  const hasLocalePrefix = isSupportedLocale(firstSegment || "");
+  if (!hasLocalePrefix && isLocalOnlyPath(pathname) && !isLocalHostname(hostname)) {
+    const publicAppOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    const redirectBase = publicAppOrigin && /^https?:\/\//i.test(publicAppOrigin)
+      ? publicAppOrigin
+      : request.nextUrl.origin;
+    const redirectUrl = new URL("/", redirectBase);
+    return NextResponse.redirect(redirectUrl);
   }
 
   const localeInfo = stripLocaleFromPathname(pathname);

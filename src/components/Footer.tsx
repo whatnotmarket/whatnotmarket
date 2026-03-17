@@ -45,7 +45,7 @@ export function Footer() {
             <Link href="/" className="block">
               <div className="relative w-40 h-10">
                 <Image 
-                  src="/logowhite.svg" 
+                  src="/images/svg/openly-logowhite.svg" 
                   alt="OpenlyMarket" 
                   fill 
                   className="object-contain object-left" 
@@ -56,7 +56,7 @@ export function Footer() {
 
             <div className="relative w-32 h-10">
                 <Image 
-                  src="/swiss_made.webp" 
+                  src="/images/webp/openly-swiss_made.webp" 
                   alt="Swiss Made" 
                   fill 
                   className="object-contain object-left" 

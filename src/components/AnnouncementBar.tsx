@@ -12,7 +12,7 @@ export function AnnouncementBar() {
     >
       <div className="absolute inset-0 z-0 h-10 w-full bg-black">
         <Image
-          src="/notifiche.svg"
+          src="/images/svg/openly-notifiche.svg"
           alt="Announcement background"
           fill
           className="object-cover opacity-100"
@@ -22,7 +22,7 @@ export function AnnouncementBar() {
       <div className="relative z-10 flex h-9 md:h-10 items-center justify-center gap-4 px-4 text-xs font-medium text-zinc-300 tracking-wide">
         <div className="flex items-center gap-2 truncate">
           <Image 
-            src="/gold.png" 
+            src="/images/png/openly-gold.png" 
             alt="Verified" 
             width={20} 
             height={20} 

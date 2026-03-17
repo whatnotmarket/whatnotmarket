@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import pumpFunLogo from "@/pumpfunlogo/pump.fun.png";
-import profileImage from "@/pumpfunlogo/NFT-OPNLY.png";
 import { ArrowRight } from "lucide-react";
 import * as motion from "framer-motion/client";
 import { cn } from "@/lib/utils";
 import { buildIndexableMetadata } from "@/lib/seo";
+
+const pumpFunLogo = "/images/png/openly-src-pumpfunlogo-pump.fun.png";
+const profileImage = "/images/png/openly-src-pumpfunlogo-NFT-OPNLY.png";
 
 export const metadata: Metadata = buildIndexableMetadata({
   title: "Official OpenlyMarket Links, Community, and Resources",

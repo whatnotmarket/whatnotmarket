@@ -94,7 +94,7 @@ export function MarketClient({ copy }: MarketClientProps) {
                     <div className="relative z-10 space-y-4 max-w-2xl text-left">
                       <div className="flex items-center gap-2 mb-1">
                         <Image 
-                          src="/thinsmooth.svg" 
+                          src="/images/svg/openly-thinsmooth.svg" 
                           alt="Smart Search" 
                           width={20} 
                           height={20} 

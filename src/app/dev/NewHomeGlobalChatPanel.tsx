@@ -41,7 +41,7 @@ import {
   getChatGlobalStateCardStyle,
   getChatGlobalUserSheetStyle,
 } from "./chatglobal-modify";
-import { HomepageChatHeader } from "../(homepage)/components/HomepageChatHeader";
+import { HomepageChatHeader } from "./components/HomepageChatHeader";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;

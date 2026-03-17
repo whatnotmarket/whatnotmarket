@@ -60,7 +60,7 @@ export function TrustCTA({ copy }: TrustCTAProps) {
           <div className="absolute inset-0 z-0">
             <div
               className="absolute inset-0 h-full w-full bg-cover bg-center opacity-80"
-              style={{ backgroundImage: "url('/affiliate-bg.svg')" }}
+              style={{ backgroundImage: "url('/images/svg/openly-affiliate-bg.svg')" }}
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>

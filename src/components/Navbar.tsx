@@ -37,7 +37,7 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link href="/market" className="group flex cursor-pointer items-center gap-2">
               <Image
-                src="/logowhite.svg"
+                src="/images/svg/openly-logowhite.svg"
                 alt="OpenlyMarket"
                 width={80}
                 height={40}
@@ -107,7 +107,7 @@ export function Navbar() {
                 aria-label="Open inbox"
               >
                 <Image
-                  src="/chat.png"
+                  src="/images/png/openly-chat.png"
                   alt="Chat"
                   width={20}
                   height={20}

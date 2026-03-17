@@ -102,7 +102,7 @@ export function CryptoPaymentGateway({
           <div className="flex justify-center">
             {/* Dynamic QR Code based on currency */}
             <img 
-              src={`/qrcodes/${currency.toUpperCase()}.png`} 
+              src={`/images/png/openly-${currency.toUpperCase()}.png`}
               alt={`${currency} QR Code`}
               className="w-56 h-56 object-contain rounded-xl"
               onError={(e) => {

@@ -62,7 +62,7 @@ async function createWalletConnectProvider() {
       name: "OpenlyMarket",
       description: "OpenlyMarket wallet auth and escrow payments",
       url: appUrl,
-      icons: [`${appUrl}/logowhite.svg`],
+      icons: [`${appUrl}/images/svg/openly-logowhite.svg`],
     },
     qrModalOptions: {
       themeMode: "dark",

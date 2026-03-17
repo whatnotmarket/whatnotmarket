@@ -89,7 +89,7 @@ export default function MarketPage() {
                   <div className="relative z-10 max-w-2xl space-y-4 text-left">
                     <div className="mb-1 flex items-center gap-2">
                       <Image
-                        src="/thinsmooth.svg"
+                        src="/images/svg/openly-thinsmooth.svg"
                         alt="Smart Search"
                         width={20}
                         height={20}

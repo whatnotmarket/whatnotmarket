@@ -330,7 +330,7 @@ export function NewHomePageClient() {
         {showAuthButtons ? (
           <div style={authButtonsShellStyle}>
             <Link
-              href="/auth?next=%2Fnew-home"
+              href="/auth?next=%2Fdev"
               className="group inline-flex items-center justify-center text-center tracking-[0.01em] transition-[filter,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] hover:brightness-105 active:translate-y-px"
               style={logInButtonStyle}
             >
@@ -339,7 +339,7 @@ export function NewHomePageClient() {
               </span>
             </Link>
             <Link
-              href="/auth?next=%2Fnew-home"
+              href="/auth?next=%2Fdev"
               className="new-home-signup-cta-press group inline-flex items-center justify-center text-center tracking-[0.01em] transition-[filter,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] hover:brightness-105 active:translate-y-px"
               style={signUpButtonStyle}
             >

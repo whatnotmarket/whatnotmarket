@@ -83,7 +83,7 @@ export function SmartSearchResultItem({ item, query, actionLabel, featured = fal
           </span>
           {item.id === "feature-buy-anywhere" ? (
             <Image
-              src="/thinsmooth.svg"
+              src="/images/svg/openly-thinsmooth.svg"
               alt="Smart Search"
               width={20}
               height={20}

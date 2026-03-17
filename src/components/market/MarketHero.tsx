@@ -23,7 +23,7 @@ export function MarketHero({ copy }: MarketHeroProps) {
       <Container size="full" className="relative h-full px-5 pb-32 pt-24 sm:px-10">
         <div className="absolute inset-0 overflow-hidden rounded-[30px] border border-white/10 bg-white/5">
           <Image
-            src="/framehero.svg"
+            src="/images/svg/openly-framehero.svg"
             alt="Hero Background"
             fill
             className="object-cover"

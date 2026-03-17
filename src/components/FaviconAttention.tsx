@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-const DARK_BACKGROUND_FAVICON = "/favicons/favicon-base-32.png";
-const LIGHT_BACKGROUND_FAVICON = "/favicons/favicon-alert-32.png";
+const DARK_BACKGROUND_FAVICON = "/images/png/favicon-base-32.png";
+const LIGHT_BACKGROUND_FAVICON = "/images/png/favicon-alert-32.png";
 const FAVICON_TOGGLE_MS = 900;
 const FAVICON_VERSION = "v1";
 

@@ -13,7 +13,10 @@ import AckeeTracker from "@/components/providers/AckeeTracker";
 import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
 import { LocalhostServiceWorkerReset } from "@/components/providers/LocalhostServiceWorkerReset";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { TwicProvider } from "@/components/TwicProvider";
 import "./globals.css";
+import "../../styles/globals.css";
+import "@twicpics/components/style.css";
 import { SITE_URL } from "@/lib/site-config";
 import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -60,7 +63,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/logowhite.svg",
+        url: "/images/svg/openly-logowhite.svg",
         alt: "OpenlyMarket",
       },
     ],
@@ -69,38 +72,38 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "OpenlyMarket | Secure Crypto Marketplace for Buyers and Sellers",
     description: DEFAULT_SEO_DESCRIPTION,
-    images: ["/logowhite.svg"],
+    images: ["/images/svg/openly-logowhite.svg"],
   },
   manifest: "/manifest.json",
   icons: {
     icon: [
       {
-        url: "/favicons/favicon-base-32.png",
+        url: "/images/png/favicon-base-32.png",
         sizes: "32x32",
         type: "image/png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/favicons/favicon-base-16.png",
+        url: "/images/png/favicon-base-16.png",
         sizes: "16x16",
         type: "image/png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/favicons/favicon-alert-32.png",
+        url: "/images/png/favicon-alert-32.png",
         sizes: "32x32",
         type: "image/png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/favicons/favicon-alert-16.png",
+        url: "/images/png/favicon-alert-16.png",
         sizes: "16x16",
         type: "image/png",
         media: "(prefers-color-scheme: dark)",
       },
     ],
-    apple: [{ url: "/pwa-assets/pwa-192.png", sizes: "192x192", type: "image/png" }],
-    shortcut: ["/favicons/favicon-base-32.png"],
+    apple: [{ url: "/images/png/openly-pwa-192.png", sizes: "192x192", type: "image/png" }],
+    shortcut: ["/images/png/favicon-base-32.png"],
   },
   appleWebApp: {
     capable: true,
@@ -177,6 +180,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased`}
         suppressHydrationWarning
       >
+        <TwicProvider />
         <LocalhostServiceWorkerReset />
         <Script
           type="application/ld+json"
