@@ -152,7 +152,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/favicon.ico",
-        destination: "/images/ico/favicon.ico",
+        destination: "/images/ico/faviconbase.ico",
         permanent: true,
       },
     ];

@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-const DARK_BACKGROUND_FAVICON = "/images/png/favicon-base-32.png";
-const LIGHT_BACKGROUND_FAVICON = "/images/png/favicon-alert-32.png";
+const DARK_BACKGROUND_FAVICON = "/images/ico/faviconbase.ico";
+const LIGHT_BACKGROUND_FAVICON = "/images/ico/faviconbianco.ico";
 const FAVICON_TOGGLE_MS = 900;
 const FAVICON_VERSION = "v1";
 
@@ -21,8 +21,7 @@ function ensureManagedLink(rel: "icon" | "shortcut icon") {
 
   const link = document.createElement("link");
   link.rel = rel;
-  link.type = "image/png";
-  if (rel === "icon") link.sizes = "32x32";
+  link.type = "image/x-icon";
   link.dataset.managedFavicon = rel;
   document.head.appendChild(link);
   return link;

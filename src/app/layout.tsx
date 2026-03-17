@@ -76,34 +76,9 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      {
-        url: "/images/png/favicon-base-32.png",
-        sizes: "32x32",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/images/png/favicon-base-16.png",
-        sizes: "16x16",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/images/png/favicon-alert-32.png",
-        sizes: "32x32",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/images/png/favicon-alert-16.png",
-        sizes: "16x16",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
+    icon: [{ url: "/images/ico/faviconbase.ico", type: "image/x-icon" }],
     apple: [{ url: "/images/png/openly-pwa-192.png", sizes: "192x192", type: "image/png" }],
-    shortcut: ["/images/png/favicon-base-32.png"],
+    shortcut: ["/images/ico/faviconbase.ico"],
   },
   appleWebApp: {
     capable: true,
