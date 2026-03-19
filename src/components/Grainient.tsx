@@ -129,6 +129,8 @@ type GrainientProps = {
   color2?: string;
   color3?: string;
   className?: string;
+  maxFps?: number;
+  maxDpr?: number;
 };
 
 export default function Grainient({
@@ -155,6 +157,8 @@ export default function Grainient({
   color2 = "#5227FF",
   color3 = "#B19EEF",
   className = "",
+  maxFps = 30,
+  maxDpr = 1.5,
 }: GrainientProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -167,7 +171,7 @@ export default function Grainient({
         webgl: 2,
         alpha: true,
         antialias: false,
-        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        dpr: Math.min(window.devicePixelRatio || 1, Math.max(1, maxDpr)),
       });
     } catch {
       return;
@@ -230,9 +234,24 @@ export default function Grainient({
     setSize();
 
     let raf = 0;
+    let lastRenderTime = 0;
     const t0 = performance.now();
+    const frameInterval = maxFps > 0 ? 1000 / maxFps : 0;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const loop = (t: number) => {
-      program.uniforms.iTime.value = (t - t0) * 0.001;
+      if (document.hidden) {
+        raf = window.requestAnimationFrame(loop);
+        return;
+      }
+
+      if (frameInterval > 0 && t - lastRenderTime < frameInterval) {
+        raf = window.requestAnimationFrame(loop);
+        return;
+      }
+
+      lastRenderTime = t;
+      program.uniforms.iTime.value = prefersReducedMotion ? 0 : (t - t0) * 0.001;
       renderer.render({ scene: mesh });
       raf = window.requestAnimationFrame(loop);
     };
@@ -270,6 +289,8 @@ export default function Grainient({
     color1,
     color2,
     color3,
+    maxFps,
+    maxDpr,
   ]);
 
   return <div ref={containerRef} className={`${styles.grainientContainer} ${className}`.trim()} />;

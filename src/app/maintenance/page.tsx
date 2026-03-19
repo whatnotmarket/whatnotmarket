@@ -23,7 +23,7 @@ const MAINTENANCE_THEME_BOOTSTRAP = `(() => {
 })();`;
 
 export const metadata: Metadata = {
-  title: "Maintenance Mode",
+  title: "Openly - Development Mode",
   description: "Sito temporaneamente non disponibile per manutenzione programmata.",
   robots: {
     index: false,
@@ -64,6 +64,28 @@ function XStatusIcon() {
       />
       </svg>
     </span>
+  );
+}
+
+function SocialXIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 640 640" style={{ width: "16px", height: "16px", display: "block" }}>
+      <path
+        fill="currentColor"
+        d="M453.2 112L523.8 112L369.6 288.2L551 528L409 528L297.7 382.6L170.5 528L99.8 528L264.7 339.5L90.8 112L236.4 112L336.9 244.9L453.2 112zM428.4 485.8L467.5 485.8L215.1 152L173.1 152L428.4 485.8z"
+      />
+    </svg>
+  );
+}
+
+function SocialGithubIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 16 16" style={{ width: "16px", height: "16px", display: "block" }}>
+      <path
+        fill="currentColor"
+        d="M8 0C3.58 0 0 3.67 0 8.2c0 3.63 2.29 6.7 5.47 7.79.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.96-.09-.24-.48-.96-.82-1.15-.28-.15-.68-.54-.01-.55.63-.01 1.08.59 1.23.84.72 1.25 1.87.9 2.33.68.07-.54.28-.9.51-1.11-1.78-.21-3.64-.92-3.64-4.06 0-.9.31-1.64.82-2.22-.08-.21-.36-1.05.08-2.18 0 0 .67-.22 2.2.85a7.38 7.38 0 0 1 4 0c1.53-1.07 2.2-.85 2.2-.85.44 1.13.16 1.97.08 2.18.51.58.82 1.31.82 2.22 0 3.15-1.87 3.84-3.65 4.06.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .22.14.49.55.4A8.24 8.24 0 0 0 16 8.2C16 3.67 12.42 0 8 0z"
+      />
+    </svg>
   );
 }
 
@@ -316,6 +338,99 @@ export default function MaintenancePage() {
                 </a>
               </strong>
             </p>
+
+            <div
+              style={{
+                marginTop: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
+              }}
+            >
+              <a
+                href="https://x.com/openlymarket"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="X"
+                style={{
+                  color: "var(--maintenance-fg)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                }}
+              >
+                <SocialXIcon />
+              </a>
+              <a
+                href="https://github.com/openlymarket"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="GitHub"
+                style={{
+                  color: "var(--maintenance-fg)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                }}
+              >
+                <SocialGithubIcon />
+              </a>
+              <a
+                href="https://www.reddit.com/"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="Reddit"
+                style={{
+                  color: "var(--maintenance-fg)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://mintlify.s3.us-west-1.amazonaws.com/mattiavizzi/icons/reddit.svg"
+                  alt=""
+                  width={16}
+                  height={16}
+                  style={{ display: "block" }}
+                />
+              </a>
+              <a
+                href="https://paragraph.xyz/"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="Paragraph"
+                style={{
+                  color: "var(--maintenance-fg)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://mintlify.s3.us-west-1.amazonaws.com/mattiavizzi/icons/paragraph.png"
+                  alt=""
+                  width={16}
+                  height={16}
+                  style={{ display: "block" }}
+                />
+              </a>
+            </div>
           </div>
         </div>
       </main>

@@ -25,7 +25,7 @@ const MAINTENANCE_ALLOWED_ASSET_PATTERN = /^\/_next\/static(?:\/|$)/i;
 const MAINTENANCE_ALLOWED_PUBLIC_PATHS = new Set<string>([
   "/manifest.json",
   "/favicon.ico",
-  "/images/ico/faviconbianco.ico",
+  "/maintenance/favicon.ico",
 ]);
 const ENCODED_SEPARATOR_OR_TRAVERSAL_PATTERN = /%(?:2f|5c|2e%2e|252f|255c|252e%252e)/i;
 const DOT_SEGMENT_PATTERN = /(?:^|\/)\.\.?(?:\/|$)/;

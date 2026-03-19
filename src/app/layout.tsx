@@ -21,6 +21,7 @@ import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { isMaintenanceModeEnabled } from "@/lib/maintenance";
 import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/i18n/config";
+import MaintenancePage from "@/app/maintenance/page";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -76,9 +77,9 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/images/ico/faviconbianco.ico", type: "image/x-icon" }],
+    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
     apple: [{ url: "/images/png/openly-pwa-192.png", sizes: "192x192", type: "image/png" }],
-    shortcut: ["/images/ico/faviconbianco.ico"],
+    shortcut: ["/favicon.ico"],
   },
   appleWebApp: {
     capable: true,
@@ -153,11 +154,7 @@ export default async function RootLayout({
           className={`${geist.className} notranslate min-h-screen overflow-x-hidden overflow-y-auto bg-background text-foreground antialiased`}
           suppressHydrationWarning
         >
-          <Providers>
-            <div id="app-root-shell" className="overflow-visible">
-              {children}
-            </div>
-          </Providers>
+          <MaintenancePage />
         </body>
       </html>
     );

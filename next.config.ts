@@ -150,11 +150,6 @@ const nextConfig: NextConfig = {
         destination: "/secure-transaction",
         permanent: true,
       },
-      {
-        source: "/favicon.ico",
-        destination: "/images/ico/faviconbianco.ico",
-        permanent: true,
-      },
     ];
   },
 };
