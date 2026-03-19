@@ -1,13 +1,8 @@
-const MAINTENANCE_ENV_VALUE = "true";
-
 export const MAINTENANCE_PATHNAME = "/maintenance";
 export const MAINTENANCE_RETRY_AFTER_SECONDS = 900;
 
 export function isMaintenanceModeEnabled(): boolean {
-  return (
-    process.env.NODE_ENV === "production" &&
-    (process.env.MAINTENANCE_MODE ?? "").trim().toLowerCase() === MAINTENANCE_ENV_VALUE
-  );
+  return process.env.NODE_ENV === "production";
 }
 
 export function createMaintenanceHeaders(): Headers {
