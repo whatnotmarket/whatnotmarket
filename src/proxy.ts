@@ -27,6 +27,9 @@ const MAINTENANCE_ALLOWED_PUBLIC_PATHS = new Set<string>([
   "/favicon.ico",
   "/maintenance/favicon.ico",
 ]);
+const MAINTENANCE_ALLOWED_API_PATHS = new Set<string>([
+  "/api/maintenance/early-access",
+]);
 const ENCODED_SEPARATOR_OR_TRAVERSAL_PATTERN = /%(?:2f|5c|2e%2e|252f|255c|252e%252e)/i;
 const DOT_SEGMENT_PATTERN = /(?:^|\/)\.\.?(?:\/|$)/;
 const MAINTENANCE_SAFE_PAGE_METHODS = new Set(["GET", "HEAD"]);
@@ -112,6 +115,23 @@ export async function proxy(request: NextRequest) {
       const response = NextResponse.rewrite(new URL(MAINTENANCE_PATHNAME, request.url), {
         status: 503,
       });
+      maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
+      return response;
+    }
+
+    if (MAINTENANCE_ALLOWED_API_PATHS.has(pathname)) {
+      const method = request.method.toUpperCase();
+      if (method !== "POST" && method !== "OPTIONS") {
+        const headers = new Headers(maintenanceHeaders);
+        headers.set("Allow", "POST, OPTIONS");
+        headers.set("Content-Type", "application/json; charset=utf-8");
+        return new NextResponse(JSON.stringify({ ok: false, error: "Method Not Allowed" }), {
+          status: 405,
+          headers,
+        });
+      }
+
+      const response = NextResponse.next({ request });
       maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
       return response;
     }

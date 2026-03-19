@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Grainient from "@/components/Grainient";
 import MaintenanceThemeToggle from "./MaintenanceThemeToggle";
+import MaintenanceEarlyAccessForm from "./MaintenanceEarlyAccessForm";
 import logoBlack from "./logosvgblack.svg";
 import logoWhite from "./logosvgwhite.svg";
 
@@ -312,6 +313,8 @@ export default function MaintenancePage() {
                   </strong>
                 </p>
               </div>
+
+              <MaintenanceEarlyAccessForm />
 
               <Link
                 href="https://docs.openlymarket.xyz/"

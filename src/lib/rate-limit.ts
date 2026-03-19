@@ -46,6 +46,7 @@ export type RateLimitAction =
   | "review_submit"
   | "comment_submit"
   | "public_form_submit"
+  | "maintenance_early_access"
   | "internal_onboarding_register"
   | "internal_onboarding_username_check"
   | "internal_onboarding_progress"
@@ -107,6 +108,7 @@ const RATE_LIMIT_CONFIGS: Record<RateLimitAction, RateLimitConfig> = {
   review_submit: { limit: 10, windowMs: 60_000 },
   comment_submit: { limit: 20, windowMs: 60_000 },
   public_form_submit: { limit: 10, windowMs: 60_000 },
+  maintenance_early_access: { limit: 6, windowMs: 10 * 60_000 },
   internal_onboarding_register: { limit: 6, windowMs: 60_000 },
   internal_onboarding_username_check: { limit: 16, windowMs: 60_000 },
   internal_onboarding_progress: { limit: 24, windowMs: 60_000 },
