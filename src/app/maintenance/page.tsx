@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import Grainient from "@/components/Grainient";
 import MaintenanceThemeToggle from "./MaintenanceThemeToggle";
 import MaintenanceEarlyAccessForm from "./MaintenanceEarlyAccessForm";
@@ -315,31 +314,6 @@ export default function MaintenancePage() {
               </div>
 
               <MaintenanceEarlyAccessForm />
-
-              <Link
-                href="https://docs.openlymarket.xyz/"
-              style={{
-                marginTop: "22px",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "10px 18px",
-                borderRadius: "999px",
-                border: "1px solid var(--maintenance-docs-border)",
-                background: "var(--maintenance-docs-bg)",
-                color: "var(--maintenance-toggle-active-icon)",
-                  textDecoration: "none",
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
-                  lineHeight: 1.1,
-                  backdropFilter: "var(--maintenance-docs-filter)",
-                  WebkitBackdropFilter: "var(--maintenance-docs-filter)",
-                boxShadow: "var(--maintenance-docs-shadow)",
-                transition: "transform 120ms ease, opacity 120ms ease",
-              }}
-            >
-              docs.openlymarket.xyz
-            </Link>
             </article>
 
             <p

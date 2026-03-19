@@ -4,18 +4,40 @@ import { useMemo, useState, type FormEvent } from "react";
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
 export default function MaintenanceEarlyAccessForm() {
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
   const [state, setState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
+  const [lastConfirmedEmail, setLastConfirmedEmail] = useState("");
 
   const isBusy = state === "loading";
-  const canSubmit = useMemo(() => email.trim().length > 3 && !isBusy, [email, isBusy]);
+  const normalizedEmail = useMemo(() => normalizeEmail(email), [email]);
+  const isEmailValid = useMemo(
+    () => EMAIL_PATTERN.test(normalizedEmail) && normalizedEmail.length <= 320,
+    [normalizedEmail]
+  );
+  const canSubmit = useMemo(() => isEmailValid && !isBusy, [isEmailValid, isBusy]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canSubmit) return;
+    if (!isEmailValid) {
+      setState("error");
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+
+    if (normalizedEmail === lastConfirmedEmail) {
+      setState("error");
+      setMessage("This email is already in early access.");
+      return;
+    }
 
     setState("loading");
     setMessage("");
@@ -38,12 +60,18 @@ export default function MaintenanceEarlyAccessForm() {
 
       if (!response.ok || !result?.ok) {
         setState("error");
+        if (response.status === 409) {
+          setMessage("This email is already in early access.");
+          return;
+        }
+
         setMessage(result?.error || "Unable to submit right now. Please try again shortly.");
         return;
       }
 
       setState("success");
       setMessage(result.message || "Thanks, you're in. We'll contact you soon.");
+      setLastConfirmedEmail(normalizedEmail);
       setEmail("");
       setWebsite("");
     } catch {
@@ -64,19 +92,26 @@ export default function MaintenanceEarlyAccessForm() {
         <label className="maintenance-early-access-label" htmlFor="maintenance-early-email">
           Email
         </label>
-        <input
-          id="maintenance-early-email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="name@domain.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="maintenance-early-access-input"
-          required
-          disabled={isBusy}
-          aria-describedby="maintenance-early-status"
-        />
+        <div className="maintenance-early-access-input-wrap">
+          <input
+            id="maintenance-early-email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
+            placeholder="name@domain.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="maintenance-early-access-input"
+            required
+            disabled={isBusy}
+            aria-invalid={state === "error"}
+            aria-describedby="maintenance-early-status"
+          />
+          <button type="submit" className="maintenance-early-access-cta" disabled={!canSubmit}>
+            {isBusy ? "Submitting..." : "Get Early Access"}
+          </button>
+        </div>
         <input
           type="text"
           tabIndex={-1}
@@ -86,9 +121,6 @@ export default function MaintenanceEarlyAccessForm() {
           className="maintenance-early-access-honeypot"
           aria-hidden="true"
         />
-        <button type="submit" className="maintenance-early-access-cta" disabled={!canSubmit}>
-          {isBusy ? "Submitting..." : "Get Early Access"}
-        </button>
       </form>
       <p
         id="maintenance-early-status"

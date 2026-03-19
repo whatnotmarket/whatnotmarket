@@ -21,6 +21,7 @@ import {
 
 const STATIC_FILE_PATTERN =
   /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json|webmanifest|woff2?|ttf|eot)$/i;
+const SOURCE_MAP_PATTERN = /\.map$/i;
 const MAINTENANCE_ALLOWED_ASSET_PATTERN = /^\/_next\/static(?:\/|$)/i;
 const MAINTENANCE_ALLOWED_PUBLIC_PATHS = new Set<string>([
   "/manifest.json",
@@ -111,6 +112,12 @@ export async function proxy(request: NextRequest) {
   const maintenanceHeaders = createMaintenanceHeaders();
 
   if (maintenanceEnabled) {
+    if (SOURCE_MAP_PATTERN.test(pathname)) {
+      const headers = new Headers(maintenanceHeaders);
+      headers.set("Content-Type", "text/plain; charset=utf-8");
+      return new NextResponse("Not Found", { status: 404, headers });
+    }
+
     if (pathname === MAINTENANCE_PATHNAME) {
       const response = NextResponse.rewrite(new URL(MAINTENANCE_PATHNAME, request.url), {
         status: 503,
@@ -174,6 +181,10 @@ export async function proxy(request: NextRequest) {
     const response = NextResponse.rewrite(maintenanceUrl, { status: 503 });
     maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
     return response;
+  }
+
+  if (process.env.NODE_ENV === "production" && SOURCE_MAP_PATTERN.test(pathname)) {
+    return new NextResponse("Not Found", { status: 404 });
   }
 
   if (pathname.startsWith("/_next/")) {

@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "maintenance:refresh-email-rules": "python src/app/maintenance/fetch_domains.py",
     "test:security": "node --import tsx --test tests/security/**/*.test.ts",
     "seo:internal-links:audit": "node scripts/seo/generate-internal-link-audit.mjs",
     "i18n:catalog": "tsx scripts/i18n/generate-master-i18n-catalog.ts",

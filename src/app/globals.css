@@ -385,7 +385,7 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
   width: min(680px, 100%);
   border: 1px solid var(--maintenance-panel-border);
   border-radius: 18px;
-  padding: 14px;
+  padding: 16px;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
   box-shadow: inset 0 1px 0 var(--maintenance-panel-shine);
   backdrop-filter: blur(12px) saturate(125%);
@@ -394,25 +394,29 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
 
 .maintenance-early-access-title {
   margin: 0;
-  font-size: 0.96rem;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 20px;
   color: var(--maintenance-fg);
 }
 
 .maintenance-early-access-copy {
-  margin: 6px 0 0;
-  font-size: 0.88rem;
-  line-height: 1.45;
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 20px;
   color: var(--maintenance-muted);
 }
 
 .maintenance-early-access-form {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
+  margin-top: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+.maintenance-early-access-input-wrap {
+  position: relative;
+  width: 100%;
 }
 
 .maintenance-early-access-label {
@@ -429,14 +433,14 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
 
 .maintenance-early-access-input {
   width: 100%;
-  min-height: 44px;
-  border-radius: 999px;
+  height: 52px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.34);
   background: rgba(17, 20, 26, 0.44);
   color: #f8fbff;
-  font-size: 0.95rem;
-  line-height: 1;
-  padding: 0 16px;
+  font-size: 15px;
+  line-height: 20px;
+  padding: 0 182px 0 16px;
   outline: none;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
@@ -451,15 +455,19 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
 }
 
 .maintenance-early-access-cta {
-  min-height: 44px;
-  border-radius: 999px;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  height: 40px;
+  min-width: 170px;
+  border-radius: 12px;
   border: 1px solid var(--maintenance-docs-border);
   background: var(--maintenance-docs-bg);
   color: var(--maintenance-toggle-active-icon);
-  padding: 0 18px;
-  font-size: 0.92rem;
+  padding: 0 16px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 20px;
   cursor: pointer;
   backdrop-filter: var(--maintenance-docs-filter);
   -webkit-backdrop-filter: var(--maintenance-docs-filter);
@@ -473,19 +481,31 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
 }
 
 .maintenance-early-access-status {
-  margin: 8px 0 0;
-  min-height: 1.1rem;
-  font-size: 0.82rem;
-  line-height: 1.35;
+  margin: 10px auto 0;
+  min-height: 36px;
+  max-width: 560px;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 20px;
   color: var(--maintenance-muted);
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .maintenance-early-access-status-success {
-  color: #2b7a3f;
+  color: #134e29;
+  border-color: rgba(22, 101, 52, 0.35);
+  background: rgba(134, 239, 172, 0.36);
 }
 
 .maintenance-early-access-status-error {
-  color: #a63838;
+  color: #7f1d1d;
+  border-color: rgba(153, 27, 27, 0.35);
+  background: rgba(252, 165, 165, 0.38);
 }
 
 .maintenance-early-access-honeypot {
@@ -507,11 +527,15 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-input::placeholder
 }
 
 html[data-maintenance-theme="dark"] .maintenance-early-access-status-success {
-  color: #71d89a;
+  color: #c6f6d5;
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.2);
 }
 
 html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
-  color: #ff9c9c;
+  color: #ffd4d4;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .maintenance-social-row {
@@ -622,25 +646,40 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
   }
 
   .maintenance-early-access-title {
-    font-size: 0.92rem !important;
+    font-size: 15px !important;
   }
 
   .maintenance-early-access-copy {
-    font-size: 0.82rem !important;
+    font-size: 13px !important;
   }
 
   .maintenance-early-access-form {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
+    max-width: 100% !important;
+    margin-top: 10px !important;
   }
 
-  .maintenance-early-access-cta,
   .maintenance-early-access-input {
-    min-height: 42px !important;
+    height: 48px !important;
+    padding: 0 134px 0 12px !important;
+    font-size: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .maintenance-early-access-cta {
+    top: 5px !important;
+    right: 5px !important;
+    height: 38px !important;
+    min-width: 124px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
   }
 
   .maintenance-early-access-status {
-    font-size: 0.78rem !important;
+    min-height: 34px !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
   }
 
   .maintenance-social-row {

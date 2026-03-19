@@ -27,6 +27,23 @@ const shouldDisablePwa = (() => {
   return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(appUrl);
 })();
 
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+  "style-src 'self' 'unsafe-inline' https:",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https:",
+  "connect-src 'self' https: wss:",
+  "frame-src 'self' https:",
+  "manifest-src 'self'",
+  "worker-src 'self' blob:",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   experimental: {
     inlineCss: true,
@@ -82,6 +99,10 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: CONTENT_SECURITY_POLICY,
+          },
           {
             key: "X-DNS-Prefetch-Control",
             value: "on",
