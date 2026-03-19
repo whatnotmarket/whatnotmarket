@@ -1,0 +1,34 @@
+name: Security Scheduled Checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily (UTC)
+    - cron: "25 2 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scheduled-checks
+  cancel-in-progress: false
+
+jobs:
+  security-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Security tests
+        run: npm run test:security

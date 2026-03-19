@@ -1,0 +1,47 @@
+name: Maintenance Email Rules Cron
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every 12 hours (UTC)
+    - cron: "12 */12 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: maintenance-email-rules-cron
+  cancel-in-progress: false
+
+jobs:
+  refresh-rules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh disposable domains and email patterns
+        run: python src/app/maintenance/fetch_domains.py
+
+      - name: Create pull request if rules changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(maintenance): refresh disposable email rules"
+          title: "chore(maintenance): refresh disposable email rules"
+          body: |
+            Automated refresh of maintenance email blocklists/patterns.
+
+            - Updated `src/app/maintenance/disposable_email_blocklist.conf`
+            - Updated `src/app/maintenance/email_pattern_blocklist.conf` (if needed)
+          branch: "codex/maintenance-email-rules-cron"
+          delete-branch: true
+          labels: maintenance, security
