@@ -194,20 +194,20 @@ export default function MaintenancePage() {
                 WebkitBackdropFilter: "blur(18px) saturate(130%)",
               }}
             >
-              <div className="maintenance-logo-wrap" style={{ margin: "0 0 44px" }}>
+              <div className="maintenance-logo-wrap" style={{ margin: "0 0 35px" }}>
                 <Image
                   src={logoBlack}
-                  alt="Pixblok"
+                  alt="OpenlyMarketBlack"
                   priority
                   className="maintenance-logo maintenance-logo-light"
-                  style={{ width: "clamp(200px, 31vw, 300px)", height: "auto" }}
+                  style={{ width: "clamp(200px, 31vw, 500px)", height: "auto" }}
                 />
                 <Image
                   src={logoWhite}
-                  alt="Pixblok"
+                  alt="OpenlyMarketWhite"
                   priority
                   className="maintenance-logo maintenance-logo-dark"
-                  style={{ width: "clamp(200px, 31vw, 300px)", height: "auto" }}
+                  style={{ width: "clamp(200px, 31vw, 500px)", height: "auto" }}
                 />
               </div>
 
