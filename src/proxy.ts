@@ -21,7 +21,10 @@ import {
 
 const STATIC_FILE_PATTERN =
   /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json|webmanifest|woff2?|ttf|eot)$/i;
-const MAINTENANCE_ALLOWED_PREFIXES = ["/_next/static", "/_next/image"] as const;
+const MAINTENANCE_ALLOWED_ASSET_PATTERN = /^\/_next\/(?:static|image)(?:\/|$)/i;
+const ENCODED_SEPARATOR_OR_TRAVERSAL_PATTERN = /%(?:2f|5c|2e%2e|252f|255c|252e%252e)/i;
+const DOT_SEGMENT_PATTERN = /(?:^|\/)\.\.?(?:\/|$)/;
+const MAINTENANCE_SAFE_PAGE_METHODS = new Set(["GET", "HEAD"]);
 
 const LOCAL_ONLY_EXACT_PATHS = new Set<string>([
   "/about",
@@ -88,7 +91,20 @@ function isLocalOnlyPath(pathname: string) {
 }
 
 function isFrameworkAssetPath(pathname: string) {
-  return MAINTENANCE_ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  if (!MAINTENANCE_ALLOWED_ASSET_PATTERN.test(pathname)) return false;
+  if (ENCODED_SEPARATOR_OR_TRAVERSAL_PATTERN.test(pathname)) return false;
+  if (DOT_SEGMENT_PATTERN.test(pathname)) return false;
+  return true;
+}
+
+function getClientIp(request: NextRequest): string | null {
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (forwardedFor) return forwardedFor;
+
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  return null;
 }
 
 export async function proxy(request: NextRequest) {
@@ -96,8 +112,21 @@ export async function proxy(request: NextRequest) {
   const maintenanceEnabled = isMaintenanceModeEnabled();
   const maintenanceHeaders = createMaintenanceHeaders();
   const healthcheckPath = (process.env.MAINTENANCE_HEALTHCHECK_PATH ?? "").trim();
+  const healthcheckAllowedIps = new Set(
+    (process.env.MAINTENANCE_HEALTHCHECK_ALLOWED_IPS ?? "")
+      .split(",")
+      .map((ip) => ip.trim())
+      .filter(Boolean)
+  );
 
   if (maintenanceEnabled && healthcheckPath && pathname === healthcheckPath) {
+    const clientIp = getClientIp(request);
+    if (!clientIp || healthcheckAllowedIps.size === 0 || !healthcheckAllowedIps.has(clientIp)) {
+      const deniedHeaders = new Headers(maintenanceHeaders);
+      deniedHeaders.set("Content-Type", "text/plain; charset=utf-8");
+      return new NextResponse("Not Found", { status: 404, headers: deniedHeaders });
+    }
+
     const headers = new Headers(maintenanceHeaders);
     headers.set("Content-Type", "application/json; charset=utf-8");
     return new NextResponse(JSON.stringify({ status: "ok", maintenance: true }), {
@@ -108,13 +137,17 @@ export async function proxy(request: NextRequest) {
 
   if (maintenanceEnabled) {
     if (pathname === MAINTENANCE_PATHNAME) {
-      const response = NextResponse.next({ request });
+      const response = NextResponse.rewrite(new URL(MAINTENANCE_PATHNAME, request.url), {
+        status: 503,
+      });
       maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
       return response;
     }
 
     if (isFrameworkAssetPath(pathname)) {
-      return NextResponse.next({ request });
+      const response = NextResponse.next({ request });
+      maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
+      return response;
     }
 
     if (pathname === "/api" || pathname.startsWith("/api/")) {
@@ -130,8 +163,17 @@ export async function proxy(request: NextRequest) {
       );
     }
 
+    if (!MAINTENANCE_SAFE_PAGE_METHODS.has(request.method.toUpperCase())) {
+      const headers = new Headers(maintenanceHeaders);
+      headers.set("Content-Type", "text/plain; charset=utf-8");
+      return new NextResponse("Service temporarily unavailable during scheduled maintenance.", {
+        status: 503,
+        headers,
+      });
+    }
+
     const maintenanceUrl = new URL(MAINTENANCE_PATHNAME, request.url);
-    const response = NextResponse.redirect(maintenanceUrl, 307);
+    const response = NextResponse.rewrite(maintenanceUrl, { status: 503 });
     maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
     return response;
   }
