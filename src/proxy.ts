@@ -21,7 +21,7 @@ import {
 
 const STATIC_FILE_PATTERN =
   /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json|webmanifest|woff2?|ttf|eot)$/i;
-const MAINTENANCE_ALLOWED_ASSET_PATTERN = /^\/_next\/(?:static|image)(?:\/|$)/i;
+const MAINTENANCE_ALLOWED_ASSET_PATTERN = /^\/_next\/static(?:\/|$)/i;
 const ENCODED_SEPARATOR_OR_TRAVERSAL_PATTERN = /%(?:2f|5c|2e%2e|252f|255c|252e%252e)/i;
 const DOT_SEGMENT_PATTERN = /(?:^|\/)\.\.?(?:\/|$)/;
 const MAINTENANCE_SAFE_PAGE_METHODS = new Set(["GET", "HEAD"]);
@@ -97,43 +97,10 @@ function isFrameworkAssetPath(pathname: string) {
   return true;
 }
 
-function getClientIp(request: NextRequest): string | null {
-  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  if (forwardedFor) return forwardedFor;
-
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp) return realIp;
-
-  return null;
-}
-
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const maintenanceEnabled = isMaintenanceModeEnabled();
   const maintenanceHeaders = createMaintenanceHeaders();
-  const healthcheckPath = (process.env.MAINTENANCE_HEALTHCHECK_PATH ?? "").trim();
-  const healthcheckAllowedIps = new Set(
-    (process.env.MAINTENANCE_HEALTHCHECK_ALLOWED_IPS ?? "")
-      .split(",")
-      .map((ip) => ip.trim())
-      .filter(Boolean)
-  );
-
-  if (maintenanceEnabled && healthcheckPath && pathname === healthcheckPath) {
-    const clientIp = getClientIp(request);
-    if (!clientIp || healthcheckAllowedIps.size === 0 || !healthcheckAllowedIps.has(clientIp)) {
-      const deniedHeaders = new Headers(maintenanceHeaders);
-      deniedHeaders.set("Content-Type", "text/plain; charset=utf-8");
-      return new NextResponse("Not Found", { status: 404, headers: deniedHeaders });
-    }
-
-    const headers = new Headers(maintenanceHeaders);
-    headers.set("Content-Type", "application/json; charset=utf-8");
-    return new NextResponse(JSON.stringify({ status: "ok", maintenance: true }), {
-      status: 200,
-      headers,
-    });
-  }
 
   if (maintenanceEnabled) {
     if (pathname === MAINTENANCE_PATHNAME) {
@@ -424,6 +391,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image).*)",
+    "/:path*",
   ],
 };
