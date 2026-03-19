@@ -201,7 +201,7 @@ export default function MaintenancePage() {
                   whiteSpace: "nowrap",
                 }}
               >
-                Sorry! We&apos;re under Development!
+                Sorry! We&apos;re under development!
               </h1>
 
               <div
