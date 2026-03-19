@@ -156,7 +156,7 @@ export const Squircle = React.memo(React.forwardRef<HTMLElement, SquircleProps>(
       {/* Optional Border Overlay */}
       {borderWidth > 0 && isReady && (
         <svg
-          className="absolute inset-0 pointer-events-none w-full h-full"
+          className="absolute inset-0 pointer-events-none h-full w-full overflow-visible"
           style={{ zIndex: 10 }} // Ensure border is on top
         >
           <path
@@ -164,6 +164,8 @@ export const Squircle = React.memo(React.forwardRef<HTMLElement, SquircleProps>(
             fill="none"
             stroke={borderColor || "var(--border)"}
             strokeWidth={borderWidth}
+            vectorEffect="non-scaling-stroke"
+            shapeRendering="geometricPrecision"
             className={borderClassName}
           />
         </svg>

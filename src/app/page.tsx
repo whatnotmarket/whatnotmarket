@@ -1,1 +1,3 @@
-export { default } from "@/app/dev/page";
+import MarketPage from "@/app/market/page";
+
+export default MarketPage;

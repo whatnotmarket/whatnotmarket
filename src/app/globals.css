@@ -279,3 +279,171 @@ textarea,
   animation: new-home-signup-press-now 1.45s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   will-change: transform, box-shadow, filter;
 }
+
+@keyframes landing-header-slide-in {
+  0% {
+    transform: translateY(-140%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.landing-header-slide-in {
+  animation: landing-header-slide-in 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes landing-logo-slide-in {
+  0% {
+    transform: translateX(-28px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.landing-logo-slide-in {
+  animation: landing-logo-slide-in 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-header-slide-in {
+    animation: none;
+  }
+  .landing-logo-slide-in {
+    animation: none;
+  }
+}
+
+:root {
+  --maintenance-bg: #f4f2ef;
+  --maintenance-fg: #09090b;
+  --maintenance-muted: rgba(9, 9, 11, 0.78);
+  --maintenance-glow-primary: rgba(249, 136, 34, 0.56);
+  --maintenance-glow-secondary: rgba(214, 184, 209, 0.46);
+  --maintenance-panel-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
+  --maintenance-panel-border: rgba(255, 255, 255, 0.44);
+  --maintenance-panel-shine: rgba(255, 255, 255, 0.58);
+  --maintenance-toggle-bg: linear-gradient(160deg, rgba(21, 24, 31, 0.74), rgba(15, 18, 24, 0.66));
+  --maintenance-toggle-border: rgba(255, 255, 255, 0.2);
+  --maintenance-toggle-shine: rgba(255, 255, 255, 0.12);
+  --maintenance-toggle-button-bg: transparent;
+  --maintenance-toggle-icon: rgba(245, 245, 247, 0.75);
+  --maintenance-toggle-active-bg: rgba(245, 245, 247, 0.16);
+  --maintenance-toggle-active-icon: #f5f5f7;
+  --maintenance-docs-bg: var(--maintenance-toggle-bg);
+  --maintenance-docs-border: var(--maintenance-toggle-border);
+  --maintenance-docs-filter: blur(16px) saturate(130%);
+  --maintenance-docs-shadow: inset 0 1px 0 var(--maintenance-toggle-shine), 0 10px 26px rgba(0, 0, 0, 0.24);
+}
+
+html[data-maintenance-theme="dark"] {
+  --maintenance-bg: #0c0c10;
+  --maintenance-fg: #f5f5f7;
+  --maintenance-muted: rgba(245, 245, 247, 0.78);
+  --maintenance-glow-primary: rgba(255, 145, 51, 0.3);
+  --maintenance-glow-secondary: rgba(166, 136, 178, 0.28);
+  --maintenance-panel-bg: linear-gradient(160deg, rgba(22, 24, 31, 0.58), rgba(16, 18, 24, 0.46));
+  --maintenance-panel-border: rgba(255, 255, 255, 0.26);
+  --maintenance-panel-shine: rgba(255, 255, 255, 0.18);
+  --maintenance-docs-bg: linear-gradient(160deg, rgba(17, 22, 30, 0.94), rgba(12, 16, 24, 0.92));
+  --maintenance-docs-border: rgba(168, 189, 217, 0.42);
+  --maintenance-docs-filter: none;
+  --maintenance-docs-shadow: 0 10px 22px rgba(0, 0, 0, 0.34);
+}
+
+.maintenance-logo {
+  display: block;
+  transform-origin: center;
+  transition: transform 160ms ease;
+}
+
+.maintenance-logo:hover {
+  transform: scale(1.015);
+}
+
+.maintenance-logo-dark {
+  display: none;
+}
+
+html[data-maintenance-theme="dark"] .maintenance-logo-light {
+  display: none;
+}
+
+html[data-maintenance-theme="dark"] .maintenance-logo-dark {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .maintenance-shell {
+    padding: 22px 12px 28px !important;
+  }
+
+  .maintenance-content-wrap {
+    width: min(820px, 100%) !important;
+  }
+
+  .maintenance-card {
+    padding: 22px 14px 26px !important;
+    border-radius: 22px !important;
+  }
+
+  .maintenance-logo-wrap {
+    margin-bottom: 24px !important;
+  }
+
+  .maintenance-logo {
+    width: clamp(152px, 50vw, 220px) !important;
+  }
+
+  .maintenance-title {
+    font-size: clamp(1.8rem, 8.3vw, 2.25rem) !important;
+    white-space: normal !important;
+    max-width: 14ch !important;
+    text-wrap: balance !important;
+  }
+
+  .maintenance-copy {
+    margin-top: 14px !important;
+    font-size: 0.92rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .maintenance-copy-primary {
+    white-space: normal !important;
+    text-wrap: balance !important;
+  }
+
+  .maintenance-copy-updates {
+    white-space: normal !important;
+    flex-wrap: wrap !important;
+    text-wrap: balance !important;
+  }
+
+  .maintenance-x-link {
+    white-space: normal !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  .maintenance-email {
+    margin-top: 12px !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maintenance-logo {
+    transition: none;
+  }
+
+  .maintenance-logo:hover {
+    transform: none;
+  }
+}

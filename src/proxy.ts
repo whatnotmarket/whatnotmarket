@@ -5,6 +5,11 @@ import { verifyToken } from "@/lib/auth";
 import { getRedirectPath } from "@/lib/redirects";
 import { hasCanonicalAdminAccess } from "@/lib/security/admin-guards";
 import {
+  MAINTENANCE_PATHNAME,
+  createMaintenanceHeaders,
+  isMaintenanceModeEnabled,
+} from "@/lib/maintenance";
+import {
   LOCALE_COOKIE_NAME,
   detectPreferredLocale,
   isSupportedLocale,
@@ -13,6 +18,10 @@ import {
   stripLocaleFromPathname,
   withLocale,
 } from "@/i18n/config";
+
+const STATIC_FILE_PATTERN =
+  /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json|webmanifest|woff2?|ttf|eot)$/i;
+const MAINTENANCE_ALLOWED_PREFIXES = ["/_next/static", "/_next/image"] as const;
 
 const LOCAL_ONLY_EXACT_PATHS = new Set<string>([
   "/about",
@@ -78,8 +87,67 @@ function isLocalOnlyPath(pathname: string) {
   return LOCAL_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
 }
 
+function isFrameworkAssetPath(pathname: string) {
+  return MAINTENANCE_ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const maintenanceEnabled = isMaintenanceModeEnabled();
+  const maintenanceHeaders = createMaintenanceHeaders();
+  const healthcheckPath = (process.env.MAINTENANCE_HEALTHCHECK_PATH ?? "").trim();
+
+  if (maintenanceEnabled && healthcheckPath && pathname === healthcheckPath) {
+    const headers = new Headers(maintenanceHeaders);
+    headers.set("Content-Type", "application/json; charset=utf-8");
+    return new NextResponse(JSON.stringify({ status: "ok", maintenance: true }), {
+      status: 200,
+      headers,
+    });
+  }
+
+  if (maintenanceEnabled) {
+    if (pathname === MAINTENANCE_PATHNAME) {
+      const response = NextResponse.next({ request });
+      maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
+      return response;
+    }
+
+    if (isFrameworkAssetPath(pathname)) {
+      return NextResponse.next({ request });
+    }
+
+    if (pathname === "/api" || pathname.startsWith("/api/")) {
+      const headers = new Headers(maintenanceHeaders);
+      headers.set("Content-Type", "application/json; charset=utf-8");
+      return new NextResponse(
+        JSON.stringify({
+          error: "Service Unavailable",
+          code: "MAINTENANCE_MODE",
+          message: "API temporarily unavailable during scheduled maintenance.",
+        }),
+        { status: 503, headers }
+      );
+    }
+
+    const maintenanceUrl = new URL(MAINTENANCE_PATHNAME, request.url);
+    const response = NextResponse.redirect(maintenanceUrl, 307);
+    maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
+    return response;
+  }
+
+  if (pathname.startsWith("/_next/")) {
+    return NextResponse.next({ request });
+  }
+
+  if (STATIC_FILE_PATTERN.test(pathname)) {
+    return NextResponse.next({ request });
+  }
+
+  if ((pathname === "/api" || pathname.startsWith("/api/")) && !pathname.startsWith("/api/admin")) {
+    return NextResponse.next({ request });
+  }
+
   const isProduction = process.env.NODE_ENV === "production";
   const hostname = request.nextUrl.hostname.toLowerCase();
   const seoCriticalPaths = new Set<string>([
@@ -314,7 +382,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sitemap\\.xml|sitemaps|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
-    "/api/admin/:path*",
+    "/((?!_next/static|_next/image).*)",
   ],
 };

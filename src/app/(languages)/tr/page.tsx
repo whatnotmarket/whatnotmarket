@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import NewHomePage from "@/app/dev/page";
+import MarketPage from "@/app/market/page";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { buildLocalizedMetadata } from "@/i18n/seo";
 
@@ -13,4 +13,4 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default NewHomePage;
+export default MarketPage;

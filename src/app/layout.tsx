@@ -19,6 +19,7 @@ import "@twicpics/components/style.css";
 import { SITE_URL } from "@/lib/site-config";
 import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 import { cn } from "@/lib/utils";
+import { isMaintenanceModeEnabled } from "@/lib/maintenance";
 import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/i18n/config";
 
 const inter = Inter({
@@ -140,6 +141,24 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (isMaintenanceModeEnabled()) {
+    return (
+      <html
+        lang="en"
+        translate="no"
+        className={cn("notranslate overflow-x-hidden overflow-y-auto", "font-sans", geist.variable)}
+        suppressHydrationWarning
+      >
+        <body
+          className={`${geist.className} notranslate min-h-screen overflow-x-hidden overflow-y-auto bg-background text-foreground antialiased`}
+          suppressHydrationWarning
+        >
+          {children}
+        </body>
+      </html>
+    );
+  }
+
   const cookieStore = await cookies();
   const htmlLocale = normalizeLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value ?? null);
 
