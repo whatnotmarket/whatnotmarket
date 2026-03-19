@@ -46,6 +46,13 @@ type EarlyAccessLeadRow = {
   created_at: string;
 };
 
+type DbErrorDetails = {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+};
+
 function parseDomainList(content: string) {
   const domains = new Set<string>();
   const lines = content.split(/\r?\n/);
@@ -229,6 +236,17 @@ function isUniqueViolation(error: unknown) {
   return "code" in error && String((error as { code?: string }).code) === "23505";
 }
 
+function toDbErrorDetails(error: unknown): DbErrorDetails {
+  if (!error || typeof error !== "object") return {};
+  const source = error as Record<string, unknown>;
+  return {
+    code: typeof source.code === "string" ? source.code : undefined,
+    message: typeof source.message === "string" ? source.message : undefined,
+    details: typeof source.details === "string" ? source.details : undefined,
+    hint: typeof source.hint === "string" ? source.hint : undefined,
+  };
+}
+
 async function getOrCreateLead({
   request,
   rawEmail,
@@ -238,7 +256,7 @@ async function getOrCreateLead({
   rawEmail: string;
   normalizedEmail: string;
 }): Promise<
-  | { ok: true; lead: EarlyAccessLeadRow }
+  | { ok: true; lead: EarlyAccessLeadRow | null }
   | { ok: false; status: number; error: string }
 > {
   let admin;
@@ -259,7 +277,9 @@ async function getOrCreateLead({
     .maybeSingle<EarlyAccessLeadRow>();
 
   if (selectError) {
-    return { ok: false, status: 503, error: "Unable to process the request right now." };
+    console.error("maintenance early-access select lead error", toDbErrorDetails(selectError));
+    // Defensive fallback: don't block valid signups if DB persistence is temporarily degraded.
+    return { ok: true, lead: null };
   }
 
   if (existing && existing.status !== "email_failed") {
@@ -273,12 +293,14 @@ async function getOrCreateLead({
   const metadata = {
     userAgent: request.headers.get("user-agent") || "unknown",
     ip: getClientIp(request),
+    submitted_email_raw: rawEmail,
   };
 
   const { data: created, error: insertError } = await admin
     .from("maintenance_early_access_leads")
     .insert({
-      email: rawEmail,
+      // Keep column value canonicalized to remain compatible with legacy constraints.
+      email: normalizedEmail,
       email_normalized: normalizedEmail,
       source: "maintenance_page",
       status: "pending",
@@ -292,7 +314,9 @@ async function getOrCreateLead({
     if (isUniqueViolation(insertError)) {
       return { ok: false, status: 409, error: EMAIL_ALREADY_REGISTERED_MESSAGE };
     }
-    return { ok: false, status: 503, error: "Unable to process the request right now." };
+    console.error("maintenance early-access insert lead error", toDbErrorDetails(insertError));
+    // Defensive fallback: continue email flow even if persistence fails.
+    return { ok: true, lead: null };
   }
 
   return { ok: true, lead: created };
@@ -391,7 +415,7 @@ export async function POST(request: Request) {
     return maintenanceJson({ ok: false, error: leadResult.error }, leadResult.status);
   }
 
-  const leadId = leadResult.lead.id;
+  const leadId = leadResult.lead?.id ?? null;
   const nowIso = new Date().toISOString();
   const userAgent = request.headers.get("user-agent") || "unknown";
   const maintenanceFlag = isMaintenanceModeEnabled() ? "ON" : "OFF";
@@ -407,7 +431,9 @@ export async function POST(request: Request) {
 
     if (autoReplyResult.error) {
       console.error("maintenance early-access auto-reply error", autoReplyResult.error);
-      await updateLeadStatus(leadId, "email_failed", String(autoReplyResult.error.message || "auto_reply_failed"));
+      if (leadId) {
+        await updateLeadStatus(leadId, "email_failed", String(autoReplyResult.error.message || "auto_reply_failed"));
+      }
       return maintenanceJson(
         {
           ok: false,
@@ -439,11 +465,15 @@ export async function POST(request: Request) {
       console.error("maintenance early-access internal notify error", internalResult.error);
     }
 
-    await updateLeadStatus(leadId, "confirmed", null);
+    if (leadId) {
+      await updateLeadStatus(leadId, "confirmed", null);
+    }
     return maintenanceJson({ ok: true, message: "You are on the list." }, 200);
   } catch (error) {
     console.error("maintenance early-access submit error", error);
-    await updateLeadStatus(leadId, "email_failed", String((error as { message?: string }).message || "unknown_error"));
+    if (leadId) {
+      await updateLeadStatus(leadId, "email_failed", String((error as { message?: string }).message || "unknown_error"));
+    }
     return maintenanceJson(
       {
         ok: false,

@@ -32,3 +32,13 @@ jobs:
 
       - name: Security tests
         run: npm run test:security
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Daily Security Checks"

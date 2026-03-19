@@ -1,0 +1,65 @@
+name: Production Smoke Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily (UTC)
+    - cron: "10 5 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke-check
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_BASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve target
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_URL="${PRODUCTION_BASE_URL:-https://openlymarket.xyz}"
+          echo "BASE_URL=${BASE_URL}" >> "$GITHUB_ENV"
+
+      - name: Run smoke checks
+        id: smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_status() {
+            local url="$1"
+            curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" "$url"
+          }
+
+          ROOT_STATUS="$(check_status "${BASE_URL}/")"
+          MAINTENANCE_STATUS="$(check_status "${BASE_URL}/maintenance")"
+          API_OPTIONS_STATUS="$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" -X OPTIONS "${BASE_URL}/api/maintenance/early-access")"
+
+          echo "root_status=${ROOT_STATUS}" >> "$GITHUB_OUTPUT"
+          echo "maintenance_status=${MAINTENANCE_STATUS}" >> "$GITHUB_OUTPUT"
+          echo "api_options_status=${API_OPTIONS_STATUS}" >> "$GITHUB_OUTPUT"
+
+          [[ "${ROOT_STATUS}" == "503" ]]
+          [[ "${MAINTENANCE_STATUS}" == "503" ]]
+          [[ "${API_OPTIONS_STATUS}" == "204" ]]
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          DETAILS="root=${{ steps.smoke.outputs.root_status || 'n/a' }}, maintenance=${{ steps.smoke.outputs.maintenance_status || 'n/a' }}, api_options=${{ steps.smoke.outputs.api_options_status || 'n/a' }}"
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Production Smoke Check" "${BASE_URL}" "${DETAILS}"
