@@ -23,8 +23,8 @@ const MAINTENANCE_THEME_BOOTSTRAP = `(() => {
 })();`;
 
 export const metadata: Metadata = {
-  title: "Openly - Development Mode",
-  description: "Sito temporaneamente non disponibile per manutenzione programmata.",
+  title: "Development Mode",
+  description: "Openly it's in Development Mode, We'll be soon online",
   robots: {
     index: false,
     follow: false,
@@ -80,12 +80,35 @@ function SocialXIcon() {
 
 function SocialGithubIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 16 16" style={{ width: "16px", height: "16px", display: "block" }}>
+    <svg aria-hidden="true" viewBox="0 0 16 16" style={{ width: "20px", height: "20px", display: "block" }}>
       <path
         fill="currentColor"
         d="M8 0C3.58 0 0 3.67 0 8.2c0 3.63 2.29 6.7 5.47 7.79.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.96-.09-.24-.48-.96-.82-1.15-.28-.15-.68-.54-.01-.55.63-.01 1.08.59 1.23.84.72 1.25 1.87.9 2.33.68.07-.54.28-.9.51-1.11-1.78-.21-3.64-.92-3.64-4.06 0-.9.31-1.64.82-2.22-.08-.21-.36-1.05.08-2.18 0 0 .67-.22 2.2.85a7.38 7.38 0 0 1 4 0c1.53-1.07 2.2-.85 2.2-.85.44 1.13.16 1.97.08 2.18.51.58.82 1.31.82 2.22 0 3.15-1.87 3.84-3.65 4.06.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .22.14.49.55.4A8.24 8.24 0 0 0 16 8.2C16 3.67 12.42 0 8 0z"
       />
     </svg>
+  );
+}
+
+type SocialLinkProps = {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+};
+
+function SocialLink({ href, label, children }: SocialLinkProps) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      aria-label={label}
+      className="maintenance-social-link"
+    >
+      {children}
+      <span className="maintenance-social-tooltip" role="tooltip">
+        {label}
+      </span>
+    </a>
   );
 }
 
@@ -312,7 +335,7 @@ export default function MaintenancePage() {
                 transition: "transform 120ms ease, opacity 120ms ease",
               }}
             >
-              Openly Docs
+              docs.openlymarket.xyz
             </Link>
             </article>
 
@@ -339,97 +362,33 @@ export default function MaintenancePage() {
               </strong>
             </p>
 
-            <div
-              style={{
-                marginTop: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "12px",
-              }}
-            >
-              <a
-                href="https://x.com/openlymarket"
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="X"
-                style={{
-                  color: "var(--maintenance-fg)",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "28px",
-                  height: "28px",
-                }}
-              >
+            <div className="maintenance-social-row" style={{ marginTop: "12px" }}>
+              <SocialLink href="https://x.com/openlymarket" label="X">
                 <SocialXIcon />
-              </a>
-              <a
-                href="https://github.com/openlymarket"
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="GitHub"
-                style={{
-                  color: "var(--maintenance-fg)",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "28px",
-                  height: "28px",
-                }}
-              >
+              </SocialLink>
+              <SocialLink href="https://github.com/openlymarket" label="GitHub">
                 <SocialGithubIcon />
-              </a>
-              <a
-                href="https://www.reddit.com/"
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="Reddit"
-                style={{
-                  color: "var(--maintenance-fg)",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "28px",
-                  height: "28px",
-                }}
-              >
+              </SocialLink>
+              <SocialLink href="https://www.reddit.com/" label="Reddit">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://mintlify.s3.us-west-1.amazonaws.com/mattiavizzi/icons/reddit.svg"
                   alt=""
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                   style={{ display: "block" }}
                 />
-              </a>
-              <a
-                href="https://paragraph.xyz/"
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="Paragraph"
-                style={{
-                  color: "var(--maintenance-fg)",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "28px",
-                  height: "28px",
-                }}
-              >
+              </SocialLink>
+              <SocialLink href="https://paragraph.xyz/" label="Paragraph">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://mintlify.s3.us-west-1.amazonaws.com/mattiavizzi/icons/paragraph.png"
                   alt=""
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                   style={{ display: "block" }}
                 />
-              </a>
+              </SocialLink>
             </div>
           </div>
         </div>

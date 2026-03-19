@@ -74,6 +74,7 @@
     "react-resizable-panels": "^4.7.2",
     "react-use": "^17.6.0",
     "recharts": "^2.15.4",
+    "resend": "^6.9.4",
     "server-only": "^0.0.1",
     "shadcn": "^4.0.0",
     "sileo": "^0.1.5",
