@@ -153,7 +153,11 @@ export default async function RootLayout({
           className={`${geist.className} notranslate min-h-screen overflow-x-hidden overflow-y-auto bg-background text-foreground antialiased`}
           suppressHydrationWarning
         >
-          {children}
+          <Providers>
+            <div id="app-root-shell" className="overflow-visible">
+              {children}
+            </div>
+          </Providers>
         </body>
       </html>
     );
