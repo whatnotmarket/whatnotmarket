@@ -7,6 +7,15 @@ type AbuseEventRow = {
   blocked: boolean;
 };
 
+function isSchemaMissingError(message: string) {
+  const normalized = String(message || "").toLowerCase();
+  return (
+    (normalized.includes("could not find the table") && normalized.includes("schema cache")) ||
+    (normalized.includes("could not find the column") && normalized.includes("schema cache")) ||
+    (normalized.includes("relation") && normalized.includes("does not exist"))
+  );
+}
+
 function topActions(rows: AbuseEventRow[], limit = 5) {
   const map = new Map<string, { total: number; blocked: number }>();
   for (const row of rows) {
@@ -69,31 +78,99 @@ export async function executeJob(): Promise<JobResult> {
             .eq("status", "email_failed"),
         ]);
 
-      if (abuseEventsRes.error) throw new Error(`Unable to read security abuse events: ${abuseEventsRes.error.message}`);
-      if (abuseBlockedRes.error) throw new Error(`Unable to count blocked abuse events: ${abuseBlockedRes.error.message}`);
-      if (trustSuspiciousRes.error) throw new Error(`Unable to count suspicious trust events: ${trustSuspiciousRes.error.message}`);
-      if (reportsOpenRes.error) throw new Error(`Unable to count trust reports: ${reportsOpenRes.error.message}`);
-      if (reportsHighPriorityRes.error) throw new Error(`Unable to count high-priority trust reports: ${reportsHighPriorityRes.error.message}`);
-      if (casesAgedRes.error) throw new Error(`Unable to count aged moderation cases: ${casesAgedRes.error.message}`);
-      if (earlyFailedRes.error) throw new Error(`Unable to count maintenance email failures: ${earlyFailedRes.error.message}`);
+      const missingSchemaRelations: string[] = [];
 
-      const abuseRows = abuseEventsRes.data || [];
+      let abuseRows: AbuseEventRow[] = [];
+      if (abuseEventsRes.error) {
+        if (isSchemaMissingError(abuseEventsRes.error.message)) {
+          missingSchemaRelations.push("security_abuse_events");
+        } else {
+          throw new Error(`Unable to read security abuse events: ${abuseEventsRes.error.message}`);
+        }
+      } else {
+        abuseRows = abuseEventsRes.data || [];
+      }
+
+      let abuseBlocked24h = 0;
+      if (abuseBlockedRes.error) {
+        if (isSchemaMissingError(abuseBlockedRes.error.message)) {
+          missingSchemaRelations.push("security_abuse_events");
+        } else {
+          throw new Error(`Unable to count blocked abuse events: ${abuseBlockedRes.error.message}`);
+        }
+      } else {
+        abuseBlocked24h = abuseBlockedRes.count || 0;
+      }
+
+      let suspiciousTrust24h = 0;
+      if (trustSuspiciousRes.error) {
+        if (isSchemaMissingError(trustSuspiciousRes.error.message)) {
+          missingSchemaRelations.push("trust_security_events");
+        } else {
+          throw new Error(`Unable to count suspicious trust events: ${trustSuspiciousRes.error.message}`);
+        }
+      } else {
+        suspiciousTrust24h = trustSuspiciousRes.count || 0;
+      }
+
+      let openReports = 0;
+      if (reportsOpenRes.error) {
+        if (isSchemaMissingError(reportsOpenRes.error.message)) {
+          missingSchemaRelations.push("trust_reports");
+        } else {
+          throw new Error(`Unable to count trust reports: ${reportsOpenRes.error.message}`);
+        }
+      } else {
+        openReports = reportsOpenRes.count || 0;
+      }
+
+      let highPriorityOpenReports = 0;
+      if (reportsHighPriorityRes.error) {
+        if (isSchemaMissingError(reportsHighPriorityRes.error.message)) {
+          missingSchemaRelations.push("trust_reports");
+        } else {
+          throw new Error(`Unable to count high-priority trust reports: ${reportsHighPriorityRes.error.message}`);
+        }
+      } else {
+        highPriorityOpenReports = reportsHighPriorityRes.count || 0;
+      }
+
+      let agedModerationCases48h = 0;
+      if (casesAgedRes.error) {
+        if (isSchemaMissingError(casesAgedRes.error.message)) {
+          missingSchemaRelations.push("trust_moderation_cases");
+        } else {
+          throw new Error(`Unable to count aged moderation cases: ${casesAgedRes.error.message}`);
+        }
+      } else {
+        agedModerationCases48h = casesAgedRes.count || 0;
+      }
+
+      let earlyAccessEmailFailures = 0;
+      if (earlyFailedRes.error) {
+        if (isSchemaMissingError(earlyFailedRes.error.message)) {
+          missingSchemaRelations.push("maintenance_early_access_leads");
+        } else {
+          throw new Error(`Unable to count maintenance email failures: ${earlyFailedRes.error.message}`);
+        }
+      } else {
+        earlyAccessEmailFailures = earlyFailedRes.count || 0;
+      }
+
       const abuseTotal24h = abuseRows.length;
-      const abuseBlocked24h = abuseBlockedRes.count || 0;
-      const suspiciousTrust24h = trustSuspiciousRes.count || 0;
-      const openReports = reportsOpenRes.count || 0;
-      const highPriorityOpenReports = reportsHighPriorityRes.count || 0;
-      const agedModerationCases48h = casesAgedRes.count || 0;
-      const earlyAccessEmailFailures = earlyFailedRes.count || 0;
 
       let warnings = 0;
       if (abuseBlocked24h >= 20) warnings += 1;
       if (highPriorityOpenReports >= 10) warnings += 1;
       if (agedModerationCases48h > 0) warnings += 1;
       if (earlyAccessEmailFailures > 0) warnings += 1;
+      if (missingSchemaRelations.length > 0) warnings += 1;
 
       return {
-        message: "Daily security digest generated.",
+        message:
+          missingSchemaRelations.length > 0
+            ? "Daily security digest generated with partial schema coverage."
+            : "Daily security digest generated.",
         details: {
           abuse_total_24h: abuseTotal24h,
           abuse_blocked_24h: abuseBlocked24h,
@@ -103,6 +180,7 @@ export async function executeJob(): Promise<JobResult> {
           trust_cases_aged_48h: agedModerationCases48h,
           maintenance_email_failed_backlog: earlyAccessEmailFailures,
           top_abuse_actions: topActions(abuseRows),
+          missing_schema_relations: Array.from(new Set(missingSchemaRelations)),
         },
         metrics: {
           processed: 7,
