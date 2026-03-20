@@ -17,6 +17,7 @@
     "cron:daily": "npx tsx jobs/runner.ts --group daily",
     "cron:weekly": "npx tsx jobs/runner.ts --group weekly",
     "cron:monthly": "npx tsx jobs/runner.ts --group monthly",
+    "security:web-audit": "node scripts/security/run-web-security-audit.mjs",
     "seo:internal-links:audit": "node scripts/seo/generate-internal-link-audit.mjs",
     "i18n:catalog": "tsx scripts/i18n/generate-master-i18n-catalog.ts",
     "i18n:englishify": "python scripts/i18n/translate_site_master_to_english.py"

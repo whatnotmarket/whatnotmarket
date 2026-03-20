@@ -48,6 +48,11 @@ const EXPECTED_WORKFLOWS: ExpectedWorkflow[] = [
     mustContain: ["npm run test:security"],
   },
   {
+    file: "security-web-audit-telegram.yml",
+    cron: "35 6 * * *",
+    mustContain: ["npm run security:web-audit"],
+  },
+  {
     file: "dependency-security-weekly.yml",
     cron: "40 3 * * 1",
     mustContain: ["npm audit --omit=dev --json"],
@@ -76,4 +81,3 @@ test("scheduled workflows contain expected cron and command hooks", async () => 
     }
   }
 });
-

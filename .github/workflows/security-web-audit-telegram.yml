@@ -1,0 +1,87 @@
+name: Daily Web Security Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 06:35 UTC
+    - cron: "35 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-web-audit-daily
+  cancel-in-progress: false
+
+jobs:
+  web-security-audit:
+    runs-on: ubuntu-latest
+    env:
+      SECURITY_AUDIT_TARGET_URL: ${{ secrets.SECURITY_AUDIT_TARGET_URL || vars.SECURITY_AUDIT_TARGET_URL || vars.PRODUCTION_BASE_URL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Show runtime versions
+        shell: bash
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Run automated web security audit
+        shell: bash
+        run: npm run security:web-audit
+
+      - name: Prepare Telegram summary
+        if: always()
+        id: summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          SUMMARY_FILE="reports/security-audit/latest-summary.txt"
+          if [[ -f "${SUMMARY_FILE}" ]]; then
+            SUMMARY="$(tr '\n' ' ' < "${SUMMARY_FILE}" | sed -E 's/[[:space:]]+/ /g' | cut -c1-900)"
+          else
+            SUMMARY="Security audit summary unavailable (report file missing)."
+          fi
+          echo "summary=${SUMMARY}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload security audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-web-security-audit
+          path: reports/security-audit/*
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Notify Telegram
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${SECURITY_AUDIT_TARGET_URL:-https://openlymarket.xyz}"
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Daily Web Security Audit" "${TARGET}" "${{ steps.summary.outputs.summary }}"
+
