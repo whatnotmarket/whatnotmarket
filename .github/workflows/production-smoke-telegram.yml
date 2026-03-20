@@ -73,13 +73,74 @@ jobs:
           status_in_list "${MAINTENANCE_STATUS}" "${MAINTENANCE_EXPECTED}"
           status_in_list "${API_OPTIONS_STATUS}" "${API_OPTIONS_EXPECTED}"
 
+      - name: Prepare Telegram message (HTML)
+        if: always()
+        id: telegram
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ROOT_STATUS="${{ steps.smoke.outputs.root_status || 'n/a' }}"
+          MAINTENANCE_STATUS="${{ steps.smoke.outputs.maintenance_status || 'n/a' }}"
+          API_OPTIONS_STATUS="${{ steps.smoke.outputs.api_options_status || 'n/a' }}"
+
+          ROOT_EXPECTED="${SMOKE_EXPECT_ROOT_STATUSES:-200,503}"
+          MAINTENANCE_EXPECTED="${SMOKE_EXPECT_MAINTENANCE_STATUSES:-200,503}"
+          API_OPTIONS_EXPECTED="${SMOKE_EXPECT_API_OPTIONS_STATUSES:-204}"
+
+          status_icon() {
+            local status="$1"
+            local allowed_csv="$2"
+            IFS=',' read -r -a allowed <<<"${allowed_csv}"
+            for candidate in "${allowed[@]}"; do
+              candidate="$(echo "${candidate}" | xargs)"
+              if [[ "${status}" == "${candidate}" ]]; then
+                echo "🟢"
+                return
+              fi
+            done
+            echo "🔴"
+          }
+
+          ROOT_ICON="$(status_icon "${ROOT_STATUS}" "${ROOT_EXPECTED}")"
+          MAINTENANCE_ICON="$(status_icon "${MAINTENANCE_STATUS}" "${MAINTENANCE_EXPECTED}")"
+          API_ICON="$(status_icon "${API_OPTIONS_STATUS}" "${API_OPTIONS_EXPECTED}")"
+
+          OVERALL_ICON="🟢"
+          if [[ "${{ job.status }}" != "success" ]]; then
+            OVERALL_ICON="🔴"
+          elif [[ "${ROOT_ICON}" == "🔴" || "${MAINTENANCE_ICON}" == "🔴" || "${API_ICON}" == "🔴" ]]; then
+            OVERALL_ICON="🟠"
+          fi
+
+          MESSAGE_FILE="${RUNNER_TEMP}/production-smoke-telegram.html"
+          cat > "${MESSAGE_FILE}" <<EOF
+<b>🚦 Production Smoke Check</b>
+
+🎯 <b>Target:</b> ${BASE_URL}
+${OVERALL_ICON} <b>Workflow status:</b> ${{ job.status }}
+
+<b>Checks</b>
+${ROOT_ICON} <b>GET /</b> -> ${ROOT_STATUS} <i>(expected: ${ROOT_EXPECTED})</i>
+${MAINTENANCE_ICON} <b>GET /maintenance</b> -> ${MAINTENANCE_STATUS} <i>(expected: ${MAINTENANCE_EXPECTED})</i>
+${API_ICON} <b>OPTIONS /api/maintenance/early-access</b> -> ${API_OPTIONS_STATUS} <i>(expected: ${API_OPTIONS_EXPECTED})</i>
+
+<b>How to fix if red</b>
+• Verify active mode (maintenance vs live) and expected status vars.
+• Check edge/proxy rewrites and middleware behavior.
+• Confirm API route and CORS preflight handling.
+EOF
+
+          echo "message_file=${MESSAGE_FILE}" >> "$GITHUB_OUTPUT"
+
       - name: Notify Telegram
         if: always()
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.telegram.outputs.message_file }}
         shell: bash
         run: |
           set -euo pipefail
-          DETAILS="root=${{ steps.smoke.outputs.root_status || 'n/a' }}, maintenance=${{ steps.smoke.outputs.maintenance_status || 'n/a' }}, api_options=${{ steps.smoke.outputs.api_options_status || 'n/a' }}"
-          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Production Smoke Check" "${BASE_URL}" "${DETAILS}"
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Production Smoke Check" "${BASE_URL}"
