@@ -54,20 +54,6 @@ jobs:
         shell: bash
         run: npm run security:web-audit
 
-      - name: Prepare Telegram summary
-        if: always()
-        id: summary
-        shell: bash
-        run: |
-          set -euo pipefail
-          SUMMARY_FILE="reports/security-audit/latest-summary.txt"
-          if [[ -f "${SUMMARY_FILE}" ]]; then
-            SUMMARY="$(tr '\n' ' ' < "${SUMMARY_FILE}" | sed -E 's/[[:space:]]+/ /g' | cut -c1-900)"
-          else
-            SUMMARY="Security audit summary unavailable (report file missing)."
-          fi
-          echo "summary=${SUMMARY}" >> "$GITHUB_OUTPUT"
-
       - name: Upload security audit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -83,5 +69,10 @@ jobs:
         run: |
           set -euo pipefail
           TARGET="${SECURITY_AUDIT_TARGET_URL:-https://openlymarket.xyz}"
-          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Daily Web Security Audit" "${TARGET}" "${{ steps.summary.outputs.summary }}"
-
+          SUMMARY_FILE="reports/security-audit/latest-summary.txt"
+          if [[ -f "${SUMMARY_FILE}" ]]; then
+            DETAILS="$(tr '\n' ' ' < "${SUMMARY_FILE}" | sed -E 's/[[:space:]]+/ /g' | cut -c1-900)"
+          else
+            DETAILS="Security audit summary unavailable (report file missing)."
+          fi
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Daily Web Security Audit" "${TARGET}" "${DETAILS}"
