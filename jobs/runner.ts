@@ -30,10 +30,22 @@ function parseArg(name: string) {
 }
 
 async function runSingleJob(jobName: RegisteredJobName) {
-  const loader = JOB_LOADERS[jobName];
-  const jobModule = await loader();
-  const result = await jobModule.executeJob();
-  return result.success ? 0 : 1;
+  try {
+    const loader = JOB_LOADERS[jobName];
+    const jobModule = await loader();
+    if (!jobModule || typeof jobModule.executeJob !== "function") {
+      console.error(`[cron:${jobName}] Invalid job module: missing executeJob export.`);
+      return 1;
+    }
+
+    const result = await jobModule.executeJob();
+    return result.success ? 0 : 1;
+  } catch (error) {
+    const details = error instanceof Error ? error.stack || error.message : String(error);
+    console.error(`[cron:${jobName}] Job crashed before lifecycle completion.`);
+    console.error(details);
+    return 1;
+  }
 }
 
 async function runGroup(groupName: string) {

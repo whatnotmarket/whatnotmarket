@@ -1,4 +1,3 @@
-import { Resend } from "resend";
 import { maintenanceEarlyAccessAutoReplyHtml, maintenanceEarlyAccessAutoReplyText } from "../../src/lib/email-templates/maintenance-early-access";
 import { runJobWithLifecycle } from "../_shared/run-job";
 import { isTransientNetworkError, sleep, withRetry } from "../_shared/retry";
@@ -26,13 +25,23 @@ function toErrorMessage(error: unknown) {
   return String(error);
 }
 
+async function createResendClient() {
+  try {
+    const { Resend } = (await import("resend")) as typeof import("resend");
+    return new Resend(getRequiredEnv("RESEND_API_KEY"));
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Unable to initialize Resend client: ${reason}`);
+  }
+}
+
 export async function executeJob(): Promise<JobResult> {
   return runJobWithLifecycle({
     jobName: "maintenance/retry-early-access-emails",
     leaseSeconds: 50 * 60,
     execute: async ({ logger }) => {
       const admin = await requireJobsSupabaseAdminClient();
-      const resend = new Resend(getRequiredEnv("RESEND_API_KEY"));
+      const resend = await createResendClient();
       const from = getRequiredEnv("RESEND_FROM_EMAIL");
       const batchSize = Math.max(1, Math.min(Number(process.env.CRON_EARLY_ACCESS_RETRY_BATCH || "40"), 200));
       const minDelayMs = Math.max(0, Number(process.env.CRON_EARLY_ACCESS_RETRY_DELAY_MS || "250"));

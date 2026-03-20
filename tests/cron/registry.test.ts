@@ -22,3 +22,16 @@ test("registry jobs are unique across groups where intended", () => {
     }
   }
 });
+
+test("every registered job is assigned to exactly one group", () => {
+  const grouped = new Set<string>();
+  for (const jobs of Object.values(JOB_GROUPS)) {
+    for (const job of jobs) {
+      grouped.add(job);
+    }
+  }
+
+  const registered = Object.keys(JOB_LOADERS).sort();
+  const scheduled = Array.from(grouped).sort();
+  assert.deepEqual(scheduled, registered);
+});

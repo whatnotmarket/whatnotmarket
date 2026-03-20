@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_BASE_URL }}
+      SMOKE_EXPECT_ROOT_STATUSES: ${{ vars.SMOKE_EXPECT_ROOT_STATUSES }}
+      SMOKE_EXPECT_MAINTENANCE_STATUSES: ${{ vars.SMOKE_EXPECT_MAINTENANCE_STATUSES }}
+      SMOKE_EXPECT_API_OPTIONS_STATUSES: ${{ vars.SMOKE_EXPECT_API_OPTIONS_STATUSES }}
 
     steps:
       - name: Checkout
@@ -36,10 +39,27 @@ jobs:
         run: |
           set -euo pipefail
 
+          status_in_list() {
+            local status="$1"
+            local allowed_csv="$2"
+            IFS=',' read -r -a allowed <<<"${allowed_csv}"
+            for candidate in "${allowed[@]}"; do
+              candidate="$(echo "${candidate}" | xargs)"
+              if [[ "${status}" == "${candidate}" ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
           check_status() {
             local url="$1"
             curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" "$url"
           }
+
+          ROOT_EXPECTED="${SMOKE_EXPECT_ROOT_STATUSES:-200,503}"
+          MAINTENANCE_EXPECTED="${SMOKE_EXPECT_MAINTENANCE_STATUSES:-200,503}"
+          API_OPTIONS_EXPECTED="${SMOKE_EXPECT_API_OPTIONS_STATUSES:-204}"
 
           ROOT_STATUS="$(check_status "${BASE_URL}/")"
           MAINTENANCE_STATUS="$(check_status "${BASE_URL}/maintenance")"
@@ -49,9 +69,9 @@ jobs:
           echo "maintenance_status=${MAINTENANCE_STATUS}" >> "$GITHUB_OUTPUT"
           echo "api_options_status=${API_OPTIONS_STATUS}" >> "$GITHUB_OUTPUT"
 
-          [[ "${ROOT_STATUS}" == "503" ]]
-          [[ "${MAINTENANCE_STATUS}" == "503" ]]
-          [[ "${API_OPTIONS_STATUS}" == "204" ]]
+          status_in_list "${ROOT_STATUS}" "${ROOT_EXPECTED}"
+          status_in_list "${MAINTENANCE_STATUS}" "${MAINTENANCE_EXPECTED}"
+          status_in_list "${API_OPTIONS_STATUS}" "${API_OPTIONS_EXPECTED}"
 
       - name: Notify Telegram
         if: always()

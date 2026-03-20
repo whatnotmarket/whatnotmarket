@@ -7,8 +7,8 @@ BASE_URL="${3:-}"
 DETAILS="${4:-}"
 
 if [[ -z "${TELEGRAM_BOT_TOKEN:-}" || -z "${TELEGRAM_CHAT_ID:-}" ]]; then
-  echo "::error::Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID."
-  exit 1
+  echo "::warning::Skipping Telegram notification: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing."
+  exit 0
 fi
 
 RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
@@ -31,13 +31,16 @@ if [[ -n "${DETAILS}" ]]; then
 Details: ${DETAILS}"
 fi
 
-RESPONSE="$(curl --silent --show-error \
+if ! RESPONSE="$(curl --silent --show-error \
   -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
   -d "chat_id=${TELEGRAM_CHAT_ID}" \
   --data-urlencode "text=${MESSAGE}" \
-  -d "disable_web_page_preview=true")"
+  -d "disable_web_page_preview=true")"; then
+  echo "::warning::Telegram request failed: ${RESPONSE}"
+  exit 0
+fi
 
 if ! grep -q '"ok":true' <<<"${RESPONSE}"; then
-  echo "::error::Telegram API error: ${RESPONSE}"
-  exit 1
+  echo "::warning::Telegram API error: ${RESPONSE}"
+  exit 0
 fi
