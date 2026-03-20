@@ -125,7 +125,16 @@ async function acquireSupabaseLock(jobName: string, leaseSeconds: number): Promi
 
   if (error) {
     const message = String(error.message || "").toLowerCase();
-    if (message.includes("function") && message.includes("does not exist")) {
+    const hint = String((error as { hint?: string }).hint || "").toLowerCase();
+    const details = String((error as { details?: string }).details || "").toLowerCase();
+    const code = String((error as { code?: string }).code || "").toLowerCase();
+    const missingRpc =
+      (message.includes("function") && message.includes("does not exist")) ||
+      (message.includes("could not find the function") && message.includes("schema cache")) ||
+      code === "pgrst202" ||
+      hint.includes("schema cache") ||
+      details.includes("schema cache");
+    if (missingRpc) {
       return null;
     }
     throw new Error(`Unable to acquire Supabase lock: ${error.message}`);
