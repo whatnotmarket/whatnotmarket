@@ -61,8 +61,21 @@ export async function POST(request: Request) {
   const token = resolveTelegramToken();
   const chatId = process.env.TELEGRAM_CHAT_ID?.trim() || "";
   if (!token || !chatId) {
+    const missing: string[] = [];
+    if (!token) {
+      missing.push(
+        "TELEGRAM_MAINTENANCE_BOT_TOKEN (or TELEGRAM_SECURITY_BOT_TOKEN / TELEGRAM_BOT_TOKEN)"
+      );
+    }
+    if (!chatId) {
+      missing.push("TELEGRAM_CHAT_ID");
+    }
+
     return NextResponse.json(
-      { ok: false, error: "Maintenance feedback integration is not configured." },
+      {
+        ok: false,
+        error: `Maintenance feedback integration is not configured. Missing: ${missing.join(", ")}`,
+      },
       { status: 503 }
     );
   }
