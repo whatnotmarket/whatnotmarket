@@ -114,22 +114,19 @@ jobs:
           fi
 
           MESSAGE_FILE="${RUNNER_TEMP}/production-smoke-telegram.html"
-          cat > "${MESSAGE_FILE}" <<EOF
-<b>🚦 Production Smoke Check</b>
-
-🎯 <b>Target:</b> ${BASE_URL}
-${OVERALL_ICON} <b>Workflow status:</b> ${{ job.status }}
-
-<b>Checks</b>
-${ROOT_ICON} <b>GET /</b> -> ${ROOT_STATUS} <i>(expected: ${ROOT_EXPECTED})</i>
-${MAINTENANCE_ICON} <b>GET /maintenance</b> -> ${MAINTENANCE_STATUS} <i>(expected: ${MAINTENANCE_EXPECTED})</i>
-${API_ICON} <b>OPTIONS /api/maintenance/early-access</b> -> ${API_OPTIONS_STATUS} <i>(expected: ${API_OPTIONS_EXPECTED})</i>
-
-<b>How to fix if red</b>
-• Verify active mode (maintenance vs live) and expected status vars.
-• Check edge/proxy rewrites and middleware behavior.
-• Confirm API route and CORS preflight handling.
-EOF
+          {
+            printf '<b>🚦 Production Smoke Check</b>\n\n'
+            printf '🎯 <b>Target:</b> %s\n' "${BASE_URL}"
+            printf '%s <b>Workflow status:</b> %s\n\n' "${OVERALL_ICON}" "${{ job.status }}"
+            printf '<b>Checks</b>\n'
+            printf '%s <b>GET /</b> -> %s <i>(expected: %s)</i>\n' "${ROOT_ICON}" "${ROOT_STATUS}" "${ROOT_EXPECTED}"
+            printf '%s <b>GET /maintenance</b> -> %s <i>(expected: %s)</i>\n' "${MAINTENANCE_ICON}" "${MAINTENANCE_STATUS}" "${MAINTENANCE_EXPECTED}"
+            printf '%s <b>OPTIONS /api/maintenance/early-access</b> -> %s <i>(expected: %s)</i>\n\n' "${API_ICON}" "${API_OPTIONS_STATUS}" "${API_OPTIONS_EXPECTED}"
+            printf '<b>How to fix if red</b>\n'
+            printf '- Verify active mode (maintenance vs live) and expected status vars.\n'
+            printf '- Check edge/proxy rewrites and middleware behavior.\n'
+            printf '- Confirm API route and CORS preflight handling.\n'
+          } > "${MESSAGE_FILE}"
 
           echo "message_file=${MESSAGE_FILE}" >> "$GITHUB_OUTPUT"
 
