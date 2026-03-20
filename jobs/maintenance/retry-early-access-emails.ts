@@ -46,18 +46,20 @@ export async function executeJob(): Promise<JobResult> {
       const batchSize = Math.max(1, Math.min(Number(process.env.CRON_EARLY_ACCESS_RETRY_BATCH || "40"), 200));
       const minDelayMs = Math.max(0, Number(process.env.CRON_EARLY_ACCESS_RETRY_DELAY_MS || "250"));
 
-      const { data: leads, error } = await admin
+      const selectResponse = await admin
         .from("maintenance_early_access_leads")
         .select("id,email,email_normalized,status,updated_at")
         .eq("status", "email_failed")
         .order("updated_at", { ascending: true })
-        .limit(batchSize)
-        .returns<EarlyAccessLead[]>();
+        .limit(batchSize);
+
+      const error = selectResponse.error as { message: string } | null;
 
       if (error) {
         throw new Error(`Unable to load early-access leads to retry: ${error.message}`);
       }
 
+      const leads = (selectResponse.data || []) as EarlyAccessLead[];
       if (!leads || leads.length === 0) {
         return {
           message: "No email_failed leads to retry.",

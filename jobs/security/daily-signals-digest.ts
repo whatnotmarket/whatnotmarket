@@ -46,8 +46,7 @@ export async function executeJob(): Promise<JobResult> {
             .from("security_abuse_events")
             .select("action,blocked")
             .gte("created_at", since24Iso)
-            .limit(4000)
-            .returns<AbuseEventRow[]>(),
+            .limit(4000),
           admin
             .from("security_abuse_events")
             .select("id", { count: "exact", head: true })
@@ -88,7 +87,7 @@ export async function executeJob(): Promise<JobResult> {
           throw new Error(`Unable to read security abuse events: ${abuseEventsRes.error.message}`);
         }
       } else {
-        abuseRows = abuseEventsRes.data || [];
+        abuseRows = (abuseEventsRes.data || []) as AbuseEventRow[];
       }
 
       let abuseBlocked24h = 0;

@@ -21,18 +21,20 @@ export async function executeJob(): Promise<JobResult> {
       while (rounds < 25) {
         rounds += 1;
 
-        const { data: rows, error: selectError } = await admin
+        const selectResponse = await admin
           .from("internal_identity_sessions")
           .select("id")
           .lt("expires_at", nowIso)
           .order("expires_at", { ascending: true })
-          .limit(batchSize)
-          .returns<SessionRow[]>();
+          .limit(batchSize);
+
+        const selectError = selectResponse.error as { message: string } | null;
 
         if (selectError) {
           throw new Error(`Unable to load expired internal sessions: ${selectError.message}`);
         }
 
+        const rows = (selectResponse.data || []) as SessionRow[];
         if (!rows || rows.length === 0) {
           break;
         }

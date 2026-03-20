@@ -5,13 +5,15 @@ import { join } from "node:path";
 import { runJobWithLifecycle } from "../_shared/run-job";
 import type { JobResult } from "../_shared/types";
 
-function buildSafeChildEnv(): NodeJS.ProcessEnv {
-  const safeEnv: NodeJS.ProcessEnv = {};
+function buildSafeChildEnv() {
+  const safeEnv: Record<string, string> = {};
   for (const [key, value] of Object.entries(process.env)) {
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
       continue;
     }
-    safeEnv[key] = value;
+    if (typeof value === "string") {
+      safeEnv[key] = value;
+    }
   }
   return safeEnv;
 }
@@ -20,7 +22,7 @@ function runNpmScript(scriptName: string) {
   return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
     exec(`npm run ${scriptName}`, {
       cwd: process.cwd(),
-      env: buildSafeChildEnv(),
+      env: buildSafeChildEnv() as unknown as NodeJS.ProcessEnv,
       windowsHide: true,
       maxBuffer: 5 * 1024 * 1024,
     }, (error, stdout, stderr) => {
