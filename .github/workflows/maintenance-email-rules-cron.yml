@@ -33,9 +33,37 @@ jobs:
           python-version: "3.12"
 
       - name: Refresh disposable domains and email patterns
-        run: python src/app/maintenance/fetch_domains.py
+        id: refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG_FILE="${RUNNER_TEMP}/maintenance-email-rules.log"
+          python src/app/maintenance/fetch_domains.py | tee "${LOG_FILE}"
+
+          export LOG_FILE
+          python <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          text = Path(os.environ["LOG_FILE"]).read_text(encoding="utf-8")
+
+          def read_value(pattern: str, default: str = "0") -> str:
+              match = re.search(pattern, text)
+              return match.group(1).strip() if match else default
+
+          processed_sources = read_value(r"Processed source\(s\):\s*(\d+)")
+          added_domains = read_value(r"New disposable domains added:\s*(\d+)")
+          added_patterns = read_value(r"New email pattern rules added:\s*(\d+)")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"processed_sources={processed_sources}\n")
+              fh.write(f"added_domains={added_domains}\n")
+              fh.write(f"added_patterns={added_patterns}\n")
+          PY
 
       - name: Create pull request if rules changed
+        id: cpr
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "chore(maintenance): refresh disposable email rules"
@@ -49,8 +77,59 @@ jobs:
           delete-branch: true
           labels: maintenance, security
 
+      - name: Prepare Telegram message (HTML)
+        if: always()
+        id: telegram
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PROCESSED_SOURCES="${{ steps.refresh.outputs.processed_sources || 'n/a' }}"
+          ADDED_DOMAINS="${{ steps.refresh.outputs.added_domains || 'n/a' }}"
+          ADDED_PATTERNS="${{ steps.refresh.outputs.added_patterns || 'n/a' }}"
+          PR_OPERATION="${{ steps.cpr.outputs.pull-request-operation || 'none' }}"
+          PR_URL="${{ steps.cpr.outputs.pull-request-url || '' }}"
+
+          STATUS_ICON="🟢"
+          if [[ "${{ job.status }}" != "success" ]]; then
+            STATUS_ICON="🔴"
+          fi
+
+          OPERATION_LABEL="No PR changes"
+          if [[ "${PR_OPERATION}" == "created" ]]; then
+            OPERATION_LABEL="PR created"
+          elif [[ "${PR_OPERATION}" == "updated" ]]; then
+            OPERATION_LABEL="PR updated"
+          elif [[ "${PR_OPERATION}" == "closed" ]]; then
+            OPERATION_LABEL="PR closed"
+          fi
+
+          MESSAGE_FILE="${RUNNER_TEMP}/maintenance-email-rules-telegram.html"
+          {
+            printf '<b>🛠 Maintenance Email Rules Cron</b>\n\n'
+            printf '%s <b>Workflow status:</b> %s\n\n' "${STATUS_ICON}" "${{ job.status }}"
+            printf '<b>What Was Done</b>\n'
+            printf '• Refreshed disposable-domain sources.\n'
+            printf '• Normalized/filtered domains against public suffixes and allowlist.\n'
+            printf '• Synced blocklist and email-pattern rules.\n'
+            printf '• Opened/updated PR only when files changed.\n\n'
+            printf '<b>Execution Summary</b>\n'
+            printf '📡 <b>Processed sources:</b> %s\n' "${PROCESSED_SOURCES}"
+            printf '➕ <b>New domains added:</b> %s\n' "${ADDED_DOMAINS}"
+            printf '🧩 <b>New pattern rules added:</b> %s\n' "${ADDED_PATTERNS}"
+            printf '🔀 <b>PR operation:</b> %s\n' "${OPERATION_LABEL}"
+            if [[ -n "${PR_URL}" ]]; then
+              printf '🔗 <b>PR:</b> <a href="%s">Open pull request</a>\n' "${PR_URL}"
+            fi
+          } > "${MESSAGE_FILE}"
+
+          echo "message_file=${MESSAGE_FILE}" >> "$GITHUB_OUTPUT"
+
       - name: Notify Telegram
         if: always()
+        env:
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.telegram.outputs.message_file }}
         shell: bash
         run: |
           set -euo pipefail

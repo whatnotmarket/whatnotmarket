@@ -5,14 +5,26 @@ type GenericSupabaseClient = {
 
 let cachedClientPromise: Promise<GenericSupabaseClient | null> | null = null;
 
+function firstNonEmptyEnv(...keys: string[]) {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  return "";
+}
+
 export async function getJobsSupabaseAdminClient(): Promise<GenericSupabaseClient | null> {
   if (cachedClientPromise) {
     return cachedClientPromise;
   }
 
   cachedClientPromise = (async () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    const supabaseUrl = firstNonEmptyEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL");
+    const serviceRoleKey = firstNonEmptyEnv(
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_SERVICE_KEY",
+      "SUPABASE_SERVICE_ROLE"
+    );
     if (!supabaseUrl || !serviceRoleKey) {
       return null;
     }
@@ -45,7 +57,7 @@ export async function requireJobsSupabaseAdminClient(): Promise<GenericSupabaseC
   const client = await getJobsSupabaseAdminClient();
   if (!client) {
     throw new Error(
-      "Supabase admin connection is not configured. Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY."
+      "Supabase admin connection is not configured. Provide NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)."
     );
   }
   return client;
