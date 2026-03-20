@@ -3,6 +3,7 @@ import Image from "next/image";
 import Grainient from "@/components/Grainient";
 import MaintenanceThemeToggle from "./MaintenanceThemeToggle";
 import MaintenanceEarlyAccessForm from "./MaintenanceEarlyAccessForm";
+import MaintenanceFeedbackWidget from "./MaintenanceFeedbackWidget";
 import logoBlack from "./logosvgblack.svg";
 import logoWhite from "./logosvgwhite.svg";
 
@@ -150,6 +151,7 @@ export default function MaintenancePage() {
             boxShadow: "0 24px 72px rgba(0, 0, 0, 0.14)",
           }}
         >
+          <MaintenanceFeedbackWidget />
           <MaintenanceThemeToggle />
           <div
             aria-hidden="true"

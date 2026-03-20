@@ -30,6 +30,7 @@ const MAINTENANCE_ALLOWED_PUBLIC_PATHS = new Set<string>([
 ]);
 const MAINTENANCE_ALLOWED_API_PATHS = new Set<string>([
   "/api/maintenance/early-access",
+  "/api/maintenance/feedback",
 ]);
 const ENCODED_SEPARATOR_OR_TRAVERSAL_PATTERN = /%(?:2f|5c|2e%2e|252f|255c|252e%252e)/i;
 const DOT_SEGMENT_PATTERN = /(?:^|\/)\.\.?(?:\/|$)/;
