@@ -16,6 +16,8 @@ concurrency:
 jobs:
   dependency-scan:
     runs-on: ubuntu-latest
+    env:
+      DEPENDENCY_AUDIT_FAIL_LEVEL: ${{ vars.DEPENDENCY_AUDIT_FAIL_LEVEL || 'critical' }}
 
     steps:
       - name: Checkout
@@ -52,7 +54,101 @@ jobs:
         run: |
           set -euo pipefail
           npm audit --omit=dev --json > npm-audit.json || true
-          node -e "const fs=require('fs'); const d=JSON.parse(fs.readFileSync('npm-audit.json','utf8')); const v=d.metadata?.vulnerabilities||{}; const high=(v.high||0)+(v.critical||0); console.log('Vulnerabilities:', JSON.stringify(v)); if(high>0){process.exit(1)}"
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const data = JSON.parse(fs.readFileSync("npm-audit.json", "utf8"));
+          const vulnerabilities = data.metadata?.vulnerabilities || {};
+          const counts = {
+            info: Number(vulnerabilities.info || 0),
+            low: Number(vulnerabilities.low || 0),
+            moderate: Number(vulnerabilities.moderate || 0),
+            high: Number(vulnerabilities.high || 0),
+            critical: Number(vulnerabilities.critical || 0),
+            total: Number(vulnerabilities.total || 0),
+          };
+
+          const rank = { none: 0, low: 1, moderate: 2, high: 3, critical: 4 };
+          const ordered = ["critical", "high", "moderate", "low", "info"];
+          let highest = "none";
+          for (const level of ordered) {
+            if ((counts[level] || 0) > 0) {
+              highest = level === "info" ? "low" : level;
+              break;
+            }
+          }
+
+          const requestedThreshold = String(process.env.DEPENDENCY_AUDIT_FAIL_LEVEL || "critical").toLowerCase();
+          const failThreshold = Object.prototype.hasOwnProperty.call(rank, requestedThreshold) ? requestedThreshold : "critical";
+          const shouldFail = failThreshold !== "none" && rank[highest] >= rank[failThreshold];
+          const summary = `total=${counts.total}, critical=${counts.critical}, high=${counts.high}, moderate=${counts.moderate}, low=${counts.low}`;
+
+          console.log("Vulnerabilities:", JSON.stringify(counts));
+          console.log(`Highest level: ${highest}; fail threshold: ${failThreshold}; should_fail=${shouldFail}`);
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `counts_json=${JSON.stringify(counts)}\n`);
+          for (const [key, value] of Object.entries(counts)) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `highest=${highest}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `fail_threshold=${failThreshold}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `should_fail=${shouldFail}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `summary=${summary}\n`);
+          NODE
+
+      - name: Prepare Telegram message (HTML)
+        if: always()
+        id: telegram
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CRITICAL="${{ steps.audit.outputs.critical || '0' }}"
+          HIGH="${{ steps.audit.outputs.high || '0' }}"
+          MODERATE="${{ steps.audit.outputs.moderate || '0' }}"
+          LOW="${{ steps.audit.outputs.low || '0' }}"
+          TOTAL="${{ steps.audit.outputs.total || '0' }}"
+          HIGHEST="${{ steps.audit.outputs.highest || 'none' }}"
+          FAIL_THRESHOLD="${{ steps.audit.outputs.fail_threshold || 'critical' }}"
+          SHOULD_FAIL="${{ steps.audit.outputs.should_fail || 'false' }}"
+
+          OVERALL_ICON="🟢"
+          OVERALL_LABEL="No High-Risk Findings"
+          if [[ "${HIGHEST}" == "critical" || "${HIGHEST}" == "high" ]]; then
+            OVERALL_ICON="🔴"
+            OVERALL_LABEL="High Risk Detected"
+          elif [[ "${HIGHEST}" == "moderate" ]]; then
+            OVERALL_ICON="🟠"
+            OVERALL_LABEL="Moderate Risk Present"
+          elif [[ "${HIGHEST}" == "low" ]]; then
+            OVERALL_ICON="🟡"
+            OVERALL_LABEL="Low Risk Present"
+          fi
+
+          BLOCKING_LABEL="No"
+          if [[ "${SHOULD_FAIL}" == "true" ]]; then
+            BLOCKING_LABEL="Yes"
+          fi
+
+          MESSAGE_FILE="${RUNNER_TEMP}/dependency-security-telegram.html"
+          {
+            printf '<b>🧪 Weekly Dependency Security Scan</b>\n\n'
+            printf '%s <b>Risk status:</b> %s\n' "${OVERALL_ICON}" "${OVERALL_LABEL}"
+            printf '🛑 <b>Blocking threshold:</b> %s\n' "${FAIL_THRESHOLD}"
+            printf '🚨 <b>Threshold breached:</b> %s\n\n' "${BLOCKING_LABEL}"
+            printf '<b>Findings (npm audit --omit=dev)</b>\n'
+            printf '🔴 <b>Critical:</b> %s\n' "${CRITICAL}"
+            printf '🟠 <b>High:</b> %s\n' "${HIGH}"
+            printf '🟡 <b>Moderate:</b> %s\n' "${MODERATE}"
+            printf '🔵 <b>Low:</b> %s\n' "${LOW}"
+            printf '📊 <b>Total:</b> %s\n\n' "${TOTAL}"
+            printf '<b>Recommended actions</b>\n'
+            printf '%s\n' '- Run npm audit fix and re-test impacted flows.'
+            printf '%s\n' '- Prioritize upgrades for packages with high/critical CVEs.'
+            printf '%s\n' '- If fix is not available, pin patched transitive deps or add temporary mitigations.'
+          } > "${MESSAGE_FILE}"
+
+          echo "message_file=${MESSAGE_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Upload npm audit report
         if: always()
@@ -68,7 +164,17 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.telegram.outputs.message_file }}
         shell: bash
         run: |
           set -euo pipefail
           bash scripts/ops/send_telegram.sh "${{ job.status }}" "Weekly Dependency Security Scan"
+
+      - name: Fail if threshold is breached
+        if: ${{ always() && steps.audit.outputs.should_fail == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::error::Dependency vulnerabilities exceeded threshold '${{ steps.audit.outputs.fail_threshold }}' (highest: '${{ steps.audit.outputs.highest }}')."
+          exit 1
