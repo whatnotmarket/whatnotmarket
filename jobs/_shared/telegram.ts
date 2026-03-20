@@ -5,32 +5,61 @@ function truncate(value: string, maxLength: number) {
   return `${value.slice(0, maxLength - 3)}...`;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function statusMeta(status: JobResult["status"]) {
+  if (status === "success") return { icon: "🟢", label: "SUCCESS" };
+  if (status === "skipped") return { icon: "🟡", label: "SKIPPED" };
+  return { icon: "🔴", label: "FAILURE" };
+}
+
 export function buildTelegramMessage(result: JobResult) {
-  const statusLabel = result.status === "success" ? "[OK]" : result.status === "skipped" ? "[SKIP]" : "[FAIL]";
+  const status = statusMeta(result.status);
+  const detailsJson =
+    result.details && Object.keys(result.details).length > 0
+      ? truncate(JSON.stringify(result.details, null, 2), 1400)
+      : "";
+
+  const timestamp = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "short",
+    timeStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date());
+
   const lines = [
-    `${statusLabel} CRON JOB: ${result.jobName}`,
-    `STATUS: ${result.status.toUpperCase()}`,
-    `Duration: ${result.metrics.duration}ms`,
-    `Processed: ${result.metrics.processed}`,
-    `Failed: ${result.metrics.failed}`,
-    `Skipped: ${result.metrics.skipped}`,
-    `Warnings: ${result.metrics.warnings}`,
-    `Memory: ${result.metrics.memoryMb.toFixed(2)} MB`,
-    `Message: ${result.message}`,
-    `Time: ${new Date().toLocaleString("it-IT")}`,
+    `<b>${status.icon} CRON JOB: ${escapeHtml(result.jobName)}</b>`,
+    `${status.icon} <b>Status:</b> ${status.label}`,
+    "",
+    "<b>Execution</b>",
+    `⏱ <b>Duration:</b> ${result.metrics.duration}ms`,
+    `📦 <b>Processed:</b> ${result.metrics.processed}`,
+    `❌ <b>Failed:</b> ${result.metrics.failed}`,
+    `⏭ <b>Skipped:</b> ${result.metrics.skipped}`,
+    `⚠️ <b>Warnings:</b> ${result.metrics.warnings}`,
+    `🧠 <b>Memory:</b> ${result.metrics.memoryMb.toFixed(2)} MB`,
+    `💬 <b>Message:</b> ${escapeHtml(result.message)}`,
+    `🕒 <b>Time:</b> ${escapeHtml(timestamp)} UTC`,
   ];
 
   if (typeof result.metrics.apiCallsRemaining === "number") {
-    lines.push(`API calls remaining: ${result.metrics.apiCallsRemaining}`);
+    lines.push(`📉 <b>API calls remaining:</b> ${result.metrics.apiCallsRemaining}`);
   }
 
   if (result.error) {
-    lines.push(`Error: ${result.error.message}`);
+    lines.push(`🚨 <b>Error:</b> ${escapeHtml(truncate(result.error.message, 500))}`);
   }
 
-  if (result.details && Object.keys(result.details).length > 0) {
-    const detailsText = truncate(JSON.stringify(result.details), 1200);
-    lines.push(`Details: ${detailsText}`);
+  if (detailsJson) {
+    lines.push("");
+    lines.push("<b>Details</b>");
+    lines.push(`<pre>${escapeHtml(detailsJson)}</pre>`);
   }
 
   return lines.join("\n");
@@ -58,6 +87,7 @@ export async function sendTelegramNotification(result: JobResult): Promise<{
     body: JSON.stringify({
       chat_id: chatId,
       text: buildTelegramMessage(result),
+      parse_mode: "HTML",
       disable_web_page_preview: true,
     }),
   });

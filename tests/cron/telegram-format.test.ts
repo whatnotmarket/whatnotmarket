@@ -25,9 +25,10 @@ const sampleResult: JobResult = {
 test("buildTelegramMessage includes core sections", () => {
   const message = buildTelegramMessage(sampleResult);
   assert.match(message, /CRON JOB: security\/daily-signals-digest/);
-  assert.match(message, /STATUS: SUCCESS/);
-  assert.match(message, /Processed: 5/);
-  assert.match(message, /Warnings: 1/);
-  assert.match(message, /API calls remaining: 42/);
+  assert.match(message, /<b>Status:<\/b> SUCCESS/);
+  assert.match(message, /<b>Processed:<\/b> 5/);
+  assert.match(message, /<b>Warnings:<\/b> 1/);
+  assert.match(message, /<b>API calls remaining:<\/b> 42/);
+  assert.match(message, /<b>Details<\/b>/);
+  assert.match(message, /<pre>/);
 });
-

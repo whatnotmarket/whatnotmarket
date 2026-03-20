@@ -66,9 +66,26 @@ jobs:
       - name: Run daily cron group
         run: npm run cron:daily
 
-      - name: Notify Telegram (workflow-level)
+      - name: Prepare Telegram report (HTML)
         if: always()
+        id: telegram
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Daily Jobs" "" "group=daily"
+          REPORT_FILE="${RUNNER_TEMP}/ops-daily-telegram.html"
+          node scripts/ops/generate-cron-group-telegram-report.mjs \
+            --group daily \
+            --owner "${GITHUB_RUN_ID}" \
+            --status "${{ job.status }}" \
+            --output "${REPORT_FILE}"
+          echo "message_file=${REPORT_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Telegram (workflow-level)
+        if: always()
+        env:
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.telegram.outputs.message_file }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Daily Jobs"

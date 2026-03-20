@@ -15,6 +15,11 @@ export async function recordJobRun(result: JobResult, owner: string | null, runT
     };
   }
 
+  const detailsPayload = {
+    ...(result.details || {}),
+    summary_message: result.message,
+  };
+
   const { error } = await client.from("cron_job_runs").insert({
     job_name: result.jobName,
     run_token: runToken,
@@ -26,7 +31,7 @@ export async function recordJobRun(result: JobResult, owner: string | null, runT
     skipped: result.metrics.skipped,
     warnings: result.metrics.warnings,
     memory_mb: result.metrics.memoryMb,
-    details: result.details || {},
+    details: detailsPayload,
     error: toErrorText(result.error),
     finished_at: new Date().toISOString(),
   });
