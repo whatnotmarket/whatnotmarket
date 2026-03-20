@@ -17,6 +17,9 @@ concurrency:
 jobs:
   refresh-rules:
     runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
 
     steps:
       - name: Checkout
@@ -45,3 +48,10 @@ jobs:
           branch: "codex/maintenance-email-rules-cron"
           delete-branch: true
           labels: maintenance, security
+
+      - name: Notify Telegram
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Maintenance Email Rules Cron"

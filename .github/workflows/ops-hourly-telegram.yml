@@ -1,0 +1,64 @@
+name: Ops Hourly Jobs
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every hour at minute 20 (UTC)
+    - cron: "20 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-hourly-jobs
+  cancel-in-progress: false
+
+jobs:
+  hourly:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || vars.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || vars.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL || vars.RESEND_FROM_EMAIL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Show runtime versions
+        shell: bash
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Run hourly cron group
+        run: npm run cron:hourly
+
+      - name: Notify Telegram (workflow-level)
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Hourly Jobs" "" "group=hourly"
