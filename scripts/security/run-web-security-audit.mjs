@@ -79,6 +79,21 @@ function sanitizeSummaryText(value, max = 420) {
   return `${compact.slice(0, max - 3)}...`;
 }
 
+function normalizeFindingTitle(test) {
+  const value = String(test || "").trim();
+  if (value.startsWith("Payload XSS:")) return "XSS input sanitization";
+  if (value.startsWith("Payload SQLi:")) return "SQL injection hardening";
+  if (/POST cross-origin|CORS permissivo/i.test(value)) return "CORS and CSRF hardening";
+  if (/Cookie flags SameSite\/Secure\/HttpOnly/i.test(value)) return "Session cookie hardening";
+  return value;
+}
+
+function statusEmoji(level) {
+  if (level === "vuln") return "\u{1F534}";
+  if (level === "warn") return "\u{1F7E0}";
+  return "\u{1F7E2}";
+}
+
 function toStatusLabel(level) {
   return STATUS[level] || STATUS.warn;
 }
@@ -1161,7 +1176,7 @@ Modalita: Non distruttiva (safe checks + probing effimero)
     report += `1. Nessuna vulnerabilita critica/high rilevata nei test automatici eseguiti.\n`;
   } else {
     topPriorities.forEach((item, index) => {
-      report += `${index + 1}. ${item.test} (${item.section}) - ${toStatusLabel(item.status)}. Fix: ${item.fix}\n`;
+      report += `${index + 1}. ${normalizeFindingTitle(item.test)} (${item.section}) - ${toStatusLabel(item.status)}. Fix: ${item.fix}\n`;
     });
   }
   report += `\n`;
@@ -1193,6 +1208,7 @@ Di seguito briefing operativo, ordinato per priorita:\n\n`;
   const reportPath = join(reportDir, `web-security-audit-${timestamp}-${runId}.md`);
   const latestPath = join(reportDir, "latest.md");
   const summaryPath = join(reportDir, "latest-summary.txt");
+  const telegramPath = join(reportDir, "latest-telegram.html");
 
   await writeFile(reportPath, report, "utf8");
   await writeFile(latestPath, report, "utf8");
@@ -1200,14 +1216,47 @@ Di seguito briefing operativo, ordinato per priorita:\n\n`;
   const criticalCount = findings.filter((finding) => finding.status === "vuln").length;
   const warningCount = findings.filter((finding) => finding.status === "warn").length;
   const summary = `score=${score}/100 | vulnerabilita=${criticalCount} | miglioramenti=${warningCount} | top=${topPriorities
-    .map((priority) => priority.test)
+    .map((priority) => normalizeFindingTitle(priority.test).replace(/[<>"'`]/g, ""))
     .join("; ") || "none"} | report=${reportPath}`;
 
   await writeFile(summaryPath, summary, "utf8");
 
+  const scoreEmoji = score >= 85 ? "\u{1F7E2}" : score >= 70 ? "\u{1F7E1}" : "\u{1F534}";
+  const healthLine =
+    criticalCount > 0
+      ? "\u{1F534} <b>Stato:</b> vulnerabilita rilevate"
+      : warningCount > 0
+        ? "\u{1F7E0} <b>Stato:</b> da migliorare"
+        : "\u{1F7E2} <b>Stato:</b> baseline solida";
+
+  const topIssuesForTelegram =
+    topPriorities.length === 0
+      ? "1) \u{1F7E2} <b>Nessuna criticita prioritaria</b>\n• Cosa non va: nessuna vulnerabilita critica emersa in questo run.\n• Come fixare: continuare hardening preventivo e monitoraggio."
+      : topPriorities
+          .map((item, index) => {
+            const title = escapeHtml(normalizeFindingTitle(item.test));
+            const issue = escapeHtml(sanitizeSummaryText(item.details, 180));
+            const fix = escapeHtml(sanitizeSummaryText(item.fix, 170));
+            return `${index + 1}) ${statusEmoji(item.status)} <b>${title}</b>\n• Cosa non va: ${issue}\n• Come fixare: ${fix}`;
+          })
+          .join("\n\n");
+
+  const telegramMessage = `<b>\u{1F6E1}\uFE0F Daily Web Security Audit</b>\n\n` +
+    `\u{1F3AF} <b>Target:</b> ${escapeHtml(target.href)}\n` +
+    `${scoreEmoji} <b>Score:</b> ${score}/100\n` +
+    `\u{1F534} <b>Vulnerabilita:</b> ${criticalCount}\n` +
+    `\u{1F7E0} <b>Da migliorare:</b> ${warningCount}\n` +
+    `${healthLine}\n\n` +
+    `<b>\u{1F525} Top 3 priorita (cosa non va + come fixare)</b>\n` +
+    `${topIssuesForTelegram}\n\n` +
+    `\u{1F4CC} <b>Report completo:</b> vedi artifact workflow <code>daily-web-security-audit</code>.`;
+
+  await writeFile(telegramPath, telegramMessage, "utf8");
+
   console.log(`Security audit completed for ${target.href}`);
   console.log(`Report: ${reportPath}`);
   console.log(`Summary: ${summaryPath}`);
+  console.log(`Telegram: ${telegramPath}`);
   console.log(summary);
 }
 
