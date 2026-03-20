@@ -33,6 +33,21 @@ const EXPECTED_WORKFLOWS: ExpectedWorkflow[] = [
     mustContain: ["npm run cron:monthly"],
   },
   {
+    file: "ops-cron-schema-health.yml",
+    cron: "45 2 * * *",
+    mustContain: ["node scripts/ops/check-cron-schema-health.mjs"],
+  },
+  {
+    file: "ops-cron-watchdog.yml",
+    cron: "50 */3 * * *",
+    mustContain: ["node scripts/ops/check-cron-runs-health.mjs"],
+  },
+  {
+    file: "ops-operational-telemetry-retention.yml",
+    cron: "35 3 * * *",
+    mustContain: ["node scripts/ops/run-operational-retention-cleanup.mjs"],
+  },
+  {
     file: "maintenance-email-rules-cron.yml",
     cron: "12 */12 * * *",
     mustContain: ["python src/app/maintenance/fetch_domains.py"],
