@@ -58,6 +58,11 @@ function isMissingFunctionError(message) {
   );
 }
 
+function isPermissionDeniedError(message) {
+  const normalized = String(message || "").toLowerCase();
+  return normalized.includes("permission denied") || normalized.includes("42501");
+}
+
 async function writeOutputFile(targetPath, content) {
   const resolved = resolve(targetPath);
   await mkdir(dirname(resolved), { recursive: true });
@@ -73,6 +78,7 @@ function buildTelegramReport(payload) {
   const abuseRetentionDays = Number(payload.abuseRetentionDays || 180);
   const batchSize = Number(payload.batchSize || 10000);
   const failureReason = payload.failureReason ? String(payload.failureReason) : "";
+  const recommendedSql = payload.recommendedSql ? String(payload.recommendedSql) : "";
 
   const lines = [
     `<b>\u{1F9F9} Operational Telemetry Retention</b>`,
@@ -98,6 +104,11 @@ function buildTelegramReport(payload) {
   if (failureReason) {
     lines.push("", "<b>Error</b>");
     lines.push(`\u{2022} ${escapeHtml(failureReason)}`);
+  }
+
+  if (recommendedSql) {
+    lines.push("", "<b>Immediate SQL Fix</b>");
+    lines.push(`<code>${escapeHtml(recommendedSql)}</code>`);
   }
 
   lines.push("", "<b>How to fix if red</b>");
@@ -150,6 +161,10 @@ async function main() {
   });
 
   if (rpc.error) {
+    const permissionHint =
+      "Grant required: GRANT EXECUTE ON FUNCTION public.cleanup_operational_telemetry(interval, interval, integer) TO service_role;";
+    const needsGrant = isPermissionDeniedError(rpc.error.message);
+
     const payload = {
       success: false,
       checkedAt,
@@ -158,8 +173,13 @@ async function main() {
       batchSize,
       totalDeleted: 0,
       rows: [],
+      recommendedSql: needsGrant
+        ? "GRANT EXECUTE ON FUNCTION public.cleanup_operational_telemetry(interval, interval, integer) TO service_role;"
+        : null,
       failureReason: isMissingFunctionError(rpc.error.message)
         ? `${rpc.error.message} (migration 20260320123000_operational_telemetry_retention_cron.sql not applied).`
+        : needsGrant
+          ? `${rpc.error.message} (${permissionHint})`
         : rpc.error.message,
     };
     await Promise.all([

@@ -97,6 +97,21 @@ jobs:
           set -euo pipefail
           bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Backup Restore Readiness"
 
+      - name: Show backup readiness failure reason
+        if: ${{ steps.readiness.outputs.exit_code != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_JSON="${{ steps.readiness.outputs.report_json }}"
+          if [[ -f "${REPORT_JSON}" ]]; then
+            echo "Backup readiness report:"
+            cat "${REPORT_JSON}"
+            echo ""
+            node -e "const fs=require('fs');const p='${{ steps.readiness.outputs.report_json }}';const r=JSON.parse(fs.readFileSync(p,'utf8'));const tableErrors=(r.tableErrors||[]).map(e=>\`\${e.table}: \${e.error}\`);const msg=r.failureReason||tableErrors[0]||r.lockAcquireMessage||'Backup readiness check reported critical issues.';console.log('::error::'+String(msg));"
+          else
+            echo "::error::Backup readiness report JSON not found at ${REPORT_JSON}"
+          fi
+
       - name: Fail workflow if readiness is not green
         if: ${{ steps.readiness.outputs.exit_code != '0' }}
         shell: bash

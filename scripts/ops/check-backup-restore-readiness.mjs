@@ -20,12 +20,14 @@ const REQUIRED_TABLES = [
   "trust_moderation_cases",
   "cron_job_locks",
   "cron_job_runs",
+  "security_sensitive_access_attempts",
 ];
 
 const REQUIRED_MIGRATION_FILES = [
   "supabase/migrations/20260320150000_cron_job_locks_and_runs.sql",
   "supabase/migrations/20260320123000_operational_telemetry_retention_cron.sql",
   "supabase/migrations/20260310143000_message_retention_24h_cleanup.sql",
+  "supabase/migrations/20260320223000_security_sensitive_access_attempts.sql",
 ];
 
 function parseArgs(argv) {
@@ -72,6 +74,7 @@ function isSchemaMissingError(message) {
   const normalized = String(message || "").toLowerCase();
   return (
     (normalized.includes("could not find the table") && normalized.includes("schema cache")) ||
+    (normalized.includes("could not find the column") && normalized.includes("schema cache")) ||
     (normalized.includes("relation") && normalized.includes("does not exist"))
   );
 }
@@ -83,6 +86,11 @@ function isMissingFunctionError(message) {
     (normalized.includes("function") && normalized.includes("does not exist")) ||
     normalized.includes("pgrst202")
   );
+}
+
+function isPermissionDeniedError(message) {
+  const normalized = String(message || "").toLowerCase();
+  return normalized.includes("permission denied") || normalized.includes("42501");
 }
 
 async function writeOutputFile(targetPath, content) {
@@ -153,6 +161,7 @@ function buildTelegramReport(payload) {
 
   const lockAcquireStatus = String(payload.lockAcquireStatus || "unknown");
   const lockReleaseStatus = String(payload.lockReleaseStatus || "unknown");
+  const recommendedSql = Array.isArray(payload.recommendedSql) ? payload.recommendedSql : [];
 
   const modeIcon = mode === "healthy" ? ICONS.green : mode === "warning" ? ICONS.orange : ICONS.red;
   const modeLabel = mode === "healthy" ? "READY" : mode === "warning" ? "PARTIAL" : "NOT READY";
@@ -194,6 +203,13 @@ function buildTelegramReport(payload) {
     lines.push("", "<b>Stale job telemetry</b>");
     for (const row of staleJobs.slice(0, 8)) {
       lines.push(`\u{2022} <code>${escapeHtml(row.jobName)}</code>: ${escapeHtml(row.reason)}`);
+    }
+  }
+
+  if (recommendedSql.length > 0) {
+    lines.push("", "<b>Immediate SQL Fix</b>");
+    for (const sql of recommendedSql.slice(0, 3)) {
+      lines.push(`<code>${escapeHtml(sql)}</code>`);
     }
   }
 
@@ -253,7 +269,7 @@ async function main() {
   const missingTables = [];
   const tableErrors = [];
   for (const table of REQUIRED_TABLES) {
-    const { error } = await client.from(table).select("id", { count: "exact", head: true }).limit(1);
+    const { error } = await client.from(table).select("*", { count: "exact", head: true }).limit(1);
     if (!error) continue;
     if (isSchemaMissingError(error.message)) {
       missingTables.push(table);
@@ -263,6 +279,13 @@ async function main() {
   }
 
   const lockCheck = await checkLockFunctions(client);
+  const recommendedSql = [];
+  if (isPermissionDeniedError(lockCheck.acquire.message) || isPermissionDeniedError(lockCheck.release.message)) {
+    recommendedSql.push(
+      "GRANT EXECUTE ON FUNCTION public.acquire_cron_job_lock(text, text, integer, text) TO service_role;",
+      "GRANT EXECUTE ON FUNCTION public.release_cron_job_lock(text, text) TO service_role;"
+    );
+  }
 
   let staleJobs = [];
   const criticalJobNames = [
@@ -336,6 +359,7 @@ async function main() {
     lockReleaseStatus: lockCheck.release.status,
     lockAcquireMessage: lockCheck.acquire.message,
     lockReleaseMessage: lockCheck.release.message,
+    recommendedSql,
     staleJobs,
   };
 

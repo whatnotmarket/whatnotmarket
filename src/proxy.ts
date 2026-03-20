@@ -90,6 +90,25 @@ const LOCAL_ONLY_PREFIXES = [
   "/user/",
 ] as const;
 
+const SENSITIVE_PROBE_EXACT_PATHS = new Set<string>([
+  "/.env",
+  "/.env.local",
+  "/.git/HEAD",
+  "/wp-admin",
+  "/wp-login.php",
+  "/phpmyadmin",
+  "/server-status",
+]);
+const SENSITIVE_PROBE_PREFIXES = ["/.git/", "/backup/", "/private/"] as const;
+const INTERNAL_SENSITIVE_ALERT_PATH = "/api/internal/security/sensitive-access-attempt";
+const INTERNAL_SENSITIVE_ALERT_TIMEOUT_MS = 1500;
+
+type SensitiveAccessAlert = {
+  reason: string;
+  blocked: boolean;
+  metadata?: Record<string, unknown>;
+};
+
 function isLocalHostname(hostname: string) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
@@ -106,10 +125,84 @@ function isFrameworkAssetPath(pathname: string) {
   return true;
 }
 
+function getClientIp(request: NextRequest) {
+  const directIp = request.headers.get("cf-connecting-ip")?.trim();
+  if (directIp) return directIp;
+
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+
+  return "unknown";
+}
+
+function isSensitiveProbePath(pathname: string) {
+  if (SENSITIVE_PROBE_EXACT_PATHS.has(pathname)) return true;
+  return SENSITIVE_PROBE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+async function reportSensitiveAccessAttempt(request: NextRequest, alert: SensitiveAccessAlert) {
+  if (process.env.NODE_ENV !== "production") return;
+
+  const token = process.env.INTERNAL_SECURITY_ALERT_TOKEN?.trim();
+  if (!token) return;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), INTERNAL_SENSITIVE_ALERT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(new URL(INTERNAL_SENSITIVE_ALERT_PATH, request.nextUrl.origin), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-security-token": token,
+      },
+      body: JSON.stringify({
+        path: request.nextUrl.pathname,
+        method: request.method.toUpperCase(),
+        ip: getClientIp(request),
+        reason: alert.reason,
+        metadata: {
+          blocked: alert.blocked,
+          userAgent: request.headers.get("user-agent") || "",
+          referer: request.headers.get("referer") || "",
+          host: request.headers.get("host") || request.nextUrl.host,
+          ...alert.metadata,
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      console.error(
+        `[security-sensitive-alert] internal endpoint returned HTTP ${response.status} for ${request.nextUrl.pathname}`
+      );
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[security-sensitive-alert] failed to report ${request.nextUrl.pathname}: ${message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const maintenanceEnabled = isMaintenanceModeEnabled();
   const maintenanceHeaders = createMaintenanceHeaders();
+
+  if (isSensitiveProbePath(pathname)) {
+    await reportSensitiveAccessAttempt(request, {
+      reason: "sensitive_probe_path",
+      blocked: false,
+      metadata: { severity: "high" },
+    });
+  }
 
   if (maintenanceEnabled) {
     if (SOURCE_MAP_PATTERN.test(pathname)) {
@@ -323,6 +416,10 @@ export async function proxy(request: NextRequest) {
     const safePreviousAttempts = Number.isFinite(previousAttempts) ? previousAttempts : 0;
 
     if (!user) {
+      await reportSensitiveAccessAttempt(request, {
+        reason: "admin_login_without_session",
+        blocked: true,
+      });
       const response = NextResponse.redirect(new URL("/market", request.url));
       const nextAttempts = safePreviousAttempts + 1;
       response.cookies.set("admin_login_attempts", String(nextAttempts), {
@@ -344,6 +441,11 @@ export async function proxy(request: NextRequest) {
       .maybeSingle<{ is_admin: boolean | null }>();
 
     if (!hasCanonicalAdminAccess(adminProfile)) {
+      await reportSensitiveAccessAttempt(request, {
+        reason: "admin_login_non_admin_user",
+        blocked: true,
+        metadata: { userId: user.id },
+      });
       const response = NextResponse.redirect(new URL("/market", request.url));
       const nextAttempts = safePreviousAttempts + 1;
       response.cookies.set("admin_login_attempts", String(nextAttempts), {
@@ -382,6 +484,10 @@ export async function proxy(request: NextRequest) {
     const token = request.cookies.get("admin_token")?.value;
 
     if (!token) {
+      await reportSensitiveAccessAttempt(request, {
+        reason: "admin_route_missing_token",
+        blocked: true,
+      });
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
@@ -391,10 +497,14 @@ export async function proxy(request: NextRequest) {
     // Verify JWT
     const payload = await verifyToken(token);
     if (!payload || payload.role !== "admin") {
-       if (pathname.startsWith("/api/")) {
+      await reportSensitiveAccessAttempt(request, {
+        reason: "admin_route_invalid_token",
+        blocked: true,
+      });
+      if (pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-       return NextResponse.redirect(new URL("/admin/login", request.url));
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
 

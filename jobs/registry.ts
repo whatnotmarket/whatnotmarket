@@ -6,6 +6,7 @@ export const JOB_LOADERS = {
   "ops/monthly-platform-report": () => import("./ops/monthly-platform-report"),
   "seo/weekly-internal-link-audit": () => import("./seo/weekly-internal-link-audit"),
   "security/daily-signals-digest": () => import("./security/daily-signals-digest"),
+  "security/sensitive-access-telegram-alerts": () => import("./security/sensitive-access-telegram-alerts"),
   "trust/weekly-risk-recalculation": () => import("./trust/weekly-risk-recalculation"),
 } as const;
 
@@ -16,6 +17,7 @@ export const JOB_GROUPS: Record<string, RegisteredJobName[]> = {
     "auth/cleanup-expired-internal-sessions",
     "chat/cleanup-expired-moderation-controls",
     "maintenance/retry-early-access-emails",
+    "security/sensitive-access-telegram-alerts",
   ],
   daily: [
     "admin/expire-timebound-records",

@@ -1,0 +1,68 @@
+name: Security Sensitive Access Alerts
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every 5 minutes (UTC)
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-sensitive-access-alerts
+  cancel-in-progress: false
+
+jobs:
+  sensitive-access-alerts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || vars.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_KEY || vars.SUPABASE_SERVICE_KEY || secrets.SUPABASE_SERVICE_ROLE || vars.SUPABASE_SERVICE_ROLE }}
+      TELEGRAM_SECURITY_BOT_TOKEN: ${{ secrets.TELEGRAM_SECURITY_BOT_TOKEN || vars.TELEGRAM_SECURITY_BOT_TOKEN || secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+      CRON_SENSITIVE_ACCESS_ALERT_BATCH: ${{ vars.CRON_SENSITIVE_ACCESS_ALERT_BATCH || '30' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Validate required runtime secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]] || missing+=("NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL)")
+          [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || missing+=("SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)")
+          [[ -n "${TELEGRAM_SECURITY_BOT_TOKEN:-}" ]] || missing+=("TELEGRAM_SECURITY_BOT_TOKEN (or TELEGRAM_BOT_TOKEN)")
+          [[ -n "${TELEGRAM_CHAT_ID:-}" ]] || missing+=("TELEGRAM_CHAT_ID")
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required secrets/vars for sensitive access alerts: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Run sensitive access alerts job
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsx jobs/runner.ts --job security/sensitive-access-telegram-alerts

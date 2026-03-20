@@ -101,6 +101,21 @@ jobs:
           set -euo pipefail
           bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Operational Telemetry Retention"
 
+      - name: Show retention failure reason
+        if: ${{ steps.retention.outputs.exit_code != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_JSON="${{ steps.retention.outputs.report_json }}"
+          if [[ -f "${REPORT_JSON}" ]]; then
+            echo "Operational telemetry retention report:"
+            cat "${REPORT_JSON}"
+            echo ""
+            node -e "const fs=require('fs');const p='${{ steps.retention.outputs.report_json }}';const r=JSON.parse(fs.readFileSync(p,'utf8'));const msg=String(r.failureReason||'Unknown failure');console.log('::error::'+msg);"
+          else
+            echo "::error::Retention report JSON not found at ${REPORT_JSON}"
+          fi
+
       - name: Fail workflow if retention cleanup failed
         if: ${{ steps.retention.outputs.exit_code != '0' }}
         shell: bash

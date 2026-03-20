@@ -93,6 +93,11 @@ const EXPECTED_WORKFLOWS: ExpectedWorkflow[] = [
     mustContain: ["npm run test:security"],
   },
   {
+    file: "security-sensitive-access-alerts.yml",
+    cron: "*/5 * * * *",
+    mustContain: ["npx tsx jobs/runner.ts --job security/sensitive-access-telegram-alerts"],
+  },
+  {
     file: "security-web-audit-telegram.yml",
     cron: "35 6 * * *",
     mustContain: ["npm run security:web-audit"],

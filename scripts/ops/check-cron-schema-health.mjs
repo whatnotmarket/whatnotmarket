@@ -18,6 +18,7 @@ const REQUIRED_TABLES = [
   "maintenance_early_access_leads",
   "payment_intents",
   "security_abuse_events",
+  "security_sensitive_access_attempts",
   "seller_verifications",
   "trust_moderation_cases",
   "trust_reports",

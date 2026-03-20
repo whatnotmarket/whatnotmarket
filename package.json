@@ -17,6 +17,7 @@
     "cron:daily": "npx tsx jobs/runner.ts --group daily",
     "cron:weekly": "npx tsx jobs/runner.ts --group weekly",
     "cron:monthly": "npx tsx jobs/runner.ts --group monthly",
+    "cron:security-sensitive-alerts": "npx tsx jobs/runner.ts --job security/sensitive-access-telegram-alerts",
     "ops:cron-schema-health": "node scripts/ops/check-cron-schema-health.mjs",
     "ops:cron-watchdog": "node scripts/ops/check-cron-runs-health.mjs",
     "ops:telemetry-retention": "node scripts/ops/run-operational-retention-cleanup.mjs",

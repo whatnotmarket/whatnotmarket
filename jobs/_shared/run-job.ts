@@ -7,6 +7,7 @@ import { createEmptyMetrics, type JobExecutionResult, type JobResult } from "./t
 export async function runJobWithLifecycle(config: {
   jobName: string;
   leaseSeconds?: number;
+  notifyOnComplete?: boolean;
   execute: (helpers: { logger: ReturnType<typeof createJobLogger> }) => Promise<JobExecutionResult>;
 }): Promise<JobResult> {
   const logger = createJobLogger(config.jobName);
@@ -96,15 +97,17 @@ export async function runJobWithLifecycle(config: {
     });
   });
 
-  const telegramOutcome = await sendTelegramNotification(finalResult).catch((notifyError) => ({
-    sent: false,
-    reason: notifyError instanceof Error ? notifyError.message : String(notifyError),
-  }));
+  if (config.notifyOnComplete !== false) {
+    const telegramOutcome = await sendTelegramNotification(finalResult).catch((notifyError) => ({
+      sent: false,
+      reason: notifyError instanceof Error ? notifyError.message : String(notifyError),
+    }));
 
-  if (!telegramOutcome.sent) {
-    logger.warn("Telegram notification not sent", {
-      reason: telegramOutcome.reason || "unknown",
-    });
+    if (!telegramOutcome.sent) {
+      logger.warn("Telegram notification not sent", {
+        reason: telegramOutcome.reason || "unknown",
+      });
+    }
   }
 
   if (!finalResult.success) {
@@ -123,4 +126,3 @@ export async function runJobWithLifecycle(config: {
 
   return finalResult;
 }
-
