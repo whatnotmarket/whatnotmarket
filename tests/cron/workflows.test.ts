@@ -48,6 +48,36 @@ const EXPECTED_WORKFLOWS: ExpectedWorkflow[] = [
     mustContain: ["node scripts/ops/run-operational-retention-cleanup.mjs"],
   },
   {
+    file: "ops-payments-reconciliation-watchdog.yml",
+    cron: "5 * * * *",
+    mustContain: ["node scripts/ops/check-payments-reconciliation.mjs"],
+  },
+  {
+    file: "ops-trust-sla-breach-alert.yml",
+    cron: "35 * * * *",
+    mustContain: ["node scripts/ops/check-trust-sla-breaches.mjs"],
+  },
+  {
+    file: "ops-backup-restore-readiness.yml",
+    cron: "40 4 * * *",
+    mustContain: ["node scripts/ops/check-backup-restore-readiness.mjs"],
+  },
+  {
+    file: "ops-storage-orphan-report.yml",
+    cron: "5 4 * * *",
+    mustContain: ["node scripts/ops/check-storage-orphans.mjs"],
+  },
+  {
+    file: "ops-seo-sitemap-canonical-check.yml",
+    cron: "55 5 * * *",
+    mustContain: ["node scripts/ops/check-seo-sitemap-canonical.mjs"],
+  },
+  {
+    file: "ops-i18n-drift-guard.yml",
+    cron: "10 6 * * 2",
+    mustContain: ["node scripts/ops/check-i18n-drift.mjs"],
+  },
+  {
     file: "maintenance-email-rules-cron.yml",
     cron: "12 */12 * * *",
     mustContain: ["python src/app/maintenance/fetch_domains.py"],

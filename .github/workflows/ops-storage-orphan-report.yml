@@ -1,0 +1,110 @@
+name: Ops Storage Orphan Report
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 04:05 UTC
+    - cron: "5 4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-storage-orphan-report
+  cancel-in-progress: false
+
+jobs:
+  storage-orphans:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || vars.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_KEY || vars.SUPABASE_SERVICE_KEY || secrets.SUPABASE_SERVICE_ROLE || vars.SUPABASE_SERVICE_ROLE }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+      STORAGE_ORPHAN_GRACE_DAYS: ${{ vars.STORAGE_ORPHAN_GRACE_DAYS || '14' }}
+      STORAGE_ORPHAN_MAX_OBJECTS: ${{ vars.STORAGE_ORPHAN_MAX_OBJECTS || '15000' }}
+      STORAGE_ORPHAN_FAIL_COUNT: ${{ vars.STORAGE_ORPHAN_FAIL_COUNT || '500' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Validate required runtime secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]] || missing+=("NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL)")
+          [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || missing+=("SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)")
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required secrets/vars for storage orphan report: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Run storage orphan report
+        id: orphans
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_JSON="reports/ops/storage-orphan-report.json"
+          REPORT_HTML="${RUNNER_TEMP}/ops-storage-orphan-report.html"
+
+          set +e
+          node scripts/ops/check-storage-orphans.mjs \
+            --json-output "${REPORT_JSON}" \
+            --telegram-output "${REPORT_HTML}" \
+            --grace-days "${STORAGE_ORPHAN_GRACE_DAYS}" \
+            --max-objects "${STORAGE_ORPHAN_MAX_OBJECTS}" \
+            --fail-count-threshold "${STORAGE_ORPHAN_FAIL_COUNT}"
+          EXIT_CODE=$?
+          set -e
+
+          echo "report_json=${REPORT_JSON}" >> "$GITHUB_OUTPUT"
+          echo "report_html=${REPORT_HTML}" >> "$GITHUB_OUTPUT"
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload storage orphan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-storage-orphan-report
+          path: ${{ steps.orphans.outputs.report_json }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.orphans.outputs.report_html }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Storage Orphan Report"
+
+      - name: Fail workflow if orphan threshold exceeded
+        if: ${{ steps.orphans.outputs.exit_code != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::error::Storage orphan report exceeded configured threshold."
+          exit 1

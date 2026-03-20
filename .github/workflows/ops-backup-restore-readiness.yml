@@ -1,0 +1,106 @@
+name: Ops Backup Restore Readiness
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 04:40 UTC
+    - cron: "40 4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-backup-restore-readiness
+  cancel-in-progress: false
+
+jobs:
+  backup-readiness:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || vars.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_KEY || vars.SUPABASE_SERVICE_KEY || secrets.SUPABASE_SERVICE_ROLE || vars.SUPABASE_SERVICE_ROLE }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+      BACKUP_READINESS_LOOKBACK_HOURS: ${{ vars.BACKUP_READINESS_LOOKBACK_HOURS || '48' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Validate required runtime secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]] || missing+=("NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL)")
+          [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || missing+=("SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)")
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required secrets/vars for backup readiness: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Run backup restore readiness check
+        id: readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_JSON="reports/ops/backup-restore-readiness.json"
+          REPORT_HTML="${RUNNER_TEMP}/ops-backup-restore-readiness.html"
+
+          set +e
+          node scripts/ops/check-backup-restore-readiness.mjs \
+            --json-output "${REPORT_JSON}" \
+            --telegram-output "${REPORT_HTML}" \
+            --lookback-hours "${BACKUP_READINESS_LOOKBACK_HOURS}"
+          EXIT_CODE=$?
+          set -e
+
+          echo "report_json=${REPORT_JSON}" >> "$GITHUB_OUTPUT"
+          echo "report_html=${REPORT_HTML}" >> "$GITHUB_OUTPUT"
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload backup readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-backup-restore-readiness
+          path: ${{ steps.readiness.outputs.report_json }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.readiness.outputs.report_html }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Backup Restore Readiness"
+
+      - name: Fail workflow if readiness is not green
+        if: ${{ steps.readiness.outputs.exit_code != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::error::Backup/restore readiness check failed."
+          exit 1

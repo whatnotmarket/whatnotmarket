@@ -1,0 +1,108 @@
+name: Ops Payments Reconciliation Watchdog
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every hour at minute 5 (UTC)
+    - cron: "5 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-payments-reconciliation-watchdog
+  cancel-in-progress: false
+
+jobs:
+  payments-reconciliation:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || vars.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_KEY || vars.SUPABASE_SERVICE_KEY || secrets.SUPABASE_SERVICE_ROLE || vars.SUPABASE_SERVICE_ROLE }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+      PAYMENTS_STALE_HOURS: ${{ vars.PAYMENTS_STALE_HOURS || '24' }}
+      PAYMENTS_DETAIL_LIMIT: ${{ vars.PAYMENTS_DETAIL_LIMIT || '50' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Validate required runtime secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]] || missing+=("NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL)")
+          [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || missing+=("SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)")
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required secrets/vars for payments watchdog: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Run payments reconciliation watchdog
+        id: watchdog
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_JSON="reports/ops/payments-reconciliation-watchdog.json"
+          REPORT_HTML="${RUNNER_TEMP}/ops-payments-reconciliation-watchdog.html"
+
+          set +e
+          node scripts/ops/check-payments-reconciliation.mjs \
+            --json-output "${REPORT_JSON}" \
+            --telegram-output "${REPORT_HTML}" \
+            --stale-hours "${PAYMENTS_STALE_HOURS}" \
+            --detail-limit "${PAYMENTS_DETAIL_LIMIT}"
+          EXIT_CODE=$?
+          set -e
+
+          echo "report_json=${REPORT_JSON}" >> "$GITHUB_OUTPUT"
+          echo "report_html=${REPORT_HTML}" >> "$GITHUB_OUTPUT"
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload watchdog report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-payments-reconciliation-watchdog
+          path: ${{ steps.watchdog.outputs.report_json }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.watchdog.outputs.report_html }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops Payments Reconciliation Watchdog"
+
+      - name: Fail workflow if critical reconciliation issues found
+        if: ${{ steps.watchdog.outputs.exit_code != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::error::Payments reconciliation watchdog detected critical issues."
+          exit 1

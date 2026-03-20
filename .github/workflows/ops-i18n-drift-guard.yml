@@ -1,0 +1,94 @@
+name: Ops I18N Drift Guard
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Tuesday at 06:10 UTC
+    - cron: "10 6 * * 2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-i18n-drift-guard
+  cancel-in-progress: false
+
+jobs:
+  i18n-drift:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || vars.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+      I18N_MAX_MISSING_KEYS: ${{ vars.I18N_MAX_MISSING_KEYS || '0' }}
+      I18N_MAX_EMPTY_VALUES: ${{ vars.I18N_MAX_EMPTY_VALUES || '0' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npm ci --no-audit --fund=false; then
+            echo "::warning::npm ci failed, retrying once..."
+            sleep 10
+            if ! npm ci --no-audit --fund=false; then
+              echo "::warning::npm ci failed twice, falling back to npm install."
+              npm install --no-audit --fund=false
+            fi
+          fi
+
+      - name: Run i18n drift guard
+        id: i18n
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_JSON="reports/ops/i18n-drift-guard.json"
+          REPORT_HTML="${RUNNER_TEMP}/ops-i18n-drift-guard.html"
+
+          set +e
+          node scripts/ops/check-i18n-drift.mjs \
+            --json-output "${REPORT_JSON}" \
+            --telegram-output "${REPORT_HTML}" \
+            --max-missing "${I18N_MAX_MISSING_KEYS}" \
+            --max-empty "${I18N_MAX_EMPTY_VALUES}"
+          EXIT_CODE=$?
+          set -e
+
+          echo "report_json=${REPORT_JSON}" >> "$GITHUB_OUTPUT"
+          echo "report_html=${REPORT_HTML}" >> "$GITHUB_OUTPUT"
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload i18n drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-i18n-drift-guard
+          path: ${{ steps.i18n.outputs.report_json }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_PARSE_MODE: HTML
+          TELEGRAM_MESSAGE_FILE: ${{ steps.i18n.outputs.report_html }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ops/send_telegram.sh "${{ job.status }}" "Ops I18N Drift Guard"
+
+      - name: Fail workflow on i18n drift beyond threshold
+        if: ${{ steps.i18n.outputs.exit_code != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::error::I18N drift guard detected critical issues."
+          exit 1
