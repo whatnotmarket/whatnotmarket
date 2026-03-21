@@ -140,13 +140,16 @@ export default function MaintenancePage() {
     <>
       <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: MAINTENANCE_THEME_BOOTSTRAP }} />
       <main
+        className="maintenance-main"
         aria-labelledby="maintenance-title"
         style={{
           position: "relative",
-          height: "100dvh",
-          minHeight: "100dvh",
-          overflow: "hidden",
-          padding: "clamp(10px, 2vw, 28px) clamp(12px, 2.2vw, 30px) 0",
+          height: "100svh",
+          minHeight: "100svh",
+          overflowX: "hidden",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          padding: "clamp(10px, 2vw, 28px) clamp(12px, 2.2vw, 30px) max(12px, env(safe-area-inset-bottom))",
           background: "var(--maintenance-bg)",
           color: "var(--maintenance-fg)",
           display: "flex",

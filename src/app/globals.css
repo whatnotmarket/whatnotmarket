@@ -621,8 +621,44 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
 }
 
 @media (max-width: 768px) {
+  .maintenance-main {
+    align-items: flex-start !important;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
+  }
+
   .maintenance-shell {
-    padding: 22px 12px 28px !important;
+    height: auto !important;
+    min-height: calc(100svh - max(10px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom)) - 12px) !important;
+    overflow: visible !important;
+    padding: 64px 12px 24px !important;
+  }
+
+  .maintenance-feedback-widget {
+    top: 10px !important;
+    left: 10px !important;
+    max-width: calc(100% - 100px) !important;
+  }
+
+  .maintenance-feedback-trigger {
+    height: 39px !important;
+    gap: 7px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .maintenance-theme-toggle-widget {
+    top: 10px !important;
+    right: 10px !important;
+  }
+
+  .maintenance-theme-toggle-group {
+    padding: 4px !important;
+  }
+
+  .maintenance-theme-toggle-button {
+    width: 29px !important;
+    height: 29px !important;
   }
 
   .maintenance-content-wrap {
@@ -735,6 +771,41 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
 
   .maintenance-social-tooltip {
     font-size: 0.74rem !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .maintenance-shell {
+    padding: 62px 10px 20px !important;
+  }
+
+  .maintenance-feedback-trigger {
+    height: 37px !important;
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+  }
+
+  .maintenance-feedback-shortcut {
+    display: none !important;
+  }
+
+  .maintenance-early-access-input-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .maintenance-early-access-input {
+    height: 46px !important;
+    padding: 0 12px !important;
+  }
+
+  .maintenance-early-access-cta {
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 44px !important;
+    border-radius: 12px !important;
   }
 }
 

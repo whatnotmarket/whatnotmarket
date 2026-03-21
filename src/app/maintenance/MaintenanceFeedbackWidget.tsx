@@ -157,6 +157,7 @@ export default function MaintenanceFeedbackWidget() {
 
   return (
     <div
+      className="maintenance-feedback-widget"
       style={{
         position: "absolute",
         top: "18px",
@@ -171,7 +172,7 @@ export default function MaintenanceFeedbackWidget() {
           <button
             type="button"
             onClick={resetStatus}
-            className="group inline-flex h-[41px] items-center gap-2 rounded-full px-3.5 text-zinc-100 transition-[transform] duration-150 hover:text-zinc-100 active:text-zinc-100 data-[state=open]:text-zinc-100 focus-visible:outline-none focus-visible:ring-0 focus-visible:text-zinc-100"
+            className="maintenance-feedback-trigger group inline-flex h-[41px] items-center gap-2 rounded-full px-3.5 text-zinc-100 transition-[transform] duration-150 hover:text-zinc-100 active:text-zinc-100 data-[state=open]:text-zinc-100 focus-visible:outline-none focus-visible:ring-0 focus-visible:text-zinc-100"
             style={{
               border: "1px solid rgba(255, 255, 255, 0.2)",
               background: "rgba(57, 61, 69, 0.76)",
@@ -182,7 +183,7 @@ export default function MaintenanceFeedbackWidget() {
           >
             <FeedbackMessageIcon className="size-[17px] transition-transform duration-200 ease-out group-hover:scale-115 group-focus-visible:scale-115" />
             <span className="text-[14px] font-semibold leading-none">Feedback</span>
-            <span className="ml-1 inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full border border-white/25 bg-[linear-gradient(170deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] px-1 text-[12px] font-semibold leading-none text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_4px_10px_rgba(0,0,0,0.24)]">
+            <span className="maintenance-feedback-shortcut ml-1 inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full border border-white/25 bg-[linear-gradient(170deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] px-1 text-[12px] font-semibold leading-none text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_4px_10px_rgba(0,0,0,0.24)]">
               F
             </span>
           </button>

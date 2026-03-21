@@ -157,6 +157,7 @@ export default function MaintenanceThemeToggle() {
 
   return (
     <div
+      className="maintenance-theme-toggle-widget"
       style={{
         position: "absolute",
         top: "18px",
@@ -166,6 +167,7 @@ export default function MaintenanceThemeToggle() {
       }}
     >
       <div
+        className="maintenance-theme-toggle-group"
         role="group"
         aria-label="Theme switch"
         style={{
@@ -182,6 +184,7 @@ export default function MaintenanceThemeToggle() {
         }}
       >
         <button
+          className="maintenance-theme-toggle-button"
           type="button"
           aria-label="Dark mode"
           aria-pressed={theme === "dark"}
@@ -207,6 +210,7 @@ export default function MaintenanceThemeToggle() {
           <MoonIcon />
         </button>
         <button
+          className="maintenance-theme-toggle-button"
           type="button"
           aria-label="Light mode"
           aria-pressed={theme === "light"}
