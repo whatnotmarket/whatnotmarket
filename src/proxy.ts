@@ -48,6 +48,7 @@ const LOCAL_ONLY_EXACT_PATHS = new Set<string>([
   "/copy-demo",
   "/dashboard",
   "/dev",
+  "/dev-home",
   "/disclaimer",
   "/escrow",
   "/faq",
