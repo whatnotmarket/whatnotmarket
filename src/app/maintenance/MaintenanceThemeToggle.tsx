@@ -1,5 +1,6 @@
 "use client";
 
+// OpenlyDev Signature: OpenlyMarket Maintenance Theme
 import { useEffect, useState } from "react";
 
 type MaintenanceTheme = "light" | "dark";
@@ -45,7 +46,7 @@ function isTheme(value: string | null): value is MaintenanceTheme {
   return value === "light" || value === "dark";
 }
 
-export default function MaintenanceThemeToggle() {
+export default function OpenlyMarketThemeToggle() {
   const [theme, setTheme] = useState<MaintenanceTheme>("light");
   const [tooltipTheme, setTooltipTheme] = useState<MaintenanceTheme | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -157,7 +158,8 @@ export default function MaintenanceThemeToggle() {
 
   return (
     <div
-      className="maintenance-theme-toggle-widget"
+      className="maintenance-theme-toggle-widget openlymarket-theme-toggle-widget"
+      data-openlymarket-component="openlymarket-theme-toggle-widget"
       style={{
         position: "absolute",
         top: "18px",
@@ -167,7 +169,7 @@ export default function MaintenanceThemeToggle() {
       }}
     >
       <div
-        className="maintenance-theme-toggle-group"
+        className="maintenance-theme-toggle-group openlymarket-theme-toggle-group"
         role="group"
         aria-label="Theme switch"
         style={{
@@ -184,7 +186,7 @@ export default function MaintenanceThemeToggle() {
         }}
       >
         <button
-          className="maintenance-theme-toggle-button"
+          className="maintenance-theme-toggle-button openlymarket-theme-toggle-button"
           type="button"
           aria-label="Dark mode"
           aria-pressed={theme === "dark"}
@@ -210,7 +212,7 @@ export default function MaintenanceThemeToggle() {
           <MoonIcon />
         </button>
         <button
-          className="maintenance-theme-toggle-button"
+          className="maintenance-theme-toggle-button openlymarket-theme-toggle-button"
           type="button"
           aria-label="Light mode"
           aria-pressed={theme === "light"}
@@ -284,3 +286,5 @@ export default function MaintenanceThemeToggle() {
     </div>
   );
 }
+
+OpenlyMarketThemeToggle.displayName = "openlymarket-theme-toggle";

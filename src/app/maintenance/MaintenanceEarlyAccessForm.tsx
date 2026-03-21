@@ -1,5 +1,6 @@
 "use client";
 
+// OpenlyDev Signature: OpenlyMarket Maintenance Early Access
 import { CornerLeftUp } from "lucide-react";
 import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 
@@ -11,7 +12,7 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
-export default function MaintenanceEarlyAccessForm() {
+export default function OpenlyMarketEarlyAccessForm() {
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
   const [state, setState] = useState<SubmitState>("idle");
@@ -90,7 +91,11 @@ export default function MaintenanceEarlyAccessForm() {
   }
 
   return (
-    <section className="maintenance-early-access" aria-labelledby="maintenance-early-access-title">
+    <section
+      className="maintenance-early-access openlymarket-early-access"
+      data-openlymarket-component="openlymarket-early-access"
+      aria-labelledby="maintenance-early-access-title"
+    >
       <h2 id="maintenance-early-access-title" className="maintenance-early-access-title">
         Join Early Access
       </h2>
@@ -151,3 +156,5 @@ export default function MaintenanceEarlyAccessForm() {
     </section>
   );
 }
+
+OpenlyMarketEarlyAccessForm.displayName = "openlymarket-early-access-form";

@@ -1,5 +1,6 @@
 "use client";
 
+// OpenlyDev Signature: OpenlyMarket Maintenance Social Shortcuts
 import { useEffect } from "react";
 
 const SHORTCUT_LINKS: Record<string, string> = {
@@ -9,7 +10,7 @@ const SHORTCUT_LINKS: Record<string, string> = {
   p: "https://paragraph.xyz/",
 };
 
-export default function MaintenanceSocialShortcuts() {
+export default function OpenlyMarketSocialShortcuts() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -38,3 +39,4 @@ export default function MaintenanceSocialShortcuts() {
   return null;
 }
 
+OpenlyMarketSocialShortcuts.displayName = "openlymarket-social-shortcuts";

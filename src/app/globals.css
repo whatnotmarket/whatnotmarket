@@ -630,7 +630,8 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
   .maintenance-shell {
     height: auto !important;
     min-height: calc(100svh - max(10px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom)) - 12px) !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    border-radius: 22px !important;
     padding: 64px 12px 24px !important;
   }
 
@@ -776,6 +777,7 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
 
 @media (max-width: 520px) {
   .maintenance-shell {
+    border-radius: 20px !important;
     padding: 62px 10px 20px !important;
   }
 

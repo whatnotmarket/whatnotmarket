@@ -21,7 +21,9 @@ import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { isMaintenanceModeEnabled } from "@/lib/maintenance";
 import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/i18n/config";
-import MaintenancePage from "@/app/maintenance/page";
+import OpenlyMarketMaintenancePage from "@/app/maintenance/page";
+
+// OpenlyDev Signature: OpenlyMarket Root Layout
 
 const inter = Inter({
   subsets: ["latin"],
@@ -89,6 +91,8 @@ export const metadata: Metadata = {
   other: {
     google: "notranslate",
     "profile:x": "https://x.com/openlymarket",
+    "openlymarket:signature": "OpenlyMarket",
+    "openlymarket:code-signature": "OpenlyDev",
   },
 };
 
@@ -154,7 +158,7 @@ export default async function RootLayout({
           className={`${geist.className} notranslate min-h-screen overflow-x-hidden overflow-y-auto bg-background text-foreground antialiased`}
           suppressHydrationWarning
         >
-          <MaintenancePage />
+          <OpenlyMarketMaintenancePage />
         </body>
       </html>
     );

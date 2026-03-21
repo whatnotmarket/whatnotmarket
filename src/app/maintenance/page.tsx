@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Grainient from "@/components/Grainient";
-import MaintenanceThemeToggle from "./MaintenanceThemeToggle";
-import MaintenanceEarlyAccessForm from "./MaintenanceEarlyAccessForm";
-import MaintenanceFeedbackWidget from "./MaintenanceFeedbackWidget";
-import MaintenanceSocialShortcuts from "./MaintenanceSocialShortcuts";
-import MaintenanceLogoContextMenu from "./MaintenanceLogoContextMenu";
+import OpenlyMarketThemeToggle from "./MaintenanceThemeToggle";
+import OpenlyMarketEarlyAccessForm from "./MaintenanceEarlyAccessForm";
+import OpenlyMarketFeedbackWidget from "./MaintenanceFeedbackWidget";
+import OpenlyMarketSocialShortcuts from "./MaintenanceSocialShortcuts";
+import OpenlyMarketLogoContextMenu from "./MaintenanceLogoContextMenu";
+
+// OpenlyDev Signature: OpenlyMarket Maintenance Page
 
 const MAINTENANCE_THEME_BOOTSTRAP = `(() => {
   try {
@@ -135,12 +137,13 @@ function SocialLink({ href, label, shortcut, children }: SocialLinkProps) {
   );
 }
 
-export default function MaintenancePage() {
+export default function OpenlyMarketMaintenancePage() {
   return (
     <>
       <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: MAINTENANCE_THEME_BOOTSTRAP }} />
       <main
-        className="maintenance-main"
+        className="maintenance-main openlymarket-maintenance-main"
+        data-openlymarket-component="openlymarket-maintenance-main"
         aria-labelledby="maintenance-title"
         style={{
           position: "relative",
@@ -149,7 +152,7 @@ export default function MaintenancePage() {
           overflowX: "hidden",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
-          padding: "clamp(10px, 2vw, 28px) clamp(12px, 2.2vw, 30px) max(12px, env(safe-area-inset-bottom))",
+          padding: "clamp(10px, 2vw, 28px)",
           background: "var(--maintenance-bg)",
           color: "var(--maintenance-fg)",
           display: "flex",
@@ -158,14 +161,14 @@ export default function MaintenancePage() {
         }}
       >
         <div
-          className="maintenance-shell"
+          className="maintenance-shell openlymarket-maintenance-shell"
           style={{
             width: "min(1720px, 100%)",
             height: "100%",
             borderTopLeftRadius: "clamp(24px, 2.8vw, 34px)",
             borderTopRightRadius: "clamp(24px, 2.8vw, 34px)",
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
+            borderBottomLeftRadius: "clamp(24px, 2.8vw, 34px)",
+            borderBottomRightRadius: "clamp(24px, 2.8vw, 34px)",
             border: "1px solid var(--maintenance-panel-border)",
             overflow: "hidden",
             position: "relative",
@@ -176,12 +179,12 @@ export default function MaintenancePage() {
             boxShadow: "0 24px 72px rgba(0, 0, 0, 0.14)",
           }}
         >
-          <MaintenanceSocialShortcuts />
-          <MaintenanceFeedbackWidget />
-          <MaintenanceThemeToggle />
+          <OpenlyMarketSocialShortcuts />
+          <OpenlyMarketFeedbackWidget />
+          <OpenlyMarketThemeToggle />
           <div
             aria-hidden="true"
-            className="maintenance-grain-wrap"
+            className="maintenance-grain-wrap openlymarket-maintenance-grain-wrap"
             style={{
               position: "absolute",
               inset: 0,
@@ -215,7 +218,7 @@ export default function MaintenancePage() {
           </div>
 
           <div
-            className="maintenance-content-wrap"
+            className="maintenance-content-wrap openlymarket-maintenance-content-wrap"
             style={{
               position: "relative",
               zIndex: 1,
@@ -228,7 +231,7 @@ export default function MaintenancePage() {
             }}
           >
             <article
-              className="maintenance-card"
+              className="maintenance-card openlymarket-maintenance-card"
               style={{
                 width: "100%",
                 display: "flex",
@@ -245,13 +248,13 @@ export default function MaintenancePage() {
                 WebkitBackdropFilter: "blur(18px) saturate(130%)",
               }}
             >
-              <div className="maintenance-logo-wrap">
-                <MaintenanceLogoContextMenu />
+              <div className="maintenance-logo-wrap openlymarket-logo-wrap">
+                <OpenlyMarketLogoContextMenu />
               </div>
 
               <h1
                 id="maintenance-title"
-                className="maintenance-title"
+                className="maintenance-title openlymarket-maintenance-title"
                 style={{
                   margin: 0,
                   fontSize: "clamp(0.95rem, 4vw, 2.35rem)",
@@ -265,7 +268,7 @@ export default function MaintenancePage() {
               </h1>
 
               <div
-                className="maintenance-copy"
+                className="maintenance-copy openlymarket-maintenance-copy"
                 style={{
                   margin: "20px auto 0",
                   fontSize: "1.05rem",
@@ -279,7 +282,7 @@ export default function MaintenancePage() {
                 }}
               >
                 <p
-                  className="maintenance-copy-primary"
+                  className="maintenance-copy-primary openlymarket-maintenance-copy-primary"
                   style={{
                     margin: 0,
                     width: "100%",
@@ -291,7 +294,7 @@ export default function MaintenancePage() {
                   Our website is currently undergoing scheduled development, We&apos;ll be online soon!
                 </p>
                 <p
-                  className="maintenance-copy-updates"
+                  className="maintenance-copy-updates openlymarket-maintenance-copy-updates"
                   style={{
                     margin: "4px 0 0",
                     display: "flex",
@@ -305,7 +308,7 @@ export default function MaintenancePage() {
                   <span>For updates,</span>
                   <strong>
                     <a
-                      className="maintenance-x-link"
+                      className="maintenance-x-link openlymarket-maintenance-x-link"
                       href="https://x.com/openlymarket"
                       target="_blank"
                       rel="noreferrer noopener"
@@ -328,11 +331,11 @@ export default function MaintenancePage() {
                 </p>
               </div>
 
-              <MaintenanceEarlyAccessForm />
+              <OpenlyMarketEarlyAccessForm />
             </article>
 
             <p
-              className="maintenance-email"
+              className="maintenance-email openlymarket-maintenance-email"
               style={{
                 margin: "16px 0 0",
                 width: "100%",
@@ -354,7 +357,7 @@ export default function MaintenancePage() {
               </strong>
             </p>
 
-            <div className="maintenance-social-row" style={{ marginTop: "12px" }}>
+            <div className="maintenance-social-row openlymarket-maintenance-social-row" style={{ marginTop: "12px" }}>
               <SocialLink href="https://x.com/openlymarket" label="X" shortcut="X">
                 <SocialXIcon />
               </SocialLink>
@@ -388,3 +391,5 @@ export default function MaintenancePage() {
     </>
   );
 }
+
+OpenlyMarketMaintenancePage.displayName = "openlymarket-maintenance-page";

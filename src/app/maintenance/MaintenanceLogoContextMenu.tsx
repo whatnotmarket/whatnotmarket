@@ -1,5 +1,6 @@
 "use client";
 
+// OpenlyDev Signature: OpenlyMarket Logo Context Menu
 import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import logoBlack from "./logosvgblack.svg";
@@ -17,7 +18,7 @@ type LogoContextMenuState = {
   y: number;
 };
 
-export default function MaintenanceLogoContextMenu() {
+export default function OpenlyMarketLogoContextMenu() {
   const [logoContextMenu, setLogoContextMenu] = useState<LogoContextMenuState>({
     open: false,
     x: 0,
@@ -132,6 +133,8 @@ export default function MaintenanceLogoContextMenu() {
         type="button"
         aria-label="OpenlyMarket logo"
         onContextMenu={openLogoContextMenu}
+        data-openlymarket-component="openlymarket-logo-context-menu"
+        className="openlymarket-logo-context-menu-trigger"
         style={{
           margin: "0 0 35px",
           padding: 0,
@@ -161,9 +164,10 @@ export default function MaintenanceLogoContextMenu() {
         <div
           ref={logoContextMenuRef}
           data-logo-context-menu="true"
+          data-openlymarket-component="openlymarket-logo-context-menu-panel"
           role="menu"
           aria-label="Logo actions"
-          className="w-[214px] overflow-hidden p-1.5"
+          className="openlymarket-logo-context-menu-panel w-[214px] overflow-hidden p-1.5"
           style={{
             position: "fixed",
             zIndex: 9999,
@@ -182,7 +186,7 @@ export default function MaintenanceLogoContextMenu() {
             type="button"
             role="menuitem"
             onClick={downloadCurrentThemeLogo}
-            className="flex h-9 w-full items-center rounded-xl px-3 text-left text-[14px] font-semibold text-zinc-100 transition-colors duration-150 hover:bg-white/10"
+            className="openlymarket-logo-context-menu-action flex h-9 w-full items-center rounded-xl px-3 text-left text-[14px] font-semibold text-zinc-100 transition-colors duration-150 hover:bg-white/10"
           >
             Download logo SVG
           </button>
@@ -190,7 +194,7 @@ export default function MaintenanceLogoContextMenu() {
             type="button"
             role="menuitem"
             onClick={openBrandResources}
-            className="flex h-9 w-full items-center rounded-xl px-3 text-left text-[14px] font-semibold text-zinc-100 transition-colors duration-150 hover:bg-white/10"
+            className="openlymarket-logo-context-menu-action flex h-9 w-full items-center rounded-xl px-3 text-left text-[14px] font-semibold text-zinc-100 transition-colors duration-150 hover:bg-white/10"
           >
             Brand Resources
           </button>
@@ -199,3 +203,5 @@ export default function MaintenanceLogoContextMenu() {
     </>
   );
 }
+
+OpenlyMarketLogoContextMenu.displayName = "openlymarket-logo-context-menu";

@@ -1,5 +1,6 @@
 "use client";
 
+// OpenlyDev Signature: OpenlyMarket Maintenance Feedback
 import {
   useEffect,
   useMemo,
@@ -38,7 +39,7 @@ function FeedbackMessageIcon({ className }: { className?: string }) {
   );
 }
 
-export default function MaintenanceFeedbackWidget() {
+export default function OpenlyMarketFeedbackWidget() {
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [state, setState] = useState<SubmitState>("idle");
@@ -58,7 +59,10 @@ export default function MaintenanceFeedbackWidget() {
     const systemTheme: MaintenanceTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
-    setTheme(isTheme(attr) ? attr : systemTheme);
+    const resolvedTheme = isTheme(attr) ? attr : systemTheme;
+    const frame = window.requestAnimationFrame(() => {
+      setTheme(resolvedTheme);
+    });
 
     const observer = new MutationObserver(() => {
       const current = root.getAttribute(ROOT_THEME_ATTR);
@@ -66,7 +70,10 @@ export default function MaintenanceFeedbackWidget() {
     });
 
     observer.observe(root, { attributes: true, attributeFilter: [ROOT_THEME_ATTR] });
-    return () => observer.disconnect();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -157,7 +164,8 @@ export default function MaintenanceFeedbackWidget() {
 
   return (
     <div
-      className="maintenance-feedback-widget"
+      className="maintenance-feedback-widget openlymarket-feedback-widget"
+      data-openlymarket-component="openlymarket-feedback-widget"
       style={{
         position: "absolute",
         top: "18px",
@@ -172,7 +180,7 @@ export default function MaintenanceFeedbackWidget() {
           <button
             type="button"
             onClick={resetStatus}
-            className="maintenance-feedback-trigger group inline-flex h-[41px] items-center gap-2 rounded-full px-3.5 text-zinc-100 transition-[transform] duration-150 hover:text-zinc-100 active:text-zinc-100 data-[state=open]:text-zinc-100 focus-visible:outline-none focus-visible:ring-0 focus-visible:text-zinc-100"
+            className="maintenance-feedback-trigger openlymarket-feedback-trigger group inline-flex h-[41px] items-center gap-2 rounded-full px-3.5 text-zinc-100 transition-[transform] duration-150 hover:text-zinc-100 active:text-zinc-100 data-[state=open]:text-zinc-100 focus-visible:outline-none focus-visible:ring-0 focus-visible:text-zinc-100"
             style={{
               border: "1px solid rgba(255, 255, 255, 0.2)",
               background: "rgba(57, 61, 69, 0.76)",
@@ -183,7 +191,7 @@ export default function MaintenanceFeedbackWidget() {
           >
             <FeedbackMessageIcon className="size-[17px] transition-transform duration-200 ease-out group-hover:scale-115 group-focus-visible:scale-115" />
             <span className="text-[14px] font-semibold leading-none">Feedback</span>
-            <span className="maintenance-feedback-shortcut ml-1 inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full border border-white/25 bg-[linear-gradient(170deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] px-1 text-[12px] font-semibold leading-none text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_4px_10px_rgba(0,0,0,0.24)]">
+            <span className="maintenance-feedback-shortcut openlymarket-feedback-shortcut ml-1 inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full border border-white/25 bg-[linear-gradient(170deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] px-1 text-[12px] font-semibold leading-none text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_4px_10px_rgba(0,0,0,0.24)]">
               F
             </span>
           </button>
@@ -259,3 +267,5 @@ export default function MaintenanceFeedbackWidget() {
     </div>
   );
 }
+
+OpenlyMarketFeedbackWidget.displayName = "openlymarket-feedback-widget";
