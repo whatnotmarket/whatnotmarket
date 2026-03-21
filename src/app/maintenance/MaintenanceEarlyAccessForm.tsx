@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { CornerLeftUp } from "lucide-react";
+import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 
@@ -80,6 +81,14 @@ export default function MaintenanceEarlyAccessForm() {
     }
   }
 
+  function handleFormKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      if (!canSubmit) return;
+      event.currentTarget.requestSubmit();
+    }
+  }
+
   return (
     <section className="maintenance-early-access" aria-labelledby="maintenance-early-access-title">
       <h2 id="maintenance-early-access-title" className="maintenance-early-access-title">
@@ -88,7 +97,12 @@ export default function MaintenanceEarlyAccessForm() {
       <p className="maintenance-early-access-copy">
         Leave your email to unlock reduced buyer and seller transaction fees.
       </p>
-      <form className="maintenance-early-access-form" onSubmit={onSubmit} noValidate>
+      <form
+        className="maintenance-early-access-form"
+        onSubmit={onSubmit}
+        onKeyDown={handleFormKeyDown}
+        noValidate
+      >
         <label className="maintenance-early-access-label" htmlFor="maintenance-early-email">
           Email
         </label>
@@ -109,7 +123,11 @@ export default function MaintenanceEarlyAccessForm() {
             aria-describedby="maintenance-early-status"
           />
           <button type="submit" className="maintenance-early-access-cta" disabled={!canSubmit}>
-            {isBusy ? "Submitting..." : "Get Early Access"}
+            <span>{isBusy ? "Submitting..." : "Get Early Access"}</span>
+            <span className="maintenance-early-access-cta-shortcut" aria-hidden="true">
+              CTRL
+              <CornerLeftUp size={14} />
+            </span>
           </button>
         </div>
         <input

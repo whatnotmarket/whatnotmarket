@@ -440,7 +440,7 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
   color: #f8fbff;
   font-size: 15px;
   line-height: 20px;
-  padding: 0 182px 0 16px;
+  padding: 0 236px 0 16px;
   outline: none;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
@@ -459,25 +459,61 @@ html[data-maintenance-theme="dark"] .maintenance-logo-dark {
   top: 6px;
   right: 6px;
   height: 40px;
-  min-width: 170px;
-  border-radius: 12px;
-  border: 1px solid var(--maintenance-docs-border);
-  background: var(--maintenance-docs-bg);
-  color: var(--maintenance-toggle-active-icon);
+  min-width: 214px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: #222222;
+  color: #f8fbff;
   padding: 0 16px;
   font-size: 14px;
   font-weight: 700;
   line-height: 20px;
   cursor: pointer;
-  backdrop-filter: var(--maintenance-docs-filter);
-  -webkit-backdrop-filter: var(--maintenance-docs-filter);
-  box-shadow: var(--maintenance-docs-shadow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 4px 10px rgba(0, 0, 0, 0.24);
   transition: opacity 120ms ease;
+  white-space: nowrap;
+}
+
+.maintenance-early-access-cta:hover,
+.maintenance-early-access-cta:active,
+.maintenance-early-access-cta:focus-visible {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: #222222;
+  color: #f8fbff;
+  outline: none;
+}
+
+.maintenance-early-access-cta-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 4px 10px rgba(0, 0, 0, 0.24);
+  color: #f8fbff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 8px;
 }
 
 .maintenance-early-access-cta:disabled {
   cursor: not-allowed;
-  opacity: 0.62;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(34, 34, 34, 0.55);
+  color: rgba(244, 244, 245, 0.62);
+  box-shadow: none;
+}
+
+.maintenance-early-access-cta:disabled .maintenance-early-access-cta-shortcut {
+  opacity: 0.74;
 }
 
 .maintenance-early-access-status {
@@ -660,7 +696,7 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
 
   .maintenance-early-access-input {
     height: 48px !important;
-    padding: 0 134px 0 12px !important;
+    padding: 0 156px 0 12px !important;
     font-size: 14px !important;
     border-radius: 14px !important;
   }
@@ -669,10 +705,14 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
     top: 5px !important;
     right: 5px !important;
     height: 38px !important;
-    min-width: 124px !important;
+    min-width: 138px !important;
     padding: 0 12px !important;
     font-size: 13px !important;
-    border-radius: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .maintenance-early-access-cta-shortcut {
+    display: none !important;
   }
 
   .maintenance-early-access-status {

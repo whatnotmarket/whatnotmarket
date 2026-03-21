@@ -100,6 +100,44 @@ export default function MaintenanceThemeToggle() {
     return () => mediaQuery.removeListener(handleThemeChange);
   }, [isReady, hasExplicitPreference]);
 
+  useEffect(() => {
+    if (!isReady) return;
+
+    let tooltipTimer: number | undefined;
+
+    const onGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+
+      const target = event.target as HTMLElement | null;
+      const isTypingTarget =
+        !!target &&
+        (target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT");
+      if (isTypingTarget) return;
+
+      const key = event.key.toLowerCase();
+      if (key !== "d" && key !== "l") return;
+
+      event.preventDefault();
+
+      const nextTheme: MaintenanceTheme = key === "d" ? "dark" : "light";
+      setHasExplicitPreference(true);
+      setTheme(nextTheme);
+      setTooltipTheme(nextTheme);
+
+      if (tooltipTimer) window.clearTimeout(tooltipTimer);
+      tooltipTimer = window.setTimeout(() => setTooltipTheme(null), 900);
+    };
+
+    window.addEventListener("keydown", onGlobalKeyDown);
+    return () => {
+      if (tooltipTimer) window.clearTimeout(tooltipTimer);
+      window.removeEventListener("keydown", onGlobalKeyDown);
+    };
+  }, [isReady]);
+
   const handleThemeSelect = (nextTheme: MaintenanceTheme) => {
     setHasExplicitPreference(true);
     setTheme(nextTheme);
@@ -200,11 +238,11 @@ export default function MaintenanceThemeToggle() {
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
-            left: "50%",
-            transform: "translateX(-50%)",
+            right: 0,
+            transform: "none",
             background: "rgba(36, 39, 46, 0.92)",
             color: "#f5f5f7",
-            borderRadius: "12px",
+                borderRadius: "6px",
             padding: "8px 12px",
             fontSize: "0.9rem",
             lineHeight: 1,
@@ -214,7 +252,29 @@ export default function MaintenanceThemeToggle() {
             pointerEvents: "none",
           }}
         >
-          {tooltipTheme === "dark" ? "Dark mode" : "Light mode"}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+            <span>{tooltipTheme === "dark" ? "Dark mode" : "Light mode"}</span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "24px",
+                height: "24px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
+                background: "linear-gradient(170deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08))",
+                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 4px 10px rgba(0, 0, 0, 0.24)",
+                color: "#f8fbff",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                lineHeight: 1,
+                padding: 0,
+              }}
+            >
+              {tooltipTheme === "dark" ? "D" : "L"}
+            </span>
+          </span>
         </div>
       )}
     </div>

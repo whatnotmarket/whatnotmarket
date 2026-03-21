@@ -4,6 +4,7 @@ import Grainient from "@/components/Grainient";
 import MaintenanceThemeToggle from "./MaintenanceThemeToggle";
 import MaintenanceEarlyAccessForm from "./MaintenanceEarlyAccessForm";
 import MaintenanceFeedbackWidget from "./MaintenanceFeedbackWidget";
+import MaintenanceSocialShortcuts from "./MaintenanceSocialShortcuts";
 import logoBlack from "./logosvgblack.svg";
 import logoWhite from "./logosvgwhite.svg";
 
@@ -93,10 +94,11 @@ function SocialGithubIcon() {
 type SocialLinkProps = {
   href: string;
   label: string;
+  shortcut: string;
   children: React.ReactNode;
 };
 
-function SocialLink({ href, label, children }: SocialLinkProps) {
+function SocialLink({ href, label, shortcut, children }: SocialLinkProps) {
   return (
     <a
       href={href}
@@ -107,7 +109,29 @@ function SocialLink({ href, label, children }: SocialLinkProps) {
     >
       {children}
       <span className="maintenance-social-tooltip" role="tooltip">
-        {label}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+          <span>{label}</span>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "6px",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
+              background: "linear-gradient(170deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08))",
+              boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 4px 10px rgba(0, 0, 0, 0.24)",
+              color: "#f8fbff",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              lineHeight: 1,
+              padding: 0,
+            }}
+          >
+            {shortcut}
+          </span>
+        </span>
       </span>
     </a>
   );
@@ -151,6 +175,7 @@ export default function MaintenancePage() {
             boxShadow: "0 24px 72px rgba(0, 0, 0, 0.14)",
           }}
         >
+          <MaintenanceSocialShortcuts />
           <MaintenanceFeedbackWidget />
           <MaintenanceThemeToggle />
           <div
@@ -342,13 +367,13 @@ export default function MaintenancePage() {
             </p>
 
             <div className="maintenance-social-row" style={{ marginTop: "12px" }}>
-              <SocialLink href="https://x.com/openlymarket" label="X">
+              <SocialLink href="https://x.com/openlymarket" label="X" shortcut="X">
                 <SocialXIcon />
               </SocialLink>
-              <SocialLink href="https://github.com/openlymarket" label="GitHub">
+              <SocialLink href="https://github.com/openlymarket" label="GitHub" shortcut="G">
                 <SocialGithubIcon />
               </SocialLink>
-              <SocialLink href="https://www.reddit.com/" label="Reddit">
+              <SocialLink href="https://www.reddit.com/" label="Reddit" shortcut="R">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://mintlify.s3.us-west-1.amazonaws.com/mattiavizzi/icons/reddit.svg"
@@ -358,7 +383,7 @@ export default function MaintenancePage() {
                   style={{ display: "block" }}
                 />
               </SocialLink>
-              <SocialLink href="https://paragraph.xyz/" label="Paragraph">
+              <SocialLink href="https://paragraph.xyz/" label="Paragraph" shortcut="P">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://mintlify.s3.us-west-1.amazonaws.com/mattiavizzi/icons/paragraph.png"

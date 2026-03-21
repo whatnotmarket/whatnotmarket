@@ -32,13 +32,6 @@ function rejectCrossOrigin(request: Request) {
   }
 }
 
-function getClientIp(request: Request) {
-  const direct = request.headers.get("cf-connecting-ip") || request.headers.get("x-real-ip");
-  if (direct) return direct.trim();
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || "unknown";
-}
-
 function resolveTelegramToken() {
   return (
     process.env.TELEGRAM_MAINTENANCE_BOT_TOKEN?.trim() ||
@@ -89,8 +82,9 @@ export async function POST(request: Request) {
   }
 
   const userAgent = String(request.headers.get("user-agent") || "unknown").slice(0, 220);
-  const ip = getClientIp(request);
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const dateUtc = now.toISOString().slice(0, 10);
+  const timeUtc = `${now.toISOString().slice(11, 19)} UTC`;
 
   const textLines = [
     "\u{1F527} <b>Maintenance Feedback</b>",
@@ -98,9 +92,9 @@ export async function POST(request: Request) {
     `<b>Message:</b>`,
     `<pre>${escapeHtml(parsed.message)}</pre>`,
     `<b>Page:</b> <code>${escapeHtml(parsed.page)}</code>`,
-    `<b>IP:</b> <code>${escapeHtml(ip)}</code>`,
     `<b>User-Agent:</b> <code>${escapeHtml(userAgent)}</code>`,
-    `<b>Time:</b> <code>${escapeHtml(nowIso)}</code>`,
+    `<b>Date:</b> <code>${escapeHtml(dateUtc)}</code>`,
+    `<b>Time:</b> <code>${escapeHtml(timeUtc)}</code>`,
   ];
 
   const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
