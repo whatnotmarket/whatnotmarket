@@ -139,7 +139,7 @@ export default function MaintenanceFeedbackWidget() {
       }
 
       setState("success");
-      setMessage(payload.message || "Feedback sent. Thank you.");
+      setMessage("Feedback received. We will handle it shortly.");
       setFeedback("");
     } catch {
       setState("error");
@@ -234,19 +234,23 @@ export default function MaintenanceFeedbackWidget() {
             </div>
 
             {(state !== "idle" || message) && (
-              <p
+              <div
                 role="status"
                 aria-live="polite"
-                className={`m-0 text-xs ${
-                  state === "error"
-                    ? "text-rose-300"
-                    : state === "success"
-                      ? "text-emerald-300"
-                      : "text-zinc-400"
+                className={`m-0 rounded-[12px] border px-3 py-2 text-xs leading-relaxed ${
+                  state === "success"
+                    ? isDark
+                      ? "border-[rgba(16,185,129,0.45)] bg-[rgba(16,185,129,0.2)] text-[#c6f6d5]"
+                      : "border-[rgba(22,101,52,0.35)] bg-[rgba(134,239,172,0.36)] text-[#134e29]"
+                    : state === "error"
+                      ? isDark
+                        ? "border-[rgba(248,113,113,0.45)] bg-[rgba(239,68,68,0.2)] text-[#ffd4d4]"
+                        : "border-[rgba(153,27,27,0.35)] bg-[rgba(252,165,165,0.38)] text-[#7f1d1d]"
+                      : "border-transparent bg-transparent text-zinc-400"
                 }`}
               >
                 {message}
-              </p>
+              </div>
             )}
           </form>
         </PopoverContent>
