@@ -330,6 +330,7 @@ textarea,
   --maintenance-panel-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
   --maintenance-panel-border: rgba(255, 255, 255, 0.44);
   --maintenance-panel-shine: rgba(255, 255, 255, 0.58);
+  --maintenance-logo-menu-bg: #222222;
   --maintenance-toggle-bg: linear-gradient(160deg, rgba(21, 24, 31, 0.74), rgba(15, 18, 24, 0.66));
   --maintenance-toggle-border: rgba(255, 255, 255, 0.2);
   --maintenance-toggle-shine: rgba(255, 255, 255, 0.12);
@@ -352,6 +353,7 @@ html[data-maintenance-theme="dark"] {
   --maintenance-panel-bg: linear-gradient(160deg, rgba(22, 24, 31, 0.58), rgba(16, 18, 24, 0.46));
   --maintenance-panel-border: rgba(255, 255, 255, 0.26);
   --maintenance-panel-shine: rgba(255, 255, 255, 0.18);
+  --maintenance-logo-menu-bg: #131111;
   --maintenance-docs-bg: linear-gradient(160deg, rgba(17, 22, 30, 0.94), rgba(12, 16, 24, 0.92));
   --maintenance-docs-border: rgba(168, 189, 217, 0.42);
   --maintenance-docs-filter: none;

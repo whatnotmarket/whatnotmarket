@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Grainient from "@/components/Grainient";
 import MaintenanceThemeToggle from "./MaintenanceThemeToggle";
 import MaintenanceEarlyAccessForm from "./MaintenanceEarlyAccessForm";
 import MaintenanceFeedbackWidget from "./MaintenanceFeedbackWidget";
 import MaintenanceSocialShortcuts from "./MaintenanceSocialShortcuts";
-import logoBlack from "./logosvgblack.svg";
-import logoWhite from "./logosvgwhite.svg";
+import MaintenanceLogoContextMenu from "./MaintenanceLogoContextMenu";
 
 const MAINTENANCE_THEME_BOOTSTRAP = `(() => {
   try {
@@ -244,21 +242,8 @@ export default function MaintenancePage() {
                 WebkitBackdropFilter: "blur(18px) saturate(130%)",
               }}
             >
-              <div className="maintenance-logo-wrap" style={{ margin: "0 0 35px" }}>
-                <Image
-                  src={logoBlack}
-                  alt="OpenlyMarketBlack"
-                  priority
-                  className="maintenance-logo maintenance-logo-light"
-                  style={{ width: "clamp(200px, 31vw, 500px)", height: "auto" }}
-                />
-                <Image
-                  src={logoWhite}
-                  alt="OpenlyMarketWhite"
-                  priority
-                  className="maintenance-logo maintenance-logo-dark"
-                  style={{ width: "clamp(200px, 31vw, 500px)", height: "auto" }}
-                />
+              <div className="maintenance-logo-wrap">
+                <MaintenanceLogoContextMenu />
               </div>
 
               <h1
