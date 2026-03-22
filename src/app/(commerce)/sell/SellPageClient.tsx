@@ -15,7 +15,7 @@ import { AlertCircle,ArrowLeft,Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect,useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm,useWatch } from "react-hook-form";
 import * as z from "zod";
 
 const CATEGORY_OPTIONS: Option[] = [
@@ -77,7 +77,7 @@ export default function SellPage() {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors, isValid },
   } = useForm<SellFormValues>({
     resolver: zodResolver(sellSchema),
@@ -93,7 +93,11 @@ export default function SellPage() {
     mode: "onChange",
   });
 
-  const titleValue = watch("title");
+  const titleValue = useWatch({ control, name: "title" }) ?? "";
+  const categoryValue = useWatch({ control, name: "category" }) ?? "";
+  const conditionValue = useWatch({ control, name: "condition" }) ?? "";
+  const paymentMethodsValue = useWatch({ control, name: "paymentMethods" }) ?? [];
+  const deliveryTimeValue = useWatch({ control, name: "deliveryTime" }) ?? "";
   const filteredSuggestions = titleValue && titleValue.length > 2 
     ? SELL_SUGGESTIONS.filter(s => s.toLowerCase().includes(titleValue.toLowerCase()))
     : [];
@@ -223,7 +227,7 @@ export default function SellPage() {
                         <SearchableSelect
                           label="Category"
                           options={CATEGORY_OPTIONS}
-                          value={watch("category")}
+                          value={categoryValue}
                           onChange={(val) => setValue("category", val, { shouldValidate: true })}
                           placeholder="Select category..."
                           searchPlaceholder="Search categories..."
@@ -237,7 +241,7 @@ export default function SellPage() {
                         <SearchableSelect
                           label="Condition"
                           options={CONDITION_OPTIONS}
-                          value={watch("condition")}
+                          value={conditionValue}
                           onChange={(val) => setValue("condition", val, { shouldValidate: true })}
                           placeholder="Select conditions..."
                           searchPlaceholder="Search condition..."
@@ -292,7 +296,7 @@ export default function SellPage() {
                           subtitle: c.code,
                           icon: <div className="w-5 h-5 flex items-center justify-center"><Image src={c.Icon} alt={c.code} width={20} height={20} /></div>
                         }))}
-                        value={watch("paymentMethods")}
+                        value={paymentMethodsValue}
                         onChange={(val) => setValue("paymentMethods", val, { shouldValidate: true })}
                         placeholder="Select crypto..."
                         searchPlaceholder="Search crypto..."
@@ -307,7 +311,7 @@ export default function SellPage() {
                         <SearchableSelect
                           label="Delivery Timeframe"
                           options={DELIVERY_OPTIONS}
-                          value={watch("deliveryTime")}
+                          value={deliveryTimeValue}
                           onChange={(val) => setValue("deliveryTime", val, { shouldValidate: true })}
                           placeholder="Select deliverability..."
                           searchPlaceholder="Search time..."

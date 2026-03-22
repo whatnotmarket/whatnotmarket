@@ -276,6 +276,8 @@ export function DataTable({
     pageSize: 10,
   })
 
+  // TanStack table returns non-memoizable functions; keep this localized until compiler-safe path is introduced.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
