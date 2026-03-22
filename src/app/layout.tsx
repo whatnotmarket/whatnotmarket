@@ -1,4 +1,4 @@
-﻿import { PrivacyCardWrapper } from "@/components/app/layout/PrivacyCardWrapper";
+import { PrivacyCardWrapper } from "@/components/app/layout/PrivacyCardWrapper";
 import Providers from "@/components/app/layout/providers";
 import { ConsentTrackingScripts } from "@/components/app/layout/providers/ConsentTrackingScripts";
 import { LocalhostServiceWorkerReset } from "@/components/app/layout/providers/LocalhostServiceWorkerReset";
@@ -8,6 +8,7 @@ import { LOCALE_COOKIE_NAME,normalizeLocale } from "@/i18n/config";
 import { DEFAULT_SEO_DESCRIPTION } from "@/lib/app/seo/seo";
 import { isMaintenanceModeEnabled } from "@/lib/core/config/maintenance";
 import { SITE_URL } from "@/lib/core/config/site-config";
+import { getNonce } from "@/lib/nonce";
 import { cn } from "@/lib/core/utils/utils";
 import { SquircleNoScript } from "@squircle-js/react";
 import { Analytics } from "@vercel/analytics/react";
@@ -141,6 +142,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = await getNonce();
+
   if (isMaintenanceModeEnabled()) {
     const { default: OpenlyMarketMaintenancePage } = await import("@/app/(ops)/maintenance/page");
 
@@ -178,11 +181,13 @@ export default async function RootLayout({
       >
         <LocalhostServiceWorkerReset />
         <Script
+          nonce={nonce}
           type="application/ld+json"
           id="schema-jsonld"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
         <Script
+          nonce={nonce}
           id="ahrefs-analytics"
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="V/7wncVpO6P5ODy8x3Cqsw"

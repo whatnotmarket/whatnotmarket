@@ -1,4 +1,4 @@
-﻿import {
+import {
 LOCALE_COOKIE_NAME,
 detectPreferredLocale,
 isPathNonLocalized,
@@ -15,8 +15,36 @@ isMaintenanceModeEnabled,
 import { verifyToken } from "@/lib/domains/auth/auth";
 import { hasCanonicalAdminAccess } from "@/lib/domains/security/admin-guards";
 import { createServerClient } from "@supabase/ssr";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+function generateCspNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+  return btoa(binary);
+}
+
+function buildContentSecurityPolicy(nonce: string): string {
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https:`,
+    "style-src 'self' 'unsafe-inline' https:",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "connect-src 'self' https: wss:",
+    "frame-src 'self' https:",
+    "manifest-src 'self'",
+    "worker-src 'self' blob:",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
 
 const STATIC_FILE_PATTERN =
   /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json|webmanifest|woff2?|ttf|eot)$/i;
@@ -193,7 +221,18 @@ async function reportSensitiveAccessAttempt(request: NextRequest, alert: Sensiti
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function proxy(incomingRequest: NextRequest) {
+  const nonce = generateCspNonce();
+  const requestHeaders = new Headers(incomingRequest.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-csp-nonce", nonce);
+  const request = new NextRequest(incomingRequest, { headers: requestHeaders });
+
+  const finalize = (response: NextResponse) => {
+    response.headers.set("Content-Security-Policy", buildContentSecurityPolicy(nonce));
+    return response;
+  };
+
   const pathname = request.nextUrl.pathname;
   const maintenanceEnabled = isMaintenanceModeEnabled();
   const maintenanceHeaders = createMaintenanceHeaders();
@@ -210,7 +249,7 @@ export async function proxy(request: NextRequest) {
     if (SOURCE_MAP_PATTERN.test(pathname)) {
       const headers = new Headers(maintenanceHeaders);
       headers.set("Content-Type", "text/plain; charset=utf-8");
-      return new NextResponse("Not Found", { status: 404, headers });
+      return finalize(new NextResponse("Not Found", { status: 404, headers }));
     }
 
     if (pathname === MAINTENANCE_PATHNAME) {
@@ -218,7 +257,7 @@ export async function proxy(request: NextRequest) {
         status: 503,
       });
       maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
-      return response;
+      return finalize(response);
     }
 
     if (MAINTENANCE_ALLOWED_API_PATHS.has(pathname)) {
@@ -227,71 +266,77 @@ export async function proxy(request: NextRequest) {
         const headers = new Headers(maintenanceHeaders);
         headers.set("Allow", "POST, OPTIONS");
         headers.set("Content-Type", "application/json; charset=utf-8");
-        return new NextResponse(JSON.stringify({ ok: false, error: "Method Not Allowed" }), {
-          status: 405,
-          headers,
-        });
+        return finalize(
+          new NextResponse(JSON.stringify({ ok: false, error: "Method Not Allowed" }), {
+            status: 405,
+            headers,
+          })
+        );
       }
 
       const response = NextResponse.next({ request });
       maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
-      return response;
+      return finalize(response);
     }
 
     if (MAINTENANCE_ALLOWED_PUBLIC_PATHS.has(pathname)) {
       const response = NextResponse.next({ request });
       maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
-      return response;
+      return finalize(response);
     }
 
     if (isFrameworkAssetPath(pathname)) {
       const response = NextResponse.next({ request });
       maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
-      return response;
+      return finalize(response);
     }
 
     if (pathname === "/api" || pathname.startsWith("/api/")) {
       const headers = new Headers(maintenanceHeaders);
       headers.set("Content-Type", "application/json; charset=utf-8");
-      return new NextResponse(
-        JSON.stringify({
-          error: "Service Unavailable",
-          code: "MAINTENANCE_MODE",
-          message: "API temporarily unavailable during scheduled maintenance.",
-        }),
-        { status: 503, headers }
+      return finalize(
+        new NextResponse(
+          JSON.stringify({
+            error: "Service Unavailable",
+            code: "MAINTENANCE_MODE",
+            message: "API temporarily unavailable during scheduled maintenance.",
+          }),
+          { status: 503, headers }
+        )
       );
     }
 
     if (!MAINTENANCE_SAFE_PAGE_METHODS.has(request.method.toUpperCase())) {
       const headers = new Headers(maintenanceHeaders);
       headers.set("Content-Type", "text/plain; charset=utf-8");
-      return new NextResponse("Service temporarily unavailable during scheduled maintenance.", {
-        status: 503,
-        headers,
-      });
+      return finalize(
+        new NextResponse("Service temporarily unavailable during scheduled maintenance.", {
+          status: 503,
+          headers,
+        })
+      );
     }
 
     const maintenanceUrl = new URL(MAINTENANCE_PATHNAME, request.url);
     const response = NextResponse.rewrite(maintenanceUrl, { status: 503 });
     maintenanceHeaders.forEach((value, key) => response.headers.set(key, value));
-    return response;
+    return finalize(response);
   }
 
   if (process.env.NODE_ENV === "production" && SOURCE_MAP_PATTERN.test(pathname)) {
-    return new NextResponse("Not Found", { status: 404 });
+    return finalize(new NextResponse("Not Found", { status: 404 }));
   }
 
   if (pathname.startsWith("/_next/")) {
-    return NextResponse.next({ request });
+    return finalize(NextResponse.next({ request }));
   }
 
   if (STATIC_FILE_PATTERN.test(pathname)) {
-    return NextResponse.next({ request });
+    return finalize(NextResponse.next({ request }));
   }
 
   if ((pathname === "/api" || pathname.startsWith("/api/")) && !pathname.startsWith("/api/admin")) {
-    return NextResponse.next({ request });
+    return finalize(NextResponse.next({ request }));
   }
 
   const isProduction = process.env.NODE_ENV === "production";
@@ -308,7 +353,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/sitemap/") ||
     pathname.startsWith("/sitemaps/")
   ) {
-    return NextResponse.next({ request });
+    return finalize(NextResponse.next({ request }));
   }
 
   const localeInfo = stripLocaleFromPathname(pathname);
@@ -324,7 +369,7 @@ export async function proxy(request: NextRequest) {
         sameSite: "lax",
       });
     }
-    return response;
+    return finalize(response);
   }
 
   // Keep listed pages available only on localhost/dev. On public hosts redirect to app root.
@@ -334,7 +379,7 @@ export async function proxy(request: NextRequest) {
       ? publicAppOrigin
       : request.nextUrl.origin;
     const redirectUrl = new URL("/", redirectBase);
-    return NextResponse.redirect(redirectUrl);
+    return finalize(NextResponse.redirect(redirectUrl));
   }
 
   if (localeInfo.locale && isPathNonLocalized(pathnameWithoutLocale)) {
@@ -345,7 +390,7 @@ export async function proxy(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
     });
-    return response;
+    return finalize(response);
   }
 
   if (!localeInfo.locale && shouldLocalizePath(pathname)) {
@@ -360,7 +405,7 @@ export async function proxy(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
     });
-    return response;
+    return finalize(response);
   }
 
   const supabaseResponse = NextResponse.next({ request });
@@ -375,7 +420,7 @@ export async function proxy(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return supabaseResponse;
+    return finalize(supabaseResponse);
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -409,12 +454,12 @@ export async function proxy(request: NextRequest) {
 
   const withSupabaseCookies = (response: NextResponse) => {
     supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
-    return response;
+    return finalize(response);
   };
 
   if (pathname === "/admin/login") {
     if (!isProduction) {
-      const response = NextResponse.next();
+      const response = NextResponse.next({ request });
       response.cookies.set("admin_login_attempts", "0", {
         path: "/",
         httpOnly: true,
@@ -473,7 +518,7 @@ export async function proxy(request: NextRequest) {
       return withSupabaseCookies(response);
     }
 
-    const response = NextResponse.next();
+    const response = NextResponse.next({ request });
     response.cookies.set("admin_login_attempts", "0", {
       path: "/",
       httpOnly: true,
@@ -490,7 +535,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/admin")
   ) {
     if (pathname === "/api/admin/login") {
-      return withSupabaseCookies(NextResponse.next());
+      return withSupabaseCookies(NextResponse.next({ request }));
     }
 
     // Check for admin_token cookie
@@ -502,9 +547,9 @@ export async function proxy(request: NextRequest) {
         blocked: true,
       });
       if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return finalize(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
       }
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return finalize(NextResponse.redirect(new URL("/admin/login", request.url)));
     }
 
     // Verify JWT
@@ -515,9 +560,9 @@ export async function proxy(request: NextRequest) {
         blocked: true,
       });
       if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return finalize(NextResponse.json({ error: "Forbidden" }, { status: 403 }));
       }
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return finalize(NextResponse.redirect(new URL("/admin/login", request.url)));
     }
   }
 
@@ -551,7 +596,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return supabaseResponse;
+  return finalize(supabaseResponse);
 }
 
 export const config = {

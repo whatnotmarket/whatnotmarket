@@ -1,3 +1,8 @@
+/**
+ * DIRECT_DB_ACCESS: intentional
+ * Reason: manual migration runner — no end-user HTTP input; run only in controlled environments.
+ * RLS bypass: acceptable — executes fixed SQL from repo files.
+ */
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');

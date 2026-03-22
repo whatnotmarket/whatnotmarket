@@ -1,4 +1,5 @@
-﻿import Grainient from "@/components/shared/visual/Grainient";
+import Grainient from "@/components/shared/visual/Grainient";
+import { getNonce } from "@/lib/nonce";
 import type { Metadata } from "next";
 import OpenlyMarketEarlyAccessForm from "./MaintenanceEarlyAccessForm";
 import OpenlyMarketFeedbackWidget from "./MaintenanceFeedbackWidget";
@@ -137,10 +138,16 @@ function SocialLink({ href, label, shortcut, children }: SocialLinkProps) {
   );
 }
 
-export default function OpenlyMarketMaintenancePage() {
+export default async function OpenlyMarketMaintenancePage() {
+  const nonce = await getNonce();
+
   return (
     <>
-      <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: MAINTENANCE_THEME_BOOTSTRAP }} />
+      <script
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: MAINTENANCE_THEME_BOOTSTRAP }}
+      />
       <main
         className="maintenance-main openlymarket-maintenance-main"
         data-openlymarket-component="openlymarket-maintenance-main"
