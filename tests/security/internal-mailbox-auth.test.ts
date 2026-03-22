@@ -1,4 +1,5 @@
-﻿import { generateMnemonic } from "bip39";
+import { generateMnemonic } from "@scure/bip39";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
@@ -19,7 +20,7 @@ test("normalizeInternalUsername strips unsupported characters", () => {
 });
 
 test("recovery phrase validator accepts only valid 12-word mnemonic", () => {
-  const mnemonic = generateMnemonic(128);
+  const mnemonic = generateMnemonic(wordlist, 128);
   assert.equal(isValidRecoveryPhrase(mnemonic), true);
 
   const invalidWordCount = normalizeRecoveryPhrase(`${mnemonic} extra`);
@@ -27,7 +28,7 @@ test("recovery phrase validator accepts only valid 12-word mnemonic", () => {
 });
 
 test("recovery phrase encryption roundtrip works", () => {
-  const phrase = generateMnemonic(128);
+  const phrase = generateMnemonic(wordlist, 128);
   const encrypted = encryptRecoveryPhraseWithSecret(phrase, "unit-test-secret");
 
   assert.notEqual(encrypted.encryptedRecovery.includes(phrase), true);
@@ -51,7 +52,7 @@ test("internal password hashing uses one-way verification", async () => {
 });
 
 test("onboarding registration schema requires personalization fields by intent", () => {
-  const mnemonic = generateMnemonic(128);
+  const mnemonic = generateMnemonic(wordlist, 128);
 
   const base = {
     username: "test_user",

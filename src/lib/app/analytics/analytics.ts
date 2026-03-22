@@ -15,7 +15,7 @@ let clientPromise: Promise<PostHogClient | null> | null = null;
 async function getPosthogClient(): Promise<PostHogClient | null> {
   if (typeof window === "undefined") return null;
   if (!clientPromise) {
-    clientPromise = import("posthog-js")
+    clientPromise = import("posthog-js/lite")
       .then((mod) => mod.default as unknown as PostHogClient)
       .catch(() => null);
   }

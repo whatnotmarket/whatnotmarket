@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
 import { cn } from "@/lib/core/utils/utils";
 import { authToast as toast } from "@/lib/domains/notifications";
-import { entropyToMnemonic,validateMnemonic } from "bip39";
+import { entropyToMnemonic,validateMnemonic } from "@scure/bip39";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { AnimatePresence,motion } from "framer-motion";
 import Link from "next/link";
 import { type FormEvent,useEffect,useMemo,useState } from "react";
@@ -64,8 +65,7 @@ function generateSecurePassword(length = 22) {
 function createRecoveryPhrase() {
   const entropy = new Uint8Array(16);
   crypto.getRandomValues(entropy);
-  const entropyHex = Array.from(entropy).map((v) => v.toString(16).padStart(2, "0")).join("");
-  return entropyToMnemonic(entropyHex);
+  return entropyToMnemonic(entropy, wordlist);
 }
 
 function pickIndexes(totalWords: number, count: number) {
@@ -183,7 +183,7 @@ export function OnboardingClient({ initialSessionId, onboardingSessionToken }: O
     e.preventDefault();
     if (password.length < 10) return toast.error("Password must be at least 10 characters.");
     if (password !== confirm) return toast.error("Passwords do not match.");
-    if (!validateMnemonic(phrase)) return toast.error("Recovery phrase is not ready.");
+    if (!validateMnemonic(phrase, wordlist)) return toast.error("Recovery phrase is not ready.");
     setStep(4);
   }
 

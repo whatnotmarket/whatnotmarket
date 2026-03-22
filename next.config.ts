@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const posthogLiteEntry = "posthog-js/dist/module.js";
+
 const supabaseHostname = (() => {
   try {
     return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
@@ -39,10 +41,19 @@ const nextConfig: NextConfig = {
   experimental: {
     inlineCss: true,
   },
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      "posthog-js/lite": posthogLiteEntry,
+    },
+  },
   reactCompiler: true,
   productionBrowserSourceMaps: false,
   webpack: (config) => {
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "posthog-js/lite": posthogLiteEntry,
+    };
     config.externals = config.externals || [];
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;

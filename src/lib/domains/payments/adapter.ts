@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { Currency,Network } from "./catalog";
 
 export interface PaymentIntent {
@@ -51,7 +50,7 @@ export class MockPaymentsAdapter implements PaymentsAdapter {
     
     return {
       depositAddress: address,
-      adapterPaymentId: `pi_${uuidv4()}`,
+      adapterPaymentId: `pi_${crypto.randomUUID()}`,
     };
   }
 
@@ -69,13 +68,13 @@ export class MockPaymentsAdapter implements PaymentsAdapter {
   async createPayout(params: PayoutParams): Promise<PayoutResult> {
     console.log("Processing payout:", params);
     return {
-      payoutTxHash: `0x${uuidv4().replace(/-/g, "")}`,
+      payoutTxHash: `0x${crypto.randomUUID().replace(/-/g, "")}`,
     };
   }
 
   async refund(params: unknown): Promise<{ refundTxHash: string }> {
     console.log("Processing refund:", params);
-    return { refundTxHash: `0x${uuidv4().replace(/-/g, "")}` };
+    return { refundTxHash: `0x${crypto.randomUUID().replace(/-/g, "")}` };
   }
 }
 

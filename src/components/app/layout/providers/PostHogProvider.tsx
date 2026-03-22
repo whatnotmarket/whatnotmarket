@@ -41,7 +41,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       if (cancelled || initialized || !hasAnalyticsConsent()) return;
 
-      const posthogModule = await import("posthog-js");
+      const posthogModule = await import("posthog-js/lite");
       if (cancelled || initialized || !hasAnalyticsConsent()) return;
 
       const posthog = posthogModule.default;

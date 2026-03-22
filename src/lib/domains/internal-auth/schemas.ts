@@ -1,5 +1,6 @@
-﻿import { isReservedProfileHandle,normalizeProfileHandle } from "@/lib/domains/security/identity-guards";
-import { validateMnemonic } from "bip39";
+import { isReservedProfileHandle,normalizeProfileHandle } from "@/lib/domains/security/identity-guards";
+import { validateMnemonic } from "@scure/bip39";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { z } from "zod";
 
 const USERNAME_MIN_LENGTH = 3;
@@ -48,7 +49,7 @@ export function isValidRecoveryPhrase(raw: string) {
     return false;
   }
 
-  return validateMnemonic(normalized);
+  return validateMnemonic(normalized, wordlist);
 }
 
 function normalizeOptionalText(value: string | undefined) {
