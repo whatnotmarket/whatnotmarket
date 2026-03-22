@@ -1,6 +1,6 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
-import { signToken, verifyToken } from "../../src/lib/domains/auth/auth";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
+import { signToken,verifyToken } from "../../src/lib/domains/auth/auth";
 
 test("admin JWT lifetime is short-lived (<= 1 hour)", async () => {
   process.env.ADMIN_JWT_SECRET = "test-admin-secret-for-unit-tests";

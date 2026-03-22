@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { usePathname } from "next/navigation";
 import { HomepagePrivacyCard } from "@/components/features/homepage/HomepagePrivacyCard";
+import { usePathname } from "next/navigation";
 
 export function PrivacyCardWrapper() {
   const pathname = usePathname();

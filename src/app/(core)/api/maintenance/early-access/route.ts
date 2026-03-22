@@ -1,20 +1,20 @@
-﻿import { NextResponse } from "next/server";
-import { z } from "zod";
-import { Resend } from "resend";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+﻿import {
+MAINTENANCE_RETRY_AFTER_SECONDS,
+createMaintenanceHeaders,
+isMaintenanceModeEnabled,
+} from "@/lib/core/config/maintenance";
+import {
+maintenanceEarlyAccessAutoReplyHtml,
+maintenanceEarlyAccessAutoReplyText,
+} from "@/lib/domains/email-templates/maintenance-early-access";
+import { checkRateLimitDetailed } from "@/lib/infra/security/rate-limit";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 import { normalizeEmail as normalizeEmailAddress } from "@/utils/emailNormalizer";
-import {
-  maintenanceEarlyAccessAutoReplyHtml,
-  maintenanceEarlyAccessAutoReplyText,
-} from "@/lib/domains/email-templates/maintenance-early-access";
-import {
-  MAINTENANCE_RETRY_AFTER_SECONDS,
-  createMaintenanceHeaders,
-  isMaintenanceModeEnabled,
-} from "@/lib/core/config/maintenance";
-import { checkRateLimitDetailed } from "@/lib/infra/security/rate-limit";
+import { NextResponse } from "next/server";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { Resend } from "resend";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

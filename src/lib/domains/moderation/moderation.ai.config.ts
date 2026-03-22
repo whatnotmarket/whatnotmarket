@@ -1,5 +1,5 @@
-﻿import type { ModerationReasonCode, ModerationTargetType } from "@/lib/domains/moderation/moderation.types";
-import type { ModerationAIProvider } from "@/lib/domains/moderation/moderation.ai.types";
+﻿import type { ModerationAIProvider } from "@/lib/domains/moderation/moderation.ai.types";
+import type { ModerationReasonCode,ModerationTargetType } from "@/lib/domains/moderation/moderation.types";
 
 const DEFAULT_ENABLED_TARGETS: ModerationTargetType[] = [
   "listing_title",

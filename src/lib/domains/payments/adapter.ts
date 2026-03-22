@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { NETWORKS, CURRENCIES, Network, Currency } from "./catalog";
+import { Currency,Network } from "./catalog";
 
 export interface PaymentIntent {
   dealId: string;
@@ -39,7 +39,7 @@ export interface PaymentsAdapter {
   createPaymentIntent(params: PaymentIntent): Promise<PaymentResult>;
   getPaymentStatus(adapterPaymentId: string): Promise<PaymentStatus>;
   createPayout(params: PayoutParams): Promise<PayoutResult>;
-  refund(params: any): Promise<any>;
+  refund(params: unknown): Promise<{ refundTxHash: string }>;
 }
 
 // Mock Adapter Implementation
@@ -56,6 +56,7 @@ export class MockPaymentsAdapter implements PaymentsAdapter {
   }
 
   async getPaymentStatus(adapterPaymentId: string): Promise<PaymentStatus> {
+    void adapterPaymentId;
     // In a real implementation, this would query an indexer or provider API
     // For MVP demo, we'll return a static status or simulate one based on time/db state
     // The actual "live" updates will come from the client polling an API route that updates the DB
@@ -72,7 +73,8 @@ export class MockPaymentsAdapter implements PaymentsAdapter {
     };
   }
 
-  async refund(params: any): Promise<any> {
+  async refund(params: unknown): Promise<{ refundTxHash: string }> {
+    console.log("Processing refund:", params);
     return { refundTxHash: `0x${uuidv4().replace(/-/g, "")}` };
   }
 }

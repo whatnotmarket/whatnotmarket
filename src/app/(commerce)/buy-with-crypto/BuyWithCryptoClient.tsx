@@ -1,17 +1,17 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { Navbar } from "@/components/app/navigation/Navbar";
+import { CryptoPaymentGateway } from "@/components/features/buy-with-crypto/CryptoPaymentGateway";
+import { OrderSummaryCard } from "@/components/features/buy-with-crypto/OrderSummaryCard";
 import { ProductUrlInput } from "@/components/features/buy-with-crypto/ProductUrlInput";
 import { ProxyOrderForm } from "@/components/features/buy-with-crypto/ProxyOrderForm";
-import { OrderSummaryCard } from "@/components/features/buy-with-crypto/OrderSummaryCard";
-import { CryptoPaymentGateway } from "@/components/features/buy-with-crypto/CryptoPaymentGateway";
-import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
-import Link from "next/link";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { AnimatePresence,motion } from "framer-motion";
+import { ArrowLeft,Check,CheckCircle2,Copy } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 type Step = "input" | "details" | "payment" | "confirmed";
 type ProxyOrderDetails = {

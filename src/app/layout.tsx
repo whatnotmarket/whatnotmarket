@@ -1,22 +1,22 @@
-﻿import type { Metadata, Viewport } from "next";
-import { Geist, Inter } from "next/font/google";
-import Script from "next/script";
-import { cookies } from "next/headers";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { SquircleNoScript } from "@squircle-js/react";
-import { PrivacyCardWrapper } from "@/components/app/layout/PrivacyCardWrapper";
-import { SeoInternalLinks } from "@/components/app/seo/SeoInternalLinks";
+﻿import { PrivacyCardWrapper } from "@/components/app/layout/PrivacyCardWrapper";
 import Providers from "@/components/app/layout/providers";
 import { ConsentTrackingScripts } from "@/components/app/layout/providers/ConsentTrackingScripts";
 import { LocalhostServiceWorkerReset } from "@/components/app/layout/providers/LocalhostServiceWorkerReset";
 import { PostHogProvider } from "@/components/app/layout/providers/PostHogProvider";
-import "./globals.css";
-import { SITE_URL } from "@/lib/core/config/site-config";
+import { SeoInternalLinks } from "@/components/app/seo/SeoInternalLinks";
+import { LOCALE_COOKIE_NAME,normalizeLocale } from "@/i18n/config";
 import { DEFAULT_SEO_DESCRIPTION } from "@/lib/app/seo/seo";
-import { cn } from "@/lib/core/utils/utils";
 import { isMaintenanceModeEnabled } from "@/lib/core/config/maintenance";
-import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/i18n/config";
+import { SITE_URL } from "@/lib/core/config/site-config";
+import { cn } from "@/lib/core/utils/utils";
+import { SquircleNoScript } from "@squircle-js/react";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Metadata,Viewport } from "next";
+import { Geist,Inter } from "next/font/google";
+import { cookies } from "next/headers";
+import Script from "next/script";
+import "./globals.css";
 
 // OpenlyDev Signature: OpenlyMarket Root Layout
 

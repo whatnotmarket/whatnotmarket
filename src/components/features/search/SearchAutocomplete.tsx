@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Globe, Map, Loader2 } from "lucide-react";
-import Link from "next/link";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import { ChevronRight,Globe,Loader2,Map } from "lucide-react";
+import Link from "next/link";
+import { useEffect,useMemo,useRef,useState } from "react";
 
 // Types
 type SearchResult = {

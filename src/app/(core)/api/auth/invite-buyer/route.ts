@@ -1,15 +1,15 @@
-﻿import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { ensureBridgeUser, signInBridgeUserOnRoute } from "@/lib/domains/auth/bridge";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { getRedirectPath } from "@/lib/app/seo/redirects";
-import { registerInviteUsage, resolveRequiredInviteCode } from "@/lib/domains/auth/invite-codes";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+﻿import { getRedirectPath } from "@/lib/app/seo/redirects";
+import { ensureBridgeUser,signInBridgeUserOnRoute } from "@/lib/domains/auth/bridge";
+import { registerInviteUsage,resolveRequiredInviteCode } from "@/lib/domains/auth/invite-codes";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
 import { isInviteCodeDirectLoginEnabled } from "@/lib/domains/security/auth-guards";
-import { detectBanEvasionRisk, recordAuthSecurityEvent } from "@/lib/domains/trust/services/auth-security";
-import { getTrustAccountState, upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
 import { enforceAuthAbuseMiddleware } from "@/lib/domains/trust/middleware/auth-abuse";
+import { detectBanEvasionRisk,recordAuthSecurityEvent } from "@/lib/domains/trust/services/auth-security";
+import { getTrustAccountState,upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 type Payload = {
   code?: string;

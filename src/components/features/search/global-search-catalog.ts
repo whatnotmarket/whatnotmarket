@@ -1,28 +1,28 @@
-﻿import {
-  BadgeCheck,
-  Bell,
-  BriefcaseBusiness,
-  Compass,
-  Flame,
-  Gavel,
-  Globe,
-  LayoutDashboard,
-  LifeBuoy,
-  LockKeyhole,
-  MessageCircle,
-  PackageSearch,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  Sparkles,
-  Store,
-  Tag,
-  UserRound,
-  Users,
-  Wallet,
+﻿import { parseSearchQuery,scoreSearchItem } from "@/components/features/search/search-intelligence";
+import type { SearchCatalogItem,SearchGroup } from "@/components/features/search/search-types";
+import {
+BadgeCheck,
+Bell,
+BriefcaseBusiness,
+Compass,
+Flame,
+Gavel,
+Globe,
+LayoutDashboard,
+LifeBuoy,
+LockKeyhole,
+MessageCircle,
+PackageSearch,
+Search,
+ShieldCheck,
+ShoppingBag,
+Sparkles,
+Store,
+Tag,
+UserRound,
+Users,
+Wallet,
 } from "lucide-react";
-import { parseSearchQuery, scoreSearchItem } from "@/components/features/search/search-intelligence";
-import type { SearchCatalogItem, SearchGroup } from "@/components/features/search/search-types";
 
 const NOW = Date.now();
 

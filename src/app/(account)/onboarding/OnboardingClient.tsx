@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { entropyToMnemonic, validateMnemonic } from "bip39";
-import { AnimatePresence, motion } from "framer-motion";
-import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
-import { authToast as toast } from "@/lib/domains/notifications";
 import { cn } from "@/lib/core/utils/utils";
+import { authToast as toast } from "@/lib/domains/notifications";
+import { entropyToMnemonic,validateMnemonic } from "bip39";
+import { AnimatePresence,motion } from "framer-motion";
+import Link from "next/link";
+import { type FormEvent,useEffect,useMemo,useState } from "react";
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 type Intent = "buy" | "sell" | "both";

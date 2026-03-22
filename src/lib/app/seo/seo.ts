@@ -1,5 +1,5 @@
-﻿import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/core/config/site-config";
+﻿import { SITE_URL } from "@/lib/core/config/site-config";
+import type { Metadata } from "next";
 
 export const DEFAULT_SEO_DESCRIPTION =
   "OpenlyMarket is a secure marketplace for buyers and sellers with escrow-style transaction flows, trusted profiles, and crypto-friendly commerce.";

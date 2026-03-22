@@ -1,10 +1,10 @@
-﻿import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+﻿import { revalidateMarketplaceSitemaps } from "@/lib/app/seo/sitemaps";
 import { moderateContent } from "@/lib/domains/moderation/moderation.service";
-import { revalidateMarketplaceSitemaps } from "@/lib/app/seo/sitemaps";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const updateRequestSchema = z.object({
   title: z.string().trim().min(5).max(160).optional(),

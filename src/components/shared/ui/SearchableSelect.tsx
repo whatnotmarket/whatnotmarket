@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Search, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import { Check,ChevronDown,Search } from "lucide-react";
+import { useEffect,useRef,useState } from "react";
 
 export interface Option {
   value: string;
@@ -12,16 +12,28 @@ export interface Option {
   subtitle?: string;
 }
 
-interface SearchableSelectProps {
+interface BaseSearchableSelectProps {
   options: Option[];
-  value: string | string[];
-  onChange: (value: any) => void;
   placeholder?: string;
   label?: string;
   className?: string;
   searchPlaceholder?: string;
   multiple?: boolean;
 }
+
+type SearchableSelectSingleProps = BaseSearchableSelectProps & {
+  multiple?: false;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+type SearchableSelectMultipleProps = BaseSearchableSelectProps & {
+  multiple: true;
+  value: string[];
+  onChange: (value: string[]) => void;
+};
+
+type SearchableSelectProps = SearchableSelectSingleProps | SearchableSelectMultipleProps;
 
 export function SearchableSelect({
   options,
@@ -84,10 +96,10 @@ export function SearchableSelect({
       const newValues = currentValues.includes(optionValue)
         ? currentValues.filter(v => v !== optionValue)
         : [...currentValues, optionValue];
-      onChange(newValues);
+      (onChange as (value: string[]) => void)(newValues);
       // Don't close on selection for multiple mode
     } else {
-      onChange(optionValue);
+      (onChange as (value: string) => void)(optionValue);
       setIsOpen(false);
       setSearch("");
     }

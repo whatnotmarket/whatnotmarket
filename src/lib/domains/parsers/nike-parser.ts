@@ -1,5 +1,5 @@
-import { BaseParser } from "./base-parser";
 import * as cheerio from "cheerio";
+import { BaseParser } from "./base-parser";
 import { ProductData } from "./types";
 
 export class NikeParser extends BaseParser {

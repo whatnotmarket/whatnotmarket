@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
+﻿import { Squircle } from "@/components/shared/ui/Squircle";
+import type { Metadata } from "next";
 import Image from "next/image";
-import { Squircle } from "@/components/shared/ui/Squircle";
 import cieloImage from "./cielo.png";
 import openlyLogo from "./openlylogo.svg";
 

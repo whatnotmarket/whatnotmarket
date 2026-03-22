@@ -1,23 +1,21 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Search, 
-  ShoppingBag, 
-  ShieldCheck, 
-  Ghost, 
-  Globe, 
-  CreditCard, 
-  Package, 
-  Sparkles, 
-  Link as LinkIcon 
-} from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+CreditCard,
+Ghost,
+Globe,
+Link as LinkIcon,
+Package,
+Sparkles
+} from "lucide-react";
 
 export function SmartSearchClient({ copy }: { copy: CopyMap }) {
   const router = useRouter();

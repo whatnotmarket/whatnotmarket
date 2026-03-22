@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, DollarSign, ChevronRight } from "lucide-react";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Squircle } from "@/components/shared/ui/Squircle";
-import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import { CheckCircle2,DollarSign,X } from "lucide-react";
+import { useEffect,useState } from "react";
 
 interface OfferModalProps {
   isOpen: boolean;
@@ -18,8 +18,7 @@ export function OfferModal({
   isOpen,
   onClose,
   listingPrice,
-  onSendOffer,
-  dealId
+  onSendOffer
 }: OfferModalProps) {
   const [step, setStep] = useState<"input" | "success">("input");
   const [offerAmount, setOfferAmount] = useState(listingPrice);

@@ -1,24 +1,23 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  Lock, 
-  Scale, 
-  UserCheck, 
-  CreditCard, 
-  Truck, 
-  CheckCircle2, 
-  AlertTriangle,
-  Eye,
-  Info
-} from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { cn } from "@/lib/core/utils/utils";
+import { motion } from "framer-motion";
+import {
+AlertTriangle,
+ArrowLeft,
+CheckCircle2,
+CreditCard,
+Eye,
+Lock,
+Scale,
+ShieldCheck,
+Truck,
+UserCheck
+} from "lucide-react";
 
 export default function SecureTransactionPage() {
   const router = useRouter();

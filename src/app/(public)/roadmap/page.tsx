@@ -1,23 +1,23 @@
 ﻿"use client";
 
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  CalendarClock,
-  CheckCircle2,
-  CircleDashed,
-  Clock3,
-  Rocket,
-  ShieldCheck,
-  Sparkles,
-  Wrench,
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { cn } from "@/lib/core/utils/utils";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+CalendarClock,
+CheckCircle2,
+CircleDashed,
+Clock3,
+Rocket,
+ShieldCheck,
+Sparkles,
+Wrench,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type RoadmapStatus = "completed" | "in-progress" | "planned";
 

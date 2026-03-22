@@ -1,11 +1,11 @@
-﻿import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { submitToIndexNow } from "@/lib/app/seo/indexnow";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { enforceAbuseGuard, AbuseGuardResponse } from "@/lib/domains/security/abuse-guards";
-import { isReservedProfileHandle, normalizeProfileHandle } from "@/lib/domains/security/identity-guards";
+﻿import { submitToIndexNow } from "@/lib/app/seo/indexnow";
 import { moderateContent } from "@/lib/domains/moderation/moderation.service";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+import { isReservedProfileHandle,normalizeProfileHandle } from "@/lib/domains/security/identity-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const updatePublicProfileSchema = z.object({
   fullName: z.string().trim().min(2).max(120).optional(),

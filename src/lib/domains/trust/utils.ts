@@ -1,6 +1,6 @@
-﻿import { createHash } from "crypto";
-import type { ReasonCode } from "@/lib/domains/trust/reason-codes";
+﻿import type { ReasonCode } from "@/lib/domains/trust/reason-codes";
 import type { ReasonWeight } from "@/lib/domains/trust/types";
+import { createHash } from "crypto";
 
 const HASH_SALT = process.env.ABUSE_SIGNAL_SALT || "openlymarket-trust-v1";
 

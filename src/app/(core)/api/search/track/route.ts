@@ -1,6 +1,6 @@
-﻿import { NextResponse } from "next/server";
+﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 import type { NextRequest } from "next/server";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { NextResponse } from "next/server";
 
 type TrackPayload = {
   query?: string;

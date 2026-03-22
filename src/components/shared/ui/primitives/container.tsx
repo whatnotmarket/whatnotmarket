@@ -1,5 +1,5 @@
-﻿import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/core/utils/utils";
+﻿import { cn } from "@/lib/core/utils/utils";
+import { cva,type VariantProps } from "class-variance-authority";
 
 const containerVariants = cva(
   "mx-auto w-full px-4 md:px-6",

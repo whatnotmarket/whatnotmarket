@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { StepProps } from "./types";
+import { useEffect,useState } from "react";
 import { TelegramProfilePreview } from "./TelegramProfilePreview";
+import { StepProps } from "./types";
 
 export function StepContact({ data, updateData, onNext, onBack }: StepProps) {
   const [telegramUsername, setTelegramUsername] = useState(data.telegramUsername || "");
@@ -36,7 +36,7 @@ export function StepContact({ data, updateData, onNext, onBack }: StepProps) {
 
         const data = await res.json();
         setProfileData({ photoUrl: data.photoUrl });
-      } catch (err) {
+      } catch {
         setProfileData(null);
         setProfileError("Profile not found");
       } finally {

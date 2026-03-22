@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { Container } from "@/components/shared/ui/primitives/container";
-import { Card } from "@/components/shared/ui/primitives/card";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { ArrowLeft, FileText, Scale } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/shared/ui/button";
-import { motion } from "framer-motion";
+import { Card } from "@/components/shared/ui/primitives/card";
+import { Container } from "@/components/shared/ui/primitives/container";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { motion } from "framer-motion";
+import { ArrowLeft,Scale } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function TermsClient({ copy }: { copy: CopyMap }) {
   const router = useRouter();

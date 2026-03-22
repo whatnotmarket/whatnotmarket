@@ -1,7 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import type { CopyWebsite } from "@/types/copy-website";
+import dynamic from "next/dynamic";
 
 const CopyAdminClient = dynamic(() => import("./client").then((mod) => mod.CopyAdminClient), {
   ssr: false,

@@ -1,40 +1,40 @@
 ﻿"use client"
 
-import { useState, useEffect, useRef } from "react"
-import { createClient } from "@/lib/infra/supabase/supabase"
-import { Button } from "@/components/shared/ui/button"
 import { Badge } from "@/components/shared/ui/badge"
+import { Button } from "@/components/shared/ui/button"
 import { Input } from "@/components/shared/ui/input"
 import { Label } from "@/components/shared/ui/label"
-import { Separator } from "@/components/shared/ui/separator"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from "@/components/shared/ui/popover"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/shared/ui/select"
-import Image from "next/image"
+import { Separator } from "@/components/shared/ui/separator"
+import { cn } from "@/lib/core/utils/utils"
+import { toast } from "@/lib/domains/notifications"
+import { normalizeDealAction,type DealTransitionAction } from "@/lib/domains/security/deal-guards"
+import { createClient } from "@/lib/infra/supabase/supabase"
+import { Deal,DealStatus,Wallet } from "@/types/trade"
+import BtcIcon from "cryptocurrency-icons/svg/color/btc.svg"
+import EthIcon from "cryptocurrency-icons/svg/color/eth.svg"
 import SolIcon from "cryptocurrency-icons/svg/color/sol.svg"
 import UsdcIcon from "cryptocurrency-icons/svg/color/usdc.svg"
 import UsdtIcon from "cryptocurrency-icons/svg/color/usdt.svg"
-import BtcIcon from "cryptocurrency-icons/svg/color/btc.svg"
-import EthIcon from "cryptocurrency-icons/svg/color/eth.svg"
-import { toast } from "@/lib/domains/notifications"
-import { 
-  ShieldCheck,
+import {
   AlertTriangle,
+  Clock,
   RefreshCw,
-  Clock
+  ShieldCheck
 } from "lucide-react"
-import { Deal, DealStatus, Wallet } from "@/types/trade"
-import { cn } from "@/lib/core/utils/utils"
-import { normalizeDealAction, type DealTransitionAction } from "@/lib/domains/security/deal-guards"
+import Image from "next/image"
+import { useCallback,useEffect,useRef,useState } from "react"
 
 interface TradePanelProps {
   userId: string
@@ -233,9 +233,9 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
   const [paymentType, setPaymentType] = useState<"crypto" | "fiat">("crypto")
   const [fiatMethod, setFiatMethod] = useState("credit_card")
   const [isBuying, setIsBuying] = useState(true) // true = I am Buyer, false = I am Seller
-  const [isCountering, setIsCountering] = useState(false)
+  const [, setIsCountering] = useState(false)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [, setIsSubmitting] = useState(false)
   const isCreatingNewRef = useRef(false)
   
   useEffect(() => {
@@ -293,77 +293,16 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
   // and manually filter in the callback.
   // Also ensure we handle INSERTs correctly even if the deal state is null.
 
-  useEffect(() => {
-    fetchDeal()
-    fetchWallets()
-    
-    console.log(`Subscribing to deals for room ${roomName} users: ${userId}, ${targetUserId}`)
-
-    const channel = supabase
-      .channel(`global-deals-tracker`) // Use a unique name to avoid conflicts
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'deals'
-        },
-        (payload) => {
-           console.log("Global Realtime payload:", payload.eventType, payload.new)
-           
-           const newRecord = payload.new as Deal
-           // Safety check
-           if (!newRecord) return
-
-           // Check if this deal involves our two users
-           const participants = [newRecord.buyer_id, newRecord.seller_id]
-           const isRelevant = participants.includes(userId) && participants.includes(targetUserId)
-           
-           if (!isRelevant) return
-
-           console.log("Relevant deal update found!", newRecord)
-
-           if (payload.eventType === 'INSERT') {
-               setDeal(newRecord)
-           } else if (payload.eventType === 'UPDATE') {
-               // Only update if it's the current deal or we don't have one yet
-               if (!deal || deal.id === newRecord.id) {
-                   // If status is cancelled/completed, we might want to show it or clear it
-                   if (['cancelled'].includes(newRecord.status)) {
-                       // Optional: setDeal(null) or keep showing cancelled state
-                       setDeal(newRecord) 
-                   } else {
-                       setDeal(newRecord)
-                   }
-               }
-           }
-        }
-      )
-      .subscribe((status) => {
-          console.log("Global Subscription status:", status)
-      })
-      
-    // Backup polling every 3 seconds to ensure state consistency
-    const interval = setInterval(() => {
-        fetchDeal(true) // Silent fetch
-    }, 3000)
-
-    return () => {
-        supabase.removeChannel(channel)
-        clearInterval(interval)
-    }
-  }, [userId, targetUserId]) // Remove deal dependency to avoid resubscribing constantly
-
-  async function fetchWallets() {
+  const fetchWallets = useCallback(async () => {
     const { data } = await supabase
       .from("wallets")
       .select("id, address, chain, verified_at")
       .eq("user_id", targetUserId)
     
     if (data) setWallets(data as Wallet[])
-  }
+  }, [supabase, targetUserId])
 
-  async function fetchDeal(silent = false) {
+  const fetchDeal = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
     try {
       // Find active deal (not completed/cancelled/rejected)
@@ -414,7 +353,64 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
     } finally {
       if (!silent) setLoading(false)
     }
-  }
+  }, [onStatusChange, supabase, targetUserId, userId])
+
+  useEffect(() => {
+    fetchDeal()
+    fetchWallets()
+    
+    console.log(`Subscribing to deals for room ${roomName} users: ${userId}, ${targetUserId}`)
+
+    const channel = supabase
+      .channel(`global-deals-tracker`) // Use a unique name to avoid conflicts
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'deals'
+        },
+        (payload) => {
+           console.log("Global Realtime payload:", payload.eventType, payload.new)
+           
+           const newRecord = payload.new as Deal
+           // Safety check
+           if (!newRecord) return
+
+           // Check if this deal involves our two users
+           const participants = [newRecord.buyer_id, newRecord.seller_id]
+           const isRelevant = participants.includes(userId) && participants.includes(targetUserId)
+           
+           if (!isRelevant) return
+
+           console.log("Relevant deal update found!", newRecord)
+
+           if (payload.eventType === 'INSERT') {
+               setDeal(newRecord)
+           } else if (payload.eventType === 'UPDATE') {
+               setDeal((prev) => {
+                 if (!prev || prev.id === newRecord.id) {
+                   return newRecord
+                 }
+                 return prev
+               })
+           }
+        }
+      )
+      .subscribe((status) => {
+          console.log("Global Subscription status:", status)
+      })
+      
+    // Backup polling every 3 seconds to ensure state consistency
+    const interval = setInterval(() => {
+        fetchDeal(true) // Silent fetch
+    }, 3000)
+
+    return () => {
+        supabase.removeChannel(channel)
+        clearInterval(interval)
+    }
+  }, [fetchDeal, fetchWallets, roomName, supabase, targetUserId, userId])
 
   const handleNewOfferClick = () => {
     setIsCreatingNew(true)
@@ -587,37 +583,10 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
 
   // --- Logic for Turn-Based Actions ---
 
-  // Check if it's my turn to act
-  const isMyTurn = () => {
-      if (!deal) return true // Can create offer
-      
-      // If deal is completed/cancelled, no one acts
-      if (['completed', 'cancelled', 'dispute'].includes(deal.status)) return true // Anyone can view/dispute maybe?
-      
-      // Negotiation phase
-      if (['offer_sent', 'buyer_offer_sent', 'seller_counter_offer', 'buyer_counter_offer'].includes(deal.status)) {
-          // If I was the last one to act (last_action_by == userId), then it's NOT my turn.
-          const lastActor = deal.last_action_by || deal.sender_id
-          if (lastActor) {
-              return lastActor !== userId
-          }
-          // Fallback: if sender_id is also missing (unlikely with new deals), assume it's NOT my turn to avoid race conditions or both acting
-          return false
-      }
-      
-      // Execution phase (simplified for now, usually specific roles act)
-      if (deal.status === 'offer_accepted') return true // Usually buyer funds
-      if (deal.status === 'escrow_funded') return deal.seller_id === userId // Seller ships
-      if (deal.status === 'shipped') return deal.buyer_id === userId // Buyer releases
-      
-      return true
-  }
-
   const getStatusDisplay = () => {
     // If no deal, return a flag to hide
     if (!deal) return null
     
-    const amIBuyer = deal.buyer_id === userId
     const lastActor = deal.last_action_by || deal.sender_id
     
     // Determine if I am the one who sent the last action/offer
@@ -714,7 +683,6 @@ export function TradePanel({ userId, targetUserId, roomName, onSystemMessage, on
       )
   }
 
-  const canAct = isMyTurn()
   const lastActor = deal?.last_action_by || deal?.sender_id
   const isMyLastAction = lastActor === userId
 

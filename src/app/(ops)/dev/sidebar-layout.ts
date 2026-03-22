@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { SidebarProfileSheetLayout, SidebarTestTheme } from "../sidebar-test/SidebarTestClient";
+import type { SidebarProfileSheetLayout,SidebarTestTheme } from "../sidebar-test/SidebarTestClient";
 
 const sidebarLeftPx = 0;
 const sidebarPaddingLeftPx = 15;

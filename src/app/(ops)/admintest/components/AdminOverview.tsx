@@ -1,16 +1,17 @@
 ﻿
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/card";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/shared/ui/card";
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
+ChartContainer,
+ChartTooltip,
+ChartTooltipContent,
+type ChartConfig,
 } from "@/components/shared/ui/chart";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shared/ui/select";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/shared/ui/select";
+import { useMemo,useState } from "react";
+import { Area,AreaChart,CartesianGrid,XAxis } from "recharts";
 import type { DashboardData } from "../types";
 
 const chartConfig = {
@@ -98,7 +99,6 @@ export function AdminOverview({ data }: AdminOverviewProps) {
           <Card key={label} className="border-zinc-800 bg-zinc-950">
             <CardHeader className="pb-2">
               <CardDescription>{label}</CardDescription>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <CardTitle>{value as any}</CardTitle>
             </CardHeader>
           </Card>

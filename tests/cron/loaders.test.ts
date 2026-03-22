@@ -1,5 +1,5 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 import { JOB_LOADERS } from "../../jobs/registry";
 
 test("every job loader resolves a module exporting executeJob", async (t) => {

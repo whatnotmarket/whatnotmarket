@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound,redirect } from "next/navigation";
 
 type ListingSlugPageProps = {
   params: Promise<{ slug: string }>;

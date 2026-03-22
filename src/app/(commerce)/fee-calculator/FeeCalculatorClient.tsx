@@ -1,68 +1,68 @@
 ﻿"use client";
 
-import Link from "next/link";
-import { useMemo, useState, type ChangeEvent } from "react";
-import {
-  AlertTriangle,
-  BadgeCheck,
-  Building2,
-  CheckCircle2,
-  ClipboardList,
-  CreditCard,
-  Gem,
-  Globe,
-  HandCoins,
-  Landmark,
-  Lock,
-  MessagesSquare,
-  ShieldCheck,
-  Truck,
-  Users,
-  Wallet,
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Badge } from "@/components/shared/ui/badge";
 import { Button } from "@/components/shared/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+Card,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
 } from "@/components/shared/ui/card";
 import { Checkbox } from "@/components/shared/ui/checkbox";
 import { Input } from "@/components/shared/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/shared/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from "@/components/shared/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shared/ui/tabs";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/shared/ui/tabs";
 import { cn } from "@/lib/core/utils/utils";
 import {
-  MAX_SLIDER_AMOUNT,
-  MIN_SLIDER_AMOUNT,
-  calculateCompetitorEscrowFee,
-  calculateEscrowFee,
-  calculatePaymentFee,
-  clampAmount,
-  formatCurrency,
-  formatPercent,
-  parseCurrencyInput,
-  paymentMethodConfig,
-  type EscrowPlan,
-  type PaymentMethod,
+MAX_SLIDER_AMOUNT,
+MIN_SLIDER_AMOUNT,
+calculateCompetitorEscrowFee,
+calculateEscrowFee,
+calculatePaymentFee,
+clampAmount,
+formatCurrency,
+formatPercent,
+parseCurrencyInput,
+paymentMethodConfig,
+type EscrowPlan,
+type PaymentMethod,
 } from "@/lib/domains/payments/fee-calculator";
+import {
+AlertTriangle,
+BadgeCheck,
+Building2,
+CheckCircle2,
+ClipboardList,
+CreditCard,
+Gem,
+Globe,
+HandCoins,
+Landmark,
+Lock,
+MessagesSquare,
+ShieldCheck,
+Truck,
+Users,
+Wallet,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo,useState,type ChangeEvent } from "react";
 
 const sectionClass =
   "rounded-[28px] border border-white/10 bg-[#111214] p-5 md:p-8 shadow-[0_14px_50px_rgba(0,0,0,0.32)]";

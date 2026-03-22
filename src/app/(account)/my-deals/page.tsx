@@ -1,25 +1,24 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { useUser } from "@/contexts/UserContext";
-import { 
-  ShoppingBag, 
-  Package, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  Search,
-  Filter,
-  ArrowRight,
-  MessageSquare
-} from "lucide-react";
-import Image from "next/image";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
-import { motion } from "framer-motion";
+import { Squircle } from "@/components/shared/ui/Squircle";
+import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/core/utils/utils";
+import { motion } from "framer-motion";
+import {
+ArrowRight,
+CheckCircle2,
+Clock,
+Filter,
+MessageSquare,
+Package,
+Search,
+ShoppingBag,
+XCircle
+} from "lucide-react";
+import { useState } from "react";
 
 // Mock Buyer Deals (Purchases)
 const BUYER_DEALS = [
@@ -101,7 +100,7 @@ const SELLER_DEALS = [
 
 export default function MyDealsPage() {
   const { role } = useUser();
-  const [filter, setFilter] = useState<"all" | "active" | "completed" | "cancelled">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "processing" | "completed" | "cancelled">("all");
   const [search, setSearch] = useState("");
   
   const isSeller = role === "seller";
@@ -168,7 +167,7 @@ export default function MyDealsPage() {
           {["all", "active", "processing", "completed", "cancelled"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setFilter(tab as any)}
+              onClick={() => setFilter(tab as "all" | "active" | "processing" | "completed" | "cancelled")}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-bold border transition-all whitespace-nowrap",
                 filter === tab 

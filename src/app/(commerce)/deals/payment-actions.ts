@@ -1,10 +1,9 @@
 ﻿"use server";
 
+import { PaymentIntent,paymentsAdapter } from "@/lib/domains/payments/adapter";
+import { CURRENCIES,NETWORKS } from "@/lib/domains/payments/catalog";
 import { createClient } from "@/lib/infra/supabase/supabase-server";
 import { revalidatePath } from "next/cache";
-import { v4 as uuidv4 } from "uuid";
-import { paymentsAdapter, PaymentIntent } from "@/lib/domains/payments/adapter";
-import { NETWORKS, CURRENCIES } from "@/lib/domains/payments/catalog";
 
 export async function createPaymentIntentAction(dealId: string, networkId: string, currencyId: string, amount: number) {
   const supabase = await createClient();

@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { Box, MapPin, QrCode, Lock } from "lucide-react";
-import { Squircle } from "@/components/shared/ui/Squircle";
+import { Box,Lock,MapPin,QrCode } from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
 
 interface LockerAssignmentCardProps {
   lockerId: string;

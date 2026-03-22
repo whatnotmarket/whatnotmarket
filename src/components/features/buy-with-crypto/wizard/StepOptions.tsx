@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { useState } from "react";
 import { StepProps } from "./types";
 
 export function StepOptions({ data, updateData, onNext, onBack }: StepProps) {

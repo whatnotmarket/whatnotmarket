@@ -1,23 +1,20 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowLeft, 
-  HelpCircle, 
-  ChevronDown, 
-  ShoppingBag, 
-  Store, 
-  ShieldCheck, 
-  Wallet,
-  Search
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { cn } from "@/lib/core/utils/utils";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import {
+ArrowLeft,
+ChevronDown,
+HelpCircle,
+ShoppingBag,
+Store
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type FAQItem = {
   question: string;

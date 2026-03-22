@@ -1,6 +1,6 @@
-﻿import { notFound, redirect } from "next/navigation";
-import { ProfileClient } from "@/components/features/profile/ProfileClient";
+﻿import { ProfileClient } from "@/components/features/profile/ProfileClient";
 import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { notFound,redirect } from "next/navigation";
 
 type UserProfilePageProps = {
   params: Promise<{ username: string }>;

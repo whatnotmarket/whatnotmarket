@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { Container } from "@/components/shared/ui/primitives/container";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Send } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { CurrencyIcon } from "@/components/features/market/CurrencyIcon";
 

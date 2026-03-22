@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/shared/ui/button"
 import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+SidebarGroup,
+SidebarGroupContent,
+SidebarMenu,
+SidebarMenuButton,
+SidebarMenuItem,
 } from "@/components/shared/ui/sidebar"
-import { CirclePlusIcon, MailIcon } from "lucide-react"
+import { CirclePlusIcon,MailIcon } from "lucide-react"
 
 type NavMainItem = {
   title: string

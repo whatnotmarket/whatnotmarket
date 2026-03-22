@@ -1,22 +1,20 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { useUser } from "@/contexts/UserContext";
-import { 
-  Gift, 
-  ArrowRight, 
-  CheckCircle2, 
-  AlertCircle,
-  Loader2,
-  Copy
-} from "lucide-react";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
-import { motion, AnimatePresence } from "framer-motion";
-import { marketToast as toast } from "@/lib/domains/notifications";
+import { Squircle } from "@/components/shared/ui/Squircle";
+import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/core/utils/utils";
+import { marketToast as toast } from "@/lib/domains/notifications";
+import { AnimatePresence,motion } from "framer-motion";
+import {
+AlertCircle,
+CheckCircle2,
+Gift,
+Loader2
+} from "lucide-react";
+import { useState } from "react";
 
 export default function RedeemPage() {
   const { role } = useUser();

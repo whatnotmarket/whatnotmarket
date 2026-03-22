@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useCallback, useSyncExternalStore } from "react";
 import type { GlobalChatRoom } from "@/lib/domains/chat/global-chat-config";
-import { Menu, X } from "lucide-react";
+import { Menu,X } from "lucide-react";
+import { useCallback,useSyncExternalStore } from "react";
 import { HomepageRoomMenu } from "./HomepageRoomMenu";
 
 const RULES_ACCEPTED_STORAGE_KEY = "global_chat_rules_accepted";

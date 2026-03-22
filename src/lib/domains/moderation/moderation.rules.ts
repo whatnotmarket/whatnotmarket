@@ -1,12 +1,12 @@
-﻿import { MODERATION_CONFIG, truncateForModeration } from "@/lib/domains/moderation/moderation.config";
+﻿import { MODERATION_CONFIG,truncateForModeration } from "@/lib/domains/moderation/moderation.config";
 import { MODERATION_REASON_CODES } from "@/lib/domains/moderation/moderation.reason-codes";
 import type {
-  ModerationDecision,
-  ModerationInput,
-  ModerationReasonCode,
-  ModerationRuleMatch,
-  ModerationSeverity,
-  RuleBasedModerationResult,
+ModerationDecision,
+ModerationInput,
+ModerationReasonCode,
+ModerationRuleMatch,
+ModerationSeverity,
+RuleBasedModerationResult,
 } from "@/lib/domains/moderation/moderation.types";
 
 function normalizeText(raw: string) {

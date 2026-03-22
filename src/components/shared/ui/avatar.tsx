@@ -1,7 +1,7 @@
 ﻿"use client"
 
-import * as React from "react"
 import { Avatar as AvatarPrimitive } from "radix-ui"
+import * as React from "react"
 
 import { cn } from "@/lib/core/utils/utils"
 
@@ -105,11 +105,8 @@ function AvatarGroupCount({
 }
 
 export {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarBadge,
+Avatar,AvatarBadge,AvatarFallback,
+AvatarGroup,
+AvatarGroupCount,AvatarImage
 }
 

@@ -1,49 +1,48 @@
 ﻿"use client"
 
-import { AnimatePresence, motion } from 'framer-motion'
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { Send, Mic, Smile, Ban, Flag, MessageSquare, Globe, X } from 'lucide-react'
 import { Button } from '@/components/shared/ui/button'
 import { Input } from '@/components/shared/ui/input'
-import { useRealtimeChat, type ChatMessage } from '@/hooks/use-realtime-chat'
-import { useChatScroll } from '@/hooks/use-chat-scroll'
-import { ChatMessageItem } from './chat-message'
-import { toast } from '@/lib/domains/notifications'
-import EmojiPicker, { Theme, type EmojiClickData } from 'emoji-picker-react'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from '@/components/shared/ui/popover'
 import { useAudioRecorder } from '@/hooks/use-audio-recorder'
+import { useChatScroll } from '@/hooks/use-chat-scroll'
+import { useRealtimeChat,type ChatMessage } from '@/hooks/use-realtime-chat'
+import { toast } from '@/lib/domains/notifications'
 import { createClient } from '@/lib/infra/supabase/supabase'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/shared/ui/tooltip"
+import EmojiPicker,{ Theme,type EmojiClickData } from 'emoji-picker-react'
+import { AnimatePresence,motion } from 'framer-motion'
+import { Globe,Smile,X } from 'lucide-react'
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react'
+import { ChatMessageItem } from './chat-message'
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/avatar"
-import { useRouter } from "next/navigation"
 import { TradePanel } from '@/components/features/chat/trade-panel'
-import { cn } from "@/lib/core/utils/utils"
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/shared/ui/avatar"
+import { Checkbox } from "@/components/shared/ui/checkbox"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogClose,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from "@/components/shared/ui/dialog"
-import { Field, FieldGroup } from "@/components/shared/ui/field"
+import { Field,FieldGroup } from "@/components/shared/ui/field"
 import { Label } from "@/components/shared/ui/label"
 import { Textarea } from "@/components/shared/ui/primitives/textarea"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/shared/ui/select"
-import { Checkbox } from "@/components/shared/ui/checkbox"
+import { cn } from "@/lib/core/utils/utils"
 import { Upload } from 'lucide-react'
+import Image from "next/image"
 
 interface RealtimeChatProps {
   roomName: string
@@ -71,11 +70,8 @@ type SlashCommand = {
 const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9]+\.[a-zA-Z]{2,}\/)/i;
 
 export function RealtimeChat({ roomName, userId, username, isVerified, role, onMessage, messages: initialMessages, targetUser }: RealtimeChatProps) {
-  const router = useRouter()
   const [inputValue, setInputValue] = useState('')
   const [showCommands, setShowCommands] = useState(false)
-  const [timer, setTimer] = useState(0)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
   const [sideOpen, setSideOpen] = useState(false)
   const [sideMode, setSideMode] = useState<'profile' | 'info'>('profile')
   const [panelLoading, setPanelLoading] = useState(false)
@@ -94,9 +90,9 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
     }
   }>({ followers: 0, offers: 0, reviews: 0, totalTransactions: 0, deliveryRate: 100, isFollowing: false })
   const headerRef = useRef<HTMLDivElement | null>(null)
-  const [headerHeight, setHeaderHeight] = useState(0)
+  const [, setHeaderHeight] = useState(0)
   
-  const { isRecording, audioBlob, startRecording, stopRecording, clearAudio, permission: audioPermission, error: audioError, requestPermission } = useAudioRecorder()
+  const { isRecording, audioBlob, clearAudio } = useAudioRecorder()
   
   const { messages, sendMessage, markAsRead, clearRoom } = useRealtimeChat({
     roomName,
@@ -227,7 +223,7 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
       }
     }
     loadPanelData()
-  }, [sideOpen, sideMode, targetUser?.id, supabase])
+  }, [sideOpen, sideMode, targetUser?.id, supabase, userId])
 
   const toggleFollow = async () => {
     if (!targetUser?.id) return
@@ -289,50 +285,12 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
     }
   }, [messages, userId, username, markAsRead])
 
-  useEffect(() => {
-      if (isRecording) {
-          setTimer(0)
-          timerRef.current = setInterval(() => {
-              setTimer(prev => prev + 1)
-          }, 1000)
-      } else {
-          if (timerRef.current) clearInterval(timerRef.current)
-          setTimer(0)
-      }
-      return () => {
-          if (timerRef.current) clearInterval(timerRef.current)
-      }
-  }, [isRecording])
-
-  const formatTime = (seconds: number) => {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const handleVoiceClick = async () => {
-      // Always ensure we have permission before proceeding
-      if (audioPermission !== 'granted') {
-        const result = await requestPermission()
-        if (result !== true) {
-            toast.error(typeof result === 'string' ? result : 'Microphone permission required')
-            return
-        }
-      }
-
-      if (isRecording) {
-          stopRecording()
-      } else {
-          startRecording()
-      }
-  }
-
-  const sendAudioMessage = async () => {
+  const sendAudioMessage = useCallback(async () => {
       if (!audioBlob) return
       
       try {
           const fileName = `${roomName}/${Date.now()}.webm`
-          const { data, error } = await supabase.storage
+          const { error } = await supabase.storage
               .from('chat-audio') 
               .upload(fileName, audioBlob, {
                   contentType: 'audio/webm'
@@ -350,13 +308,13 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
           console.error('Failed to send audio:', err)
           toast.error('Failed to send voice message')
       }
-  }
+  }, [audioBlob, clearAudio, roomName, sendMessage, supabase])
   
   useEffect(() => {
       if (!isRecording && audioBlob) {
             sendAudioMessage()
       }
-  }, [isRecording, audioBlob])
+  }, [isRecording, audioBlob, sendAudioMessage])
 
   const COMMANDS = useMemo(() => {
     const cmds = [
@@ -389,19 +347,9 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
     }
 
     return cmds
-  }, [isBlockedByMe, isBlockedByOther, targetUser, username])
+  }, [isBlockedByMe, role, targetUser, username])
 
   const filteredCommands = COMMANDS.filter(c => c.command.toLowerCase().startsWith(inputValue.toLowerCase()))
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value
-      setInputValue(val)
-      if (val.startsWith('/')) {
-          setShowCommands(true)
-      } else {
-          setShowCommands(false)
-      }
-  }
 
   const handleCommandSelect = async (cmd: SlashCommand) => {
       setInputValue('')
@@ -613,7 +561,7 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
       return () => {
           supabase.removeChannel(channel)
       }
-  }, [targetUser?.id, roomName, userId, supabase])
+  }, [targetUser?.id, targetUser?.name, roomName, userId, supabase])
 
   return (
     <div className="flex flex-col h-full w-full bg-background relative">
@@ -1038,9 +986,12 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
                   <div className="flex flex-wrap gap-2 mt-2">
                     {proofFiles.map((file, idx) => (
                       <div key={idx} className="relative group w-16 h-16 rounded-lg border border-white/10 overflow-hidden bg-white/5">
-                        <img 
-                          src={URL.createObjectURL(file)} 
-                          alt="preview" 
+                        <Image
+                          src={URL.createObjectURL(file)}
+                          alt="preview"
+                          width={64}
+                          height={64}
+                          unoptimized
                           className="w-full h-full object-cover"
                         />
                         <button 

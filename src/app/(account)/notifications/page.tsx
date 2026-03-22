@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Button } from "@/components/shared/ui/button";
 import { createClient } from "@/lib/infra/supabase/supabase";
 import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useEffect,useMemo,useState } from "react";
 
 type NotificationRow = {
   id: string;

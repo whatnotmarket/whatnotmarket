@@ -1,7 +1,7 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { TRUST_SAFETY_CONFIG } from "@/lib/domains/trust/config";
+﻿import { TRUST_SAFETY_CONFIG } from "@/lib/domains/trust/config";
 import { getTrustAccountState } from "@/lib/domains/trust/services/trust-store";
 import { toHoursFromNow } from "@/lib/domains/trust/utils";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type ActionGuardAction = "create_listing" | "send_message" | "create_offer";
 

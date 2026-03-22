@@ -1,21 +1,21 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import QRCode from "react-qr-code";
-import {
-  CheckCircle2,
-  Chrome,
-  Download,
-  ExternalLink,
-  QrCode,
-  Share2,
-  ShieldCheck,
-  Smartphone,
-} from "lucide-react";
 import { StepList } from "@/components/features/install/StepList";
+import { detectInstallPlatform,isStandaloneDisplayMode,type InstallPlatformInfo } from "@/lib/core/utils/device";
 import { cn } from "@/lib/core/utils/utils";
-import { detectInstallPlatform, isStandaloneDisplayMode, type InstallPlatformInfo } from "@/lib/core/utils/device";
+import {
+CheckCircle2,
+Chrome,
+Download,
+ExternalLink,
+QrCode,
+Share2,
+ShieldCheck,
+Smartphone,
+} from "lucide-react";
+import Link from "next/link";
+import { useCallback,useEffect,useMemo,useRef,useState } from "react";
+import QRCode from "react-qr-code";
 
 type InstallPromptOutcome = "idle" | "accepted" | "dismissed" | "error";
 

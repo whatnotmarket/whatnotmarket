@@ -1,6 +1,6 @@
-﻿import { NextResponse } from "next/server";
+﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type DealRow = {
   created_at: string | null;

@@ -2,9 +2,9 @@
 
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { StepProps } from "./types";
-import { Edit2 } from "lucide-react";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
+import Image from "next/image";
+import { StepProps } from "./types";
 
 export function StepReviewAndPay({ data, onBack, onNext, initialUrl, initialData }: StepProps) {
   // Mock fee calculation
@@ -34,9 +34,12 @@ export function StepReviewAndPay({ data, onBack, onNext, initialUrl, initialData
         {/* Product Summary */}
         <Squircle radius={20} smoothing={1} innerClassName="bg-[#1C1C1E] p-4 flex gap-4">
            {initialData?.image && (
-            <img 
-              src={initialData.image} 
-              alt="Product" 
+            <Image
+              src={initialData.image}
+              alt="Product"
+              width={64}
+              height={64}
+              unoptimized
               className="w-16 h-16 object-cover rounded-lg bg-white/5"
             />
           )}
@@ -61,9 +64,11 @@ export function StepReviewAndPay({ data, onBack, onNext, initialUrl, initialData
             <span className="text-xs text-zinc-500 uppercase tracking-wider">Payment</span>
             <div className="flex items-center gap-2">
               {cryptoData && (
-                <img 
-                  src={cryptoData.Icon} 
-                  alt={data.currency} 
+                <Image
+                  src={cryptoData.Icon}
+                  alt={data.currency}
+                  width={20}
+                  height={20}
                   className="w-5 h-5 rounded-full bg-white/10"
                 />
               )}

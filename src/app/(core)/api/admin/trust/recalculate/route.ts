@@ -1,7 +1,7 @@
-﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
+﻿import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
 import { runTrustRiskRecalculationWorker } from "@/lib/domains/trust/workers/recalculate-risk";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {

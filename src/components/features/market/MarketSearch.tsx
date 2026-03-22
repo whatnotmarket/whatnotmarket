@@ -1,12 +1,12 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { Search } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { Squircle } from "@/components/shared/ui/Squircle";
+import { Search } from "lucide-react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const SearchAutocomplete = dynamic(() => import("@/components/features/search/SearchAutocomplete").then(mod => mod.SearchAutocomplete), {
   ssr: false, // Search is client-side interaction

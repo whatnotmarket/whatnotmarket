@@ -1,16 +1,16 @@
-﻿import { MODERATION_CONFIG } from "@/lib/domains/moderation/moderation.config";
-import { MODERATION_REASON_CODES } from "@/lib/domains/moderation/moderation.reason-codes";
-import { writeModerationAudit } from "@/lib/domains/moderation/moderation.audit";
-import { MODERATION_AI_CONFIG } from "@/lib/domains/moderation/moderation.ai.config";
+﻿import { MODERATION_AI_CONFIG } from "@/lib/domains/moderation/moderation.ai.config";
 import { moderateWithAI } from "@/lib/domains/moderation/moderation.ai.service";
+import { writeModerationAudit } from "@/lib/domains/moderation/moderation.audit";
+import { MODERATION_CONFIG } from "@/lib/domains/moderation/moderation.config";
+import { MODERATION_REASON_CODES } from "@/lib/domains/moderation/moderation.reason-codes";
 import { evaluateRuleBasedModeration } from "@/lib/domains/moderation/moderation.rules";
 import { shouldSkipModeration } from "@/lib/domains/moderation/moderation.skip";
 import type {
-  ModerationDecision,
-  ModerationInput,
-  ModerationReasonCode,
-  ModerationResult,
-  ModerationSeverity,
+ModerationDecision,
+ModerationInput,
+ModerationReasonCode,
+ModerationResult,
+ModerationSeverity,
 } from "@/lib/domains/moderation/moderation.types";
 
 const ALLOWED_TARGETS = new Set([

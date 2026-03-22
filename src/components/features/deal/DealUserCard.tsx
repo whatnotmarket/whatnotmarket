@@ -2,7 +2,7 @@
 
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { cn } from "@/lib/core/utils/utils";
-import { Star, MessageCircle, MapPin, ShieldCheck, Flag } from "lucide-react";
+import { MapPin,MessageCircle,ShieldCheck,Star } from "lucide-react";
 import Image from "next/image";
 
 interface DealUserCardProps {

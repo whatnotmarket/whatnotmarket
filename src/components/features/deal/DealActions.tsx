@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { cn } from "@/lib/core/utils/utils";
 import { Squircle } from "@/components/shared/ui/Squircle";
+import { cn } from "@/lib/core/utils/utils";
 
 interface Action {
   label: string;

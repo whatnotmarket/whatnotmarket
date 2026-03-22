@@ -1,10 +1,10 @@
 ﻿import "server-only";
 
 import {
-  decryptRecoveryPhraseWithSecret,
-  encryptRecoveryPhraseWithSecret,
-  hashPasswordWithBcrypt,
-  verifyPasswordWithBcrypt,
+decryptRecoveryPhraseWithSecret,
+encryptRecoveryPhraseWithSecret,
+hashPasswordWithBcrypt,
+verifyPasswordWithBcrypt,
 } from "@/lib/domains/internal-auth/security-core";
 
 function getRecoveryEncryptionSecret() {

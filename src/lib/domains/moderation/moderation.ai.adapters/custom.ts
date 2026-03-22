@@ -1,11 +1,11 @@
 ﻿import { MODERATION_AI_CONFIG } from "@/lib/domains/moderation/moderation.ai.config";
 import {
-  createAIAllowResult,
-  parseAIClassifierOutput,
-  type ModerationAICategory,
-  type ModerationClassifierInput,
-  type ModerationProvider,
-  type ModerationProviderResult,
+createAIAllowResult,
+parseAIClassifierOutput,
+type ModerationAICategory,
+type ModerationClassifierInput,
+type ModerationProvider,
+type ModerationProviderResult,
 } from "@/lib/domains/moderation/moderation.ai.types";
 import type { ModerationReasonCode } from "@/lib/domains/moderation/moderation.types";
 

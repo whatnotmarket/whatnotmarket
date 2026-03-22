@@ -1,7 +1,9 @@
-﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+﻿import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 function asString(v: unknown) {
   const s = String(v ?? "").trim();
@@ -116,7 +118,7 @@ export async function GET(request: NextRequest) {
       }
     });
     const ids = Array.from(map.keys());
-    let statuses: Record<string, "online" | "muted" | "banned" | "unknown"> = {};
+    const statuses: Record<string, "online" | "muted" | "banned" | "unknown"> = {};
     if (ids.length > 0) {
       const { data: controls } = await admin
         .from("global_chat_user_controls")

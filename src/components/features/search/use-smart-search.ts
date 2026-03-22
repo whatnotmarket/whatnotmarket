@@ -1,41 +1,41 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+createQuerySuggestions,
+createRecentSearchItems,
+createTrendingSearchItems,
+getKnownBrands,
+getKnownCategories,
+GROUP_ORDER,
+PINNED_ITEM_IDS,
+SEARCH_CATALOG,
+type TrendingSearchEntry,
+} from "@/components/features/search/global-search-catalog";
+import { getQueryDebounceMs,matchesScope,parseSearchQuery,scoreSearchItem } from "@/components/features/search/search-intelligence";
+import type { ParsedQuery,SearchCatalogItem,SearchEntityType,SearchGroup,SearchScopeId } from "@/components/features/search/search-types";
 import type { LucideIcon } from "lucide-react";
 import {
-  BadgeCheck,
-  BriefcaseBusiness,
-  Compass,
-  FileText,
-  Flame,
-  Globe,
-  LayoutDashboard,
-  LockKeyhole,
-  MessageCircle,
-  PackageSearch,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  Sparkles,
-  Store,
-  Tag,
-  UserRound,
-  Users,
-  Wallet,
+BadgeCheck,
+BriefcaseBusiness,
+Compass,
+FileText,
+Flame,
+Globe,
+LayoutDashboard,
+LockKeyhole,
+MessageCircle,
+PackageSearch,
+Search,
+ShieldCheck,
+ShoppingBag,
+Sparkles,
+Store,
+Tag,
+UserRound,
+Users,
+Wallet,
 } from "lucide-react";
-import {
-  createQuerySuggestions,
-  createRecentSearchItems,
-  createTrendingSearchItems,
-  getKnownBrands,
-  getKnownCategories,
-  GROUP_ORDER,
-  PINNED_ITEM_IDS,
-  SEARCH_CATALOG,
-  type TrendingSearchEntry,
-} from "@/components/features/search/global-search-catalog";
-import { getQueryDebounceMs, matchesScope, parseSearchQuery, scoreSearchItem } from "@/components/features/search/search-intelligence";
-import type { ParsedQuery, SearchCatalogItem, SearchEntityType, SearchGroup, SearchScopeId } from "@/components/features/search/search-types";
+import { useCallback,useEffect,useMemo,useRef,useState } from "react";
 
 type ApiSearchItem = {
   id: string;

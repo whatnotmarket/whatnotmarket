@@ -1,12 +1,11 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { TRUST_SAFETY_CONFIG } from "@/lib/domains/trust/config";
-import { detectChatPatternSignals, redactExternalContact } from "@/lib/domains/trust/detection";
+﻿import { TRUST_SAFETY_CONFIG } from "@/lib/domains/trust/config";
+import { detectChatPatternSignals,redactExternalContact } from "@/lib/domains/trust/detection";
 import { evaluateConversationRiskPolicy } from "@/lib/domains/trust/policy/engine";
 import { calculateConversationRiskScore } from "@/lib/domains/trust/scoring/conversation-risk";
-import { createModerationCase, saveRiskEvent, upsertRiskSnapshot } from "@/lib/domains/trust/services/trust-store";
-import { getTrustAccountState } from "@/lib/domains/trust/services/trust-store";
-import type { ConversationPolicyDecision, ConversationRiskSignals, RiskScoreResult } from "@/lib/domains/trust/types";
-import { normalizeWhitespace, toHoursFromNow } from "@/lib/domains/trust/utils";
+import { createModerationCase,getTrustAccountState,saveRiskEvent,upsertRiskSnapshot } from "@/lib/domains/trust/services/trust-store";
+import type { ConversationPolicyDecision,ConversationRiskSignals,RiskScoreResult } from "@/lib/domains/trust/types";
+import { normalizeWhitespace,toHoursFromNow } from "@/lib/domains/trust/utils";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type ProfileCreatedAtRow = {
   created_at: string;

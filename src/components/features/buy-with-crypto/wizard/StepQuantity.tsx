@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { Minus, Plus } from "lucide-react";
+import { Minus,Plus } from "lucide-react";
+import { useState } from "react";
 import { StepProps } from "./types";
 
 export function StepQuantity({ data, updateData, onNext, onBack }: StepProps) {

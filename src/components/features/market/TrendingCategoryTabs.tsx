@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useRef, useEffect, useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { cn } from "@/lib/core/utils/utils";
+import { useEffect,useRef,useState } from "react";
 
 const DEFAULT_CATEGORIES = [
   "All",

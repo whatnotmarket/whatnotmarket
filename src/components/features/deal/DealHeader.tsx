@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import { cn } from "@/lib/core/utils/utils";
-import { ChevronRight, Home, ArrowLeft } from "lucide-react";
+import { ArrowLeft,ChevronRight,Home } from "lucide-react";
 import Link from "next/link";
-import { DealStatusBadge, DealStatus } from "./DealStatusBadge";
+import { DealStatus,DealStatusBadge } from "./DealStatusBadge";
 
 interface DealHeaderProps {
   status: DealStatus;

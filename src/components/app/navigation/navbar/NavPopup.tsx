@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import * as React from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
 import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import { X } from "lucide-react";
+import * as React from "react";
 
 interface NavPopupProps {
   isOpen: boolean;

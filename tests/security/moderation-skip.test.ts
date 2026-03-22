@@ -1,6 +1,6 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
-import { isInboxRoute, shouldSkipModeration } from "../../src/lib/domains/moderation/moderation.skip";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
+import { isInboxRoute,shouldSkipModeration } from "../../src/lib/domains/moderation/moderation.skip";
 
 test("isInboxRoute detects private inbox and DM endpoints", () => {
   assert.equal(isInboxRoute("/inbox"), true);

@@ -1,5 +1,7 @@
 ﻿import { getCopyByPage } from '@/lib/app/content/copy-system';
 
+import Link from 'next/link';
+
 export const dynamic = 'force-dynamic';
 
 export default async function CopyDemoPage() {
@@ -19,7 +21,7 @@ export default async function CopyDemoPage() {
       </div>
       
       <div className="mt-8 text-sm text-gray-500">
-        <p>To populate this page, go to <a href="/copywebsiteadmin" className="underline text-blue-500">/copywebsiteadmin</a> and add items with:</p>
+        <p>To populate this page, go to <Link href="/copywebsiteadmin" className="underline text-blue-500">/copywebsiteadmin</Link> and add items with:</p>
         <ul className="list-disc list-inside mt-2">
           <li>Page: /copy-demo</li>
           <li>Key: hero_title</li>

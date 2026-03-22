@@ -7,15 +7,15 @@ import { NavMain } from "@/components/app/navigation/nav-main"
 import { NavSecondary } from "@/components/app/navigation/nav-secondary"
 import { NavUser } from "@/components/app/navigation/nav-user"
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+Sidebar,
+SidebarContent,
+SidebarFooter,
+SidebarHeader,
+SidebarMenu,
+SidebarMenuButton,
+SidebarMenuItem,
 } from "@/components/shared/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import { ChartBarIcon,CircleHelpIcon,CommandIcon,DatabaseIcon,FileChartColumnIcon,FileIcon,FolderIcon,LayoutDashboardIcon,ListIcon,SearchIcon,Settings2Icon,UsersIcon } from "lucide-react"
 
 type AppSidebarUser = {
   name: string

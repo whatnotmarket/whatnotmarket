@@ -1,10 +1,10 @@
 ﻿"use client";
 
+import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import { ArrowRight,ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/core/utils/utils";
 
 const MENU_DATA = [
   {

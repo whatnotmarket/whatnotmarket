@@ -1,15 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import BnbIcon from "cryptocurrency-icons/svg/color/bnb.svg";
 import BtcIcon from "cryptocurrency-icons/svg/color/btc.svg";
 import EthIcon from "cryptocurrency-icons/svg/color/eth.svg";
-import UsdcIcon from "cryptocurrency-icons/svg/color/usdc.svg";
-import UsdtIcon from "cryptocurrency-icons/svg/color/usdt.svg";
+import LtcIcon from "cryptocurrency-icons/svg/color/ltc.svg";
 import SolIcon from "cryptocurrency-icons/svg/color/sol.svg";
 import TrxIcon from "cryptocurrency-icons/svg/color/trx.svg";
-import LtcIcon from "cryptocurrency-icons/svg/color/ltc.svg";
+import UsdcIcon from "cryptocurrency-icons/svg/color/usdc.svg";
+import UsdtIcon from "cryptocurrency-icons/svg/color/usdt.svg";
 import XmrIcon from "cryptocurrency-icons/svg/color/xmr.svg";
-import BnbIcon from "cryptocurrency-icons/svg/color/bnb.svg";
+import { createContext,ReactNode,useContext,useState } from "react";
 
 export const CRYPTO_CURRENCIES = [
   { code: "BTC", name: "Bitcoin", Icon: BtcIcon, color: "#F7931A" },

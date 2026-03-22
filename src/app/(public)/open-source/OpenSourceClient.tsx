@@ -1,21 +1,17 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Github, 
-  Code2, 
-  Cpu, 
-  ShieldCheck, 
-  GitBranch, 
-  Terminal,
-  Layers
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Code2,
+Github,
+Layers
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function OpenSourceClient({ copy }: { copy: CopyMap }) {
   const router = useRouter();

@@ -1,11 +1,11 @@
-﻿import { z } from "zod";
-import { isModerationReasonCode } from "@/lib/domains/moderation/moderation.reason-codes";
+﻿import { isModerationReasonCode } from "@/lib/domains/moderation/moderation.reason-codes";
 import type {
-  ModerationDecision,
-  ModerationReasonCode,
-  ModerationSeverity,
-  ModerationTargetType,
+ModerationDecision,
+ModerationReasonCode,
+ModerationSeverity,
+ModerationTargetType,
 } from "@/lib/domains/moderation/moderation.types";
+import { z } from "zod";
 
 export const MODERATION_AI_CATEGORIES = [
   "spam",

@@ -1,6 +1,6 @@
-﻿import { cva, type VariantProps } from "class-variance-authority";
+﻿import { Squircle } from "@/components/shared/ui/Squircle";
 import { cn } from "@/lib/core/utils/utils";
-import { Squircle } from "@/components/shared/ui/Squircle";
+import { cva,type VariantProps } from "class-variance-authority";
 
 const cardVariants = cva(
   "relative w-full transition-all duration-300",
@@ -38,7 +38,7 @@ export interface CardProps
   radius?: number;
   smoothing?: number;
   innerClassName?: string;
-  as?: any;
+  as?: React.ElementType;
 }
 
 export function Card({ 

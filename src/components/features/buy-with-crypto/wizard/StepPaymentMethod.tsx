@@ -1,10 +1,11 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { StepProps } from "./types";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
+import Image from "next/image";
+import { useState } from "react";
+import { StepProps } from "./types";
 
 export function StepPaymentMethod({ data, updateData, onNext, onBack }: StepProps) {
   const [selectedCurrency, setSelectedCurrency] = useState(data.currency || "");
@@ -22,7 +23,6 @@ export function StepPaymentMethod({ data, updateData, onNext, onBack }: StepProp
     setSelectedNetwork(""); // Reset network when currency changes
   };
 
-  const selectedCryptoData = CRYPTO_CURRENCIES.find(c => c.code === selectedCurrency);
   const showNetworkSelector = !!selectedCurrency && ["USDT", "USDC"].includes(selectedCurrency);
 
   const networks = ["ERC20", "TRC20", "BEP20", "SOL"];
@@ -65,7 +65,7 @@ export function StepPaymentMethod({ data, updateData, onNext, onBack }: StepProp
                 }`}
               >
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                   <img src={crypto.Icon} alt={crypto.name} className="w-full h-full object-cover" />
+                   <Image src={crypto.Icon} alt={crypto.name} width={32} height={32} className="w-full h-full object-cover" />
                 </div>
                 <div className="text-left">
                   <div className="font-bold text-sm" style={selectedCurrency === crypto.code ? { color: crypto.color } : {}}>{crypto.code}</div>

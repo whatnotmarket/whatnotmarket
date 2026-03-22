@@ -1,26 +1,26 @@
 ﻿"use client"
 
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
+Avatar,
+AvatarFallback,
+AvatarImage,
 } from "@/components/shared/ui/avatar"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuGroup,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from "@/components/shared/ui/dropdown-menu"
 import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
+SidebarMenu,
+SidebarMenuButton,
+SidebarMenuItem,
+useSidebar,
 } from "@/components/shared/ui/sidebar"
-import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { BellIcon,CircleUserRoundIcon,CreditCardIcon,EllipsisVerticalIcon,LogOutIcon } from "lucide-react"
 
 export function NavUser({
   user,

@@ -1,7 +1,7 @@
 ﻿import "server-only";
 
-import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/domains/auth/auth";
+import type { NextRequest } from "next/server";
 
 export async function assertAdminRequest(request: NextRequest) {
   const token = request.cookies.get("admin_token")?.value;

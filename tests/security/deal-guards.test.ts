@@ -1,8 +1,8 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  evaluateDealTransition,
-  normalizeDealAction,
+evaluateDealTransition,
+normalizeDealAction,
 } from "../../src/lib/domains/security/deal-guards";
 
 const buyerId = "buyer-1";

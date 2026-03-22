@@ -1,5 +1,5 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import { evaluateAbuseSnapshot } from "../../src/lib/domains/security/abuse-scoring";
 
 test("abuse guard blocks heavy burst traffic", () => {

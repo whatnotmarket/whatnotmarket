@@ -1,23 +1,23 @@
 ﻿"use client";
 
-import { useMemo, useState, useTransition } from "react";
-import type { ElementType } from "react";
+import {
+DEFAULT_LOCALE,
+LOCALE_COOKIE_NAME,
+SUPPORTED_LOCALES,
+isPathNonLocalized,
+normalizeLocale,
+shouldLocalizePath,
+stripLocaleFromPathname,
+withLocale,
+type Locale,
+} from "@/i18n/config";
+import { cn } from "@/lib/core/utils/utils";
 import * as Flags from "country-flag-icons/react/3x2";
 import { ChevronDown } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { cn } from "@/lib/core/utils/utils";
+import { usePathname,useRouter } from "next/navigation";
+import type { ElementType } from "react";
+import { useMemo,useState,useTransition } from "react";
 import { NavPopup } from "./NavPopup";
-import {
-  DEFAULT_LOCALE,
-  LOCALE_COOKIE_NAME,
-  SUPPORTED_LOCALES,
-  isPathNonLocalized,
-  normalizeLocale,
-  shouldLocalizePath,
-  stripLocaleFromPathname,
-  withLocale,
-  type Locale,
-} from "@/i18n/config";
 
 const LANGUAGE_META: Record<
   Locale,

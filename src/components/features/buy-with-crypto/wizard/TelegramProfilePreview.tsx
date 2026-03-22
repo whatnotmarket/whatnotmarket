@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { Check, X } from "lucide-react";
-import { useState, useEffect } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
+import { Check,X } from "lucide-react";
+import Image from "next/image";
 
 interface TelegramProfilePreviewProps {
   username: string;
@@ -64,9 +64,12 @@ export function TelegramProfilePreview({
       <div className="relative shrink-0">
         <div className="w-12 h-12 rounded-full overflow-hidden bg-white/5 border border-white/10">
           {photoUrl ? (
-            <img 
-              src={photoUrl} 
-              alt={username} 
+            <Image
+              src={photoUrl}
+              alt={username}
+              width={48}
+              height={48}
+              unoptimized
               className="w-full h-full object-cover"
             />
           ) : (

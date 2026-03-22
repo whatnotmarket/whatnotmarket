@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { Squircle } from "@/components/shared/ui/Squircle";
-import { Search, MessageSquare, ShieldCheck } from "lucide-react";
+import { MessageSquare,Search,ShieldCheck } from "lucide-react";
 
 interface HowItWorksProps {
   copy?: Record<string, string>;

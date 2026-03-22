@@ -1,6 +1,6 @@
-﻿import { timingSafeEqual } from "crypto";
+﻿import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
 
 const ONBOARDING_GATE_COOKIE = "onboarding_gate_access";
 

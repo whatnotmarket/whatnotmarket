@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Mesh, Program, Renderer, Triangle } from "ogl";
+import { Mesh,Program,Renderer,Triangle } from "ogl";
+import { useEffect,useRef } from "react";
 import styles from "./Grainient.module.css";
 
 function hexToRgb(hex: string): [number, number, number] {

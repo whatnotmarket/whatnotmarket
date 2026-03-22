@@ -1,9 +1,9 @@
-﻿import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+﻿import { verifyOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
 import { onboardingProgressSchema } from "@/lib/domains/internal-auth/schemas";
-import { verifyOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const rateLimit = checkRateLimitDetailed(request, { action: "internal_onboarding_progress" });

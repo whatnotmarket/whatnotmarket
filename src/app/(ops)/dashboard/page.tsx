@@ -1,8 +1,8 @@
 ﻿"use client"
 
-import dynamic from "next/dynamic"
-import { SidebarInset, SidebarProvider } from "@/components/shared/ui/sidebar"
+import { SidebarInset,SidebarProvider } from "@/components/shared/ui/sidebar"
 import { TooltipProvider } from "@/components/shared/ui/tooltip"
+import dynamic from "next/dynamic"
 
 import data from "./data.json"
 

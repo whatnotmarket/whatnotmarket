@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { ChevronDown, Search } from "lucide-react";
-import { useCrypto, CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
+import { CRYPTO_CURRENCIES,useCrypto } from "@/contexts/CryptoContext";
 import { cn } from "@/lib/core/utils/utils";
+import { ChevronDown,Search } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 import { NavPopup } from "./NavPopup";
 
 export function CryptoSelector() {

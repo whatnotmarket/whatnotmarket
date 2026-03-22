@@ -1,9 +1,9 @@
-﻿import { NextResponse } from "next/server";
+﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { createClient as createSupabaseClient,type SupabaseClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
-import { readdirSync, statSync } from "node:fs";
+import { NextResponse } from "next/server";
+import { readdirSync,statSync } from "node:fs";
 import path from "node:path";
-import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type AnySupabaseClient = SupabaseClient;
 

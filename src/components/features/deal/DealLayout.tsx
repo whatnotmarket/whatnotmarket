@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { cn } from "@/lib/core/utils/utils";
 import { Navbar } from "@/components/app/navigation/Navbar";
+import { cn } from "@/lib/core/utils/utils";
 
 interface DealLayoutProps {
   children: React.ReactNode;

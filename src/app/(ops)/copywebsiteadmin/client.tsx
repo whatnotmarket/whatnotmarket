@@ -1,30 +1,30 @@
 ﻿'use client';
 
-import { useState, useMemo } from 'react';
-import { CopyWebsite, CopyWebsiteInsert, CopyContentType } from '@/types/copy-website';
+import { useMemo,useState } from 'react';
+/* eslint-disable react/no-unescaped-entities */
+import { CopyForm } from '@/components/features/copy-admin/CopyForm';
 import { Button } from '@/components/shared/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/shared/ui/card';
+import {
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle
+} from '@/components/shared/ui/dialog';
 import { Input } from '@/components/shared/ui/input';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from '@/components/shared/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/shared/ui/dialog';
-import { CopyForm } from '@/components/features/copy-admin/CopyForm';
-import { createCopyItem, updateCopyItem, deleteCopyItem } from './actions';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Plus, Pencil, Trash2, Folder, ChevronLeft } from 'lucide-react';
 import { toast } from '@/lib/domains/notifications';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/shared/ui/card';
+import { CopyWebsite } from '@/types/copy-website';
+import { ChevronLeft,Folder,Pencil,Plus,Search,Trash2 } from 'lucide-react';
+import { useRouter,useSearchParams } from 'next/navigation';
+import { createCopyItem,deleteCopyItem,updateCopyItem } from './actions';
 
 export function CopyAdminClient({ items }: { items: CopyWebsite[] }) {
   const [editingItem, setEditingItem] = useState<CopyWebsite | null>(null);

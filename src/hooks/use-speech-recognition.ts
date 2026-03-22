@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useCallback,useEffect,useRef,useState } from 'react'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function useSpeechRecognition() {
   const [isListening, setIsListening] = useState(false)

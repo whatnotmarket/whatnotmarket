@@ -2,7 +2,7 @@
 
 // OpenlyDev Signature: OpenlyMarket Maintenance Early Access
 import { CornerLeftUp } from "lucide-react";
-import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useMemo,useState,type FormEvent,type KeyboardEvent } from "react";
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 

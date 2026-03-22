@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
+import { useState } from "react";
 
 export function SidebarTestAccessGate() {
   const [password, setPassword] = useState("");

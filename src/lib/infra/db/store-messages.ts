@@ -1,5 +1,5 @@
-﻿import { createClient } from '@/lib/infra/supabase/supabase'
-import { ChatMessage } from '@/hooks/use-realtime-chat'
+﻿import { ChatMessage } from '@/hooks/use-realtime-chat'
+import { createClient } from '@/lib/infra/supabase/supabase'
 
 export async function storeMessages(messages: ChatMessage[], roomName: string, updatedMessage?: ChatMessage | ChatMessage[]) {
   const supabase = createClient()

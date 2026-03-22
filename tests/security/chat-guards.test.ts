@@ -1,10 +1,10 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  containsDisallowedLink,
-  isCanonicalRoomId,
-  isParticipantInRoom,
-  normalizeChatContent,
+containsDisallowedLink,
+isCanonicalRoomId,
+isParticipantInRoom,
+normalizeChatContent,
 } from "../../src/lib/domains/security/chat-guards";
 
 const ROOM_ID = "11111111-1111-4111-8111-111111111111_22222222-2222-4222-8222-222222222222";

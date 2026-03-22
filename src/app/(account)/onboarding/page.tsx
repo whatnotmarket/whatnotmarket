@@ -1,7 +1,7 @@
-﻿import { cookies } from "next/headers";
+﻿import { createOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
+import { cookies } from "next/headers";
 import { OnboardingAccessGate } from "./OnboardingAccessGate";
 import { OnboardingClientShell } from "./OnboardingClientShell";
-import { createOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
 
 export const dynamic = "force-dynamic";
 

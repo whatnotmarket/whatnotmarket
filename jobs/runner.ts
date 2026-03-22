@@ -1,4 +1,4 @@
-import { JOB_GROUPS, JOB_LOADERS, type RegisteredJobName } from "./registry";
+import { JOB_GROUPS,JOB_LOADERS,type RegisteredJobName } from "./registry";
 
 function printHelp() {
   const jobs = Object.keys(JOB_LOADERS).sort();

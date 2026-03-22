@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, AlertTriangle } from "lucide-react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import { AlertTriangle,X } from "lucide-react";
+import { useEffect } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;

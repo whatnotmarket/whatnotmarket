@@ -1,7 +1,7 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { REASON_CODES, type ReasonCode } from "@/lib/domains/trust/reason-codes";
-import { appendTrustAuditLog, getTrustAccountState, upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
-import { getClientIp, getRequestDeviceHint, hashSignal } from "@/lib/domains/trust/utils";
+﻿import { REASON_CODES,type ReasonCode } from "@/lib/domains/trust/reason-codes";
+import { appendTrustAuditLog,getTrustAccountState,upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
+import { getClientIp,getRequestDeviceHint,hashSignal } from "@/lib/domains/trust/utils";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type AuthSecurityDecision = {
   suspicious: boolean;

@@ -1,17 +1,17 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Send, AlertCircle, FileText, ArrowLeft, MoreVertical } from "lucide-react";
-import { Button } from "@/components/shared/ui/button";
-import { Input } from "@/components/shared/ui/input";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/ui/card";
+import { PaymentPanel } from "@/components/features/deal/PaymentPanel";
+import { Button } from "@/components/shared/ui/button";
+import { Card,CardContent,CardHeader,CardTitle } from "@/components/shared/ui/card";
+import { Input } from "@/components/shared/ui/input";
 import { cn } from "@/lib/core/utils/utils";
 import { dealsToast as toast } from "@/lib/domains/notifications";
-import { PaymentPanel } from "@/components/features/deal/PaymentPanel";
 import { createClient } from "@/lib/infra/supabase/supabase";
+import { motion } from "framer-motion";
+import { AlertCircle,ArrowLeft,FileText,MoreVertical,Send } from "lucide-react";
+import { useParams,useRouter } from "next/navigation";
+import { useEffect,useMemo,useRef,useState } from "react";
 
 type DealRow = {
   id: string;

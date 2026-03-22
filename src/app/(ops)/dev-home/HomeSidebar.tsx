@@ -1,36 +1,36 @@
 ﻿"use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { GlobalCommandSearch } from "@/components/features/search/GlobalCommandSearch";
+import {
+Sidebar,
+SidebarContent,
+SidebarGroup,
+SidebarGroupContent,
+SidebarMenu,
+SidebarMenuItem,
+SidebarProvider,
+} from "@/components/shared/ui/sidebar";
+import { AnimatePresence,motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
-  ChartNoAxesColumn,
-  ChevronDown,
-  Compass,
-  Feather,
-  House,
-  Mail,
+ChartNoAxesColumn,
+ChevronDown,
+Compass,
+Feather,
+House,
+Mail,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarProvider,
-} from "@/components/shared/ui/sidebar";
-import { GlobalCommandSearch } from "@/components/features/search/GlobalCommandSearch";
+import { type CSSProperties,useCallback,useEffect,useRef,useState } from "react";
 import { getCommandSearchThemeVars } from "../dev/command-search-theme";
 import {
-  DEV_HOME_INTERNAL_SHORTCUT_LETTERS,
-  DEV_HOME_RAIL_SHORTCUTS,
-  DEV_HOME_SHORTCUT_CHORD_TIMEOUT_MS,
-  DEV_HOME_SIDEBAR_TOGGLE_KEY,
-  DEV_HOME_SIDEBAR_TOGGLE_LABEL,
-  DEV_HOME_SIDEBAR_TOGGLE_TOOLTIP_TEXT,
+DEV_HOME_INTERNAL_SHORTCUT_LETTERS,
+DEV_HOME_RAIL_SHORTCUTS,
+DEV_HOME_SHORTCUT_CHORD_TIMEOUT_MS,
+DEV_HOME_SIDEBAR_TOGGLE_KEY,
+DEV_HOME_SIDEBAR_TOGGLE_LABEL,
+DEV_HOME_SIDEBAR_TOGGLE_TOOLTIP_TEXT,
 } from "./shortcuts";
 
 type RailItemId = "home" | "discover" | "compose" | "stats" | "messages";

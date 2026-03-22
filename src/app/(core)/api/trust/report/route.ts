@@ -1,10 +1,10 @@
-﻿import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+﻿import { moderateContent } from "@/lib/domains/moderation/moderation.service";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
 import { createTrustReport } from "@/lib/domains/trust/services/reports";
-import { moderateContent } from "@/lib/domains/moderation/moderation.service";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const reportSchema = z.object({
   targetType: z.enum(["user", "listing", "conversation", "review"]),

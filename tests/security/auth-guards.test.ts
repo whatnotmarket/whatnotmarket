@@ -1,8 +1,8 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  isInviteCodeDirectLoginEnabled,
-  shouldAllowBridgeUserCreation,
+isInviteCodeDirectLoginEnabled,
+shouldAllowBridgeUserCreation,
 } from "../../src/lib/domains/security/auth-guards";
 
 test("signin mode never allows bridge user creation", () => {

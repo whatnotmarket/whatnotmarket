@@ -1,6 +1,6 @@
-import { cookieStorage, createStorage, http } from "@wagmi/core";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { mainnet, arbitrum, polygon, base, optimism, bsc } from "@reown/appkit/networks";
+import { arbitrum,base,bsc,mainnet,optimism,polygon } from "@reown/appkit/networks";
+import { cookieStorage,createStorage,http } from "@wagmi/core";
 import { type Config } from "wagmi";
 
 export const projectId = process.env.NEXT_PUBLIC_APPKIT_PROJECT_ID;

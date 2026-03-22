@@ -1,7 +1,7 @@
 "use client";
 
 // OpenlyDev Signature: OpenlyMarket Maintenance Theme
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 
 type MaintenanceTheme = "light" | "dark";
 

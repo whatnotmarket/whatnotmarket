@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { motion } from "framer-motion";
-import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
+import { motion } from "framer-motion";
+import { Check,Loader2 } from "lucide-react";
 
 interface StepPayoutProps {
   payoutAddress: string;

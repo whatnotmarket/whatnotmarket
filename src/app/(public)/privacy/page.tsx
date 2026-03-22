@@ -1,21 +1,22 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Shield, 
-  Lock, 
-  EyeOff, 
-  FileText, 
-  Database, 
-  Server,
-  Cookie
-} from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Cookie,
+Database,
+EyeOff,
+FileText,
+Lock,
+Server,
+Shield
+} from "lucide-react";
 
 export default function PrivacyPage() {
   const router = useRouter();

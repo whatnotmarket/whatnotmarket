@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
+﻿import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+import type { Metadata } from "next";
 import { FeeCalculatorPageShell } from "./FeeCalculatorPageShell";
-import { buildIndexableMetadata } from "@/lib/app/seo/seo";
 
 export const metadata: Metadata = buildIndexableMetadata({
   title: "Escrow Fee Calculator for Crypto and Marketplace Deals",

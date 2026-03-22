@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+/* eslint-disable react/no-unescaped-entities */
 import { Check } from "lucide-react";
 
 export function StepComplete() {

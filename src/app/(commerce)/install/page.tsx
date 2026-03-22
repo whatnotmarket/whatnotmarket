@@ -1,5 +1,5 @@
-﻿import type { Metadata } from "next";
-import { InstallClient } from "@/components/features/install/InstallClient";
+﻿import { InstallClient } from "@/components/features/install/InstallClient";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Install OpenlyMarket App on iPhone and Android",

@@ -1,5 +1,5 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { ProductParserService } from "@/lib/domains/parsers/product-parser-service";
+﻿import { ProductParserService } from "@/lib/domains/parsers/product-parser-service";
+import { NextRequest,NextResponse } from "next/server";
 
 // --- Security: basic SSRF protections
 function isHttpUrl(url: string) {
@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
     const data = await parserService.parseProduct(url);
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Link preview error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch preview" },
+      { error: error instanceof Error ? error.message : "Failed to fetch preview" },
       { status: 500 }
     );
   }

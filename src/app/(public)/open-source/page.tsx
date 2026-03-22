@@ -1,21 +1,22 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Github, 
-  Code2, 
-  Cpu, 
-  ShieldCheck, 
-  GitBranch, 
-  Terminal,
-  Layers
-} from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Code2,
+Cpu,
+GitBranch,
+Github,
+Layers,
+ShieldCheck,
+Terminal
+} from "lucide-react";
 
 export default function OpenSourcePage() {
   const router = useRouter();

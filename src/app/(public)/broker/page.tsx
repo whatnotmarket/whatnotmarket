@@ -1,30 +1,30 @@
-﻿import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  BadgeCheck,
-  Building2,
-  Car,
-  Gem,
-  Globe,
-  HandCoins,
-  Lock,
-  Network,
-  ShieldCheck,
-  Wallet,
-} from "lucide-react";
-import { Navbar } from "@/components/app/navigation/Navbar";
+﻿import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Badge } from "@/components/shared/ui/badge";
 import { Button } from "@/components/shared/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+Card,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
 } from "@/components/shared/ui/card";
-import { cn } from "@/lib/core/utils/utils";
 import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+import { cn } from "@/lib/core/utils/utils";
+import {
+BadgeCheck,
+Building2,
+Car,
+Gem,
+Globe,
+HandCoins,
+Lock,
+Network,
+ShieldCheck,
+Wallet,
+} from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = buildIndexableMetadata({
   title: "Escrow Infrastructure for Brokers and Intermediaries",

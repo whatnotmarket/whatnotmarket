@@ -1,5 +1,5 @@
-﻿import type { Metadata } from "next";
-import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+﻿import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = buildIndexableMetadata({
   title: "OpenlyMarket FAQ for Buyers, Sellers, and Escrow Flows",

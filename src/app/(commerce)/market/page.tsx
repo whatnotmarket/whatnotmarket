@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
-import dynamic from "next/dynamic";
-import Image from "next/image";
-import { ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { MarketHero } from "@/components/features/market/MarketHero";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { ArrowRight } from "lucide-react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import { useRef,useState } from "react";
 
 const BuyWithCryptoFlow = dynamic(
   () => import("@/components/features/buy-with-crypto/BuyWithCryptoFlow").then((mod) => mod.BuyWithCryptoFlow),

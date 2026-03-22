@@ -1,22 +1,22 @@
-﻿import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+﻿import { getRedirectPath } from "@/lib/app/seo/redirects";
 import { signInBridgeUserOnRoute } from "@/lib/domains/auth/bridge";
-import { getRedirectPath } from "@/lib/app/seo/redirects";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 import { generateInternalAuthEmail } from "@/lib/domains/internal-auth/identity";
-import {
-  onboardingRegistrationSchema,
-  type OnboardingRegistrationInput,
-} from "@/lib/domains/internal-auth/schemas";
-import { hashInternalPassword, encryptRecoveryPhrase } from "@/lib/domains/internal-auth/security";
-import {
-  createInternalIdentitySession,
-  setInternalSessionCookie,
-} from "@/lib/domains/internal-auth/sessions";
 import { verifyOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+import {
+onboardingRegistrationSchema,
+type OnboardingRegistrationInput,
+} from "@/lib/domains/internal-auth/schemas";
+import { encryptRecoveryPhrase,hashInternalPassword } from "@/lib/domains/internal-auth/security";
+import {
+createInternalIdentitySession,
+setInternalSessionCookie,
+} from "@/lib/domains/internal-auth/sessions";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
 import { enforceAuthAbuseMiddleware } from "@/lib/domains/trust/middleware/auth-abuse";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 type RegisterResponse = {
   ok: boolean;

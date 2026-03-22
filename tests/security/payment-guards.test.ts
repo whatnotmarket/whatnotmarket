@@ -1,8 +1,8 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  evaluateFundingSubmission,
-  evaluateOrderTxBinding,
+evaluateFundingSubmission,
+evaluateOrderTxBinding,
 } from "../../src/lib/domains/security/payment-guards";
 
 test("funding submission is allowed for pending payments with no existing tx hash", () => {

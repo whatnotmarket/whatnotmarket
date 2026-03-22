@@ -1,8 +1,8 @@
+import { AmazonParser } from "./amazon-parser";
 import { BaseParser } from "./base-parser";
 import { NikeParser } from "./nike-parser";
-import { AmazonParser } from "./amazon-parser";
 import { ShopifyParser } from "./shopify-parser";
-import { ProductData, ProductParser } from "./types";
+import { ProductData,ProductParser } from "./types";
 
 export class ProductParserService {
   private parsers: ProductParser[];

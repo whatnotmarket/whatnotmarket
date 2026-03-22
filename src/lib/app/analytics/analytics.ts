@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname,useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 type EventProperties = Record<string, string | number | boolean | null | undefined>;

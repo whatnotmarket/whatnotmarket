@@ -1,23 +1,22 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Loader2, ArrowLeft, AlertCircle, DollarSign } from "lucide-react";
-import { motion } from "framer-motion";
-import { Input } from "@/components/shared/ui/primitives/input";
-import { Button } from "@/components/shared/ui/button";
 import { Navbar } from "@/components/app/navigation/Navbar";
+import { Button } from "@/components/shared/ui/button";
 import { Card } from "@/components/shared/ui/primitives/card";
 import { Container } from "@/components/shared/ui/primitives/container";
-import { marketToast as toast } from "@/lib/domains/notifications";
-import { cn } from "@/lib/core/utils/utils";
-import { CRYPTO_CURRENCIES, useCrypto } from "@/contexts/CryptoContext";
-import Image from "next/image";
-import { SearchableSelect, Option } from "@/components/shared/ui/SearchableSelect";
+import { Input } from "@/components/shared/ui/primitives/input";
+import { Option,SearchableSelect } from "@/components/shared/ui/SearchableSelect";
+import { CRYPTO_CURRENCIES,useCrypto } from "@/contexts/CryptoContext";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { cn } from "@/lib/core/utils/utils";
+import { marketToast as toast } from "@/lib/domains/notifications";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import { ArrowLeft,DollarSign,Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect,useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const CATEGORY_OPTIONS: Option[] = [
   { value: "accounts", label: "Accounts & Access", icon: "ðŸ”", subtitle: "Netflix, Spotify, VPNs, etc." },
@@ -82,8 +81,7 @@ export function CreateRequestClient({ copy }: { copy: CopyMap }) {
     handleSubmit,
     setValue,
     watch,
-    getValues,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
@@ -121,8 +119,8 @@ export function CreateRequestClient({ copy }: { copy: CopyMap }) {
         const json = await res.json();
         toast.success("Request published successfully!");
         router.push(`/requests/${json.id}`);
-    } catch (error: any) {
-        toast.error(error.message);
+    } catch (error: unknown) {
+        toast.error(error instanceof Error ? error.message : "Failed to create request");
     } finally {
         setLoading(false);
     }

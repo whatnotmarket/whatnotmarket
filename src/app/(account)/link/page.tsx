@@ -1,10 +1,10 @@
-﻿import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight } from "lucide-react";
-import * as motion from "framer-motion/client";
+﻿import { buildIndexableMetadata } from "@/lib/app/seo/seo";
 import { cn } from "@/lib/core/utils/utils";
-import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+import * as motion from "framer-motion/client";
+import { ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 
 const pumpFunLogo = "/images/png/openly-src-pumpfunlogo-pump.fun.png";
 const profileImage = "/images/png/openly-src-pumpfunlogo-NFT-OPNLY.png";

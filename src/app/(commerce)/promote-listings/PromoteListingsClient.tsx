@@ -1,34 +1,22 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { 
-  ArrowLeft, 
-  Rocket, 
-  Zap, 
-  TrendingUp, 
-  Target, 
-  Eye, 
-  CheckCircle2, 
-  AlertTriangle,
-  Award,
-  DollarSign,
-  Copy,
-  ExternalLink,
-  Layers,
-  LayoutGrid
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
-import { cn } from "@/lib/core/utils/utils";
-import { marketToast as toast } from "@/lib/domains/notifications";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { marketToast as toast } from "@/lib/domains/notifications";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AnimatePresence,motion } from "framer-motion";
+import {
+ArrowLeft,
+Copy,
+Rocket
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 // Schema for Step 2
 const applicationSchema = z.object({

@@ -1,46 +1,46 @@
 "use client";
 
+import { useUser } from "@/contexts/UserContext";
+import { AnimatePresence,motion } from "framer-motion";
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
+import { useCallback,useEffect,useRef,useState,useSyncExternalStore } from "react";
+import SidebarTestClient from "../sidebar-test/SidebarTestClient";
 import { NewHomeCommandSearch } from "./NewHomeCommandSearch";
-import { getCentralLeftSpace, getCentralLayoutStyle } from "./central-layout";
-import {
-  getActionsToSearchGapWhenChatClosed,
-  getAuthButtonsShellStyle,
-  getChatGlobalButtonActiveStyle,
-  getChatGlobalButtonIconSize,
-  getChatGlobalButtonPinnedGap,
-  getChatGlobalButtonSize,
-  getChatGlobalButtonStyle,
-  getLogInButtonLabelStyle,
-  getLogInButtonStyle,
-  getRightActionGroupWidth,
-  getSignUpButtonGap,
-  getSignUpButtonLabelStyle,
-  getSignUpButtonStyle,
-} from "./global-chat-button-layout";
-import {
-  globalChatClassNames,
-  getChatGlobalCentralBlockOpenTopRightRadius,
-  getChatGlobalCenterRightInset,
-  getChatGlobalContainerStyle,
-  getChatGlobalMotionSpec,
-} from "./global-chat-layout";
 import { NewHomeGlobalChatPanel } from "./NewHomeGlobalChatPanel";
+import { getCentralLayoutStyle,getCentralLeftSpace } from "./central-layout";
 import { getCommandSearchThemeVars } from "./command-search-theme";
 import {
-  getSidebarContainerStyle,
-  getSidebarLeftSpace,
-  getSidebarProfileSheetLayoutOverrides,
-  getSidebarThemeOverrides,
-  sidebarBehavior,
-  sidebarClassNames,
+getActionsToSearchGapWhenChatClosed,
+getAuthButtonsShellStyle,
+getChatGlobalButtonActiveStyle,
+getChatGlobalButtonIconSize,
+getChatGlobalButtonPinnedGap,
+getChatGlobalButtonSize,
+getChatGlobalButtonStyle,
+getLogInButtonLabelStyle,
+getLogInButtonStyle,
+getRightActionGroupWidth,
+getSignUpButtonGap,
+getSignUpButtonLabelStyle,
+getSignUpButtonStyle,
+} from "./global-chat-button-layout";
+import {
+getChatGlobalCenterRightInset,
+getChatGlobalCentralBlockOpenTopRightRadius,
+getChatGlobalContainerStyle,
+getChatGlobalMotionSpec,
+globalChatClassNames,
+} from "./global-chat-layout";
+import {
+getSidebarContainerStyle,
+getSidebarLeftSpace,
+getSidebarProfileSheetLayoutOverrides,
+getSidebarThemeOverrides,
+sidebarBehavior,
+sidebarClassNames,
 } from "./sidebar-layout";
-import SidebarTestClient from "../sidebar-test/SidebarTestClient";
 
 const NEW_HOME_GLOBAL_CHAT_OPEN_STORAGE_KEY = "new_home_global_chat_open";
 const NEW_HOME_GLOBAL_CHAT_OPEN_STORAGE_EVENT = "new_home_global_chat_open_change";

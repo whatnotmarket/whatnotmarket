@@ -1,7 +1,7 @@
-﻿import { REASON_CODES } from "@/lib/domains/trust/reason-codes";
-import { TRUST_SAFETY_CONFIG, scoreToRiskLevel } from "@/lib/domains/trust/config";
-import type { ListingRiskSignals, ReasonWeight, RiskScoreResult } from "@/lib/domains/trust/types";
-import { addReason, clampScore, dedupeReasonCodes } from "@/lib/domains/trust/utils";
+﻿import { TRUST_SAFETY_CONFIG,scoreToRiskLevel } from "@/lib/domains/trust/config";
+import { REASON_CODES } from "@/lib/domains/trust/reason-codes";
+import type { ListingRiskSignals,ReasonWeight,RiskScoreResult } from "@/lib/domains/trust/types";
+import { addReason,clampScore,dedupeReasonCodes } from "@/lib/domains/trust/utils";
 
 export function calculateListingRiskScore(signals: ListingRiskSignals): RiskScoreResult<ListingRiskSignals> {
   const reasons: ReasonWeight[] = [];

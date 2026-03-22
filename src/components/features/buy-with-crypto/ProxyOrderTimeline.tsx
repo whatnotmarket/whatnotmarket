@@ -1,7 +1,8 @@
 ﻿"use client";
 
 import { Squircle } from "@/components/shared/ui/Squircle";
-import { Check, Clock, Package, Truck, Box, ShieldCheck, MapPin, Lock } from "lucide-react";
+import { Box,Check,Clock,Lock,MapPin,Package,ShieldCheck } from "lucide-react";
+import type { ComponentType } from "react";
 import { LockerAssignmentCard } from "./LockerAssignmentCard";
 
 export type OrderStatus = "PENDING_PURCHASE" | "ORDER_PLACED" | "PROCESSING" | "LOCKER_ASSIGNED" | "READY_FOR_PICKUP" | "COMPLETED" | "CANCELLED";
@@ -25,7 +26,7 @@ const STATUS_ORDER: OrderStatus[] = [
   "COMPLETED"
 ];
 
-const STATUS_CONFIG: Record<OrderStatus, { icon: any, label: string, desc: string }> = {
+const STATUS_CONFIG: Record<OrderStatus, { icon: ComponentType<{ className?: string }>, label: string, desc: string }> = {
   PENDING_PURCHASE: { icon: Clock, label: "Pending Purchase", desc: "We are processing your request." },
   ORDER_PLACED: { icon: Box, label: "Order Placed", desc: "Purchase made on your behalf." },
   PROCESSING: { icon: Package, label: "Processing", desc: "Seller is preparing your item." },

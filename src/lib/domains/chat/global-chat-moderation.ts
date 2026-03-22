@@ -1,7 +1,7 @@
 ﻿import {
-  DEFAULT_BLOCKED_PHRASES,
-  GLOBAL_CHAT_ROOM_SET,
-  type GlobalChatRoom,
+DEFAULT_BLOCKED_PHRASES,
+GLOBAL_CHAT_ROOM_SET,
+type GlobalChatRoom,
 } from "@/lib/domains/chat/global-chat-config";
 
 export type ModerationErrorCode =

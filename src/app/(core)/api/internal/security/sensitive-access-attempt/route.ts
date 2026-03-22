@@ -1,6 +1,6 @@
-﻿import { timingSafeEqual } from "crypto";
+﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 export const runtime = "nodejs";
 

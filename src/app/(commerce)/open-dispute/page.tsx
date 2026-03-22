@@ -1,16 +1,17 @@
 ﻿"use client";
 
-import { Container } from "@/components/shared/ui/primitives/container";
 import { Card } from "@/components/shared/ui/primitives/card";
+import { Container } from "@/components/shared/ui/primitives/container";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { ArrowLeft, AlertTriangle, Upload, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/primitives/input";
 import { Textarea } from "@/components/shared/ui/primitives/textarea";
-import { motion } from "framer-motion";
-import { useState } from "react";
 import { dealsToast as toast } from "@/lib/domains/notifications";
+import { motion } from "framer-motion";
+import { AlertCircle,AlertTriangle,ArrowLeft,Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function OpenDisputePage() {
   const router = useRouter();

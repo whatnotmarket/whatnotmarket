@@ -1,34 +1,34 @@
 ﻿"use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area,AreaChart,CartesianGrid,XAxis } from "recharts"
 
-import { useIsMobile } from "@/hooks/use-mobile"
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+Card,
+CardAction,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
 } from "@/components/shared/ui/card"
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
+ChartContainer,
+ChartTooltip,
+ChartTooltipContent,
+type ChartConfig,
 } from "@/components/shared/ui/chart"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/shared/ui/select"
 import {
-  ToggleGroup,
-  ToggleGroupItem,
+ToggleGroup,
+ToggleGroupItem,
 } from "@/components/shared/ui/toggle-group"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export const description = "An interactive area chart"
 

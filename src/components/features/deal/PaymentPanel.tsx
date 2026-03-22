@@ -1,15 +1,15 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, ExternalLink, RefreshCw, AlertTriangle, ShieldCheck, Wallet } from "lucide-react";
+import { createPaymentIntentAction } from "@/app/(commerce)/deals/payment-actions"; // Adjust path if needed
 import { Button } from "@/components/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/ui/card";
-import { NETWORKS, CURRENCIES, getCurrenciesForNetwork, Network, Currency } from "@/lib/domains/payments/catalog";
-import { createPaymentIntentAction, simulatePaymentDetection } from "@/app/(commerce)/deals/payment-actions"; // Adjust path if needed
-import QRCode from "react-qr-code";
-import { paymentsToast as toast } from "@/lib/domains/notifications";
+import { Card,CardContent,CardHeader,CardTitle } from "@/components/shared/ui/card";
 import { cn } from "@/lib/core/utils/utils";
+import { paymentsToast as toast } from "@/lib/domains/notifications";
+import { Currency,getCurrenciesForNetwork,Network,NETWORKS } from "@/lib/domains/payments/catalog";
+import { AnimatePresence,motion } from "framer-motion";
+import { AlertTriangle,Check,Copy,ShieldCheck,Wallet } from "lucide-react";
+import { useEffect,useState } from "react";
+import QRCode from "react-qr-code";
 
 interface PaymentPanelProps {
   dealId: string;
@@ -17,11 +17,16 @@ interface PaymentPanelProps {
   isBuyer: boolean;
 }
 
-export function PaymentPanel({ dealId, amount, isBuyer }: PaymentPanelProps) {
+type PaymentIntentView = {
+  deposit_address: string;
+  pay_token_id: string;
+};
+
+export function PaymentPanel({ dealId, amount }: PaymentPanelProps) {
   const [step, setStep] = useState<"select" | "deposit" | "funded">("select");
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
-  const [paymentIntent, setPaymentIntent] = useState<any>(null);
+  const [paymentIntent, setPaymentIntent] = useState<PaymentIntentView | null>(null);
   const [loading, setLoading] = useState(false);
   const [copying, setCopying] = useState(false);
 
@@ -46,7 +51,7 @@ export function PaymentPanel({ dealId, amount, isBuyer }: PaymentPanelProps) {
       const result = await createPaymentIntentAction(dealId, selectedNetwork.id, selectedCurrency.id, amount);
       
       if (result.intent) {
-        setPaymentIntent(result.intent);
+        setPaymentIntent(result.intent as PaymentIntentView);
         setStep("deposit");
       } else {
         toast.error("Failed to create payment intent");

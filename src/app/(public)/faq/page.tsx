@@ -1,25 +1,25 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
-import Script from "next/script";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ChevronDown,
-  HelpCircle,
-  Search,
-  ShoppingBag,
-  Store,
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { Card } from "@/components/shared/ui/primitives/card";
 import { Input } from "@/components/shared/ui/primitives/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shared/ui/tabs";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/shared/ui/tabs";
 import { cn } from "@/lib/core/utils/utils";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+ChevronDown,
+HelpCircle,
+Search,
+ShoppingBag,
+Store,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import Script from "next/script";
+import { useMemo,useState } from "react";
 
 type FAQItem = {
   id: string;

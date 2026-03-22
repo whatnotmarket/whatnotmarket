@@ -1,5 +1,5 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { evaluateAndPersistUserRisk } from "@/lib/domains/trust/services/user-risk-service";
+﻿import { evaluateAndPersistUserRisk } from "@/lib/domains/trust/services/user-risk-service";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type WorkerResult = {
   processedUsers: number;

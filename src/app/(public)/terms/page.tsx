@@ -1,13 +1,14 @@
 ﻿"use client";
 
 import { Container } from "@/components/shared/ui/primitives/container";
-import { Card } from "@/components/shared/ui/primitives/card";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
-import { ArrowLeft, FileText, Scale } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/shared/ui/button";
+import { Card } from "@/components/shared/ui/primitives/card";
 import { motion } from "framer-motion";
+import { ArrowLeft,Scale } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function TermsPage() {
   const router = useRouter();

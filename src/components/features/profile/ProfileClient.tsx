@@ -1,43 +1,35 @@
 ﻿"use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  ShieldCheck,
-  Calendar,
-  TrendingUp,
-  Clock,
-  Package,
-  Camera,
-  Move,
-  MessageSquare,
-  Ban,
-  Flag,
-} from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable prefer-const */
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Squircle } from "@/components/shared/ui/Squircle";
+import { RelatedLinks } from "@/components/app/seo/RelatedLinks";
 import { Button } from "@/components/shared/ui/button";
 import { ButtonGroup } from "@/components/shared/ui/button-group";
-import { Modal } from "@/components/shared/ui/Modal";
 import { ConfirmationModal } from "@/components/shared/ui/ConfirmationModal";
-import { RelatedLinks } from "@/components/app/seo/RelatedLinks";
+import { Modal } from "@/components/shared/ui/Modal";
+import { Squircle } from "@/components/shared/ui/Squircle";
 import { useUser } from "@/contexts/UserContext";
+import { CopyMap } from "@/lib/app/content/copy-system";
 import { cn } from "@/lib/core/utils/utils";
 import { profileToast as toast } from "@/lib/domains/notifications";
-import { createClient } from "@/lib/infra/supabase/supabase";
-import { CopyMap } from "@/lib/app/content/copy-system";
 import { isReservedProfileHandle } from "@/lib/domains/security/identity-guards";
-
-const MOCK_LISTINGS = [
-  { id: 1, title: "Netflix 4K UHD Lifetime", price: 15.0, image: "NFX", sold: 120 },
-  { id: 2, title: "Spotify Premium Upgrade", price: 8.5, image: "SPF", sold: 450 },
-  { id: 3, title: "NordVPN 2 Year Account", price: 12.0, image: "VPN", sold: 85 },
-];
-
-type EditableImageType = "avatar" | "banner";
+import { createClient } from "@/lib/infra/supabase/supabase";
+import { motion } from "framer-motion";
+import {
+  Ban,
+  Calendar,
+  Camera,
+Clock,
+Flag,
+Move,
+Package,
+ShieldCheck,
+TrendingUp
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect,useMemo,useRef,useState } from "react";
 
 type StoredProfile = {
   full_name: string | null;
@@ -291,7 +283,6 @@ export function ProfileClient({
   routeRole = null,
   copy = {}
 }: ProfileClientProps) {
-  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { role } = useUser();
   const viewerRole = role === "seller" ? "seller" : "buyer";
@@ -314,7 +305,7 @@ export function ProfileClient({
   const [isBlocking, setIsBlocking] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
+  const [isReporting] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<ProfileState | null>(null);

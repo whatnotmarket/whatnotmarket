@@ -1,5 +1,5 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 import { buildTelegramMessage } from "../../jobs/_shared/telegram";
 import type { JobResult } from "../../jobs/_shared/types";
 

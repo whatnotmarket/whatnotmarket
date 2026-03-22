@@ -1,7 +1,7 @@
-﻿import { NextResponse } from "next/server";
-import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { getTrustAccountState } from "@/lib/domains/trust/services/trust-store";
+﻿import { getTrustAccountState } from "@/lib/domains/trust/services/trust-store";
 import { evaluateAndPersistUserRisk } from "@/lib/domains/trust/services/user-risk-service";
+import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const supabase = await createClient();

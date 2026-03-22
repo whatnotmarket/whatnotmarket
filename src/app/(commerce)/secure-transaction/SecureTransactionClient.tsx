@@ -1,25 +1,16 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  Lock, 
-  Scale, 
-  UserCheck, 
-  CreditCard, 
-  Truck, 
-  CheckCircle2, 
-  AlertTriangle,
-  Eye,
-  Info
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
-import { cn } from "@/lib/core/utils/utils";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Lock,
+ShieldCheck
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function SecureTransactionClient({ copy }: { copy: CopyMap }) {
   const router = useRouter();

@@ -1,29 +1,30 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Search, 
-  LayoutGrid,
-  Gem,
-  Cpu,
-  Shirt,
-  Home,
-  Briefcase,
-  ChevronRight
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import Link from "next/link";
-import { Button } from "@/components/shared/ui/button";
 import { InternalBreadcrumbs } from "@/components/app/seo/InternalBreadcrumbs";
 import { RelatedLinks } from "@/components/app/seo/RelatedLinks";
-import { cn } from "@/lib/core/utils/utils";
+import { Button } from "@/components/shared/ui/button";
+import { Card } from "@/components/shared/ui/primitives/card";
 import { Container } from "@/components/shared/ui/primitives/container";
 import { Section } from "@/components/shared/ui/primitives/section";
-import { Card } from "@/components/shared/ui/primitives/card";
-import { PUBLIC_CATEGORY_SLUGS, getPublicCategoryProductSlugs } from "@/lib/app/catalog/public-catalog";
+import { PUBLIC_CATEGORY_SLUGS,getPublicCategoryProductSlugs } from "@/lib/app/catalog/public-catalog";
+import { cn } from "@/lib/core/utils/utils";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Briefcase,
+ChevronRight,
+Cpu,
+Gem,
+Home,
+LayoutGrid,
+Search,
+Shirt
+} from "lucide-react";
+import Link from "next/link";
+import { useParams,useRouter } from "next/navigation";
+import type { ComponentType } from "react";
+import { useState } from "react";
 
 // Mock Data Generators
 const generateItems = (category: string, count: number) => {
@@ -38,7 +39,7 @@ const generateItems = (category: string, count: number) => {
   }));
 };
 
-const CATEGORY_CONFIG: Record<string, { label: string; icon: any; description: string }> = {
+const CATEGORY_CONFIG: Record<string, { label: string; icon: ComponentType<{ className?: string }>; description: string }> = {
   collectibles: {
     label: "Collectibles",
     icon: Gem,

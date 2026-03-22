@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useCallback,useRef,useState } from 'react'
 
 export function useAudioRecorder() {
   const [isRecording, setIsRecording] = useState(false)
@@ -23,16 +23,17 @@ export function useAudioRecorder() {
       setPermission('granted')
       stream.getTracks().forEach(track => track.stop()) 
       return true
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error requesting microphone permission:', err)
       setPermission('denied')
       
-      let msg = err.message || 'Errore sconosciuto'
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      const errObj = err as { message?: string; name?: string }
+      let msg = errObj.message || 'Errore sconosciuto'
+      if (errObj.name === 'NotAllowedError' || errObj.name === 'PermissionDeniedError') {
           msg = 'Permesso negato. Controlla le impostazioni del browser.'
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      } else if (errObj.name === 'NotFoundError' || errObj.name === 'DevicesNotFoundError') {
           msg = 'Nessun microfono trovato.'
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      } else if (errObj.name === 'NotReadableError' || errObj.name === 'TrackStartError') {
           msg = 'Impossibile accedere al microfono. Forse è in uso?'
       }
       

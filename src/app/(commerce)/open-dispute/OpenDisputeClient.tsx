@@ -1,17 +1,17 @@
 ﻿"use client";
 
-import { Container } from "@/components/shared/ui/primitives/container";
-import { Card } from "@/components/shared/ui/primitives/card";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { ArrowLeft, AlertTriangle, Upload, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/shared/ui/button";
+import { Card } from "@/components/shared/ui/primitives/card";
+import { Container } from "@/components/shared/ui/primitives/container";
 import { Input } from "@/components/shared/ui/primitives/input";
 import { Textarea } from "@/components/shared/ui/primitives/textarea";
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { dealsToast as toast } from "@/lib/domains/notifications";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { dealsToast as toast } from "@/lib/domains/notifications";
+import { motion } from "framer-motion";
+import { AlertCircle,AlertTriangle,ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function OpenDisputeClient({ copy }: { copy: CopyMap }) {
   const router = useRouter();

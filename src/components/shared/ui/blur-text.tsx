@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from 'react';
+import type { TargetAndTransition } from 'framer-motion';
 import { motion } from 'framer-motion';
+import { useEffect,useRef,useState } from 'react';
 
 const BlurText = ({
   text = '',
@@ -13,7 +14,6 @@ const BlurText = ({
   rootMargin = '0px',
   animationFrom,
   animationTo,
-  easing = (t: number) => t,
   onAnimationComplete,
 }: {
   text?: string;
@@ -23,9 +23,8 @@ const BlurText = ({
   direction?: 'top' | 'bottom';
   threshold?: number;
   rootMargin?: string;
-  animationFrom?: any;
-  animationTo?: any;
-  easing?: (t: number) => number;
+  animationFrom?: TargetAndTransition;
+  animationTo?: TargetAndTransition;
   onAnimationComplete?: () => void;
 }) => {
   const elements = animateBy === 'words' ? text.split(' ') : text.split('');
@@ -38,14 +37,11 @@ const BlurText = ({
     ? { filter: 'blur(10px)', opacity: 0, transform: 'translate3d(0,-50px,0)' }
     : { filter: 'blur(10px)', opacity: 0, transform: 'translate3d(0,50px,0)' };
 
-  const defaultTo = [
-    {
-      filter: 'blur(5px)',
-      opacity: 0.5,
-      transform: direction === 'top' ? 'translate3d(0,5px,0)' : 'translate3d(0,-5px,0)',
-    },
-    { filter: 'blur(0px)', opacity: 1, transform: 'translate3d(0,0,0)' },
-  ];
+  const defaultTo = {
+    filter: 'blur(0px)',
+    opacity: 1,
+    transform: 'translate3d(0,0,0)',
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(

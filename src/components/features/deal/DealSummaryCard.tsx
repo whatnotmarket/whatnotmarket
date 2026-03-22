@@ -2,8 +2,8 @@
 
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { cn } from "@/lib/core/utils/utils";
+import { Calendar,ChevronDown,MapPin } from "lucide-react";
 import Image from "next/image";
-import { DollarSign, Tag, Calendar, MapPin, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 interface DealSummaryCardProps {

@@ -1,8 +1,8 @@
 ﻿import { createClient } from '@/lib/infra/supabase/supabase-server';
-import { CopyWebsite } from '@/types/copy-website';
 import { cache } from 'react';
 
 export type CopyMap = Record<string, Record<string, string>>;
+type CopyRow = { section: string; key: string; content: string | null };
 
 // Cache the fetch to avoid multiple requests on the same render
 export const getCopyByPage = cache(async (page: string, locale: string = 'it'): Promise<CopyMap> => {
@@ -21,7 +21,7 @@ export const getCopyByPage = cache(async (page: string, locale: string = 'it'): 
 
   const copyMap: CopyMap = {};
   
-  data?.forEach((item: any) => {
+  (data as CopyRow[] | null)?.forEach((item) => {
     if (!copyMap[item.section]) {
       copyMap[item.section] = {};
     }

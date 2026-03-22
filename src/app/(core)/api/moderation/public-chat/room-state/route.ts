@@ -1,8 +1,8 @@
-﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+﻿import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 type Payload = {
   action?: "slow_mode" | "close" | "open";

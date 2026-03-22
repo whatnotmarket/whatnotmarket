@@ -1,18 +1,18 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Clock, Ghost } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/shared/ui/button";
-import { HoverTooltip as Tooltip } from "@/components/shared/ui/tooltip";
-import { TrendingCategoryTabs } from "@/components/features/market/TrendingCategoryTabs";
 import { CurrencyIcon } from "@/components/features/market/CurrencyIcon";
-import { useCrypto } from "@/contexts/CryptoContext";
-import { Container } from "@/components/shared/ui/primitives/container";
+import { TrendingCategoryTabs } from "@/components/features/market/TrendingCategoryTabs";
+import { Button } from "@/components/shared/ui/button";
 import { Card } from "@/components/shared/ui/primitives/card";
+import { Container } from "@/components/shared/ui/primitives/container";
+import { HoverTooltip as Tooltip } from "@/components/shared/ui/tooltip";
+import { useCrypto } from "@/contexts/CryptoContext";
 import { createClient } from "@/lib/infra/supabase/supabase";
+import { AnimatePresence,motion } from "framer-motion";
+import { ArrowRight,Clock,Ghost } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect,useMemo,useState } from "react";
 
 type RequestRow = {
   id: string;

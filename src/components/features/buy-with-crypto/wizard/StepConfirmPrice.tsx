@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { AlertCircle } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 import { StepProps } from "./types";
 
-export function StepConfirmPrice({ data, updateData, onNext, onBack, initialUrl, initialData }: StepProps) {
+export function StepConfirmPrice({ data, updateData, onNext, initialUrl, initialData }: StepProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [inputPrice, setInputPrice] = useState(data.price?.toString() || "");
 
@@ -34,9 +35,12 @@ export function StepConfirmPrice({ data, updateData, onNext, onBack, initialUrl,
       <div className="space-y-4">
         <div className="flex gap-4 p-4 bg-[#1C1C1E] border border-white/10 rounded-xl">
           {initialData?.image && (
-            <img 
-              src={initialData.image} 
-              alt="Product Preview" 
+            <Image
+              src={initialData.image}
+              alt="Product Preview"
+              width={80}
+              height={80}
+              unoptimized
               className="w-20 h-20 object-cover rounded-lg bg-white/5"
             />
           )}

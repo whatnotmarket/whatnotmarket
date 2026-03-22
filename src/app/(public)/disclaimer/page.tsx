@@ -1,4 +1,5 @@
 ﻿import { Navbar } from "@/components/app/navigation/Navbar";
+/* eslint-disable react/no-unescaped-entities */
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 
 export default function DisclaimerPage() {

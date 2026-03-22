@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { PickupCityForm } from "../PickupCityForm";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { PickupCityForm } from "../PickupCityForm";
 import { StepProps } from "./types";
 
 export function StepPrivacyDelivery({ data, updateData, onNext, onBack }: StepProps) {

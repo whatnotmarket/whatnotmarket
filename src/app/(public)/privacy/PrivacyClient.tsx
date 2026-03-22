@@ -1,21 +1,20 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Shield, 
-  Lock, 
-  EyeOff, 
-  FileText, 
-  Database, 
-  Server,
-  Cookie
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Cookie,
+Database,
+EyeOff,
+Lock,
+Server,
+Shield
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function PrivacyClient({ copy }: { copy: CopyMap }) {
   const router = useRouter();

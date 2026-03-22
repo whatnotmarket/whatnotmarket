@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { cn } from "@/lib/core/utils/utils";
+import Link from "next/link";
 
 type CrossClusterVariant =
   | "about"

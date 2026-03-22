@@ -1,11 +1,9 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState, useMemo as useReactMemo } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/shared/ui/button";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { createClient } from "@/lib/infra/supabase/supabase";
 import { GLOBAL_CHAT_ROOMS } from "@/lib/domains/chat/global-chat-config";
+import { createClient } from "@/lib/infra/supabase/supabase";
+import { useCallback,useEffect,useMemo,useMemo as useReactMemo,useState } from "react";
 
 type AdminChatRow = {
   id: string;
@@ -15,6 +13,7 @@ type AdminChatRow = {
   created_at: string;
   reply_to_id: string | null;
   is_deleted: boolean;
+  flagged?: boolean;
   profiles?: { username?: string | null; full_name?: string | null } | null;
 };
 
@@ -24,12 +23,31 @@ export default function AdminPublicChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [room, setRoom] = useState<string>("");
   const [q, setQ] = useState<string>("");
-  const router = useRouter();
   const supabase = useReactMemo(() => createClient(), []);
   const [roomState, setRoomState] = useState<{ slow_mode_seconds: number; closed_until: string | null } | null>(null);
   const [activeUsers, setActiveUsers] = useState<Array<{ user_id: string; username: string | null; full_name: string | null; last_message_at: string; messages_count: number; status: string }>>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userHistory, setUserHistory] = useState<Array<{ id: string; message: string; created_at: string; is_deleted: boolean }>>([]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams();
+    if (room) params.set("room", room);
+    if (q) params.set("q", q);
+    try {
+      const res = await fetch(`/api/admin/dashboard/public-chat?${params.toString()}`, { cache: "no-store" });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload?.error || "Unable to load");
+      setRows(payload.messages || []);
+      setRoomState(payload.roomState || null);
+      setActiveUsers(payload.activeUsers || []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [q, room]);
 
   const applyRoomState = async (payload: { action: "slow_mode" | "close" | "open"; seconds?: number; minutes?: number }) => {
     setLoading(true);
@@ -43,25 +61,6 @@ export default function AdminPublicChatPage() {
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || "Unable to apply room state");
       await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    const params = new URLSearchParams();
-    if (room) params.set("room", room);
-    if (q) params.set("q", q);
-    try {
-      const res = await fetch(`/api/admin/dashboard/public-chat?${params.toString()}`, { cache: "no-store" });
-      const payload = await res.json();
-      if (!res.ok) throw new Error(payload?.error || "Unable to load");
-      setRows(payload.messages || []);
-      setRoomState(payload.roomState || null);
-      setActiveUsers(payload.activeUsers || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -156,7 +155,7 @@ export default function AdminPublicChatPage() {
           ) : (
             filtered.map((row) => {
               const deleted = row.is_deleted;
-              const warning = Boolean((row as any).flagged);
+              const warning = Boolean(row.flagged);
               return (
                 <div
                   key={row.id}

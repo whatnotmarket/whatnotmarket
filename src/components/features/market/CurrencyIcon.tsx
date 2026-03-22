@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
+import Image from "next/image";
 
 export const CurrencyIcon = ({ currency }: { currency?: string }) => {
   if (!currency) return null;

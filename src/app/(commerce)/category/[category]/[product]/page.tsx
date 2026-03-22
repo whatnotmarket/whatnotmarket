@@ -1,30 +1,30 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import Script from "next/script";
-import { motion } from "framer-motion";
-import { 
-  Search, 
-  Share2, 
-  Clock,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  ChevronDown,
-  HelpCircle
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Button } from "@/components/shared/ui/button";
 import { InternalBreadcrumbs } from "@/components/app/seo/InternalBreadcrumbs";
 import { RelatedLinks } from "@/components/app/seo/RelatedLinks";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shared/ui/tabs";
-import { cn } from "@/lib/core/utils/utils";
-import { Container } from "@/components/shared/ui/primitives/container";
-import { Card } from "@/components/shared/ui/primitives/card";
-import { Input } from "@/components/shared/ui/primitives/input";
 import { ListingWalletPayment } from "@/components/features/listing/ListingWalletPayment";
-import { PUBLIC_CATEGORY_SLUGS, getPublicCategoryProductSlugs } from "@/lib/app/catalog/public-catalog";
+import { Button } from "@/components/shared/ui/button";
+import { Card } from "@/components/shared/ui/primitives/card";
+import { Container } from "@/components/shared/ui/primitives/container";
+import { Input } from "@/components/shared/ui/primitives/input";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/shared/ui/tabs";
+import { PUBLIC_CATEGORY_SLUGS,getPublicCategoryProductSlugs } from "@/lib/app/catalog/public-catalog";
+import { cn } from "@/lib/core/utils/utils";
+import { motion } from "framer-motion";
+import {
+AlertCircle,
+CheckCircle2,
+ChevronDown,
+Clock,
+HelpCircle,
+Search,
+Share2,
+ShieldCheck
+} from "lucide-react";
+import { useParams } from "next/navigation";
+import Script from "next/script";
+import { useState } from "react";
 
 // Mock Offers Data
 const OFFERS = Array.from({ length: 8 }).map((_, i) => ({

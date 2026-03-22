@@ -1,9 +1,9 @@
 ﻿import "server-only";
 
-import { revalidateTag, unstable_cache } from "next/cache";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 import { SITE_URL } from "@/lib/core/config/site-config";
 import { isReservedProfileHandle } from "@/lib/domains/security/identity-guards";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { revalidateTag,unstable_cache } from "next/cache";
 
 export const SITEMAP_URL_LIMIT = 50_000;
 export const SITEMAP_CACHE_SECONDS = 900;

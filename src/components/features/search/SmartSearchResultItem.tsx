@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import Image from "next/image";
-import { ArrowUpRight, ShieldCheck } from "lucide-react";
-import { CommandItem, CommandShortcut } from "@/components/shared/ui/command";
 import { SearchHighlightedText } from "@/components/features/search/SearchHighlightedText";
 import type { SearchCatalogItem } from "@/components/features/search/search-types";
+import { CommandItem,CommandShortcut } from "@/components/shared/ui/command";
+import { ArrowUpRight,ShieldCheck } from "lucide-react";
+import Image from "next/image";
 
 type SmartSearchResultItemProps = {
   item: SearchCatalogItem;

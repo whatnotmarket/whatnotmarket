@@ -1,16 +1,16 @@
 ﻿"use client";
 
-import { useState, useRef } from "react";
+import { CryptoPaymentGateway } from "@/components/features/buy-with-crypto/CryptoPaymentGateway";
+import { OrderSummaryCard } from "@/components/features/buy-with-crypto/OrderSummaryCard";
 import { ProductUrlInput } from "@/components/features/buy-with-crypto/ProductUrlInput";
 import { BuyAnywhereWizard } from "@/components/features/buy-with-crypto/wizard/BuyAnywhereWizard";
-import type { WizardData, WizardProps } from "@/components/features/buy-with-crypto/wizard/types";
-import { OrderSummaryCard } from "@/components/features/buy-with-crypto/OrderSummaryCard";
-import { CryptoPaymentGateway } from "@/components/features/buy-with-crypto/CryptoPaymentGateway";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Copy, Check } from "lucide-react";
+import type { WizardData,WizardProps } from "@/components/features/buy-with-crypto/wizard/types";
 import { Button } from "@/components/shared/ui/button";
+import { Squircle } from "@/components/shared/ui/Squircle";
 import { analytics } from "@/lib/app/analytics/analytics";
+import { AnimatePresence,motion } from "framer-motion";
+import { ArrowLeft,Check,Copy } from "lucide-react";
+import { useRef,useState } from "react";
 
 type Step = "input" | "details" | "payment" | "confirmed";
 

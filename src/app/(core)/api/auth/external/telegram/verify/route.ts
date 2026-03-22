@@ -1,23 +1,23 @@
-﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { applyRoleAssignmentForUser } from "@/lib/domains/auth/role-assignment";
-import {
-  BridgeIdentityNotFoundError,
-  ensureBridgeUser,
-  signInBridgeUserOnRoute,
+﻿import {
+BridgeIdentityNotFoundError,
+ensureBridgeUser,
+signInBridgeUserOnRoute,
 } from "@/lib/domains/auth/bridge";
 import {
-  verifyTelegramAuthPayload,
-  type TelegramAuthPayload,
+verifyTelegramAuthPayload,
+type TelegramAuthPayload,
 } from "@/lib/domains/auth/external-telegram";
 import { resolveRequiredInviteCode } from "@/lib/domains/auth/invite-codes";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { applyRoleAssignmentForUser } from "@/lib/domains/auth/role-assignment";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
 import { shouldAllowBridgeUserCreation } from "@/lib/domains/security/auth-guards";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
-import { detectBanEvasionRisk, recordAuthSecurityEvent } from "@/lib/domains/trust/services/auth-security";
-import { getTrustAccountState, upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
 import { enforceAuthAbuseMiddleware } from "@/lib/domains/trust/middleware/auth-abuse";
+import { detectBanEvasionRisk,recordAuthSecurityEvent } from "@/lib/domains/trust/services/auth-security";
+import { getTrustAccountState,upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 type Payload = {
   telegramAuth?: TelegramAuthPayload;

@@ -1,24 +1,24 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { useUser } from "@/contexts/UserContext";
-import { 
-  Gift, 
-  ArrowRight, 
-  CheckCircle2, 
-  AlertCircle,
-  Loader2,
-  Copy
-} from "lucide-react";
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
-import { motion, AnimatePresence } from "framer-motion";
-import { marketToast as toast } from "@/lib/domains/notifications";
-import { cn } from "@/lib/core/utils/utils";
+import { Squircle } from "@/components/shared/ui/Squircle";
+import { useUser } from "@/contexts/UserContext";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { cn } from "@/lib/core/utils/utils";
+import { marketToast as toast } from "@/lib/domains/notifications";
+import { AnimatePresence,motion } from "framer-motion";
+import {
+AlertCircle,
+ArrowRight,
+CheckCircle2,
+Copy,
+Gift,
+Loader2
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export function RedeemClient({ copy }: { copy: CopyMap }) {
   const { role } = useUser();

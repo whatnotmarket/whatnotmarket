@@ -1,6 +1,6 @@
-﻿import { maintenanceEarlyAccessAutoReplyHtml, maintenanceEarlyAccessAutoReplyText } from "../../src/lib/domains/email-templates/maintenance-early-access";
+﻿import { maintenanceEarlyAccessAutoReplyHtml,maintenanceEarlyAccessAutoReplyText } from "../../src/lib/domains/email-templates/maintenance-early-access";
+import { isTransientNetworkError,sleep,withRetry } from "../_shared/retry";
 import { runJobWithLifecycle } from "../_shared/run-job";
-import { isTransientNetworkError, sleep, withRetry } from "../_shared/retry";
 import { requireJobsSupabaseAdminClient } from "../_shared/supabase";
 import type { JobResult } from "../_shared/types";
 

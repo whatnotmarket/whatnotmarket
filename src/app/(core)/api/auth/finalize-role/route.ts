@@ -1,7 +1,7 @@
-﻿import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+﻿import { applyRoleAssignmentForUser,type DesiredRole } from "@/lib/domains/auth/role-assignment";
 import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { applyRoleAssignmentForUser, type DesiredRole } from "@/lib/domains/auth/role-assignment";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 type PendingSignupContext = {
   desiredRole?: DesiredRole;

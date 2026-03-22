@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import Image from "next/image";
+import { useState } from "react";
 import { PickupCityForm } from "./PickupCityForm";
 
 // Fallback for missing UI components
@@ -76,14 +77,17 @@ export function ProxyOrderForm({ onSubmit, productUrl, initialData }: ProxyOrder
     <div className="w-full max-w-2xl mx-auto space-y-6">
       <div className="space-y-4">
         {initialData && (
-          <div className="flex gap-4 p-4 bg-[#1C1C1E] border border-white/10 rounded-xl">
-            {initialData.image && (
-              <img 
-                src={initialData.image} 
-                alt="Product Preview" 
-                className="w-20 h-20 object-cover rounded-lg bg-white/5"
-              />
-            )}
+            <div className="flex gap-4 p-4 bg-[#1C1C1E] border border-white/10 rounded-xl">
+              {initialData.image && (
+                <Image
+                  src={initialData.image}
+                  alt="Product Preview"
+                  width={80}
+                  height={80}
+                  unoptimized
+                  className="w-20 h-20 object-cover rounded-lg bg-white/5"
+                />
+              )}
             <div className="flex-1 min-w-0">
               <h4 className="font-bold text-white truncate">{initialData.title || "Product"}</h4>
               <p className="text-sm text-zinc-400 break-all line-clamp-1">{productUrl}</p>

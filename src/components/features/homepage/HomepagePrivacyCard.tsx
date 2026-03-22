@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Button } from "@/components/shared/ui/button";
 import { Switch } from "@/components/shared/ui/switch";
 import { cn } from "@/lib/core/utils/utils";
+import { ChevronDown,ChevronUp,X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useMemo,useState,useSyncExternalStore } from "react";
 
 type CookiePreferences = {
   essential: boolean;

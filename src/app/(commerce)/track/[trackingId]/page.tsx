@@ -1,8 +1,8 @@
-﻿import { getOrderByTrackingAccess } from "@/lib/infra/db/orders-db";
-import { notFound } from "next/navigation";
-import { Navbar } from "@/components/app/navigation/Navbar";
+﻿import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
+import { getOrderByTrackingAccess } from "@/lib/infra/db/orders-db";
 import { MapPin } from "lucide-react";
+import { notFound } from "next/navigation";
 
 interface PageProps {
   params: {

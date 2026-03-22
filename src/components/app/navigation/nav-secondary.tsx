@@ -3,11 +3,11 @@
 import * as React from "react"
 
 import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+SidebarGroup,
+SidebarGroupContent,
+SidebarMenu,
+SidebarMenuButton,
+SidebarMenuItem,
 } from "@/components/shared/ui/sidebar"
 
 export function NavSecondary({

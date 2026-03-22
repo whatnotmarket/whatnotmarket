@@ -1,23 +1,23 @@
 ﻿"use client";
 
-import dynamic from "next/dynamic";
-import { useParams, useRouter } from "next/navigation";
+import { Navbar } from "@/components/app/navigation/Navbar";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/shared/ui/avatar";
 import { useUser } from "@/contexts/UserContext";
 import { useMessagesQuery } from "@/hooks/use-messages-query";
-import { Navbar } from "@/components/app/navigation/Navbar";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { createClient } from "@/lib/infra/supabase/supabase";
 import { cn } from "@/lib/core/utils/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/avatar";
+import { createClient } from "@/lib/infra/supabase/supabase";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useParams,useRouter } from "next/navigation";
+import { useEffect,useMemo,useState } from "react";
 
-import { Input } from "@/components/shared/ui/input";
 import { Button } from "@/components/shared/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shared/ui/dialog";
-import { Search, Plus, MessageSquarePlus, X } from "lucide-react";
+import { Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger } from "@/components/shared/ui/dialog";
+import { Input } from "@/components/shared/ui/input";
 import { toast } from "@/lib/domains/notifications";
+import { MessageSquarePlus,Search } from "lucide-react";
 
 const RealtimeChat = dynamic(
   () => import("@/components/features/realtime-chat/realtime-chat").then((mod) => mod.RealtimeChat),
@@ -274,7 +274,7 @@ export default function ChatPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, supabase, targetUserId]); // Added targetUserId to handle unread count updates correctly
+  }, [router, user, supabase, targetUserId]); // Added targetUserId to handle unread count updates correctly
 
   useEffect(() => {
     async function fetchRecentChats() {

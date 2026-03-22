@@ -1,5 +1,5 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 import { withRetry } from "../../jobs/_shared/retry";
 
 test("withRetry retries and eventually succeeds", async () => {

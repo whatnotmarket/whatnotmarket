@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { hasCanonicalAdminAccess } from "@/lib/domains/security/admin-guards";
 import { createClient } from "@/lib/infra/supabase/supabase";
 import { User } from "@supabase/supabase-js";
-import { hasCanonicalAdminAccess } from "@/lib/domains/security/admin-guards";
+import { createContext,ReactNode,useContext,useEffect,useState } from "react";
 
 // Define the role type
 export type UserRole = "guest" | "buyer" | "seller";

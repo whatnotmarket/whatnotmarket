@@ -1,15 +1,15 @@
-﻿import { NextResponse } from "next/server";
-import {
-  SITEMAP_CACHE_CONTROL,
-  getCategoriesSitemapEntries,
-  getCompanySitemapEntries,
-  getListingSitemapChunks,
-  getPagesSitemapEntries,
-  getProductsSitemapEntries,
-  getServicesSitemapEntries,
-  getUsersSitemapEntries,
-  renderUrlset,
+﻿import {
+SITEMAP_CACHE_CONTROL,
+getCategoriesSitemapEntries,
+getCompanySitemapEntries,
+getListingSitemapChunks,
+getPagesSitemapEntries,
+getProductsSitemapEntries,
+getServicesSitemapEntries,
+getUsersSitemapEntries,
+renderUrlset,
 } from "@/lib/app/seo/sitemaps";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const revalidate = 900;

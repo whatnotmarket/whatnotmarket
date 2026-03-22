@@ -1,15 +1,15 @@
 ﻿"use client";
 
+import {
+Breadcrumb,
+BreadcrumbItem,
+BreadcrumbLink,
+BreadcrumbList,
+BreadcrumbPage,
+BreadcrumbSeparator,
+} from "@/components/shared/ui/breadcrumb";
 import Link from "next/link";
 import { Fragment } from "react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/shared/ui/breadcrumb";
 
 type BreadcrumbEntry = {
   label: string;

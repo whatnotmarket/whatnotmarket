@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { Fragment } from "react";
 import { getMatchRanges } from "@/components/features/search/search-intelligence";
+import { Fragment } from "react";
 
 type SearchHighlightedTextProps = {
   text: string;

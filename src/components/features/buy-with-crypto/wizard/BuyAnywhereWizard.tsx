@@ -1,18 +1,17 @@
 ﻿"use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { AnimatePresence, motion } from "framer-motion";
-import { WizardData, WizardProps } from "./types";
+import { AnimatePresence,motion } from "framer-motion";
+import { X } from "lucide-react";
+import { useEffect,useRef,useState } from "react";
 import { StepConfirmPrice } from "./StepConfirmPrice";
-import { StepQuantity } from "./StepQuantity";
+import { StepContact } from "./StepContact";
+import { StepNotes } from "./StepNotes";
 import { StepOptions } from "./StepOptions";
 import { StepPaymentMethod } from "./StepPaymentMethod";
 import { StepPrivacyDelivery } from "./StepPrivacyDelivery";
-import { StepNotes } from "./StepNotes";
-import { StepContact } from "./StepContact";
+import { StepQuantity } from "./StepQuantity";
 import { StepReviewAndPay } from "./StepReviewAndPay";
-import { X } from "lucide-react";
+import { WizardData,WizardProps } from "./types";
 
 const STEPS = [
   "Confirm Price",

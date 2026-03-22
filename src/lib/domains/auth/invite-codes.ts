@@ -1,7 +1,7 @@
 ﻿import "server-only";
 
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 import { enforceRequiredInvite } from "@/lib/domains/security/invite-guards";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 export type InviteRole = "buyer" | "seller";
 export type InviteCodeType = InviteRole | "founder";

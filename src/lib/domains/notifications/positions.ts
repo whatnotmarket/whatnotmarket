@@ -1,4 +1,4 @@
-import type { SileoOptions, SileoPosition } from "sileo";
+import type { SileoOptions,SileoPosition } from "sileo";
 
 export type NotificationScope =
   | "global"

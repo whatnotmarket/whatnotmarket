@@ -1,18 +1,18 @@
 ﻿"use client";
 
+import { AnnouncementBar } from "@/components/app/layout/AnnouncementBar";
+import { Button } from "@/components/shared/ui/button";
+import { Squircle } from "@/components/shared/ui/Squircle";
+import { useUser } from "@/contexts/UserContext";
+import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
-import { AnnouncementBar } from "@/components/app/layout/AnnouncementBar";
 import { CryptoSelector } from "./navbar/CryptoSelector";
 import { LanguageSelector } from "./navbar/LanguageSelector";
 import { MarketplaceMenu } from "./navbar/MarketplaceMenu";
 import { MoreMenu } from "./navbar/MoreMenu";
 import { NotificationsMenu } from "./navbar/NotificationsMenu";
 import { ProfileMenu } from "./navbar/ProfileMenu";
-import { Button } from "@/components/shared/ui/button";
-import { Squircle } from "@/components/shared/ui/Squircle";
 
 export function Navbar() {
   const { role, isFounder } = useUser();

@@ -1,13 +1,13 @@
 ﻿import { MODERATION_AI_CONFIG } from "@/lib/domains/moderation/moderation.ai.config";
-import { buildModerationSystemPrompt, buildModerationUserPrompt } from "@/lib/domains/moderation/moderation.ai.prompts";
+import { buildModerationSystemPrompt,buildModerationUserPrompt } from "@/lib/domains/moderation/moderation.ai.prompts";
 import {
-  createAIAllowResult,
-  parseAIClassifierOutput,
-  tryParseJsonObject,
-  type ModerationAICategory,
-  type ModerationClassifierInput,
-  type ModerationProvider,
-  type ModerationProviderResult,
+createAIAllowResult,
+parseAIClassifierOutput,
+tryParseJsonObject,
+type ModerationAICategory,
+type ModerationClassifierInput,
+type ModerationProvider,
+type ModerationProviderResult,
 } from "@/lib/domains/moderation/moderation.ai.types";
 import type { ModerationReasonCode } from "@/lib/domains/moderation/moderation.types";
 

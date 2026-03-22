@@ -1,17 +1,17 @@
-﻿import test from "node:test";
+﻿import { generateMnemonic } from "bip39";
 import assert from "node:assert/strict";
-import { generateMnemonic } from "bip39";
+import test from "node:test";
 import {
-  isValidRecoveryPhrase,
-  normalizeInternalUsername,
-  normalizeRecoveryPhrase,
-  onboardingRegistrationSchema,
+isValidRecoveryPhrase,
+normalizeInternalUsername,
+normalizeRecoveryPhrase,
+onboardingRegistrationSchema,
 } from "../../src/lib/domains/internal-auth/schemas";
 import {
-  decryptRecoveryPhraseWithSecret,
-  encryptRecoveryPhraseWithSecret,
-  hashPasswordWithBcrypt,
-  verifyPasswordWithBcrypt,
+decryptRecoveryPhraseWithSecret,
+encryptRecoveryPhraseWithSecret,
+hashPasswordWithBcrypt,
+verifyPasswordWithBcrypt,
 } from "../../src/lib/domains/internal-auth/security-core";
 
 test("normalizeInternalUsername strips unsupported characters", () => {

@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import Image from "next/image";
 import { MarketSearch } from "@/components/features/market/MarketSearch";
 import { Container } from "@/components/shared/ui/primitives/container";
 import { Section } from "@/components/shared/ui/primitives/section";
+import Image from "next/image";
 
 interface MarketHeroProps {
   copy?: Record<string, string>;

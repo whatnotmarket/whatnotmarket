@@ -1,5 +1,5 @@
+import { DEFAULT_LOCALE,type Locale } from "@/i18n/config";
 import { createHash } from "node:crypto";
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 type TranslationKey = {
   namespace: string;

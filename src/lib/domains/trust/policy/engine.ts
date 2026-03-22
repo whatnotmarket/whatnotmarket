@@ -1,10 +1,10 @@
 ﻿import { TRUST_SAFETY_CONFIG } from "@/lib/domains/trust/config";
 import type {
-  ConversationPolicyDecision,
-  ListingPolicyDecision,
-  PolicyDecision,
-  RiskScoreResult,
-  TrustAccountFlag,
+ConversationPolicyDecision,
+ListingPolicyDecision,
+PolicyDecision,
+RiskScoreResult,
+TrustAccountFlag,
 } from "@/lib/domains/trust/types";
 
 function reasonSummaryFallback(score: number) {

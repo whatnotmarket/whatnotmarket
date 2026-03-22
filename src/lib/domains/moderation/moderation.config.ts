@@ -1,4 +1,4 @@
-﻿import type { ModerationDecision, ModerationReasonCode, ModerationSeverity } from "@/lib/domains/moderation/moderation.types";
+﻿import type { ModerationDecision,ModerationReasonCode,ModerationSeverity } from "@/lib/domains/moderation/moderation.types";
 
 export const MODERATION_CONFIG = {
   thresholds: {

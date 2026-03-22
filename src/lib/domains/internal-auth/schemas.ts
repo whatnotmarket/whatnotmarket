@@ -1,6 +1,6 @@
-﻿import { validateMnemonic } from "bip39";
+﻿import { isReservedProfileHandle,normalizeProfileHandle } from "@/lib/domains/security/identity-guards";
+import { validateMnemonic } from "bip39";
 import { z } from "zod";
-import { isReservedProfileHandle, normalizeProfileHandle } from "@/lib/domains/security/identity-guards";
 
 const USERNAME_MIN_LENGTH = 3;
 const USERNAME_MAX_LENGTH = 24;

@@ -1,5 +1,5 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import { hasCanonicalAdminAccess } from "../../src/lib/domains/security/admin-guards";
 
 test("canonical admin access depends only on authoritative is_admin", () => {

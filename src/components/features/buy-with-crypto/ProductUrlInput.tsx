@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
-import { ArrowRight, Link as LinkIcon, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { AlertCircle,ArrowRight,Link as LinkIcon } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 type ProductPreviewData = {
   title?: string;

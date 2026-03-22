@@ -1,7 +1,8 @@
 ﻿"use client";
 
 import { cn } from "@/lib/core/utils/utils";
-import { Clock, CheckCircle2, Shield, Truck, Archive, XCircle, MessageCircle, AlertCircle, Package, Sparkles } from "lucide-react";
+import { AlertCircle,Archive,CheckCircle2,Clock,MessageCircle,Package,Shield,Sparkles,Truck,XCircle } from "lucide-react";
+import type { ComponentType } from "react";
 
 export type DealStatus = 
   | "deal_created"
@@ -23,7 +24,7 @@ interface DealStatusBadgeProps {
   size?: "sm" | "md" | "lg";
 }
 
-const statusConfig: Record<DealStatus, { label: string; icon: any; color: string; iconColor: string }> = {
+const statusConfig: Record<DealStatus, { label: string; icon: ComponentType<{ className?: string }>; color: string; iconColor: string }> = {
   deal_created: {
     label: "New Deal",
     icon: Sparkles,

@@ -2,14 +2,14 @@
 
 import { Badge } from "@/components/shared/ui/badge"
 import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+Card,
+CardAction,
+CardDescription,
+CardFooter,
+CardHeader,
+CardTitle,
 } from "@/components/shared/ui/card"
-import { TrendingUpIcon, TrendingDownIcon } from "lucide-react"
+import { TrendingDownIcon,TrendingUpIcon } from "lucide-react"
 
 type SectionMetrics = {
   totalUsers?: number

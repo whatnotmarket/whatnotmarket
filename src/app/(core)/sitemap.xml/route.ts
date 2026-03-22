@@ -1,10 +1,10 @@
-﻿import { NextResponse } from "next/server";
-import {
-  SITEMAP_CACHE_CONTROL,
-  getSitemapIndexEntries,
-  renderSitemapIndex,
+﻿import {
+SITEMAP_CACHE_CONTROL,
+getSitemapIndexEntries,
+renderSitemapIndex,
 } from "@/lib/app/seo/sitemaps";
 import { SITE_URL } from "@/lib/core/config/site-config";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const revalidate = 900;

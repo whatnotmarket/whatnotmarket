@@ -1,12 +1,12 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle, Zap, Smartphone, Monitor, Sparkles, Globe, LucideIcon } from "lucide-react";
-import Link from "next/link";
 import { Card } from "@/components/shared/ui/primitives/card";
 import { Container } from "@/components/shared/ui/primitives/container";
 import { createClient } from "@/lib/infra/supabase/supabase";
+import { motion } from "framer-motion";
+import { CheckCircle,Globe,LucideIcon,Monitor,Smartphone,Sparkles,Zap } from "lucide-react";
+import Link from "next/link";
+import { useEffect,useState } from "react";
 
 // Map string icon names to Lucide components
 const ICON_MAP: Record<string, LucideIcon> = {

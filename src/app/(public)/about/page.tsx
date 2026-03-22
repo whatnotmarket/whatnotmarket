@@ -1,24 +1,23 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Globe, 
-  Shield, 
-  Zap, 
-  Lock, 
-  Users, 
-  Search, 
-  MessageSquare, 
-  Repeat,
-  Gem,
-  Scale
-} from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Gem,
+Globe,
+Lock,
+Scale,
+Search,
+Shield,
+Users,
+Zap
+} from "lucide-react";
 
 export default function AboutPage() {
   const router = useRouter();

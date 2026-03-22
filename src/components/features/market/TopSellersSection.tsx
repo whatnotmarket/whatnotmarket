@@ -1,12 +1,11 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { Container } from "@/components/shared/ui/primitives/container";
 import { createClient } from "@/lib/infra/supabase/supabase";
-import { Squircle } from "@/components/shared/ui/Squircle";
 import { Ghost } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect,useState } from "react";
 
 interface Seller {
   id: string;
@@ -15,6 +14,12 @@ interface Seller {
   status?: "online" | "offline";
   platform?: string; // Icon identifier
 }
+
+type LeaderboardRow = {
+  user_id: string;
+  username: string;
+  avatar_url: string;
+};
 
 function toSellerProfileHref(name: string) {
   const handle = name?.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") || "seller";
@@ -82,7 +87,7 @@ export function TopSellersSection() {
 
         if (weekData) {
           setTopSellersWeek(
-            weekData.map((d: any) => ({
+            (weekData as LeaderboardRow[]).map((d) => ({
               id: d.user_id,
               name: d.username,
               avatar: d.avatar_url,
@@ -99,7 +104,7 @@ export function TopSellersSection() {
 
         if (monthData) {
           setTopSellersMonth(
-            monthData.map((d: any) => ({
+            (monthData as LeaderboardRow[]).map((d) => ({
               id: d.user_id,
               name: d.username,
               avatar: d.avatar_url,
@@ -116,7 +121,7 @@ export function TopSellersSection() {
 
         if (escrowData) {
           setTopEscrowMonth(
-            escrowData.map((d: any) => ({
+            (escrowData as LeaderboardRow[]).map((d) => ({
               id: d.user_id,
               name: d.username,
               avatar: d.avatar_url,

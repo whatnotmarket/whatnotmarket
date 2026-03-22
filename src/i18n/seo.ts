@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
+﻿import { SUPPORTED_LOCALES,type Locale } from "@/i18n/config";
 import { SITE_URL } from "@/lib/core/config/site-config";
-import { SUPPORTED_LOCALES, type Locale } from "@/i18n/config";
+import type { Metadata } from "next";
 
 const OPEN_GRAPH_LOCALE_BY_LANG: Record<Locale, string> = {
   en: "en_US",

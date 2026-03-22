@@ -1,26 +1,26 @@
 ﻿"use client";
 
-import { type ComponentType, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  BadgeCheck,
-  BriefcaseBusiness,
-  Command as CommandIcon,
-  Compass,
-  CornerDownLeft,
-  Search as SearchIcon,
-  ShoppingBag,
-  UserRound,
-  Wallet,
-  X,
-} from "lucide-react";
-import { Command, CommandGroup, CommandInput, CommandList } from "@/components/shared/ui/command";
-import { cn } from "@/lib/core/utils/utils";
+import type { SearchCatalogItem,SearchScopeId } from "@/components/features/search/search-types";
+import { SearchLoadingSkeleton,SmartEmptyState } from "@/components/features/search/SearchResultStates";
 import { SmartSearchResultItem } from "@/components/features/search/SmartSearchResultItem";
-import { SearchLoadingSkeleton, SmartEmptyState } from "@/components/features/search/SearchResultStates";
 import { useSmartSearch } from "@/components/features/search/use-smart-search";
-import type { SearchCatalogItem, SearchScopeId } from "@/components/features/search/search-types";
+import { Command,CommandGroup,CommandInput,CommandList } from "@/components/shared/ui/command";
+import { cn } from "@/lib/core/utils/utils";
+import { AnimatePresence,motion } from "framer-motion";
+import {
+BadgeCheck,
+BriefcaseBusiness,
+Command as CommandIcon,
+Compass,
+CornerDownLeft,
+Search as SearchIcon,
+ShoppingBag,
+UserRound,
+Wallet,
+X,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type ComponentType,useEffect,useMemo,useRef,useState } from "react";
 
 type GlobalCommandSearchProps = {
   className?: string;

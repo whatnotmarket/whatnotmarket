@@ -1,24 +1,21 @@
 ﻿"use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { RealtimeChat } from "@/components/features/realtime-chat/realtime-chat";
-import { useUser } from "@/contexts/UserContext";
-import { useMessagesQuery } from "@/hooks/use-messages-query";
 import { Navbar } from "@/components/app/navigation/Navbar";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { createClient } from "@/lib/infra/supabase/supabase";
+import { RealtimeChat } from "@/components/features/realtime-chat/realtime-chat";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/shared/ui/avatar";
+import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/core/utils/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/avatar";
+import { createClient } from "@/lib/infra/supabase/supabase";
 import { formatDistanceToNow } from "date-fns";
-import { it } from "date-fns/locale";
+import { Loader2 } from "lucide-react";
+import { useParams,useRouter } from "next/navigation";
+import { useCallback,useEffect,useMemo,useState } from "react";
 
-import { Input } from "@/components/shared/ui/input";
 import { Button } from "@/components/shared/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shared/ui/dialog";
-import { Search, Plus, MessageSquarePlus, X } from "lucide-react";
-import { toast } from "@/lib/domains/notifications";
+import { Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger } from "@/components/shared/ui/dialog";
+import { Input } from "@/components/shared/ui/input";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import { MessageSquarePlus,Search } from "lucide-react";
 
 type ChatListEntry = {
   userId: string;

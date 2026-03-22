@@ -1,8 +1,8 @@
-﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+﻿import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { assertAdminRequest } from "@/lib/domains/auth/admin-auth";
 import { createClient as createServerClient } from "@/lib/infra/supabase/supabase-server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 type WalletPayload = {
   id?: string;

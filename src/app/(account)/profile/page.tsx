@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { ProfileClient } from "@/components/features/profile/ProfileClient";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 function normalizeHandleParam(raw: string | null) {
   if (!raw) return null;

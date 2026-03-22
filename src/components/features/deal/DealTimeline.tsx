@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { cn } from "@/lib/core/utils/utils";
-import { Check, Circle, Truck, Package, CreditCard, Handshake, ShieldCheck } from "lucide-react";
 import { Squircle } from "@/components/shared/ui/Squircle";
+import { cn } from "@/lib/core/utils/utils";
+import { Check,Circle } from "lucide-react";
 
 export interface TimelineEvent {
   id: string;

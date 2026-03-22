@@ -1,5 +1,5 @@
-﻿import type { Metadata } from "next";
-import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+﻿import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = buildIndexableMetadata({
   title: "Marketplace for Trusted Digital Products and Services",

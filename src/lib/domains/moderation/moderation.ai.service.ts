@@ -1,16 +1,16 @@
-﻿import { MODERATION_REASON_CODES } from "@/lib/domains/moderation/moderation.reason-codes";
-import { MODERATION_AI_CONFIG } from "@/lib/domains/moderation/moderation.ai.config";
-import { CustomModerationAdapter } from "@/lib/domains/moderation/moderation.ai.adapters/custom";
+﻿import { CustomModerationAdapter } from "@/lib/domains/moderation/moderation.ai.adapters/custom";
 import { OpenAIModerationAdapter } from "@/lib/domains/moderation/moderation.ai.adapters/openai";
 import { PerspectiveModerationAdapter } from "@/lib/domains/moderation/moderation.ai.adapters/perspective";
-import { isInboxRoute } from "@/lib/domains/moderation/moderation.skip";
+import { MODERATION_AI_CONFIG } from "@/lib/domains/moderation/moderation.ai.config";
 import {
-  createAIAllowResult,
-  type ModerationAIExecution,
-  type ModerationClassifierInput,
-  type ModerationProvider,
-  type ModerationProviderResult,
+createAIAllowResult,
+type ModerationAIExecution,
+type ModerationClassifierInput,
+type ModerationProvider,
+type ModerationProviderResult,
 } from "@/lib/domains/moderation/moderation.ai.types";
+import { MODERATION_REASON_CODES } from "@/lib/domains/moderation/moderation.reason-codes";
+import { isInboxRoute } from "@/lib/domains/moderation/moderation.skip";
 
 type ModerateWithAIOptions = {
   skipBecauseHardRuleBlock?: boolean;

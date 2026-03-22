@@ -1,6 +1,6 @@
-﻿import { redirect } from "next/navigation";
-import { ProfileClient } from "@/components/features/profile/ProfileClient";
+﻿import { ProfileClient } from "@/components/features/profile/ProfileClient";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { redirect } from "next/navigation";
 
 type ProfileBySlugPageProps = {
   params: Promise<{ id: string }>;

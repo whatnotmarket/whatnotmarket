@@ -1,10 +1,10 @@
-﻿import type { Metadata } from "next";
-import Grainient from "@/components/shared/visual/Grainient";
-import OpenlyMarketThemeToggle from "./MaintenanceThemeToggle";
+﻿import Grainient from "@/components/shared/visual/Grainient";
+import type { Metadata } from "next";
 import OpenlyMarketEarlyAccessForm from "./MaintenanceEarlyAccessForm";
 import OpenlyMarketFeedbackWidget from "./MaintenanceFeedbackWidget";
-import OpenlyMarketSocialShortcuts from "./MaintenanceSocialShortcuts";
 import OpenlyMarketLogoContextMenu from "./MaintenanceLogoContextMenu";
+import OpenlyMarketSocialShortcuts from "./MaintenanceSocialShortcuts";
+import OpenlyMarketThemeToggle from "./MaintenanceThemeToggle";
 
 // OpenlyDev Signature: OpenlyMarket Maintenance Page
 

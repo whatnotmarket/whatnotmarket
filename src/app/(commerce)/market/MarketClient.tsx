@@ -1,17 +1,17 @@
 ﻿"use client";
 
-import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Navbar } from "@/components/app/navigation/Navbar";
+import { Button } from "@/components/shared/ui/button";
+import { Squircle } from "@/components/shared/ui/Squircle";
+import { AnimatePresence,motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/components/shared/ui/button";
-import { Navbar } from "@/components/app/navigation/Navbar";
-import { Squircle } from "@/components/shared/ui/Squircle";
+import { useRef,useState } from "react";
 
 // Import new components
 import { MarketHero } from "@/components/features/market/MarketHero";
-import dynamic from "next/dynamic";
 import { CopyMap } from "@/lib/app/content/copy-system";
+import dynamic from "next/dynamic";
 
 const BuyWithCryptoFlow = dynamic(() => import("@/components/features/buy-with-crypto/BuyWithCryptoFlow").then(mod => mod.BuyWithCryptoFlow), {
   loading: () => <div className="h-96 animate-pulse bg-white/5 rounded-[24px]" />,

@@ -1,9 +1,9 @@
-﻿import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createClient } from "@/lib/infra/supabase/supabase-server";
+﻿import { evaluateFollowToggle } from "@/lib/domains/security/follow-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { evaluateFollowToggle } from "@/lib/domains/security/follow-guards";
+import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const toggleFollowSchema = z.object({
   targetUserId: z.string().uuid(),

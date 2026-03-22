@@ -1,10 +1,32 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { ChatMessage } from '@/hooks/use-realtime-chat'
 import { createClient } from '@/lib/infra/supabase/supabase'
-import { ChatMessage } from '@/hooks/use-realtime-chat'
+import { useEffect,useMemo,useState } from 'react'
+
+type MessageRow = {
+  id: string
+  content: string
+  created_at: string
+  sender_id: string
+  type: 'text' | 'audio'
+  metadata?: {
+    user_snapshot?: { name?: string; isVerified?: boolean; role?: string }
+    reactions?: Record<string, string[]>
+    audioUrl?: string
+    status?: 'sent' | 'read'
+  } | null
+  is_read: boolean
+  is_deleted: boolean
+  sender?: {
+    full_name?: string | null
+    username?: string | null
+    seller_status?: string | null
+    is_admin?: boolean | null
+  } | null
+}
 
 export function useMessagesQuery(roomName: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     async function fetchMessages() {
@@ -33,7 +55,7 @@ export function useMessagesQuery(roomName: string) {
       }
 
       if (data) {
-        const mappedMessages: ChatMessage[] = data.map((msg: any) => {
+        const mappedMessages: ChatMessage[] = (data as MessageRow[]).map((msg) => {
           // Construct user object from profile join or metadata snapshot
           const profile = msg.sender
           const snapshot = msg.metadata?.user_snapshot
@@ -53,7 +75,7 @@ export function useMessagesQuery(roomName: string) {
             reactions: msg.metadata?.reactions || {},
             type: msg.type as 'text' | 'audio',
             audioUrl: msg.metadata?.audioUrl,
-            status: msg.is_read ? 'read' : (msg.metadata?.status || 'sent')
+            status: msg.is_read ? 'read' : 'sent'
           }
         })
         
@@ -62,7 +84,7 @@ export function useMessagesQuery(roomName: string) {
     }
 
     fetchMessages()
-  }, [roomName])
+  }, [roomName, supabase])
 
   return { data: messages }
 }

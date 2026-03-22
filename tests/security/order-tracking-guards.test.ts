@@ -1,11 +1,11 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  buildTrackingPath,
-  generateOrderId,
-  generateTrackingAccessToken,
-  generateTrackingId,
-  isTrackingAccessAllowed,
+buildTrackingPath,
+generateOrderId,
+generateTrackingAccessToken,
+generateTrackingId,
+isTrackingAccessAllowed,
 } from "../../src/lib/domains/security/order-tracking-guards";
 
 test("order and tracking identifiers use opaque high-entropy formats", () => {

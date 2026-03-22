@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { cn } from "@/lib/core/utils/utils";
-import { Send, Paperclip, Smile } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
 import { Squircle } from "@/components/shared/ui/Squircle";
+import { cn } from "@/lib/core/utils/utils";
+import { Paperclip,Send,Smile } from "lucide-react";
+import Image from "next/image";
+import { useEffect,useRef,useState } from "react";
 
 interface Message {
   id: string;
@@ -68,15 +69,17 @@ export function DealChatPanel({ initialMessages = [], className, recipientName =
     >
       <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
         <div className="relative">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
-                <div className="h-full w-full rounded-full bg-zinc-900 overflow-hidden">
-                    <img 
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
+                    <div className="h-full w-full rounded-full bg-zinc-900 overflow-hidden">
+                      <Image
                         src={`https://ui-avatars.com/api/?name=${recipientName}&background=random`}
                         alt={recipientName}
+                        width={40}
+                        height={40}
                         className="h-full w-full object-cover"
-                    />
+                      />
+                    </div>
                 </div>
-            </div>
             {isOnline && (
                 <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-zinc-900" />
             )}

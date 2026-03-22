@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { sileo, type SileoOptions, type SileoState } from "sileo";
+import { sileo,type SileoOptions,type SileoState } from "sileo";
 import {
-  notificationScopeDefaults,
-  notificationScopePosition,
-  type NotificationScope,
+notificationScopeDefaults,
+notificationScopePosition,
+type NotificationScope,
 } from "./positions";
 
 type ToastInput =
@@ -176,4 +176,4 @@ export const paymentsToast = createScopedToast("payments");
 export const profileToast = createScopedToast("profile");
 export const dealsToast = createScopedToast("deals");
 
-export type { ToastInput, ToastOverrides, ToastPromiseConfig, ScopedToast };
+export type { ScopedToast,ToastInput,ToastOverrides,ToastPromiseConfig };

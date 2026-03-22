@@ -1,6 +1,6 @@
-import test from "node:test";
 import assert from "node:assert/strict";
-import { JOB_GROUPS, JOB_LOADERS } from "../../jobs/registry";
+import test from "node:test";
+import { JOB_GROUPS,JOB_LOADERS } from "../../jobs/registry";
 
 test("every group references existing jobs", () => {
   const jobs = new Set(Object.keys(JOB_LOADERS));

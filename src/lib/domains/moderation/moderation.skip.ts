@@ -1,5 +1,5 @@
 ﻿import { MODERATION_REASON_CODES } from "@/lib/domains/moderation/moderation.reason-codes";
-import type { ModerationInput, ModerationReasonCode } from "@/lib/domains/moderation/moderation.types";
+import type { ModerationInput,ModerationReasonCode } from "@/lib/domains/moderation/moderation.types";
 
 function normalizeRoute(pathname: string | null | undefined) {
   return String(pathname || "").trim().toLowerCase();

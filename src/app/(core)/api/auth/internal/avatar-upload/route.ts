@@ -1,9 +1,9 @@
-﻿import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+﻿import { verifyOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
 import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
-import { verifyOnboardingSessionProof } from "@/lib/domains/internal-auth/onboarding-session";
+import { randomUUID } from "crypto";
+import { NextResponse } from "next/server";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);

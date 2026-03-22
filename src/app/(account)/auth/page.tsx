@@ -1,5 +1,5 @@
-﻿import Link from "next/link";
-import { getRedirectPath } from "@/lib/app/seo/redirects";
+﻿import { getRedirectPath } from "@/lib/app/seo/redirects";
+import Link from "next/link";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

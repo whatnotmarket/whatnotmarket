@@ -1,4 +1,4 @@
-﻿import type { ParsedQuery, ScoreBreakdown, SearchCatalogItem, SearchScopeId } from "@/components/features/search/search-types";
+﻿import type { ParsedQuery,ScoreBreakdown,SearchCatalogItem,SearchScopeId } from "@/components/features/search/search-types";
 
 type ParseOptions = {
   knownBrands?: string[];

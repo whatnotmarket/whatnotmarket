@@ -1,47 +1,47 @@
 ﻿"use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import * as Flags from "country-flag-icons/react/3x2";
-import {
-  BriefcaseBusiness,
-  Coins,
-  Globe2,
-  LifeBuoy,
-  LogIn,
-  ShoppingBag,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/shared/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/avatar";
 import BuyerProfileRealtimeChart from "@/components/shared/charts/buyer-profile-realtime-chart";
 import { profileChartTheme } from "@/components/shared/charts/profile-chart-theme";
-import { cn } from "@/lib/core/utils/utils";
-import { createClient } from "@/lib/infra/supabase/supabase";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/shared/ui/avatar";
+import { Button } from "@/components/shared/ui/button";
 import { useUser } from "@/contexts/UserContext";
+import { cn } from "@/lib/core/utils/utils";
 import {
-  DEFAULT_GLOBAL_CHAT_ROOM,
-  GLOBAL_CHAT_ROOMS,
-  type GlobalChatRoom,
+DEFAULT_GLOBAL_CHAT_ROOM,
+GLOBAL_CHAT_ROOMS,
+type GlobalChatRoom,
 } from "@/lib/domains/chat/global-chat-config";
+import { createClient } from "@/lib/infra/supabase/supabase";
+import * as Flags from "country-flag-icons/react/3x2";
+import { AnimatePresence,motion } from "framer-motion";
 import {
-  globalChatBehavior,
-  globalChatClassNames,
-  globalChatComponentClassNames,
-  getChatGlobalComposerShellStyle,
-  getChatGlobalCssVars,
-  getChatGlobalErrorCardStyle,
-  getChatGlobalInputStyle,
-  getChatGlobalMessageCardStyle,
-  getChatGlobalPanelStyle,
-  getChatGlobalRulesCardStyle,
-  getChatGlobalSendButtonStyle,
-  getChatGlobalStateCardStyle,
-  getChatGlobalUserSheetStyle,
-} from "./global-chat-layout";
+BriefcaseBusiness,
+Coins,
+Globe2,
+LifeBuoy,
+LogIn,
+ShoppingBag,
+X,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname,useRouter } from "next/navigation";
+import { useCallback,useEffect,useMemo,useRef,useState } from "react";
 import { HomepageChatHeader } from "./components/HomepageChatHeader";
+import {
+getChatGlobalComposerShellStyle,
+getChatGlobalCssVars,
+getChatGlobalErrorCardStyle,
+getChatGlobalInputStyle,
+getChatGlobalMessageCardStyle,
+getChatGlobalPanelStyle,
+getChatGlobalRulesCardStyle,
+getChatGlobalSendButtonStyle,
+getChatGlobalStateCardStyle,
+getChatGlobalUserSheetStyle,
+globalChatBehavior,
+globalChatClassNames,
+globalChatComponentClassNames,
+} from "./global-chat-layout";
 
 const PROFILE_SELECT = "username,full_name,avatar_url,created_at,role_preference,seller_status";
 const MESSAGE_SELECT = `id,user_id,room,message,created_at,is_deleted,profiles!global_chat_messages_user_id_fkey(${PROFILE_SELECT})`;

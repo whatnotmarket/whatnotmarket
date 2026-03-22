@@ -1,7 +1,6 @@
-﻿import "server-only";
-import { SITE_URL } from "@/lib/core/config/site-config";
+﻿import { SITE_URL } from "@/lib/core/config/site-config";
+import "server-only";
 
-const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 const BING_ENDPOINT = "https://www.bing.com/indexnow";
 const BASE_URL = SITE_URL;
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY;

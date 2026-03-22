@@ -45,5 +45,10 @@ export interface StepProps {
   isFirstStep?: boolean;
   isLastStep?: boolean;
   initialUrl?: string;
-  initialData?: any;
+  initialData?: {
+    title?: string;
+    image?: string;
+    price?: number;
+    currency?: string;
+  };
 }

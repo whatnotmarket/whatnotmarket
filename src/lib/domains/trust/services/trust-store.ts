@@ -1,6 +1,6 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import type { ReasonCode } from "@/lib/domains/trust/reason-codes";
-import type { RiskEntityType, RiskLevel, TrustAccountFlag, TrustAccountState } from "@/lib/domains/trust/types";
+﻿import type { ReasonCode } from "@/lib/domains/trust/reason-codes";
+import type { RiskEntityType,RiskLevel,TrustAccountFlag,TrustAccountState } from "@/lib/domains/trust/types";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type TrustAccountStateRow = {
   user_id: string;

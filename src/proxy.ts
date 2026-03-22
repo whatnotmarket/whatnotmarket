@@ -1,22 +1,22 @@
-﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { verifyToken } from "@/lib/domains/auth/auth";
-import { getRedirectPath } from "@/lib/app/seo/redirects";
-import { hasCanonicalAdminAccess } from "@/lib/domains/security/admin-guards";
-import {
-  MAINTENANCE_PATHNAME,
-  createMaintenanceHeaders,
-  isMaintenanceModeEnabled,
-} from "@/lib/core/config/maintenance";
-import {
-  LOCALE_COOKIE_NAME,
-  detectPreferredLocale,
-  isPathNonLocalized,
-  shouldLocalizePath,
-  stripLocaleFromPathname,
-  withLocale,
+﻿import {
+LOCALE_COOKIE_NAME,
+detectPreferredLocale,
+isPathNonLocalized,
+shouldLocalizePath,
+stripLocaleFromPathname,
+withLocale,
 } from "@/i18n/config";
+import { getRedirectPath } from "@/lib/app/seo/redirects";
+import {
+MAINTENANCE_PATHNAME,
+createMaintenanceHeaders,
+isMaintenanceModeEnabled,
+} from "@/lib/core/config/maintenance";
+import { verifyToken } from "@/lib/domains/auth/auth";
+import { hasCanonicalAdminAccess } from "@/lib/domains/security/admin-guards";
+import { createServerClient } from "@supabase/ssr";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const STATIC_FILE_PATTERN =
   /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json|webmanifest|woff2?|ttf|eot)$/i;

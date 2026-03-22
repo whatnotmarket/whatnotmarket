@@ -1,7 +1,7 @@
 ﻿'use server';
 
 import { createClient } from '@/lib/infra/supabase/supabase-server';
-import { CopyWebsite, CopyWebsiteInsert, CopyWebsiteUpdate } from '@/types/copy-website';
+import { CopyWebsite,CopyWebsiteInsert,CopyWebsiteUpdate } from '@/types/copy-website';
 import { revalidatePath } from 'next/cache';
 
 export async function getCopyItems(query?: string) {

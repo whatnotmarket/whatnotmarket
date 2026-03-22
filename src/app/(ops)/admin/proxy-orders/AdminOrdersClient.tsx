@@ -1,21 +1,23 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { ProxyOrder, OrderStatus } from "@/lib/infra/db/orders-db";
 import { Button } from "@/components/shared/ui/button";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { adminToast as toast } from "@/lib/domains/notifications";
+import { OrderStatus,ProxyOrder } from "@/lib/infra/db/orders-db";
+import { useState } from "react";
 
 interface AdminOrdersClientProps {
   initialOrders: ProxyOrder[];
 }
 
+type OrderMetadata = Record<string, string>;
+
 export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders] = useState(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<ProxyOrder | null>(null);
   const [newStatus, setNewStatus] = useState<OrderStatus>("CREATED");
   const [message, setMessage] = useState("");
-  const [metadata, setMetadata] = useState<any>({});
+  const [metadata, setMetadata] = useState<OrderMetadata>({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [followerHandle, setFollowerHandle] = useState("");
   const [targetHandle, setTargetHandle] = useState("openlymarket");
@@ -136,8 +138,7 @@ export function AdminOrdersClient({ initialOrders }: AdminOrdersClientProps) {
                 <span className="font-mono text-xs text-zinc-500">#{order.id.slice(0,6)}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
                   order.status === "COMPLETED" ? "bg-emerald-500/20 text-emerald-400" :
-                  // @ts-ignore
-                  order.status === "CANCELLED" ? "bg-red-500/20 text-red-400" :
+                  String(order.status) === "CANCELLED" ? "bg-red-500/20 text-red-400" :
                   "bg-zinc-800 text-zinc-400"
                 }`}>
                   {order.status}

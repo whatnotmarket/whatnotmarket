@@ -1,12 +1,12 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { User, CreditCard, LogOut, Phone, Ticket, PlusCircle, MessageSquare } from "lucide-react";
-import { NavPopup } from "./NavPopup";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import { createClient } from "@/lib/infra/supabase/supabase";
+import { CreditCard,LogOut,MessageSquare,Phone,PlusCircle,Ticket,User } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect,useMemo,useState } from "react";
+import { NavPopup } from "./NavPopup";
 
 function toDisplayNameFromEmail(email: string | null | undefined) {
   const localPart = String(email || "")

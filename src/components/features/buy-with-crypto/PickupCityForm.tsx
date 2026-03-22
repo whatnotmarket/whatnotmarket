@@ -1,7 +1,8 @@
 "use client";
 
-import { MapPin, Check } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Check,MapPin } from "lucide-react";
+/* eslint-disable react/no-unescaped-entities */
+import { useEffect,useRef,useState } from "react";
 
 // Expanded list of major world cities for autocomplete
 const CITIES = [

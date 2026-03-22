@@ -1,12 +1,12 @@
-﻿import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { AbuseGuardResponse, enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
-import {
-  normalizeInternalUsername,
-  usernameAvailabilitySchema,
+﻿import {
+normalizeInternalUsername,
+usernameAvailabilitySchema,
 } from "@/lib/domains/internal-auth/schemas";
+import { AbuseGuardResponse,enforceAbuseGuard } from "@/lib/domains/security/abuse-guards";
 import { isReservedProfileHandle } from "@/lib/domains/security/identity-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { NextResponse } from "next/server";
 
 function withJitter() {
   const delayMs = 120 + Math.floor(Math.random() * 180);

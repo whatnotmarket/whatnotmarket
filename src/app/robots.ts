@@ -1,5 +1,5 @@
-﻿import { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/core/config/site-config";
+﻿import { SITE_URL } from "@/lib/core/config/site-config";
+import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = SITE_URL;

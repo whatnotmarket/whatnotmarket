@@ -1,16 +1,16 @@
 ﻿"use client";
 
-import { useState } from "react";
 import {
-  adminToast,
-  authToast,
-  dealsToast,
-  marketToast,
-  paymentsToast,
-  profileToast,
-  toast,
-  type ScopedToast,
+adminToast,
+authToast,
+dealsToast,
+marketToast,
+paymentsToast,
+profileToast,
+toast,
+type ScopedToast,
 } from "@/lib/domains/notifications";
+import { useState } from "react";
 
 type ScopeKey = "global" | "auth" | "admin" | "market" | "payments" | "profile" | "deals";
 

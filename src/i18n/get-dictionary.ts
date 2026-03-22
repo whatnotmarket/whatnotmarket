@@ -1,6 +1,6 @@
-import { cache } from "react";
-import { DEFAULT_LOCALE, normalizeLocale, type Locale } from "@/i18n/config";
+import { DEFAULT_LOCALE,normalizeLocale,type Locale } from "@/i18n/config";
 import type { UiDictionary } from "@/i18n/dictionaries/types";
+import { cache } from "react";
 
 const dictionaryLoaders: Record<Locale, () => Promise<UiDictionary>> = {
   en: () => import("@/i18n/dictionaries/en").then((mod) => mod.dictionary),

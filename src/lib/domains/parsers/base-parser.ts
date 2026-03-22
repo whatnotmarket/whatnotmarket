@@ -1,8 +1,8 @@
 import * as cheerio from "cheerio";
-import { ProductData, ProductParser } from "./types";
+import { ProductData,ProductParser } from "./types";
 
 export class BaseParser implements ProductParser {
-  canParse(url: string): boolean {
+  canParse(): boolean {
     return true; // Fallback parser handles everything
   }
 
@@ -68,7 +68,7 @@ export class BaseParser implements ProductParser {
             };
           }
         }
-      } catch (e) {
+      } catch {
         continue;
       }
     }

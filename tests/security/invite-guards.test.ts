@@ -1,5 +1,5 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import { enforceRequiredInvite } from "../../src/lib/domains/security/invite-guards";
 
 test("required invite fails when code is missing", () => {

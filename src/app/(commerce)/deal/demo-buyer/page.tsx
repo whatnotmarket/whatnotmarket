@@ -1,15 +1,15 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { DealLayout, DealMainColumn, DealSideColumn } from "@/components/features/deal/DealLayout";
-import { DealHeader } from "@/components/features/deal/DealHeader";
-import { DealSummaryCard } from "@/components/features/deal/DealSummaryCard";
-import { DealUserCard } from "@/components/features/deal/DealUserCard";
-import { DealTimeline, TimelineEvent } from "@/components/features/deal/DealTimeline";
 import { DealChatPanel } from "@/components/features/deal/DealChatPanel";
+import { DealHeader } from "@/components/features/deal/DealHeader";
+import { DealLayout,DealMainColumn,DealSideColumn } from "@/components/features/deal/DealLayout";
+import { DealStatus } from "@/components/features/deal/DealStatusBadge";
+import { DealSummaryCard } from "@/components/features/deal/DealSummaryCard";
+import { DealTimeline,TimelineEvent } from "@/components/features/deal/DealTimeline";
+import { DealUserCard } from "@/components/features/deal/DealUserCard";
 import { OfferModal } from "@/components/features/deal/OfferModal";
 import { ConfirmationModal } from "@/components/shared/ui/ConfirmationModal";
-import { DealStatus } from "@/components/features/deal/DealStatusBadge";
+import { useState } from "react";
 
 // Mock Data
 const INITIAL_DEAL = {

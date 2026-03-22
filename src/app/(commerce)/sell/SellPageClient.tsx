@@ -1,22 +1,22 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Loader2, ArrowLeft, DollarSign, Clock, AlertCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import { Input } from "@/components/shared/ui/input";
-import { Button } from "@/components/shared/ui/button";
 import { Navbar } from "@/components/app/navigation/Navbar";
+import { Button } from "@/components/shared/ui/button";
+import { Input } from "@/components/shared/ui/input";
+import { Option,SearchableSelect } from "@/components/shared/ui/SearchableSelect";
 import { Squircle } from "@/components/shared/ui/Squircle";
-import { marketToast as toast } from "@/lib/domains/notifications";
-import { cn } from "@/lib/core/utils/utils";
 import { CRYPTO_CURRENCIES } from "@/contexts/CryptoContext";
-import Image from "next/image";
-import { SearchableSelect, Option } from "@/components/shared/ui/SearchableSelect";
 import { analytics } from "@/lib/app/analytics/analytics";
+import { cn } from "@/lib/core/utils/utils";
+import { marketToast as toast } from "@/lib/domains/notifications";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import { AlertCircle,ArrowLeft,Loader2 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect,useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const CATEGORY_OPTIONS: Option[] = [
   { value: "accounts", label: "Accounts & Access", icon: "ðŸ”", subtitle: "Netflix, Spotify, VPNs, etc." },
@@ -97,16 +97,6 @@ export default function SellPage() {
   const filteredSuggestions = titleValue && titleValue.length > 2 
     ? SELL_SUGGESTIONS.filter(s => s.toLowerCase().includes(titleValue.toLowerCase()))
     : [];
-
-  // Toggle crypto selection
-  const handleCryptoToggle = (cryptoCode: string) => {
-    const currentMethods = watch("paymentMethods") || [];
-    if (currentMethods.includes(cryptoCode)) {
-      setValue("paymentMethods", currentMethods.filter(c => c !== cryptoCode), { shouldValidate: true });
-    } else {
-      setValue("paymentMethods", [...currentMethods, cryptoCode], { shouldValidate: true });
-    }
-  };
 
   const onSubmit = async (data: SellFormValues) => {
     setLoading(true);

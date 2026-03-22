@@ -1,5 +1,5 @@
-﻿import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/core/utils/utils";
+﻿import { cn } from "@/lib/core/utils/utils";
+import { cva,type VariantProps } from "class-variance-authority";
 
 const sectionVariants = cva(
   "relative w-full",

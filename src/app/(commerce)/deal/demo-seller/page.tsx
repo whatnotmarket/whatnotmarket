@@ -1,12 +1,11 @@
 ﻿"use client";
 
-import { DealLayout, DealMainColumn, DealSideColumn } from "@/components/features/deal/DealLayout";
-import { DealHeader } from "@/components/features/deal/DealHeader";
-import { DealSummaryCard } from "@/components/features/deal/DealSummaryCard";
-import { DealUserCard } from "@/components/features/deal/DealUserCard";
-import { DealTimeline } from "@/components/features/deal/DealTimeline";
 import { DealChatPanel } from "@/components/features/deal/DealChatPanel";
-import { Truck, MessageSquare, Ban } from "lucide-react";
+import { DealHeader } from "@/components/features/deal/DealHeader";
+import { DealLayout,DealMainColumn,DealSideColumn } from "@/components/features/deal/DealLayout";
+import { DealSummaryCard } from "@/components/features/deal/DealSummaryCard";
+import { DealTimeline } from "@/components/features/deal/DealTimeline";
+import { DealUserCard } from "@/components/features/deal/DealUserCard";
 
 // Mock Data for Seller View
 const MOCK_DEAL = {

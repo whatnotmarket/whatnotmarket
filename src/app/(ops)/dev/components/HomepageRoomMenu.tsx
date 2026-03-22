@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { useCallback, useState, useSyncExternalStore } from "react";
-import type { GlobalChatRoom } from "@/lib/domains/chat/global-chat-config";
 import { cn } from "@/lib/core/utils/utils";
+import type { GlobalChatRoom } from "@/lib/domains/chat/global-chat-config";
 import { ChevronDown } from "lucide-react";
+import { useCallback,useState,useSyncExternalStore } from "react";
 
 const ROOM_TOOLTIP_CHOSEN_STORAGE_KEY = "global_chat_room_tooltip_chosen";
 const ROOM_TOOLTIP_CHOSEN_STORAGE_EVENT = "global_chat_room_tooltip_chosen_change";

@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { Squircle } from "@/components/shared/ui/Squircle";
-import { Copy, Check, QrCode, Loader2 } from "lucide-react";
 import { Button } from "@/components/shared/ui/button";
+import { Squircle } from "@/components/shared/ui/Squircle";
+import { Check,Copy,Loader2,QrCode } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 interface CryptoPaymentGatewayProps {
   orderId: string;
@@ -101,9 +102,11 @@ export function CryptoPaymentGateway({
         <div className="flex flex-col items-center gap-4">
           <div className="flex justify-center">
             {/* Dynamic QR Code based on currency */}
-            <img 
+            <Image 
               src={`/images/png/openly-${currency.toUpperCase()}.png`}
               alt={`${currency} QR Code`}
+              width={224}
+              height={224}
               className="w-56 h-56 object-contain rounded-xl"
               onError={(e) => {
                 // Fallback to generic icon if image fails

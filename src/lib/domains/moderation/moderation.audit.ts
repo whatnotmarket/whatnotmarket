@@ -1,5 +1,5 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
-import type { ModerationInput, ModerationResult } from "@/lib/domains/moderation/moderation.types";
+﻿import type { ModerationInput,ModerationResult } from "@/lib/domains/moderation/moderation.types";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type ModerationAuditPayload = {
   input: ModerationInput;

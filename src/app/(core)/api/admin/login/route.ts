@@ -1,10 +1,10 @@
-﻿import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { signToken } from "@/lib/domains/auth/auth";
-import { checkRateLimitDetailed, RateLimitResponse } from "@/lib/infra/security/rate-limit";
-import { createClient } from "@/lib/infra/supabase/supabase-server";
-import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+﻿import { signToken } from "@/lib/domains/auth/auth";
 import { hasCanonicalAdminAccess } from "@/lib/domains/security/admin-guards";
+import { checkRateLimitDetailed,RateLimitResponse } from "@/lib/infra/security/rate-limit";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+import { createClient } from "@/lib/infra/supabase/supabase-server";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const rateLimit = checkRateLimitDetailed(req, { action: "admin_login" });

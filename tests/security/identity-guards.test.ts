@@ -1,8 +1,8 @@
-﻿import test from "node:test";
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  isReservedProfileHandle,
-  normalizeProfileHandle,
+isReservedProfileHandle,
+normalizeProfileHandle,
 } from "../../src/lib/domains/security/identity-guards";
 
 test("normalize profile handle strips dangerous prefixes and symbols", () => {

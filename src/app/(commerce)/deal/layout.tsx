@@ -1,5 +1,5 @@
-﻿import type { Metadata } from "next";
-import { NOINDEX_METADATA } from "@/lib/app/seo/seo";
+﻿import { NOINDEX_METADATA } from "@/lib/app/seo/seo";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = NOINDEX_METADATA;
 

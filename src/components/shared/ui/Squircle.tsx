@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import React from "react";
-import { Squircle as ReactSquircle } from "@squircle-js/react";
 import { cn } from "@/lib/core/utils/utils";
+import { Squircle as ReactSquircle } from "@squircle-js/react";
+import React from "react";
 
 type SquircleProps = {
   /** The corner radius in pixels. Defaults to 24. */

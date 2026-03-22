@@ -1,5 +1,5 @@
-import type { JobResult } from "./types";
 import { getJobsSupabaseAdminClient } from "./supabase";
+import type { JobResult } from "./types";
 
 function toErrorText(error: Error | undefined) {
   if (!error) return null;

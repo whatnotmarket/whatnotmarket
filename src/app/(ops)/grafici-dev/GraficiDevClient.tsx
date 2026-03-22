@@ -1,47 +1,47 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Crosshair,
-  Eye,
-  Layers,
-  Lock,
-  Magnet,
-  Minus,
-  Move,
-  Pencil,
-  Plus,
-  Ruler,
-  Share2,
-  SlidersHorizontal,
-  Smile,
-  Trash2,
-  Type,
-  Workflow,
-} from "lucide-react";
-import {
-  CandlestickSeries,
-  ColorType,
-  CrosshairMode,
-  HistogramSeries,
-  LineSeries,
-  LineStyle,
-  createChart,
-  type BarData,
-  type CandlestickData,
-  type HistogramData,
-  type IChartApi,
-  type IPriceLine,
-  type ISeriesApi,
-  type MouseEventParams,
-  type SingleValueData,
-  type Time,
-  type UTCTimestamp,
+CandlestickSeries,
+ColorType,
+CrosshairMode,
+HistogramSeries,
+LineSeries,
+LineStyle,
+createChart,
+type BarData,
+type CandlestickData,
+type HistogramData,
+type IChartApi,
+type IPriceLine,
+type ISeriesApi,
+type MouseEventParams,
+type SingleValueData,
+type Time,
+type UTCTimestamp,
 } from "lightweight-charts";
+import {
+Crosshair,
+Eye,
+Layers,
+Lock,
+Magnet,
+Minus,
+Move,
+Pencil,
+Plus,
+Ruler,
+Share2,
+SlidersHorizontal,
+Smile,
+Trash2,
+Type,
+Workflow,
+} from "lucide-react";
+import { useEffect,useMemo,useRef,useState } from "react";
 
 import LightweightChart from "@/components/shared/charts/lightweight-chart";
 import LightweightDocsShowcase from "@/components/shared/charts/lightweight-docs-showcase";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/card";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/shared/ui/card";
 
 const lineLikeData: SingleValueData<Time>[] = [
   { time: "2026-01-01", value: 102 },

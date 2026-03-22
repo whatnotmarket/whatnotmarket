@@ -1,29 +1,29 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AreaSeries,
-  ColorType,
-  HistogramSeries,
-  LineSeries,
-  LineStyle,
-  CandlestickSeries,
-  createChart,
-  createImageWatermark,
-  createTextWatermark,
-  type CandlestickData,
-  type ChartOptions,
-  type DeepPartial,
-  type HistogramData,
-  type IChartApi,
-  type LogicalRange,
-  type MouseEventParams,
-  type SingleValueData,
-  type Time,
-  type UTCTimestamp,
+AreaSeries,
+CandlestickSeries,
+ColorType,
+createChart,
+createImageWatermark,
+createTextWatermark,
+HistogramSeries,
+LineSeries,
+LineStyle,
+type CandlestickData,
+type ChartOptions,
+type DeepPartial,
+type HistogramData,
+type IChartApi,
+type LogicalRange,
+type MouseEventParams,
+type SingleValueData,
+type Time,
+type UTCTimestamp,
 } from "lightweight-charts";
+import { useEffect,useMemo,useRef,useState } from "react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/card";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/shared/ui/card";
 
 type ShowcaseRealtimeConfig = {
   enabled: boolean;

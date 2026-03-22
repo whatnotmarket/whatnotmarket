@@ -1,34 +1,34 @@
 ﻿"use client";
 
-import { type CSSProperties, type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import {
-  ArrowLeftRight,
-  BarChart3,
-  Bell,
-  ChevronDown,
-  ChevronRight,
-  CircleHelp,
-  CircleUserRound,
-  Globe,
-  Grid3X3,
-  HardDrive,
-  Link as LinkIcon,
-  Mail,
-  Megaphone,
-  Moon,
-  Search,
-  Settings,
-  X,
-  Wrench,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { SIDEBAR_TOOLTIPS } from "./sidebar-tooltips";
 import { useUser } from "@/contexts/UserContext";
-import { createClient } from "@/lib/infra/supabase/supabase";
 import { cn } from "@/lib/core/utils/utils";
+import { createClient } from "@/lib/infra/supabase/supabase";
+import { AnimatePresence,motion } from "framer-motion";
+import type { LucideIcon } from "lucide-react";
+import {
+ArrowLeftRight,
+BarChart3,
+Bell,
+ChevronDown,
+ChevronRight,
+CircleHelp,
+CircleUserRound,
+Globe,
+Grid3X3,
+HardDrive,
+Link as LinkIcon,
+Mail,
+Megaphone,
+Moon,
+Search,
+Settings,
+Wrench,
+X,
+} from "lucide-react";
+import Image from "next/image";
+import { usePathname,useRouter } from "next/navigation";
+import { type CSSProperties,type MouseEvent as ReactMouseEvent,useCallback,useEffect,useRef,useState } from "react";
+import { SIDEBAR_TOOLTIPS } from "./sidebar-tooltips";
 
 const RAIL_WIDTH = 92;
 const OPEN_LEFT_WIDTH = 336;
@@ -90,9 +90,12 @@ function SidebarProfileTriggerIcon({
   if (isLoggedIn && avatarUrl) {
     return (
       <span className="h-9 w-9 overflow-hidden rounded-xl">
-        <img
+        <Image
           src={avatarUrl}
           alt="Profile"
+          width={36}
+          height={36}
+          unoptimized
           className="h-full w-full rounded-xl object-cover"
           referrerPolicy="no-referrer"
         />
@@ -661,9 +664,12 @@ function ProfileSlideSheet({
             <div className="mb-4 flex flex-col items-center text-center">
               {profileAvatarUrl ? (
                 <span className="h-14 w-14 overflow-hidden rounded-2xl">
-                  <img
+                  <Image
                     src={profileAvatarUrl}
                     alt={profileDisplayName}
+                    width={56}
+                    height={56}
+                    unoptimized
                     className="h-full w-full rounded-2xl object-cover"
                     referrerPolicy="no-referrer"
                   />

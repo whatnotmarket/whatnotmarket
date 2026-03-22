@@ -1,9 +1,6 @@
-﻿import { cn } from '@/lib/core/utils/utils'
-import type { ChatMessage } from '@/hooks/use-realtime-chat'
-import { CheckCircle2, Check, CheckCheck } from 'lucide-react'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/shared/ui/popover'
-import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react'
-import { useState } from 'react'
+﻿import type { ChatMessage } from '@/hooks/use-realtime-chat'
+import { cn } from '@/lib/core/utils/utils'
+import { Check,CheckCheck,CheckCircle2 } from 'lucide-react'
 
 interface ChatMessageItemProps {
   message: ChatMessage
@@ -14,13 +11,6 @@ interface ChatMessageItemProps {
 }
 
 export const ChatMessageItem = ({ message, isOwnMessage, showHeader, onReact, currentUsername }: ChatMessageItemProps) => {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const handleReactionClick = (emojiData: EmojiClickData) => {
-      onReact?.(emojiData.emoji)
-      setIsOpen(false)
-  }
-
   if (message.type === 'system') {
     return (
       <div className="flex justify-center my-4 w-full">
@@ -30,9 +20,6 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader, onReact, cu
       </div>
     )
   }
-
-  // Only allow reactions on other people's messages
-  const canReact = !isOwnMessage && !!onReact;
 
   // Calculate reactions display
   const reactions = Object.entries(message.reactions || {}).map(([emoji, users]) => ({

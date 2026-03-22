@@ -1,9 +1,9 @@
-﻿import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
+﻿import { evaluateUserRiskPolicy } from "@/lib/domains/trust/policy/engine";
 import { calculateUserRiskScore } from "@/lib/domains/trust/scoring/user-risk";
-import { evaluateUserRiskPolicy } from "@/lib/domains/trust/policy/engine";
-import { getTrustAccountState, saveRiskEvent, upsertRiskSnapshot, upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
-import type { PolicyDecision, UserRiskSignals } from "@/lib/domains/trust/types";
+import { getTrustAccountState,saveRiskEvent,upsertRiskSnapshot,upsertTrustAccountState } from "@/lib/domains/trust/services/trust-store";
+import type { PolicyDecision,UserRiskSignals } from "@/lib/domains/trust/types";
 import { toHoursFromNow } from "@/lib/domains/trust/utils";
+import { createAdminClient } from "@/lib/infra/supabase/supabase-admin";
 
 type ProfileRiskRow = {
   id: string;

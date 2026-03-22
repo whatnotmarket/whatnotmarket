@@ -1,63 +1,58 @@
 ﻿"use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import {
-  AlertTriangle,
-  BarChart3,
-  Bell,
-  ClipboardList,
-  Database,
-  HandCoins,
-  Loader2,
-  MessageSquareWarning,
-  PackageSearch,
-  RefreshCw,
-  Search,
-  ShieldAlert,
-  ShieldCheck,
-  UserCog,
-  Users,
-  Wallet,
-  Wrench,
-} from "lucide-react";
-import { adminToast as toast } from "@/lib/domains/notifications";
-import { ChartAreaInteractive } from "@/components/shared/charts/chart-area-interactive";
 import { SiteHeader } from "@/components/app/navigation/site-header";
-import { Button } from "@/components/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/card";
-import { Input } from "@/components/shared/ui/input";
+import { ChartAreaInteractive } from "@/components/shared/charts/chart-area-interactive";
 import { Badge } from "@/components/shared/ui/badge";
+import { Button } from "@/components/shared/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/shared/ui/card";
 import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
+type ChartConfig
 } from "@/components/shared/ui/chart";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shared/ui/select";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-} from "@/components/shared/ui/sidebar";
-import { TooltipProvider } from "@/components/shared/ui/tooltip";
+import { Input } from "@/components/shared/ui/input";
 import { Modal } from "@/components/shared/ui/Modal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shared/ui/tabs";
-import type { DashboardData, EscrowDashboardData, ProxyDashboardData, CryptoWalletsPayload, CryptoWallet, User, Deal, Payment, ProxyOrder } from "./types";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/shared/ui/select";
+import {
+Sidebar,
+SidebarContent,
+SidebarGroup,
+SidebarGroupContent,
+SidebarGroupLabel,
+SidebarHeader,
+SidebarInset,
+SidebarMenu,
+SidebarMenuButton,
+SidebarMenuItem,
+SidebarProvider,
+} from "@/components/shared/ui/sidebar";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/shared/ui/tabs";
+import { TooltipProvider } from "@/components/shared/ui/tooltip";
+import { adminToast as toast } from "@/lib/domains/notifications";
+import {
+AlertTriangle,
+BarChart3,
+Bell,
+ClipboardList,
+Database,
+HandCoins,
+Loader2,
+MessageSquareWarning,
+PackageSearch,
+RefreshCw,
+Search,
+ShieldAlert,
+ShieldCheck,
+UserCog,
+Users,
+Wallet,
+Wrench,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useCallback,useEffect,useMemo,useState,type CSSProperties } from "react";
 import { AdminOverview } from "./components/AdminOverview";
+import type { CryptoWalletsPayload,DashboardData,EscrowDashboardData,ProxyDashboardData } from "./types";
 
 type SectionKey =
   | "search"

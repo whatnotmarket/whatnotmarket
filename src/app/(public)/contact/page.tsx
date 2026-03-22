@@ -1,20 +1,18 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
-  MessageSquare, 
-  Mail, 
-  Send, 
-  HelpCircle,
-  Clock,
-  MapPin
-} from "lucide-react";
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
+import { motion } from "framer-motion";
+import {
+ArrowLeft,
+Clock,
+HelpCircle,
+Mail,
+MessageSquare
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Custom Telegram Icon since it's not in Lucide
 const TelegramIcon = ({ className }: { className?: string }) => (

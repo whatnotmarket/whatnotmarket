@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useTheme } from "next-themes";
-import { useState, useEffect } from "react";
-import { Sun, Monitor, ChevronDown } from "lucide-react";
-import { NavPopup } from "./NavPopup";
 import { cn } from "@/lib/core/utils/utils";
+import { Monitor,Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useState,useSyncExternalStore } from "react";
+import { NavPopup } from "./NavPopup";
 
 const CustomMoon = ({ className }: { className?: string }) => (
     <svg 
@@ -22,9 +22,11 @@ const CustomMoon = ({ className }: { className?: string }) => (
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   if (!mounted) return null;
 
