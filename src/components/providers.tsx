@@ -1,18 +1,13 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import { ThemeProvider } from "next-themes";
 import { ReactNode, useEffect, useState } from "react";
+import NotificationToasters from "@/components/notification-toasters";
 import { CartProvider } from "@/contexts/CartContext";
 import { CryptoProvider } from "@/contexts/CryptoContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { WalletProvider } from "@/contexts/WalletContext";
-
-const NotificationToasters = dynamic(() => import("@/components/notification-toasters"), {
-  ssr: false,
-  loading: () => null,
-});
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());

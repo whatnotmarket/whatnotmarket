@@ -27,6 +27,7 @@ type GlobalCommandSearchProps = {
   variant?: "default" | "polymarket";
   triggerPlaceholder?: string;
   rightHint?: string;
+  triggerStyle?: "default" | "liquid-glass";
 };
 
 type ScopeUI = {
@@ -93,12 +94,14 @@ export function GlobalCommandSearch({
   variant = "default",
   triggerPlaceholder = "Search products, brands, categories, sellers, pages...",
   rightHint,
+  triggerStyle = "default",
 }: GlobalCommandSearchProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeScope, setActiveScope] = useState<SearchScopeId | null>(null);
   const isPolymarketVariant = variant === "polymarket";
+  const isLiquidGlassTrigger = isPolymarketVariant && triggerStyle === "liquid-glass";
 
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -114,6 +117,7 @@ export function GlobalCommandSearch({
     return navigator.platform.toUpperCase().includes("MAC") ? "Cmd K" : "Ctrl K";
   }, []);
   const resolvedRightHint = rightHint ?? (isPolymarketVariant ? "Ctrl K" : hotkeyLabel);
+  const [hintModifier = "Ctrl", hintKey = "K"] = resolvedRightHint.split(" ");
   const triggerBackgroundColor = "var(--cmdk-trigger-bg, #13232D)";
   const triggerBorderColor = isPolymarketVariant
     ? "var(--cmdk-trigger-border-color, transparent)"
@@ -219,77 +223,125 @@ export function GlobalCommandSearch({
         onClick={openPalette}
         aria-label="Open global search"
         className={cn(
-          "relative hidden w-full cursor-text items-center text-left transition md:flex",
+          "group relative hidden w-full cursor-text items-center text-left transition md:flex",
+          isLiquidGlassTrigger ? "liquid-glass-wrapper liquid-glass-pill liquid-glass-blur-minimal gap-2 px-4" : "",
           isPolymarketVariant
             ? "focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-lg:text-[16px]"
             : "h-9 gap-3 rounded-2xl px-3 text-sm font-semibold"
         )}
         style={{
-          backgroundColor: triggerBackgroundColor,
+          backgroundColor: isLiquidGlassTrigger ? "transparent" : triggerBackgroundColor,
           backgroundImage: "none",
           borderColor: triggerBorderColor,
-          borderWidth: isPolymarketVariant ? "var(--cmdk-trigger-border-width, 1px)" : "2px",
+          borderWidth: isLiquidGlassTrigger
+            ? "0px"
+            : isPolymarketVariant
+              ? "var(--cmdk-trigger-border-width, 1px)"
+              : "2px",
           borderStyle: "solid",
           borderRadius: isPolymarketVariant ? "var(--cmdk-trigger-radius, 12px)" : undefined,
           height: isPolymarketVariant ? "var(--cmdk-trigger-height, 40px)" : undefined,
-          paddingInline: isPolymarketVariant ? "var(--cmdk-trigger-padding-x, 16px)" : undefined,
-          paddingBlock: isPolymarketVariant ? "var(--cmdk-trigger-padding-y, 4px)" : undefined,
+          paddingInline: isLiquidGlassTrigger
+            ? "0px"
+            : isPolymarketVariant
+              ? "var(--cmdk-trigger-padding-x, 16px)"
+              : undefined,
+          paddingBlock: isLiquidGlassTrigger
+            ? "0px"
+            : isPolymarketVariant
+              ? "var(--cmdk-trigger-padding-y, 4px)"
+              : undefined,
           boxShadow: triggerBoxShadow,
           transition: "background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease",
           color: "var(--gc-text-primary)",
           opacity: 1,
+          overflow: "hidden",
         }}
       >
         {isPolymarketVariant ? (
-          <>
-            <span className="flex min-w-0 flex-1 items-center" style={{ gap: "var(--cmdk-leading-gap, 12px)" }}>
-              <SearchIcon
-                className="shrink-0"
-                style={{
-                  color: "var(--cmdk-placeholder-color, #535353)",
-                  width: "var(--cmdk-search-icon-size, 20px)",
-                  height: "var(--cmdk-search-icon-size, 20px)",
-                }}
-              />
+          isLiquidGlassTrigger ? (
+            <>
               <span
-                className="truncate"
+                aria-hidden="true"
+                className="liquid-glass-visual-layers absolute inset-0 rounded-[999px]"
+              >
+                <span className="liquid-glass-effect absolute inset-0 rounded-[999px] bg-[linear-gradient(180deg,rgba(22,8,12,0.86),rgba(14,8,10,0.90))] backdrop-blur-[14px] backdrop-saturate-[125%]" />
+                <span className="liquid-glass-tint absolute inset-0 rounded-[999px] bg-[radial-gradient(125%_140%_at_50%_-40%,rgba(255,255,255,0.14),rgba(255,255,255,0.05)_34%,rgba(255,255,255,0)_62%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)_40%,rgba(0,0,0,0.20)_100%)]" />
+                <span className="liquid-glass-shine absolute inset-0 rounded-[999px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(0,0,0,0.40),0_6px_22px_rgba(0,0,0,0.22)]" />
+                <span className="liquid-glass-top-edge pointer-events-none absolute left-6 right-6 top-[1px] h-px bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.45),rgba(255,255,255,0))]" />
+              </span>
+              <span className="liquid-glass-content relative z-[1] flex h-full w-full items-center gap-2 px-4">
+                <SearchIcon className="mr-2 h-4 w-4 shrink-0 text-[var(--cmdk-placeholder-color,#838383)]" />
+                <span
+                  className="flex-1 truncate text-left"
+                  style={{
+                    color: "var(--cmdk-placeholder-color, #838383)",
+                    fontSize: "var(--cmdk-placeholder-size, 14px)",
+                    fontWeight: "var(--cmdk-placeholder-weight, 500)",
+                  }}
+                >
+                  {triggerPlaceholder}
+                </span>
+                <kbd className="pointer-events-none hidden h-5 select-none items-center justify-center gap-0.5 rounded-md border border-[var(--gc-border)] px-1.5 font-mono text-[10px] font-medium text-[var(--gc-text-primary)] opacity-0 transition-opacity group-hover:opacity-100 md:flex">
+                  <span className="flex items-center">
+                    <span className="text-xs leading-none">{hintModifier}</span>
+                  </span>
+                  <span>+</span>
+                  <span>{hintKey}</span>
+                </kbd>
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="flex min-w-0 flex-1 items-center" style={{ gap: "var(--cmdk-leading-gap, 12px)" }}>
+                <SearchIcon
+                  className="shrink-0"
+                  style={{
+                    color: "var(--cmdk-placeholder-color, #535353)",
+                    width: "var(--cmdk-search-icon-size, 20px)",
+                    height: "var(--cmdk-search-icon-size, 20px)",
+                  }}
+                />
+                <span
+                  className="truncate"
+                  style={{
+                    color: "var(--cmdk-placeholder-color, #535353)",
+                    fontSize: "var(--cmdk-placeholder-size, 14px)",
+                    fontWeight: "var(--cmdk-placeholder-weight, 500)",
+                  }}
+                >
+                  {triggerPlaceholder}
+                </span>
+              </span>
+              <span
+                className="pointer-events-none inline-flex shrink-0 items-center leading-none"
                 style={{
-                  color: "var(--cmdk-placeholder-color, #535353)",
-                  fontSize: "var(--cmdk-placeholder-size, 14px)",
-                  fontWeight: "var(--cmdk-placeholder-weight, 500)",
+                  color: "var(--cmdk-shortcut-color, #535353)",
+                  backgroundColor: "var(--cmdk-shortcut-bg, #2A3A4A)",
+                  borderRadius: "var(--cmdk-shortcut-radius, 12px)",
+                  paddingInline: "var(--cmdk-shortcut-padding-x, 10px)",
+                  paddingBlock: "var(--cmdk-shortcut-padding-y, 6px)",
+                  gap: "var(--cmdk-shortcut-gap, 6px)",
                 }}
               >
-                {triggerPlaceholder}
+                <CommandIcon
+                  style={{
+                    width: "var(--cmdk-shortcut-icon-size, 16px)",
+                    height: "var(--cmdk-shortcut-icon-size, 16px)",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: "var(--cmdk-shortcut-font-size, 14px)",
+                    fontWeight: 500,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {resolvedRightHint}
+                </span>
               </span>
-            </span>
-            <span
-              className="pointer-events-none inline-flex shrink-0 items-center leading-none"
-              style={{
-                color: "var(--cmdk-shortcut-color, #535353)",
-                backgroundColor: "var(--cmdk-shortcut-bg, #2A3A4A)",
-                borderRadius: "var(--cmdk-shortcut-radius, 12px)",
-                paddingInline: "var(--cmdk-shortcut-padding-x, 10px)",
-                paddingBlock: "var(--cmdk-shortcut-padding-y, 6px)",
-                gap: "var(--cmdk-shortcut-gap, 6px)",
-              }}
-            >
-              <CommandIcon
-                style={{
-                  width: "var(--cmdk-shortcut-icon-size, 16px)",
-                  height: "var(--cmdk-shortcut-icon-size, 16px)",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: "var(--cmdk-shortcut-font-size, 14px)",
-                  fontWeight: 500,
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {resolvedRightHint}
-              </span>
-            </span>
-          </>
+            </>
+          )
         ) : (
           <>
             <span className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">

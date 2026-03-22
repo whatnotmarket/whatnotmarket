@@ -12,7 +12,6 @@ import {
 import {
   LOCALE_COOKIE_NAME,
   detectPreferredLocale,
-  isSupportedLocale,
   isPathNonLocalized,
   shouldLocalizePath,
   stripLocaleFromPathname,
@@ -91,6 +90,7 @@ const LOCAL_ONLY_PREFIXES = [
   "/track/",
   "/user/",
 ] as const;
+const LOCAL_DEV_FAST_PATHS = new Set<string>(["/dev-home"]);
 
 const SENSITIVE_PROBE_EXACT_PATHS = new Set<string>([
   "/.env",
@@ -311,10 +311,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const localeInfo = stripLocaleFromPathname(pathname);
+  const pathnameWithoutLocale = localeInfo.pathname;
+
+  // Speed up localhost dev routes by skipping auth/profile checks.
+  if (!isProduction && isLocalHostname(hostname) && LOCAL_DEV_FAST_PATHS.has(pathnameWithoutLocale)) {
+    const response = NextResponse.next({ request });
+    if (localeInfo.locale) {
+      response.cookies.set(LOCALE_COOKIE_NAME, localeInfo.locale, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+      });
+    }
+    return response;
+  }
+
   // Keep listed pages available only on localhost/dev. On public hosts redirect to app root.
-  const [, firstSegment] = pathname.split("/");
-  const hasLocalePrefix = isSupportedLocale(firstSegment || "");
-  if (!hasLocalePrefix && isLocalOnlyPath(pathname) && !isLocalHostname(hostname)) {
+  if (isLocalOnlyPath(pathnameWithoutLocale) && !isLocalHostname(hostname)) {
     const publicAppOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim();
     const redirectBase = publicAppOrigin && /^https?:\/\//i.test(publicAppOrigin)
       ? publicAppOrigin
@@ -322,9 +336,6 @@ export async function proxy(request: NextRequest) {
     const redirectUrl = new URL("/", redirectBase);
     return NextResponse.redirect(redirectUrl);
   }
-
-  const localeInfo = stripLocaleFromPathname(pathname);
-  const pathnameWithoutLocale = localeInfo.pathname;
 
   if (localeInfo.locale && isPathNonLocalized(pathnameWithoutLocale)) {
     const redirectUrl = new URL(pathnameWithoutLocale, request.url);
