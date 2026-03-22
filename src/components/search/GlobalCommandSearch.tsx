@@ -265,10 +265,9 @@ export function GlobalCommandSearch({
                 aria-hidden="true"
                 className="liquid-glass-visual-layers absolute inset-0 rounded-[999px]"
               >
-                <span className="liquid-glass-effect absolute inset-0 rounded-[999px] bg-[linear-gradient(180deg,rgba(22,8,12,0.86),rgba(14,8,10,0.90))] backdrop-blur-[14px] backdrop-saturate-[125%]" />
-                <span className="liquid-glass-tint absolute inset-0 rounded-[999px] bg-[radial-gradient(125%_140%_at_50%_-40%,rgba(255,255,255,0.14),rgba(255,255,255,0.05)_34%,rgba(255,255,255,0)_62%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)_40%,rgba(0,0,0,0.20)_100%)]" />
-                <span className="liquid-glass-shine absolute inset-0 rounded-[999px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(0,0,0,0.40),0_6px_22px_rgba(0,0,0,0.22)]" />
-                <span className="liquid-glass-top-edge pointer-events-none absolute left-6 right-6 top-[1px] h-px bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.45),rgba(255,255,255,0))]" />
+                <span className="liquid-glass-effect absolute inset-0 rounded-[999px] bg-[#0D0D0D]" />
+                <span className="liquid-glass-tint absolute inset-0 rounded-[999px] bg-transparent" />
+                <span className="liquid-glass-shine absolute inset-0 rounded-[999px] border-t border-white/20 shadow-[0_6px_22px_rgba(0,0,0,0.22)]" />
               </span>
               <span className="liquid-glass-content relative z-[1] flex h-full w-full items-center gap-2 px-4">
                 <SearchIcon className="mr-2 h-4 w-4 shrink-0 text-[var(--cmdk-placeholder-color,#838383)]" />
@@ -282,7 +281,7 @@ export function GlobalCommandSearch({
                 >
                   {triggerPlaceholder}
                 </span>
-                <kbd className="pointer-events-none hidden h-5 select-none items-center justify-center gap-0.5 rounded-md border border-[var(--gc-border)] px-1.5 font-mono text-[10px] font-medium text-[var(--gc-text-primary)] opacity-0 transition-opacity group-hover:opacity-100 md:flex">
+                <kbd className="pointer-events-none hidden h-[22px] min-w-[22px] select-none items-center justify-center gap-0.5 rounded-full border border-white/25 bg-[linear-gradient(170deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] px-2 text-[11px] font-semibold leading-none text-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_4px_10px_rgba(0,0,0,0.24)] md:inline-flex">
                   <span className="flex items-center">
                     <span className="text-xs leading-none">{hintModifier}</span>
                   </span>

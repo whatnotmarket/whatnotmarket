@@ -95,12 +95,15 @@ const WORDMARK_REVEAL_WIDTH = 194;
 const WORDMARK_OFFSET_FROM_LOGO = -15;
 const ACCORDION_ICON_CENTER_X = 26;
 const ACCORDION_ITEMS_START_X = 36;
-const LOGO_TOP = 24;
-const LOGO_HEIGHT = 32;
 const SEARCH_TRIGGER_HEIGHT = 40;
-const SEARCH_TOP = LOGO_TOP - (SEARCH_TRIGGER_HEIGHT - LOGO_HEIGHT) / 2;
+const SEARCH_TOP = 12;
+const LOGO_ROW_HEIGHT = SEARCH_TRIGGER_HEIGHT;
+const LOGO_TOP = SEARCH_TOP;
 const SEARCH_LEFT_GAP = 24;
 const SEARCH_RIGHT_GAP = 24;
+const SEARCH_FIXED_LEFT = MINI_SIDEBAR_WIDTH + SEARCH_LEFT_GAP;
+const HEADER_ICON_BUTTON_SIZE = 32;
+const CLOSE_SIDEBAR_ICON_TOP = SEARCH_TOP + (LOGO_ROW_HEIGHT - HEADER_ICON_BUTTON_SIZE) / 2;
 
 const WIDTH_SPRING = {
   type: "spring",
@@ -192,11 +195,10 @@ export function HomeSidebar() {
   const internalShortcutButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const shortcutChordCategoryRef = useRef<RailItemId | null>(null);
   const shortcutChordTimeoutRef = useRef<number | null>(null);
-  const searchLeft = (isMiniSidebarOpen ? MINI_SIDEBAR_WIDTH : RAIL_WIDTH) + SEARCH_LEFT_GAP;
   const commandSearchVars = {
     ...getCommandSearchThemeVars(),
-    "--cmdk-trigger-bg": "rgba(18, 10, 12, 0.78)",
-    "--cmdk-trigger-hover-bg": "rgba(28, 14, 18, 0.92)",
+    "--cmdk-trigger-bg": "#0D0D0D",
+    "--cmdk-trigger-hover-bg": "#0D0D0D",
     "--cmdk-trigger-border-color": "rgba(255, 255, 255, 0.10)",
     "--cmdk-trigger-border-width": "1px",
     "--cmdk-trigger-height": `${SEARCH_TRIGGER_HEIGHT}px`,
@@ -763,9 +765,9 @@ export function HomeSidebar() {
         className="pointer-events-none fixed z-[215] flex items-center"
         style={{
           top: `${SEARCH_TOP}px`,
-          left: `${searchLeft}px`,
+          left: `${SEARCH_FIXED_LEFT}px`,
           right: `${SEARCH_RIGHT_GAP}px`,
-          transition: "left 280ms cubic-bezier(0.22,1,0.36,1)",
+          transition: "none",
         }}
       >
         <div
@@ -814,13 +816,13 @@ export function HomeSidebar() {
           <Link
             href="/"
             aria-label="Logo"
-            className={`absolute z-30 flex h-8 items-center overflow-visible rounded-xl text-white/95 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] [transform-origin:left_center] ${
+            className={`absolute z-30 flex h-10 items-center overflow-visible rounded-xl text-white/95 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] [transform-origin:left_center] ${
               isMiniSidebarOpen ? "" : "hover:scale-105"
             }`}
             style={{ left: BUTTON_LEFT, top: LOGO_TOP }}
           >
             <span
-              className="flex h-8 items-center justify-center"
+              className="flex h-full items-center justify-center"
               style={{ width: `${LOGO_SLOT_WIDTH}px` }}
             >
               <Image
@@ -840,7 +842,7 @@ export function HomeSidebar() {
                 marginLeft: WORDMARK_OFFSET_FROM_LOGO,
               }}
               transition={LOGO_REVEAL_TRANSITION}
-              className="flex h-8 items-center overflow-hidden leading-none"
+              className="flex h-full items-center overflow-hidden leading-none"
             >
               <Image
                 src="/images/svg/Wordmark%20(White).svg"
@@ -901,7 +903,7 @@ export function HomeSidebar() {
               exit={{ opacity: 0, x: -12 }}
               transition={CONTENT_TRANSITION_IN}
               className="pointer-events-none absolute z-40 flex items-center justify-end"
-              style={{ left: 98, right: 24, top: 24 }}
+              style={{ left: 98, right: 24, top: CLOSE_SIDEBAR_ICON_TOP }}
             >
               <div className="group relative pointer-events-auto">
                 <motion.button
@@ -951,4 +953,3 @@ export function HomeSidebar() {
     </main>
   );
 }
-
