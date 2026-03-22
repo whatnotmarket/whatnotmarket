@@ -80,7 +80,7 @@ const EXPECTED_WORKFLOWS: ExpectedWorkflow[] = [
   {
     file: "maintenance-email-rules-cron.yml",
     cron: "12 */12 * * *",
-    mustContain: ["python src/app/maintenance/fetch_domains.py"],
+    mustContain: ["python src/app/(ops)/maintenance/fetch_domains.py"],
   },
   {
     file: "production-smoke-telegram.yml",

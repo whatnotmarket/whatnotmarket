@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
-import { createClient } from '@/lib/client'
+import { createClient } from '@/lib/infra/supabase/client'
 
 export const useCurrentUserImage = () => {
   const [image, setImage] = useState<string | null>(null)
@@ -19,3 +19,4 @@ export const useCurrentUserImage = () => {
 
   return image
 }
+

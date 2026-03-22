@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Operational artifacts and legacy Node scripts (CommonJS).
+    "reports/**",
+    "scripts/**/*.js",
   ]),
 ]);
 

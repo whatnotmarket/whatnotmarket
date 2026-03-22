@@ -4,7 +4,7 @@ import {
   RateLimitResponse,
   checkRateLimitDetailed,
   resetRateLimitStateForTests,
-} from "../../src/lib/rate-limit";
+} from "../../src/lib/infra/security/rate-limit";
 
 function makeRequest(ip: string, userAgent: string) {
   return new Request("https://example.test/api", {

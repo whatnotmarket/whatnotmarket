@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
+﻿import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/infra/supabase/supabase'
 import { ChatMessage } from '@/hooks/use-realtime-chat'
 
 export function useMessagesQuery(roomName: string) {
@@ -66,3 +66,4 @@ export function useMessagesQuery(roomName: string) {
 
   return { data: messages }
 }
+

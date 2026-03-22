@@ -1,27 +1,22 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Geist, Inter } from "next/font/google";
 import Script from "next/script";
-import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { PrivacyCardWrapper } from "@/components/PrivacyCardWrapper";
-import { SeoInternalLinks } from "@/components/SeoInternalLinks";
-import Providers from "@/components/providers";
-import AckeeTracker from "@/components/providers/AckeeTracker";
-import { ConsentTrackingScripts } from "@/components/providers/ConsentTrackingScripts";
-import { LocalhostServiceWorkerReset } from "@/components/providers/LocalhostServiceWorkerReset";
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import { TwicProvider } from "@/components/TwicProvider";
+import { SquircleNoScript } from "@squircle-js/react";
+import { PrivacyCardWrapper } from "@/components/app/layout/PrivacyCardWrapper";
+import { SeoInternalLinks } from "@/components/app/seo/SeoInternalLinks";
+import Providers from "@/components/app/layout/providers";
+import { ConsentTrackingScripts } from "@/components/app/layout/providers/ConsentTrackingScripts";
+import { LocalhostServiceWorkerReset } from "@/components/app/layout/providers/LocalhostServiceWorkerReset";
+import { PostHogProvider } from "@/components/app/layout/providers/PostHogProvider";
 import "./globals.css";
-import "../../styles/globals.css";
-import "@twicpics/components/style.css";
-import { SITE_URL } from "@/lib/site-config";
-import { DEFAULT_SEO_DESCRIPTION } from "@/lib/seo";
-import { cn } from "@/lib/utils";
-import { isMaintenanceModeEnabled } from "@/lib/maintenance";
+import { SITE_URL } from "@/lib/core/config/site-config";
+import { DEFAULT_SEO_DESCRIPTION } from "@/lib/app/seo/seo";
+import { cn } from "@/lib/core/utils/utils";
+import { isMaintenanceModeEnabled } from "@/lib/core/config/maintenance";
 import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/i18n/config";
-import OpenlyMarketMaintenancePage from "@/app/maintenance/page";
 
 // OpenlyDev Signature: OpenlyMarket Root Layout
 
@@ -147,6 +142,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   if (isMaintenanceModeEnabled()) {
+    const { default: OpenlyMarketMaintenancePage } = await import("@/app/(ops)/maintenance/page");
+
     return (
       <html
         lang="en"
@@ -159,6 +156,7 @@ export default async function RootLayout({
           suppressHydrationWarning
         >
           <OpenlyMarketMaintenancePage />
+          <SquircleNoScript />
         </body>
       </html>
     );
@@ -178,7 +176,6 @@ export default async function RootLayout({
         className={`${inter.variable} ${inter.className} notranslate overflow-x-hidden overflow-y-auto antialiased`}
         suppressHydrationWarning
       >
-        <TwicProvider />
         <LocalhostServiceWorkerReset />
         <Script
           type="application/ld+json"
@@ -197,9 +194,6 @@ export default async function RootLayout({
         <PostHogProvider>
           <Providers>
             <div id="app-root-shell" className="overflow-visible">
-              <Suspense fallback={null}>
-                <AckeeTracker />
-              </Suspense>
               {children}
             </div>
             <PrivacyCardWrapper />
@@ -208,7 +202,11 @@ export default async function RootLayout({
         <SeoInternalLinks />
         <Analytics />
         <SpeedInsights />
+        <SquircleNoScript />
       </body>
     </html>
   );
 }
+
+
+

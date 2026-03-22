@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildTrackingPath,
@@ -6,7 +6,7 @@ import {
   generateTrackingAccessToken,
   generateTrackingId,
   isTrackingAccessAllowed,
-} from "../../src/lib/security/order-tracking-guards";
+} from "../../src/lib/domains/security/order-tracking-guards";
 
 test("order and tracking identifiers use opaque high-entropy formats", () => {
   const orderId = generateOrderId();
@@ -28,4 +28,5 @@ test("tracking access comparison is strict and timing-safe compatible", () => {
   assert.equal(isTrackingAccessAllowed("same-token", "different-token"), false);
   assert.equal(isTrackingAccessAllowed(null, "same-token"), false);
 });
+
 

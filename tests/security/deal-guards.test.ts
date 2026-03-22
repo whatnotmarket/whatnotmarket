@@ -1,9 +1,9 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   evaluateDealTransition,
   normalizeDealAction,
-} from "../../src/lib/security/deal-guards";
+} from "../../src/lib/domains/security/deal-guards";
 
 const buyerId = "buyer-1";
 const sellerId = "seller-1";
@@ -145,3 +145,4 @@ test("status to action normalization maps supported statuses", () => {
   assert.equal(normalizeDealAction("completed"), "complete");
   assert.equal(normalizeDealAction("buyer_counter_offer"), null);
 });
+

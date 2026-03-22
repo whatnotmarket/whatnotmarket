@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           LOG_FILE="${RUNNER_TEMP}/maintenance-email-rules.log"
-          python src/app/maintenance/fetch_domains.py | tee "${LOG_FILE}"
+          python src/app/(ops)/maintenance/fetch_domains.py | tee "${LOG_FILE}"
 
           export LOG_FILE
           python <<'PY'
@@ -71,8 +71,8 @@ jobs:
           body: |
             Automated refresh of maintenance email blocklists/patterns.
 
-            - Updated `src/app/maintenance/disposable_email_blocklist.conf`
-            - Updated `src/app/maintenance/email_pattern_blocklist.conf` (if needed)
+            - Updated `src/app/(ops)/maintenance/disposable_email_blocklist.conf`
+            - Updated `src/app/(ops)/maintenance/email_pattern_blocklist.conf` (if needed)
           branch: "codex/maintenance-email-rules-cron"
           delete-branch: true
           labels: maintenance, security

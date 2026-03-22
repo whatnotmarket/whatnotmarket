@@ -1,6 +1,6 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateFollowToggle } from "../../src/lib/security/follow-guards";
+import { evaluateFollowToggle } from "../../src/lib/domains/security/follow-guards";
 
 test("follow toggle allows valid actor -> target follow", () => {
   const result = evaluateFollowToggle({
@@ -37,3 +37,4 @@ test("follow toggle rejects missing ids", () => {
     assert.match(result.reason, /required/i);
   }
 });
+

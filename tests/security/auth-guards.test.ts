@@ -1,9 +1,9 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   isInviteCodeDirectLoginEnabled,
   shouldAllowBridgeUserCreation,
-} from "../../src/lib/security/auth-guards";
+} from "../../src/lib/domains/security/auth-guards";
 
 test("signin mode never allows bridge user creation", () => {
   assert.equal(shouldAllowBridgeUserCreation("signin"), false);
@@ -32,3 +32,4 @@ test("invite direct login is disabled in production unless explicitly enabled", 
   env.NODE_ENV = previousNodeEnv;
   env.ENABLE_INVITE_CODE_LOGIN = previousInviteToggle;
 });
+

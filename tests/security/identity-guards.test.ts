@@ -1,9 +1,9 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   isReservedProfileHandle,
   normalizeProfileHandle,
-} from "../../src/lib/security/identity-guards";
+} from "../../src/lib/domains/security/identity-guards";
 
 test("normalize profile handle strips dangerous prefixes and symbols", () => {
   assert.equal(normalizeProfileHandle(" @Support!! "), "support");
@@ -15,4 +15,5 @@ test("reserved handles are blocked for impersonation reduction", () => {
   assert.equal(isReservedProfileHandle("@OPENLYMARKET"), true);
   assert.equal(isReservedProfileHandle("trusted_seller_123"), false);
 });
+
 

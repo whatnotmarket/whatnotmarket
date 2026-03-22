@@ -1,6 +1,6 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateAbuseSnapshot } from "../../src/lib/security/abuse-scoring";
+import { evaluateAbuseSnapshot } from "../../src/lib/domains/security/abuse-scoring";
 
 test("abuse guard blocks heavy burst traffic", () => {
   const decision = evaluateAbuseSnapshot({
@@ -46,3 +46,4 @@ test("abuse guard allows normal traffic envelopes", () => {
   assert.equal(decision.blocked, false);
   assert.ok(decision.score < 100);
 });
+

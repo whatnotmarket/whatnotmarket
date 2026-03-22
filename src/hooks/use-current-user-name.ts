@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
-import { createClient } from '@/lib/client'
+import { createClient } from '@/lib/infra/supabase/client'
 
 export const useCurrentUserName = () => {
   const [name, setName] = useState<string | null>(null)
@@ -20,3 +20,4 @@ export const useCurrentUserName = () => {
 
   return name || '?'
 }
+

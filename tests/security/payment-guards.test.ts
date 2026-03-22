@@ -1,9 +1,9 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   evaluateFundingSubmission,
   evaluateOrderTxBinding,
-} from "../../src/lib/security/payment-guards";
+} from "../../src/lib/domains/security/payment-guards";
 
 test("funding submission is allowed for pending payments with no existing tx hash", () => {
   const result = evaluateFundingSubmission({
@@ -68,3 +68,4 @@ test("order tx binding rejects a second different tx", () => {
     assert.match(result.reason, /already has a different verified payment/i);
   }
 });
+

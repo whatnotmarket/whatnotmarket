@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import withPWA from "@ducanh2912/next-pwa";
 
 const supabaseHostname = (() => {
   try {
@@ -17,14 +16,6 @@ const twicPicsHostname = (() => {
   } catch {
     return "";
   }
-})();
-
-const shouldDisablePwa = (() => {
-  if (process.env.NODE_ENV === "development") return true;
-  if (process.env.DISABLE_PWA === "true") return true;
-  if (process.env.NEXT_PUBLIC_DISABLE_PWA === "true") return true;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(appUrl);
 })();
 
 const CONTENT_SECURITY_POLICY = [
@@ -48,11 +39,9 @@ const nextConfig: NextConfig = {
   experimental: {
     inlineCss: true,
   },
+  turbopack: {},
   reactCompiler: true,
   productionBrowserSourceMaps: false,
-  // Silence Turbopack error for webpack plugins (next-pwa)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  turbopack: {} as any,
   webpack: (config) => {
     config.externals = config.externals || [];
     config.externals.push("pino-pretty", "lokijs", "encoding");
@@ -174,16 +163,4 @@ const nextConfig: NextConfig = {
     ];
   },
 };
-
-const withPWAConfig = withPWA({
-  dest: "public",
-  cacheOnFrontEndNav: false,
-  aggressiveFrontEndNavCaching: false,
-  reloadOnOnline: true,
-  disable: shouldDisablePwa,
-  workboxOptions: {
-    disableDevLogs: true,
-  },
-});
-
-export default withPWAConfig(nextConfig);
+export default nextConfig;

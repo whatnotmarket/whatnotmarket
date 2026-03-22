@@ -1,11 +1,11 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import {
   containsDisallowedLink,
   isCanonicalRoomId,
   isParticipantInRoom,
   normalizeChatContent,
-} from "../../src/lib/security/chat-guards";
+} from "../../src/lib/domains/security/chat-guards";
 
 const ROOM_ID = "11111111-1111-4111-8111-111111111111_22222222-2222-4222-8222-222222222222";
 
@@ -34,4 +34,5 @@ test("disallowed link detection catches phishing-like content", () => {
 test("chat content normalization trims and normalizes line endings", () => {
   assert.equal(normalizeChatContent("  hi\r\nthere  "), "hi\nthere");
 });
+
 

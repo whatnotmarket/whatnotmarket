@@ -1,6 +1,16 @@
+type QueryResultLike = {
+  data: { [key: string]: unknown; length?: number } | Array<unknown> | null;
+  count?: number | null;
+  error: { message: string } | null;
+};
+
+type QueryBuilderLike = PromiseLike<QueryResultLike> & {
+  [method: string]: (...args: unknown[]) => QueryBuilderLike;
+};
+
 type GenericSupabaseClient = {
-  from: (...args: unknown[]) => any;
-  rpc: (...args: unknown[]) => any;
+  from: (...args: unknown[]) => QueryBuilderLike;
+  rpc: (fn: string, params?: Record<string, unknown>) => Promise<QueryResultLike>;
 };
 
 let cachedClientPromise: Promise<GenericSupabaseClient | null> | null = null;
@@ -32,8 +42,8 @@ export async function getJobsSupabaseAdminClient(): Promise<GenericSupabaseClien
     let createClient: ((url: string, key: string, options: Record<string, unknown>) => GenericSupabaseClient) | null =
       null;
     try {
-      const module = await import("@supabase/supabase-js");
-      createClient = module.createClient as (
+      const supabaseModule = await import("@supabase/supabase-js");
+      createClient = supabaseModule.createClient as unknown as (
         url: string,
         key: string,
         options: Record<string, unknown>

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "sileo/styles.css";
-@import "shadcn/tailwind.css";
+@import "./shadcn-tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 @plugin "tailwindcss-corner-shape/presets/squircle";
@@ -819,4 +819,26 @@ html[data-maintenance-theme="dark"] .maintenance-early-access-status-error {
   .maintenance-logo:hover {
     transform: none;
   }
+}
+
+/* Dev Home hard override to keep colors stable even if a stale client chunk is cached. */
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"][class*="bg-[#131111]"],
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"][class*="bg-[#111111]"] {
+  background-color: #111111 !important;
+}
+
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"] [style*="--cmdk-trigger-bg"],
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"] [style*="--cmdk-popup-bg"] {
+  --cmdk-trigger-bg: #1E1E1E !important;
+  --cmdk-trigger-hover-bg: #1E1E1E !important;
+  --cmdk-popup-bg: #1E1E1E !important;
+}
+
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"] .liquid-glass-effect {
+  background-color: #1E1E1E !important;
+}
+
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"] div[class*="rounded-[22px]"][class*="backdrop-blur-[10px]"][class*="bg-[#0D0D0D]"],
+main[class*="z-[120]"][class*="h-screen"][class*="overflow-hidden"] div[class*="rounded-[22px]"][class*="backdrop-blur-[10px]"][class*="bg-[#1E1E1E]"] {
+  background-color: #1E1E1E !important;
 }

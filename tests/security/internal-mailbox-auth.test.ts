@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { generateMnemonic } from "bip39";
 import {
@@ -6,13 +6,13 @@ import {
   normalizeInternalUsername,
   normalizeRecoveryPhrase,
   onboardingRegistrationSchema,
-} from "../../src/lib/internal-auth/schemas";
+} from "../../src/lib/domains/internal-auth/schemas";
 import {
   decryptRecoveryPhraseWithSecret,
   encryptRecoveryPhraseWithSecret,
   hashPasswordWithBcrypt,
   verifyPasswordWithBcrypt,
-} from "../../src/lib/internal-auth/security-core";
+} from "../../src/lib/domains/internal-auth/security-core";
 
 test("normalizeInternalUsername strips unsupported characters", () => {
   assert.equal(normalizeInternalUsername("@@John.Doe!"), "john_doe");
@@ -81,4 +81,5 @@ test("onboarding registration schema requires personalization fields by intent",
   });
   assert.equal(bothValid.success, true);
 });
+
 

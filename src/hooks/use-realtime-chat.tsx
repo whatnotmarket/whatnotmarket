@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase";
-import { toast } from "@/lib/notifications";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createClient } from "@/lib/infra/supabase/supabase";
+import { toast } from "@/lib/domains/notifications";
 
 export interface ChatMessage {
   id: string;
@@ -318,3 +318,4 @@ export function useRealtimeChat({
 
   return { messages, sendMessage, sendReaction, markAsRead, clearRoom };
 }
+

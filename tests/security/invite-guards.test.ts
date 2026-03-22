@@ -1,6 +1,6 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRequiredInvite } from "../../src/lib/security/invite-guards";
+import { enforceRequiredInvite } from "../../src/lib/domains/security/invite-guards";
 
 test("required invite fails when code is missing", () => {
   const result = enforceRequiredInvite({
@@ -55,3 +55,4 @@ test("required invite accepts valid allowed type", () => {
   assert.equal(result.isValid, true);
   assert.equal(result.reason, "ok");
 });
+
