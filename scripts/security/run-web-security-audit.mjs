@@ -6,7 +6,7 @@ import tls from "node:tls";
 import { URL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import { load } from "cheerio";
+import { parse } from "node-html-parser";
 
 const SECTION_NAMES = [
   "1. RICOGNIZIONE",
@@ -180,47 +180,47 @@ function isSameOrigin(urlLike) {
 }
 
 function collectInternalLinks(pageUrl, html) {
-  const $ = load(html);
+  const root = parse(html);
   const links = new Set();
 
-  $("a[href]").each((_, el) => {
-    const href = String($(el).attr("href") || "").trim();
-    if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("javascript:")) return;
+  for (const el of root.querySelectorAll("a[href]")) {
+    const href = String(el.getAttribute("href") || "").trim();
+    if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("javascript:")) continue;
     try {
       const resolved = new URL(href, pageUrl);
-      if (resolved.origin !== target.origin) return;
+      if (resolved.origin !== target.origin) continue;
       links.add(`${resolved.origin}${resolved.pathname}`);
     } catch {
       // ignore invalid href
     }
-  });
+  }
 
   return Array.from(links);
 }
 
 function collectExternalResources(html, pageUrl) {
-  const $ = load(html);
+  const root = parse(html);
   const resources = [];
   const selectors = ["script[src]", "link[href]", "img[src]", "iframe[src]", "source[src]"];
 
   for (const selector of selectors) {
-    $(selector).each((_, el) => {
-      const attr = selector.includes("href") ? "href" : "src";
-      const value = String($(el).attr(attr) || "").trim();
-      if (!value) return;
+    const attr = selector.includes("href") ? "href" : "src";
+    for (const el of root.querySelectorAll(selector)) {
+      const value = String(el.getAttribute(attr) || "").trim();
+      if (!value) continue;
       try {
         const resolved = new URL(value, pageUrl);
         if (resolved.origin !== target.origin) {
           resources.push({
             tag: selector.split("[")[0],
             url: resolved.toString(),
-            integrity: String($(el).attr("integrity") || ""),
+            integrity: String(el.getAttribute("integrity") || ""),
           });
         }
       } catch {
         // ignore
       }
-    });
+    }
   }
 
   return resources;
@@ -385,17 +385,17 @@ async function main() {
 
   const scriptSources = new Set();
   for (const snapshot of pageSnapshots) {
-    const $ = load(snapshot.html);
-    $("script[src]").each((_, el) => {
-      const src = String($(el).attr("src") || "").trim();
-      if (!src) return;
+    const root = parse(snapshot.html);
+    for (const el of root.querySelectorAll("script[src]")) {
+      const src = String(el.getAttribute("src") || "").trim();
+      if (!src) continue;
       try {
         const resolved = new URL(src, snapshot.url);
         scriptSources.add(resolved.toString());
       } catch {
         // ignore invalid url
       }
-    });
+    }
   }
 
   const sameOriginScripts = Array.from(scriptSources).filter((url) => isSameOrigin(url)).slice(0, 10);
@@ -633,10 +633,10 @@ async function main() {
   // Inventory form
   const formInventory = [];
   for (const snapshot of pageSnapshots) {
-    const $ = load(snapshot.html);
-    $("form").each((_, formEl) => {
-      const method = String($(formEl).attr("method") || "get").toLowerCase();
-      const actionRaw = String($(formEl).attr("action") || snapshot.url);
+    const root = parse(snapshot.html);
+    for (const formEl of root.querySelectorAll("form")) {
+      const method = String(formEl.getAttribute("method") || "get").toLowerCase();
+      const actionRaw = String(formEl.getAttribute("action") || snapshot.url);
       let actionUrl;
       try {
         actionUrl = new URL(actionRaw, snapshot.url).toString();
@@ -645,25 +645,21 @@ async function main() {
       }
 
       const inputs = [];
-      $(formEl)
-        .find("input[name], textarea[name], select[name]")
-        .each((__, inputEl) => {
-          const name = String($(inputEl).attr("name") || "").trim();
-          const type = String($(inputEl).attr("type") || "text").toLowerCase();
-          if (!name) return;
-          if (["hidden", "submit", "button", "image", "reset", "checkbox", "radio", "file"].includes(type)) return;
-          inputs.push(name);
-        });
+      for (const inputEl of formEl.querySelectorAll("input[name], textarea[name], select[name]")) {
+        const name = String(inputEl.getAttribute("name") || "").trim();
+        const type = String(inputEl.getAttribute("type") || "text").toLowerCase();
+        if (!name) continue;
+        if (["hidden", "submit", "button", "image", "reset", "checkbox", "radio", "file"].includes(type)) continue;
+        inputs.push(name);
+      }
 
       const hiddenFields = [];
-      $(formEl)
-        .find("input[type='hidden'][name]")
-        .each((__, hiddenEl) => {
-          hiddenFields.push(String($(hiddenEl).attr("name") || "").trim());
-        });
+      for (const hiddenEl of formEl.querySelectorAll("input[type='hidden'][name]")) {
+        hiddenFields.push(String(hiddenEl.getAttribute("name") || "").trim());
+      }
 
       formInventory.push({ pageUrl: snapshot.url, method, actionUrl, inputs, hiddenFields });
-    });
+    }
   }
 
   const getTargets = formInventory

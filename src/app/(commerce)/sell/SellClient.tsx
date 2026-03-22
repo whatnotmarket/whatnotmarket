@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { Button } from "@/components/shared/ui/button";
@@ -11,7 +11,6 @@ import { CopyMap } from "@/lib/app/content/copy-system";
 import { cn } from "@/lib/core/utils/utils";
 import { marketToast as toast } from "@/lib/domains/notifications";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { AlertCircle,ArrowLeft,Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -145,28 +144,18 @@ export function SellClient({ copy }: { copy: CopyMap }) {
               Back
             </Button>
             
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-              className="space-y-4"
-            >
+            <div className="animate-in fade-in slide-in-from-left-4 space-y-4 duration-300">
               <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
                 {header.title || "Sell Something"}
               </h1>
               <p className="text-zinc-400 text-base leading-relaxed">
                 {header.subtitle || "List your digital product or service. Reach thousands of buyers instantly."}
               </p>
-            </motion.div>
+            </div>
           </div>
 
           {/* Right Column: Form Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="w-full"
-          >
+          <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "100ms" }}>
           <Squircle 
             radius={32} 
             smoothing={1} 
@@ -377,7 +366,7 @@ export function SellClient({ copy }: { copy: CopyMap }) {
 
             </form>
           </Squircle>
-        </motion.div>
+        </div>
         
         </div>
       </main>

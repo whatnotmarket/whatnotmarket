@@ -1,11 +1,10 @@
-﻿"use client";
+"use client";
 
 import { Navbar } from "@/components/app/navigation/Navbar";
 import { CrossClusterLinks } from "@/components/app/seo/CrossClusterLinks";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { cn } from "@/lib/core/utils/utils";
-import { motion } from "framer-motion";
 import {
 ArrowLeft,
 CalendarClock,
@@ -182,12 +181,7 @@ export default function RoadmapPage() {
             Indietro
           </Button>
 
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35 }}
-            className="space-y-4"
-          >
+          <div className="animate-in fade-in slide-in-from-left-4 space-y-4 duration-300">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-xl">
               <CalendarClock className="h-8 w-8 text-white" />
             </div>
@@ -196,7 +190,7 @@ export default function RoadmapPage() {
               Priorita, stato avanzamento e direzione prodotto. Aggiornata in tempo reale con focus su trust,
               performance e crescita seller.
             </p>
-          </motion.div>
+          </div>
 
           <Squircle radius={24} smoothing={1} className="w-full" innerClassName="border border-white/8 bg-[#131316] p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Focus Now</p>
@@ -217,12 +211,7 @@ export default function RoadmapPage() {
           </Squircle>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.08 }}
-          className="w-full"
-        >
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "80ms" }}>
           <Squircle
             radius={34}
             smoothing={1}
@@ -236,12 +225,10 @@ export default function RoadmapPage() {
                 const progress = clampProgress(phase.progress);
 
                 return (
-                  <motion.section
+                  <section
                     key={phase.id}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.28, delay: 0.06 * index }}
-                    className="rounded-3xl border border-white/7 bg-[#0F0F12] p-5 md:p-6"
+                    className="animate-in fade-in slide-in-from-bottom-4 rounded-3xl border border-white/7 bg-[#0F0F12] p-5 md:p-6 duration-300"
+                    style={{ animationDelay: `${index * 60}ms` }}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="space-y-2">
@@ -272,11 +259,9 @@ export default function RoadmapPage() {
                         <span>{progress}%</span>
                       </div>
                       <div className="h-2.5 overflow-hidden rounded-full bg-white/8">
-                        <motion.div
-                          className="h-full rounded-full bg-gradient-to-r from-violet-400 via-indigo-400 to-sky-400"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progress}%` }}
-                          transition={{ duration: 0.5, delay: 0.1 + index * 0.05 }}
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-violet-400 via-indigo-400 to-sky-400 transition-[width] duration-500 ease-out"
+                          style={{ width: `${progress}%`, transitionDelay: `${100 + index * 50}ms` }}
                         />
                       </div>
                     </div>
@@ -292,7 +277,7 @@ export default function RoadmapPage() {
                         </article>
                       ))}
                     </div>
-                  </motion.section>
+                  </section>
                 );
               })}
 
@@ -312,7 +297,7 @@ export default function RoadmapPage() {
           </Squircle>
 
           <CrossClusterLinks variant="roadmap" className="mt-6" />
-        </motion.div>
+        </div>
       </main>
     </div>
   );

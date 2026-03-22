@@ -1,9 +1,8 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
 import { authToast as toast } from "@/lib/domains/notifications";
-import { motion } from "framer-motion";
 import { ExternalLink,Loader2,ShieldCheck } from "lucide-react";
 
 interface StepVerificationProps {
@@ -26,13 +25,7 @@ export function StepVerification({
   loading
 }: StepVerificationProps) {
   return (
-    <motion.div
-        key="step2"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        className="space-y-6"
-    >
+    <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300">
          <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">Verify via Telegram</h1>
             <p className="text-zinc-400">To protect buyers and keep quality high, sellers verify through Telegram. It takes ~1 minute.</p>
@@ -90,7 +83,7 @@ export function StepVerification({
                 </div>
             )}
         </div>
-    </motion.div>
+    </div>
   );
 }
 

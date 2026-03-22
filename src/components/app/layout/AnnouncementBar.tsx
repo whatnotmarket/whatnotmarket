@@ -1,15 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
 
 export function AnnouncementBar() {
   return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      className="w-full relative overflow-hidden h-10"
-    >
+    <div className="relative h-10 w-full animate-in fade-in slide-in-from-top-2 overflow-hidden duration-300">
       <div className="absolute inset-0 z-0 h-10 w-full bg-black">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(255,255,255,0.12),transparent_40%),radial-gradient(circle_at_80%_50%,rgba(255,255,255,0.12),transparent_40%)]" />
       </div>
@@ -31,6 +26,6 @@ export function AnnouncementBar() {
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }

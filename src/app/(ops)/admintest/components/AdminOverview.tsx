@@ -1,17 +1,12 @@
-﻿
+
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/shared/ui/card";
-import {
-ChartContainer,
-ChartTooltip,
-ChartTooltipContent,
-type ChartConfig,
-} from "@/components/shared/ui/chart";
+import { SvgStackedAreaChart } from "@/components/shared/charts/svg-stacked-area-chart";
+import { ChartContainer,type ChartConfig } from "@/components/shared/ui/chart";
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/shared/ui/select";
 import { useMemo,useState } from "react";
-import { Area,AreaChart,CartesianGrid,XAxis } from "recharts";
 import type { DashboardData } from "../types";
 
 const chartConfig = {
@@ -123,43 +118,18 @@ export function AdminOverview({ data }: AdminOverviewProps) {
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-            <AreaChart data={overviewActivityData}>
-              <defs>
-                <linearGradient id="fillUsers" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-users)" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="var(--color-users)" stopOpacity={0.1} />
-                </linearGradient>
-                <linearGradient id="fillRequests" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-requests)" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="var(--color-requests)" stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                }}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(value) => {
-                      return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                    }}
-                    indicator="dot"
-                  />
-                }
-              />
-              <Area dataKey="users" type="natural" fill="url(#fillUsers)" stroke="var(--color-users)" stackId="a" />
-              <Area dataKey="requests" type="natural" fill="url(#fillRequests)" stroke="var(--color-requests)" stackId="a" />
-            </AreaChart>
+            <SvgStackedAreaChart
+              data={overviewActivityData as Record<string, string | number>[]}
+              keys={["users", "requests"]}
+              colors={["#3b82f6", "#22c55e"]}
+              height={250}
+              mode="absolute"
+              tickFormat={(row) => {
+                const raw = String(row.date ?? "");
+                const d = new Date(raw);
+                return Number.isNaN(d.getTime()) ? raw.slice(5) : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              }}
+            />
           </ChartContainer>
         </CardContent>
       </Card>
@@ -171,28 +141,16 @@ export function AdminOverview({ data }: AdminOverviewProps) {
             <CardDescription>Escrow distribution over time (expanded).</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                escrow: { label: "Escrow", color: "var(--chart-1)" },
-                released: { label: "Released", color: "var(--chart-2)" },
-                blocked: { label: "Blocked", color: "var(--chart-3)" },
-              }}
-            >
-              <AreaChart data={paymentStackData} margin={{ left: 12, right: 12, top: 12 }} stackOffset="expand">
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickFormatter={(value) => String(value).slice(5)}
-                />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-                <Area dataKey="blocked" type="natural" fill="var(--color-blocked)" fillOpacity={0.2} stroke="var(--color-blocked)" stackId="a" />
-                <Area dataKey="released" type="natural" fill="var(--color-released)" fillOpacity={0.35} stroke="var(--color-released)" stackId="a" />
-                <Area dataKey="escrow" type="natural" fill="var(--color-escrow)" fillOpacity={0.35} stroke="var(--color-escrow)" stackId="a" />
-              </AreaChart>
-            </ChartContainer>
+            <div className="w-full overflow-hidden">
+              <SvgStackedAreaChart
+                data={paymentStackData as Record<string, string | number>[]}
+                keys={["blocked", "released", "escrow"]}
+                colors={["#64748b", "#22c55e", "#eab308"]}
+                height={220}
+                mode="percent"
+                tickFormat={(row) => String(row.date ?? "").slice(5)}
+              />
+            </div>
           </CardContent>
         </Card>
         <Card className="border-zinc-800 bg-zinc-950">
@@ -201,28 +159,16 @@ export function AdminOverview({ data }: AdminOverviewProps) {
             <CardDescription>Financial movements (Deposits vs Payouts).</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                deposits: { label: "Deposits", color: "var(--chart-1)" },
-                payouts: { label: "Payouts", color: "var(--chart-2)" },
-                fees: { label: "Fees", color: "var(--chart-3)" },
-              }}
-            >
-              <AreaChart data={ledgerFlowData} margin={{ left: 12, right: 12, top: 12 }} stackOffset="expand">
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickFormatter={(value) => String(value).slice(5)}
-                />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-                <Area dataKey="payouts" type="natural" fill="var(--color-payouts)" fillOpacity={0.1} stroke="var(--color-payouts)" stackId="a" />
-                <Area dataKey="fees" type="natural" fill="var(--color-fees)" fillOpacity={0.4} stroke="var(--color-fees)" stackId="a" />
-                <Area dataKey="deposits" type="natural" fill="var(--color-deposits)" fillOpacity={0.4} stroke="var(--color-deposits)" stackId="a" />
-              </AreaChart>
-            </ChartContainer>
+            <div className="w-full overflow-hidden">
+              <SvgStackedAreaChart
+                data={ledgerFlowData as Record<string, string | number>[]}
+                keys={["payouts", "fees", "deposits"]}
+                colors={["#a855f7", "#f97316", "#3b82f6"]}
+                height={220}
+                mode="percent"
+                tickFormat={(row) => String(row.date ?? "").slice(5)}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

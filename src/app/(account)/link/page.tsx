@@ -1,6 +1,5 @@
-﻿import { buildIndexableMetadata } from "@/lib/app/seo/seo";
+import { buildIndexableMetadata } from "@/lib/app/seo/seo";
 import { cn } from "@/lib/core/utils/utils";
-import * as motion from "framer-motion/client";
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -180,14 +179,13 @@ function LinkList() {
     return (
         <>
           {LINKS.map((link, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.08, duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
+              className="animate-in fade-in slide-in-from-bottom-5 duration-500"
+              style={{ animationDelay: `${idx * 80}ms` }}
             >
               <LinkCard link={link} />
-            </motion.div>
+            </div>
           ))}
         </>
     )

@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parse } from "node-html-parser";
 import { BaseParser } from "./base-parser";
 import { ProductData } from "./types";
 
@@ -8,32 +8,39 @@ export class AmazonParser extends BaseParser {
   }
 
   async parse(url: string, html: string): Promise<ProductData> {
-    const $ = cheerio.load(html);
-    
-    // Amazon specific selectors
-    const title = $("#productTitle").text().trim() || 
-                  $("#title").text().trim();
-                  
-    const image = $("#landingImage").attr("src") || 
-                  $("#imgBlkFront").attr("src") ||
-                  $("#ebooksImgBlkFront").attr("src") ||
-                  $(".a-dynamic-image").first().attr("src");
+    const root = parse(html);
 
-    const priceText = $(".a-price .a-offscreen").first().text().trim() || 
-                      $("#priceblock_ourprice").text().trim() || 
-                      $("#priceblock_dealprice").text().trim();
-                      
+    // Amazon specific selectors
+    const title =
+      root.querySelector("#productTitle")?.text?.trim() ||
+      root.querySelector("#title")?.text?.trim() ||
+      "";
+
+    const image =
+      root.querySelector("#landingImage")?.getAttribute("src") ||
+      root.querySelector("#imgBlkFront")?.getAttribute("src") ||
+      root.querySelector("#ebooksImgBlkFront")?.getAttribute("src") ||
+      root.querySelector(".a-dynamic-image")?.getAttribute("src") ||
+      null;
+
+    const priceText =
+      root.querySelector(".a-price .a-offscreen")?.text?.trim() ||
+      root.querySelector("#priceblock_ourprice")?.text?.trim() ||
+      root.querySelector("#priceblock_dealprice")?.text?.trim() ||
+      "";
+
     const price = priceText ? parseFloat(priceText.replace(/[^0-9.]/g, "")) : null;
-    
+
     // Currency detection from symbol
     let currency = "USD";
     if (priceText.includes("€")) currency = "EUR";
     if (priceText.includes("£")) currency = "GBP";
 
-    const description = $("#feature-bullets").text().trim().replace(/\s+/g, " ").slice(0, 200) + "...";
+    const bullets = root.querySelector("#feature-bullets")?.text?.trim().replace(/\s+/g, " ").slice(0, 200);
+    const description = bullets ? `${bullets}...` : "";
 
     // Fallback to base logic if Amazon specific fails
-    const meta = this.extractMetaTags($);
+    const meta = this.extractMetaTags(root);
 
     return {
       url,

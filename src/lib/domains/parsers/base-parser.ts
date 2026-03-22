@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parse,type HTMLElement } from "node-html-parser";
 import { ProductData,ProductParser } from "./types";
 
 export class BaseParser implements ProductParser {
@@ -7,9 +7,9 @@ export class BaseParser implements ProductParser {
   }
 
   async parse(url: string, html: string): Promise<ProductData> {
-    const $ = cheerio.load(html);
-    const jsonLd = this.extractJsonLd($);
-    const meta = this.extractMetaTags($);
+    const root = parse(html);
+    const jsonLd = this.extractJsonLd(root);
+    const meta = this.extractMetaTags(root);
     const fallbackPrice = this.extractPriceFallback(html);
 
     return {
@@ -23,35 +23,37 @@ export class BaseParser implements ProductParser {
     };
   }
 
-  protected extractMetaTags($: cheerio.CheerioAPI) {
+  protected extractMetaTags(root: HTMLElement) {
     const get = (selectors: string[]) => {
       for (const sel of selectors) {
-        const val = $(sel).attr("content") || $(sel).attr("href");
+        const el = root.querySelector(sel);
+        const val = el?.getAttribute("content") || el?.getAttribute("href");
         if (val && val.trim()) return val.trim();
       }
       return null;
     };
 
+    const titleEl = root.querySelector("title");
+
     return {
-      title: get(['meta[property="og:title"]', 'meta[name="twitter:title"]']) || $("title").first().text().trim() || null,
+      title: get(['meta[property="og:title"]', 'meta[name="twitter:title"]']) || titleEl?.text?.trim() || null,
       image: get(['meta[property="og:image"]', 'meta[name="twitter:image"]']),
       description: get(['meta[property="og:description"]', 'meta[name="twitter:description"]', 'meta[name="description"]']),
       siteName: get(['meta[property="og:site_name"]']),
     };
   }
 
-  protected extractJsonLd($: cheerio.CheerioAPI): Partial<ProductData> {
-    const scripts = $('script[type="application/ld+json"]')
-      .map((_, el) => $(el).text())
-      .get();
+  protected extractJsonLd(root: HTMLElement): Partial<ProductData> {
+    const scripts = root.querySelectorAll('script[type="application/ld+json"]');
+    const texts = scripts.map((el) => el.text);
 
-    for (const raw of scripts) {
+    for (const raw of texts) {
       try {
         const parsed = JSON.parse(raw);
         const nodes = Array.isArray(parsed) ? parsed : [parsed];
-        
+
         // Handle @graph structure
-        const candidates = nodes.flatMap(n => n?.["@graph"] || n);
+        const candidates = nodes.flatMap((n) => n?.["@graph"] || n);
 
         for (const node of candidates) {
           if (node?.["@type"] === "Product") {

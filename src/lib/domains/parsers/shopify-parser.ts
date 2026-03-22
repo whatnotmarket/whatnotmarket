@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parse } from "node-html-parser";
 import { BaseParser } from "./base-parser";
 import { ProductData } from "./types";
 
@@ -8,13 +8,13 @@ export class ShopifyParser extends BaseParser {
   }
 
   async parse(url: string, html: string): Promise<ProductData> {
-    const $ = cheerio.load(html);
-    const jsonLd = this.extractJsonLd($);
-    const meta = this.extractMetaTags($);
+    const root = parse(html);
+    const jsonLd = this.extractJsonLd(root);
+    const meta = this.extractMetaTags(root);
 
     // Shopify specific: <meta property="og:price:amount">
-    const ogPrice = $('meta[property="og:price:amount"]').attr("content");
-    const ogCurrency = $('meta[property="og:price:currency"]').attr("content");
+    const ogPrice = root.querySelector('meta[property="og:price:amount"]')?.getAttribute("content");
+    const ogCurrency = root.querySelector('meta[property="og:price:currency"]')?.getAttribute("content");
 
     return {
       url,

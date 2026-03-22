@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/shared/ui/button";
-import { motion } from "framer-motion";
 import { DollarSign,Loader2,ShoppingBag } from "lucide-react";
 
 interface StepRoleProps {
@@ -13,13 +12,7 @@ interface StepRoleProps {
 
 export function StepRole({ role, setRole, onSubmit, loading }: StepRoleProps) {
   return (
-    <motion.div
-        key="step0"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        className="space-y-6"
-    >
+    <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300">
         <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">How do you want to use openlymarket?</h1>
             <p className="text-zinc-400">Choose your primary intent. You can change this later.</p>
@@ -84,7 +77,7 @@ export function StepRole({ role, setRole, onSubmit, loading }: StepRoleProps) {
         >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Continue"}
         </Button>
-    </motion.div>
+    </div>
   );
 }
 

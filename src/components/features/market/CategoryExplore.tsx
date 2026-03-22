@@ -1,9 +1,8 @@
-﻿"use client";
+"use client";
 
 import { Card } from "@/components/shared/ui/primitives/card";
 import { Container } from "@/components/shared/ui/primitives/container";
 import { createClient } from "@/lib/infra/supabase/supabase";
-import { motion } from "framer-motion";
 import { CheckCircle,Globe,LucideIcon,Monitor,Smartphone,Sparkles,Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect,useState } from "react";
@@ -101,12 +100,10 @@ export function CategoryExplore() {
           {categories.map((cat, i) => {
             const Icon = ICON_MAP[cat.icon] || Globe;
             return (
-              <motion.div
+              <div
                 key={cat.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
+                className="animate-in fade-in zoom-in-95 duration-300"
+                style={{ animationDelay: `${i * 50}ms` }}
               >
                 <Link href={`/category/${cat.id}`} className="block group h-full">
                   <Card
@@ -123,7 +120,7 @@ export function CategoryExplore() {
                     <span className="font-bold text-sm text-zinc-300 group-hover:text-white transition-colors">{cat.name}</span>
                   </Card>
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
         </div>

@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
-import { Area,AreaChart,CartesianGrid,XAxis } from "recharts"
 
+import { LwcDualAreaChart } from "@/components/shared/charts/lwc-dual-area-chart"
 import {
 Card,
 CardAction,
@@ -11,12 +11,7 @@ CardDescription,
 CardHeader,
 CardTitle,
 } from "@/components/shared/ui/card"
-import {
-ChartContainer,
-ChartTooltip,
-ChartTooltipContent,
-type ChartConfig,
-} from "@/components/shared/ui/chart"
+import { ChartContainer,type ChartConfig } from "@/components/shared/ui/chart"
 import {
 Select,
 SelectContent,
@@ -172,6 +167,22 @@ export function ChartAreaInteractive({
     }
   }, [isMobile])
 
+  const colorRef = React.useRef<HTMLDivElement>(null)
+  const [palette, setPalette] = React.useState({
+    desktop: "#2563eb",
+    mobile: "#6366f1",
+  })
+
+  React.useLayoutEffect(() => {
+    const el = colorRef.current
+    if (!el) return
+    const cs = getComputedStyle(el)
+    setPalette({
+      desktop: cs.getPropertyValue("--color-desktop").trim() || "#2563eb",
+      mobile: cs.getPropertyValue("--color-mobile").trim() || "#6366f1",
+    })
+  }, [])
+
   const filteredData = sourceData.filter((item) => {
     const date = new Date(item.date)
     const lastDate = sourceData[sourceData.length - 1]?.date
@@ -242,77 +253,21 @@ export function ChartAreaInteractive({
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={1.0}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }}
+          <div ref={colorRef} className="h-full w-full min-h-[200px]">
+            <LwcDualAreaChart
+              data={filteredData.map((d) => ({
+                time: d.date,
+                a: d.desktop,
+                b: d.mobile,
+              }))}
+              colorA={palette.desktop}
+              colorB={palette.mobile}
+              labelA={String(chartConfig.desktop.label ?? "Desktop")}
+              labelB={String(chartConfig.mobile.label ?? "Mobile")}
+              height={250}
+              className="w-full"
             />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="mobile"
-              type="natural"
-              fill="url(#fillMobile)"
-              stroke="var(--color-mobile)"
-              stackId="a"
-            />
-            <Area
-              dataKey="desktop"
-              type="natural"
-              fill="url(#fillDesktop)"
-              stroke="var(--color-desktop)"
-              stackId="a"
-            />
-          </AreaChart>
+          </div>
         </ChartContainer>
       </CardContent>
     </Card>

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { Button } from '@/components/shared/ui/button'
 import { Input } from '@/components/shared/ui/input'
@@ -12,10 +12,11 @@ import { useChatScroll } from '@/hooks/use-chat-scroll'
 import { useRealtimeChat,type ChatMessage } from '@/hooks/use-realtime-chat'
 import { toast } from '@/lib/domains/notifications'
 import { createClient } from '@/lib/infra/supabase/supabase'
-import EmojiPicker,{ Theme,type EmojiClickData } from 'emoji-picker-react'
+import type { EmojiClickData } from 'emoji-picker-react'
 import { AnimatePresence,motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import { Globe,Smile,X } from 'lucide-react'
-import { useCallback,useEffect,useMemo,useRef,useState } from 'react'
+import { useCallback,useEffect,useMemo,useRef,useState,type ComponentProps } from 'react'
 import { ChatMessageItem } from './chat-message'
 
 import { TradePanel } from '@/components/features/chat/trade-panel'
@@ -43,6 +44,25 @@ SelectValue,
 import { cn } from "@/lib/core/utils/utils"
 import { Upload } from 'lucide-react'
 import Image from "next/image"
+
+const EmojiPicker = dynamic(
+  () =>
+    import("emoji-picker-react").then((mod) => {
+      const Picker = mod.default
+      function EmojiPickerWithTheme(props: ComponentProps<typeof Picker>) {
+        return <Picker {...props} theme={mod.Theme.DARK} />
+      }
+      return EmojiPickerWithTheme
+    }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[400px] w-[320px] items-center justify-center">
+        <span className="text-sm text-muted-foreground">Caricamento...</span>
+      </div>
+    ),
+  }
+)
 
 interface RealtimeChatProps {
   roomName: string
@@ -675,7 +695,7 @@ export function RealtimeChat({ roomName, userId, username, isVerified, role, onM
                     </PopoverTrigger>
                     <PopoverContent className="w-full border-none p-0 shadow-none bg-transparent" align="start">
                       <div className="shadow-xl rounded-xl overflow-hidden">
-                        <EmojiPicker onEmojiClick={handleEmojiClick} theme={Theme.DARK} width={320} height={400} lazyLoadEmojis />
+                        <EmojiPicker onEmojiClick={handleEmojiClick} width={320} height={400} lazyLoadEmojis />
                       </div>
                     </PopoverContent>
                   </Popover>

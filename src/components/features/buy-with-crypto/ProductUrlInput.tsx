@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
 import { Squircle } from "@/components/shared/ui/Squircle";
-import { motion } from "framer-motion";
 import { AlertCircle,ArrowRight,Link as LinkIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -134,14 +133,10 @@ export function ProductUrlInput({
         </Squircle>
 
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -bottom-8 left-4 flex items-center gap-2 text-sm text-red-400"
-          >
+          <div className="absolute -bottom-8 left-4 flex animate-in fade-in slide-in-from-top-2 items-center gap-2 text-sm text-red-400 duration-200">
             <AlertCircle className="h-4 w-4" />
             {error}
-          </motion.div>
+          </div>
         )}
       </form>
     </div>

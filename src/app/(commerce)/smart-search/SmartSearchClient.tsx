@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 /* eslint-disable react/no-unescaped-entities */
@@ -6,7 +6,6 @@ import { Navbar } from "@/components/app/navigation/Navbar";
 import { Squircle } from "@/components/shared/ui/Squircle";
 import { Button } from "@/components/shared/ui/button";
 import { CopyMap } from "@/lib/app/content/copy-system";
-import { motion } from "framer-motion";
 import {
 ArrowLeft,
 CreditCard,
@@ -45,12 +44,7 @@ export function SmartSearchClient({ copy }: { copy: CopyMap }) {
               {header.back_button || "Indietro"}
             </Button>
             
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-              className="space-y-4"
-            >
+            <div className="animate-in fade-in slide-in-from-left-4 space-y-4 duration-300">
               <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center shadow-xl mb-6 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-blue-500/20 opacity-50" />
                 <Sparkles className="w-8 h-8 text-white relative z-10" />
@@ -67,16 +61,11 @@ export function SmartSearchClient({ copy }: { copy: CopyMap }) {
               <p className="text-zinc-400 text-base leading-relaxed">
                 {header.subtitle || "Buy Anywhere with Crypto. Acquista da qualsiasi sito web usando le tue criptovalute, in totale privacy."}
               </p>
-            </motion.div>
+            </div>
           </div>
 
           {/* Right Column: Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="w-full space-y-8"
-          >
+          <div className="w-full animate-in fade-in slide-in-from-bottom-4 space-y-8 duration-500" style={{ animationDelay: "100ms" }}>
             <Squircle 
               radius={32} 
               smoothing={1} 
@@ -154,7 +143,7 @@ export function SmartSearchClient({ copy }: { copy: CopyMap }) {
 
               </div>
             </Squircle>
-          </motion.div>
+          </div>
         </div>
       </main>
     </div>

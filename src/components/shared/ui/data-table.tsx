@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { adminToast as toast } from "@/lib/domains/notifications"
 import {
@@ -16,17 +16,12 @@ type SortingState,
 type VisibilityState,
 } from "@tanstack/react-table"
 import * as React from "react"
-import { Area,AreaChart,CartesianGrid,XAxis } from "recharts"
 import { z } from "zod"
 
+import { LwcDualAreaChart } from "@/components/shared/charts/lwc-dual-area-chart"
 import { Badge } from "@/components/shared/ui/badge"
 import { Button } from "@/components/shared/ui/button"
-import {
-ChartContainer,
-ChartTooltip,
-ChartTooltipContent,
-type ChartConfig,
-} from "@/components/shared/ui/chart"
+import { ChartContainer,type ChartConfig } from "@/components/shared/ui/chart"
 import { Checkbox } from "@/components/shared/ui/checkbox"
 import {
 Drawer,
@@ -552,6 +547,31 @@ const chartConfig = {
 
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
+  const colorRef = React.useRef<HTMLDivElement>(null)
+  const [palette, setPalette] = React.useState({
+    desktop: "#2563eb",
+    mobile: "#6366f1",
+  })
+
+  React.useLayoutEffect(() => {
+    const el = colorRef.current
+    if (!el) return
+    const cs = getComputedStyle(el)
+    setPalette({
+      desktop: cs.getPropertyValue("--color-desktop").trim() || "#2563eb",
+      mobile: cs.getPropertyValue("--color-mobile").trim() || "#6366f1",
+    })
+  }, [])
+
+  const lwcSeriesData = React.useMemo(
+    () =>
+      chartData.map((row, i) => ({
+        time: `2024-${String(i + 1).padStart(2, "0")}-01`,
+        a: row.mobile,
+        b: row.desktop,
+      })),
+    []
+  )
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
@@ -571,44 +591,17 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
           {!isMobile && (
             <>
               <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
+                <div ref={colorRef} className="aspect-video w-full min-h-[200px]">
+                  <LwcDualAreaChart
+                    data={lwcSeriesData}
+                    colorA={palette.mobile}
+                    colorB={palette.desktop}
+                    labelA="Mobile"
+                    labelB="Desktop"
+                    height={220}
+                    className="w-full"
                   />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Area
-                    dataKey="mobile"
-                    type="natural"
-                    fill="var(--color-mobile)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a"
-                  />
-                </AreaChart>
+                </div>
               </ChartContainer>
               <Separator />
               <div className="grid gap-2">

@@ -1,8 +1,7 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/shared/ui/button";
 import { Input } from "@/components/shared/ui/input";
-import { motion } from "framer-motion";
 import { Check,Loader2 } from "lucide-react";
 
 interface StepPayoutProps {
@@ -33,13 +32,7 @@ export function StepPayout({
   loading
 }: StepPayoutProps) {
   return (
-    <motion.div
-        key="step1"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        className="space-y-6"
-    >
+    <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300">
         <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">Set up your payout wallet</h1>
             <p className="text-zinc-400">Where should we send your funds after a successful sale?</p>
@@ -123,7 +116,7 @@ export function StepPayout({
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Continue"}
             </Button>
         </div>
-    </motion.div>
+    </div>
   );
 }
 
