@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { ProductData,ProductParser } from "./types";
 
 export class BaseParser implements ProductParser {
-  canParse(): boolean {
+  canParse(_url: string): boolean {
     return true; // Fallback parser handles everything
   }
 
